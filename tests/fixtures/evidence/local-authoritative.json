@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "manifest": {
+    "schema_version": 1,
+    "repository": "FlitCatz/policy-kernel",
+    "work_item_id": "task-3",
+    "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "policy_digest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_set_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "workflow_run_id": "run-3",
+    "created_at": "2026-09-04T08:58:00Z",
+    "child_digests": [
+      { "path": "modifications", "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945" },
+      { "path": "executions", "digest": "eca22f2dae11c9de7e781f730c9d69109da7cd3c63babac31d1af90161d09118" },
+      { "path": "reviews", "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945" },
+      { "path": "findings", "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945" },
+      { "path": "waivers", "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945" },
+      { "path": "sensors", "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945" },
+      { "path": "test_adequacy", "digest": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b" },
+      { "path": "knowledge", "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945" }
+    ]
+  },
+  "modifications": [],
+  "executions": [
+    {
+      "execution_id": "local-run",
+      "provider": "local-provider",
+      "model": "local-model",
+      "status": "passed",
+      "command_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+      "input_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+      "output_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+      "started_at": "2026-09-04T08:55:00Z",
+      "completed_at": "2026-09-04T08:56:00Z",
+      "trust": "local_untrusted"
+    }
+  ],
+  "reviews": [],
+  "findings": [],
+  "waivers": [],
+  "sensors": [],
+  "test_adequacy": null,
+  "knowledge": []
+}
