@@ -1,10 +1,17 @@
-use crate::{deserialize_schema_version, CheckConclusion, CommitSha, MergeMethod, PullRequestNumber, RepositoryId, Sha256Digest, UtcTimestamp, WorkItemId, WorkflowRunId};
+use crate::{
+    deserialize_schema_version, CheckConclusion, CommitSha, MergeMethod, PullRequestNumber,
+    RepositoryId, Sha256Digest, UtcTimestamp, WorkItemId, WorkflowRunId,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum PullRequestState { Open, Closed, Merged }
+pub enum PullRequestState {
+    Open,
+    Closed,
+    Merged,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]

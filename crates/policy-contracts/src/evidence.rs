@@ -1,26 +1,52 @@
-use crate::{deserialize_schema_version, CommitSha, ExecutionId, FindingSeverity, ModelId, ProviderId, RepositoryId, ReviewStatus, SensorId, Sha256Digest, UtcTimestamp, WorkItemId, WorkflowRunId};
+use crate::{
+    deserialize_schema_version, CommitSha, ExecutionId, FindingSeverity, ModelId, ProviderId,
+    RepositoryId, ReviewStatus, SensorId, Sha256Digest, UtcTimestamp, WorkItemId, WorkflowRunId,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum TrustClass { LocalUntrusted, CiObserved, TrustedRunnerAttested }
+pub enum TrustClass {
+    LocalUntrusted,
+    CiObserved,
+    TrustedRunnerAttested,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecutionStatus { Passed, Failed, TimedOut, Skipped, Unparsable }
+pub enum ExecutionStatus {
+    Passed,
+    Failed,
+    TimedOut,
+    Skipped,
+    Unparsable,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum SensorStatus { Passed, Failed, TimedOut, Skipped, NotApplicable, Unparsable }
+pub enum SensorStatus {
+    Passed,
+    Failed,
+    TimedOut,
+    Skipped,
+    NotApplicable,
+    Unparsable,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum KnowledgeKind { LatClaim, CodeGraphIndex }
+pub enum KnowledgeKind {
+    LatClaim,
+    CodeGraphIndex,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct ArtifactDigest { pub path: String, pub digest: Sha256Digest }
+pub struct ArtifactDigest {
+    pub path: String,
+    pub digest: Sha256Digest,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -114,7 +140,10 @@ pub struct SensorEvidence {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct TestMapping { pub requirement_id: String, pub test_ids: Vec<String> }
+pub struct TestMapping {
+    pub requirement_id: String,
+    pub test_ids: Vec<String>,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]

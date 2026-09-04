@@ -13,10 +13,12 @@ fn unknown_schema_version_is_rejected() {
 fn short_and_non_hex_commit_shas_are_rejected() {
     assert!(CommitSha::parse("deadbeef").is_err());
     assert!(CommitSha::parse(&"z".repeat(40)).is_err());
-    assert!(serde_json::from_str::<PreMergeEvaluationInput>(include_str!(
-        "../../../tests/fixtures/contracts/invalid-sha.json"
-    ))
-    .is_err());
+    assert!(
+        serde_json::from_str::<PreMergeEvaluationInput>(include_str!(
+            "../../../tests/fixtures/contracts/invalid-sha.json"
+        ))
+        .is_err()
+    );
 }
 
 #[test]
@@ -30,10 +32,12 @@ fn advisory_decision_cannot_be_post_merge_authorization() {
 
 #[test]
 fn advisory_decision_cannot_deserialize_as_post_merge_authorization() {
-    assert!(serde_json::from_str::<AuthoritativePreMergeDecision>(include_str!(
-        "../../../tests/fixtures/contracts/advisory-decision.json"
-    ))
-    .is_err());
+    assert!(
+        serde_json::from_str::<AuthoritativePreMergeDecision>(include_str!(
+            "../../../tests/fixtures/contracts/advisory-decision.json"
+        ))
+        .is_err()
+    );
 }
 
 #[test]

@@ -1,38 +1,76 @@
-use crate::{deserialize_schema_version, CommitSha, EvidenceBundle, GitHubCheckObservation, GitHubMergeObservation, GitHubPullRequestObservation, PolicySnapshot, PullRequestNumber, RepositoryId, Sha256Digest, UtcTimestamp, WorkItemObservation};
+use crate::{
+    deserialize_schema_version, CommitSha, EvidenceBundle, GitHubCheckObservation,
+    GitHubMergeObservation, GitHubPullRequestObservation, PolicySnapshot, PullRequestNumber,
+    RepositoryId, Sha256Digest, UtcTimestamp, WorkItemObservation,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum EvaluationMode { Advisory, Authoritative }
+pub enum EvaluationMode {
+    Advisory,
+    Authoritative,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum PreMergeStatus { Blocked, Inconclusive, ReadyToMerge }
+pub enum PreMergeStatus {
+    Blocked,
+    Inconclusive,
+    ReadyToMerge,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum PostMergeStatus { Blocked, Inconclusive, Shipped }
+pub enum PostMergeStatus {
+    Blocked,
+    Inconclusive,
+    Shipped,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ReviewStatus { Approved, Blocked, Inconclusive }
+pub enum ReviewStatus {
+    Approved,
+    Blocked,
+    Inconclusive,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum FindingSeverity { Low, Medium, High, Critical }
+pub enum FindingSeverity {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum CheckConclusion { Success, Failure, Cancelled, TimedOut, Neutral, Skipped }
+pub enum CheckConclusion {
+    Success,
+    Failure,
+    Cancelled,
+    TimedOut,
+    Neutral,
+    Skipped,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum MergeMethod { Merge, Squash, Rebase }
+pub enum MergeMethod {
+    Merge,
+    Squash,
+    Rebase,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct Reason { pub code: String, pub message: String }
+pub struct Reason {
+    pub code: String,
+    pub message: String,
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -92,8 +130,12 @@ impl<'de> Deserialize<'de> for AuthoritativePreMergeDecision {
 }
 
 impl AuthoritativePreMergeDecision {
-    pub fn as_decision(&self) -> &PreMergeDecision { &self.0 }
-    pub fn into_decision(self) -> PreMergeDecision { self.0 }
+    pub fn as_decision(&self) -> &PreMergeDecision {
+        &self.0
+    }
+    pub fn into_decision(self) -> PreMergeDecision {
+        self.0
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

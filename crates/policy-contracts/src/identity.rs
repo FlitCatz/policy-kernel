@@ -32,17 +32,23 @@ macro_rules! string_id {
                 Ok(Self(value))
             }
 
-            pub fn as_str(&self) -> &str { &self.0 }
+            pub fn as_str(&self) -> &str {
+                &self.0
+            }
         }
 
         impl TryFrom<String> for $name {
             type Error = IdentityError;
-            fn try_from(value: String) -> Result<Self, Self::Error> { Self::parse(value) }
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+                Self::parse(value)
+            }
         }
 
         impl<'de> Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where D: Deserializer<'de> {
+            where
+                D: Deserializer<'de>,
+            {
                 Self::parse(String::deserialize(deserializer)?).map_err(serde::de::Error::custom)
             }
         }
@@ -79,23 +85,31 @@ impl RepositoryId {
             Err(IdentityError::InvalidRepository)
         }
     }
-    pub fn as_str(&self) -> &str { &self.0 }
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 impl TryFrom<String> for RepositoryId {
     type Error = IdentityError;
-    fn try_from(value: String) -> Result<Self, Self::Error> { Self::parse(value) }
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Self::parse(value)
+    }
 }
 
 impl<'de> Deserialize<'de> for RepositoryId {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: Deserializer<'de> {
+    where
+        D: Deserializer<'de>,
+    {
         Self::parse(String::deserialize(deserializer)?).map_err(serde::de::Error::custom)
     }
 }
 
 impl fmt::Display for RepositoryId {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result { formatter.write_str(&self.0) }
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str(&self.0)
+    }
 }
 
 macro_rules! hex_id {
@@ -108,29 +122,42 @@ macro_rules! hex_id {
             pub fn parse(value: impl Into<String>) -> Result<Self, IdentityError> {
                 let value = value.into();
                 if value.len() != $length
-                    || !value.bytes().all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                    || !value
+                        .bytes()
+                        .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
                 {
-                    return Err(IdentityError::InvalidHex { kind: $kind, expected: $length });
+                    return Err(IdentityError::InvalidHex {
+                        kind: $kind,
+                        expected: $length,
+                    });
                 }
                 Ok(Self(value))
             }
-            pub fn as_str(&self) -> &str { &self.0 }
+            pub fn as_str(&self) -> &str {
+                &self.0
+            }
         }
 
         impl TryFrom<String> for $name {
             type Error = IdentityError;
-            fn try_from(value: String) -> Result<Self, Self::Error> { Self::parse(value) }
+            fn try_from(value: String) -> Result<Self, Self::Error> {
+                Self::parse(value)
+            }
         }
 
         impl<'de> Deserialize<'de> for $name {
             fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where D: Deserializer<'de> {
+            where
+                D: Deserializer<'de>,
+            {
                 Self::parse(String::deserialize(deserializer)?).map_err(serde::de::Error::custom)
             }
         }
 
         impl fmt::Display for $name {
-            fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result { formatter.write_str(&self.0) }
+            fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str(&self.0)
+            }
         }
     };
 }
@@ -144,14 +171,20 @@ pub struct PullRequestNumber(u64);
 
 impl PullRequestNumber {
     pub fn new(value: u64) -> Result<Self, IdentityError> {
-        (value > 0).then_some(Self(value)).ok_or(IdentityError::InvalidPullRequestNumber)
+        (value > 0)
+            .then_some(Self(value))
+            .ok_or(IdentityError::InvalidPullRequestNumber)
     }
-    pub fn get(self) -> u64 { self.0 }
+    pub fn get(self) -> u64 {
+        self.0
+    }
 }
 
 impl<'de> Deserialize<'de> for PullRequestNumber {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: Deserializer<'de> {
+    where
+        D: Deserializer<'de>,
+    {
         Self::new(u64::deserialize(deserializer)?).map_err(serde::de::Error::custom)
     }
 }
@@ -166,24 +199,32 @@ impl UtcTimestamp {
             .map(|timestamp| Self(timestamp.with_timezone(&Utc)))
             .map_err(|_| IdentityError::InvalidTimestamp)
     }
-    pub fn as_datetime(&self) -> &DateTime<Utc> { &self.0 }
+    pub fn as_datetime(&self) -> &DateTime<Utc> {
+        &self.0
+    }
 }
 
 impl FromStr for UtcTimestamp {
     type Err = IdentityError;
-    fn from_str(value: &str) -> Result<Self, Self::Err> { Self::parse(value) }
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        Self::parse(value)
+    }
 }
 
 impl Serialize for UtcTimestamp {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where S: Serializer {
+    where
+        S: Serializer,
+    {
         serializer.serialize_str(&self.0.to_rfc3339_opts(SecondsFormat::AutoSi, true))
     }
 }
 
 impl<'de> Deserialize<'de> for UtcTimestamp {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where D: Deserializer<'de> {
+    where
+        D: Deserializer<'de>,
+    {
         Self::parse(&String::deserialize(deserializer)?).map_err(serde::de::Error::custom)
     }
 }
