@@ -26,8 +26,8 @@ are explicitly rejected as implementation coupling.
 
 ## Rust dependency pins
 
-The workspace declares only the approved technology stack. These exact pins must be
-confirmed by Cargo 1.95.0 before this baseline is accepted.
+The workspace declares only the approved technology stack. Exact versions are pinned
+for deterministic resolution as the crates begin using them.
 
 | Package | Pin |
 |---|---:|
@@ -47,7 +47,8 @@ confirmed by Cargo 1.95.0 before this baseline is accepted.
 
 ## Verification status
 
-The authoring environment did not provide `rustc` or Cargo. Consequently,
-`Cargo.lock`, the source-inventory test, and workspace metadata remain unverified.
-Run the Task 1 verification commands with Rust 1.95.0 before treating this baseline
-as complete.
+GitHub Actions run `33868276500` validated commit
+`ae56817e05376e352ff3a56fcc3cb28ff611b8c1` with Rust 1.95.0. The locked workspace
+check, frozen source-inventory test, and exact seven-member workspace metadata check
+all completed successfully. Dependency pins not yet referenced by a crate will enter
+the lockfile when their corresponding implementation task introduces them.
