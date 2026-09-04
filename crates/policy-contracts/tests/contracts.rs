@@ -29,6 +29,14 @@ fn advisory_decision_cannot_be_post_merge_authorization() {
 }
 
 #[test]
+fn advisory_decision_cannot_deserialize_as_post_merge_authorization() {
+    assert!(serde_json::from_str::<AuthoritativePreMergeDecision>(include_str!(
+        "../../../tests/fixtures/contracts/advisory-decision.json"
+    ))
+    .is_err());
+}
+
+#[test]
 fn authoritative_ready_decision_can_be_post_merge_authorization() {
     let mut decision: PreMergeDecision = serde_json::from_str(include_str!(
         "../../../tests/fixtures/contracts/advisory-decision.json"
