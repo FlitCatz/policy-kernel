@@ -58,7 +58,7 @@ pub struct PreMergeDecision {
     pub decision_digest: Sha256Digest,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(transparent)]
 pub struct AuthoritativePreMergeDecision(PreMergeDecision);
 
@@ -77,6 +77,17 @@ impl TryFrom<PreMergeDecision> for AuthoritativePreMergeDecision {
         } else {
             Err(InvalidAuthoritativeDecision)
         }
+    }
+}
+
+impl<'de> Deserialize<'de> for AuthoritativePreMergeDecision {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        PreMergeDecision::deserialize(deserializer)?
+            .try_into()
+            .map_err(serde::de::Error::custom)
     }
 }
 
