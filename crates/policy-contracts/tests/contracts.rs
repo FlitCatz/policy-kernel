@@ -12,7 +12,7 @@ fn unknown_schema_version_is_rejected() {
 #[test]
 fn short_and_non_hex_commit_shas_are_rejected() {
     assert!(CommitSha::parse("deadbeef").is_err());
-    assert!(CommitSha::parse(&"z".repeat(40)).is_err());
+    assert!(CommitSha::parse("z".repeat(40)).is_err());
     assert!(
         serde_json::from_str::<PreMergeEvaluationInput>(include_str!(
             "../../../tests/fixtures/contracts/invalid-sha.json"
