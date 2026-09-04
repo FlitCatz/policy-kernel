@@ -1,0 +1,12 @@
+[package]
+name = "evidence-collector"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "evidence-collector"
+path = "src/main.rs"

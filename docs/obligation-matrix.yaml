@@ -1,0 +1,115 @@
+schema_version: 1
+source_repository: FlitCatz/agent-dev-kit
+source_commit: e5f6ec8584cc91fdeca3aab40687c6cdcd303b43
+obligations:
+  - id: PK-PROV-001
+    source:
+      - path: AGENTS_GUIDE.md
+        blob_sha: ac3282911ebf292e3c2d318222245d09c4e93560
+        sha256: cd70fc7b78b70f4738571f57ceccc0887daf9f2553dea8b2d26ea6822edb89f8
+      - path: docs/ARCHITECTURE.md
+        blob_sha: babaf7ff47c0475da735170cdc6ea69d72382685
+        sha256: 645623f55f650dae6e9beb55c1f7b2d09843efef7898ad9ff56d61acfb3d9c92
+    expected: INCONCLUSIVE
+    reason_code: PK-PROV-DIGEST-MISMATCH
+    fixture: tests/fixtures/evidence/tampered.json
+    preserved_rule: Evidence must be complete, immutable, fresh, and bound to the exact repository and head.
+    rejected_coupling: Mutable lifecycle logs, filesystem discovery, ambient Git state, and orchestration-owned evidence capture.
+
+  - id: PK-SELF-001
+    source:
+      - path: tools/src/consensus.rs
+        blob_sha: 9e253adc9bdd5028db7f03baf1428f9b14a27d0d
+        sha256: e53babb3131369e7952bf03d3ee018914e689c00838fd4d271d9c9d06335d361
+      - path: tools/tests/integration_tests.rs
+        blob_sha: bb40dbdacdba4b09f5fcc92df2f360ae0b459499
+        sha256: 04f1dffd4e8b45f0d2fd92a6d73c262687f62266c22b7841798c55f31202f1de
+    expected: INCONCLUSIVE
+    reason_code: PK-SELF-PROVIDER
+    fixture: tests/fixtures/reviews/self-review.json
+    preserved_rule: A verifier must be provider- and execution-independent from every code contributor.
+    rejected_coupling: Provider CLI allowlists, command execution, configuration lookup, and last-modifier-only identity checks.
+
+  - id: PK-SEV-001
+    source:
+      - path: tools/src/consensus.rs
+        blob_sha: 9e253adc9bdd5028db7f03baf1428f9b14a27d0d
+        sha256: e53babb3131369e7952bf03d3ee018914e689c00838fd4d271d9c9d06335d361
+      - path: docs/ARCHITECTURE.md
+        blob_sha: babaf7ff47c0475da735170cdc6ea69d72382685
+        sha256: 645623f55f650dae6e9beb55c1f7b2d09843efef7898ad9ff56d61acfb3d9c92
+    expected: BLOCKED
+    reason_code: PK-REVIEW-HIGH
+    fixture: tests/fixtures/reviews/critical.json
+    preserved_rule: Any unwaived Critical or High finding blocks; confirmed Medium blocks and conflicting Medium is inconclusive.
+    rejected_coupling: CLI presentation, provider-specific report parsing, and mutable reviewer configuration.
+
+  - id: PK-WAIVE-001
+    source:
+      - path: tools/src/consensus.rs
+        blob_sha: 9e253adc9bdd5028db7f03baf1428f9b14a27d0d
+        sha256: e53babb3131369e7952bf03d3ee018914e689c00838fd4d271d9c9d06335d361
+      - path: AGENTS_GUIDE.md
+        blob_sha: ac3282911ebf292e3c2d318222245d09c4e93560
+        sha256: cd70fc7b78b70f4738571f57ceccc0887daf9f2553dea8b2d26ea6822edb89f8
+    expected: INCONCLUSIVE
+    reason_code: PK-WAIVER-INVALID
+    fixture: tests/fixtures/reviews/waiver-expired.json
+    preserved_rule: A human waiver binds actor, finding, repository, head, evidence digest, reason, issuance, and expiry.
+    rejected_coupling: Ambient clocks, hard-coded actors, self-waiver, and lifecycle state mutation.
+
+  - id: PK-SENSOR-001
+    source:
+      - path: tools/src/sensor_resolver.rs
+        blob_sha: aa16445b13001289b5c4753759c5bb8fb55283c8
+        sha256: a5e0b718bfe5eea294826e65ddc7ab1cd944ea88c0083450cd1e0de3b2fdf2f4
+      - path: AGENTS_GUIDE.md
+        blob_sha: ac3282911ebf292e3c2d318222245d09c4e93560
+        sha256: cd70fc7b78b70f4738571f57ceccc0887daf9f2553dea8b2d26ea6822edb89f8
+    expected: INCONCLUSIVE
+    reason_code: PK-SENSOR-MISSING
+    fixture: tests/fixtures/sensors/missing.json
+    preserved_rule: Every applicable required sensor needs typed, exact-head evidence; missing, skipped, timed-out, or unparsable results cannot pass.
+    rejected_coupling: Command execution, process termination, environment injection, filesystem logs, and ambient head discovery.
+
+  - id: PK-ADEQ-001
+    source:
+      - path: tools/src/sensor_resolver.rs
+        blob_sha: aa16445b13001289b5c4753759c5bb8fb55283c8
+        sha256: a5e0b718bfe5eea294826e65ddc7ab1cd944ea88c0083450cd1e0de3b2fdf2f4
+      - path: docs/ARCHITECTURE.md
+        blob_sha: babaf7ff47c0475da735170cdc6ea69d72382685
+        sha256: 645623f55f650dae6e9beb55c1f7b2d09843efef7898ad9ff56d61acfb3d9c92
+    expected: BLOCKED
+    reason_code: PK-ADEQ-NO-TESTS
+    fixture: tests/fixtures/sensors/no-tests.json
+    preserved_rule: Successful execution is distinct from test adequacy; empty discovery and unmapped criteria cannot satisfy the gate.
+    rejected_coupling: Inferring adequacy from a command exit status or a sensor success claim.
+
+  - id: PK-PRE-001
+    source:
+      - path: tools/src/git_provider.rs
+        blob_sha: 3a5837521b966240ef778db29bc45072c5cab720
+        sha256: c96936675075dbe3cfa81fcb390b8759d2a06af4f0a890158ec7090779a1d93f
+      - path: tools/tests/integration_tests.rs
+        blob_sha: bb40dbdacdba4b09f5fcc92df2f360ae0b459499
+        sha256: 04f1dffd4e8b45f0d2fd92a6d73c262687f62266c22b7841798c55f31202f1de
+    expected: INCONCLUSIVE
+    reason_code: PK-PRE-AGENT-READY-MISSING
+    fixture: tests/fixtures/pre-merge/missing-agent-ready.json
+    preserved_rule: Pre-merge readiness requires an authorized agent-ready observation and complete evidence for the exact PR head.
+    rejected_coupling: GitHub API calls, gh subprocesses, issue comment mutation, and trusting a label without its event actor.
+
+  - id: PK-POST-001
+    source:
+      - path: tools/src/lifecycle.rs
+        blob_sha: ba1c92358f08fc66265a935330d632570c92e17b
+        sha256: 8aa6160467daaef1c014ccdade223472af8466a13079526e72c40ba9fe5e3a3b
+      - path: tools/src/git_provider.rs
+        blob_sha: 3a5837521b966240ef778db29bc45072c5cab720
+        sha256: c96936675075dbe3cfa81fcb390b8759d2a06af4f0a890158ec7090779a1d93f
+    expected: INCONCLUSIVE
+    reason_code: PK-POST-CHECK-MISSING
+    fixture: tests/fixtures/post-merge/missing-check.json
+    preserved_rule: Shipped requires a protected merge matching the evaluated PR head and the exact successful required-check decision digest.
+    rejected_coupling: GSD lifecycle transitions, local evidence files, ambient clocks, shelling out to gh, and treating merge commit OID as PR head.

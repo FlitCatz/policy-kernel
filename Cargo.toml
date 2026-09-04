@@ -1,0 +1,31 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/policy-contracts",
+    "crates/policy-core",
+    "crates/policy-cli",
+    "crates/policy-ci",
+    "crates/evidence-collector",
+    "crates/github-adapter",
+    "xtask",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.145"
+serde_yaml = "=0.9.34"
+chrono = { version = "=0.4.42", default-features = false, features = ["serde", "std"] }
+sha2 = "=0.10.9"
+hex = "=0.4.3"
+thiserror = "=2.0.16"
+clap = { version = "=4.5.47", features = ["derive"] }
+schemars = { version = "=1.0.4", features = ["chrono04"] }
+globset = "=0.4.16"
+assert_cmd = "=2.0.17"
+test-case = "=3.3.1"
+proptest = "=1.7.0"

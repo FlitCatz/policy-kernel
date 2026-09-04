@@ -1,0 +1,9 @@
+[package]
+name = "policy-ci"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "policy-ci"
+path = "src/main.rs"

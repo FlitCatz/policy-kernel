@@ -1,0 +1,9 @@
+[package]
+name = "policy-cli"
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "policy-cli"
+path = "src/main.rs"
