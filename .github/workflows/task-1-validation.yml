@@ -1,0 +1,49 @@
+name: Task 1 validation
+
+on:
+  push:
+    branches:
+      - feat/initial-policy-kernel
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Rust workspace and provenance baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.95.0
+          rustc --version
+          cargo --version
+
+      - name: Check locked workspace
+        run: cargo check --workspace --locked
+
+      - name: Test frozen source inventory
+        run: cargo test -p policy-core --test source_inventory --locked
+
+      - name: Verify exact workspace membership
+        run: |
+          cargo metadata --no-deps --format-version 1 --locked > metadata.json
+          jq -e '
+            ([.packages[].name] | sort) ==
+            ([
+              "evidence-collector",
+              "github-adapter",
+              "policy-ci",
+              "policy-cli",
+              "policy-contracts",
+              "policy-core",
+              "xtask"
+            ] | sort)
+          ' metadata.json
