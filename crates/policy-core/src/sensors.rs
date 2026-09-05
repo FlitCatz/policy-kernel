@@ -2,6 +2,7 @@ use policy_contracts::{
     Reason, Risk, SensorCondition, SensorEvidence, SensorId, SensorProfile, SensorStatus,
     TestAdequacyEvidence, TestAdequacyPolicy,
 };
+use globset::Glob;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -27,6 +28,12 @@ impl SensorEvaluation {
 pub enum SensorResolutionError {
     #[error("changed path contains a parent-directory segment: {0}")]
     ParentTraversal(String),
+    #[error("sensor profile contains duplicate sensor ID: {0}")]
+    DuplicateSensor(String),
+    #[error("sensor profile contains an invalid or duplicate condition ID: {0}")]
+    InvalidCondition(String),
+    #[error("sensor condition contains an invalid glob: {0}")]
+    InvalidGlob(String),
 }
 
 pub fn resolve_required_sensors(
@@ -34,6 +41,7 @@ pub fn resolve_required_sensors(
     changed_paths: &[&str],
     risk: Risk,
 ) -> Result<Vec<SensorId>, SensorResolutionError> {
+    validate_profile(profile)?;
     let paths = changed_paths
         .iter()
         .map(|path| normalize_path(path))
@@ -61,6 +69,37 @@ pub fn evaluate_sensor_evidence(
     required_sensor_ids: &[SensorId],
     evidence: &[SensorEvidence],
     adequacy: Option<&TestAdequacyEvidence>,
+) -> SensorEvaluation {
+    evaluate_sensor_evidence_inner(profile, required_sensor_ids, evidence, adequacy, None)
+}
+
+pub fn evaluate_sensor_evidence_for_change(
+    profile: &SensorProfile,
+    changed_paths: &[&str],
+    risk: Risk,
+    evidence: &[SensorEvidence],
+    adequacy: Option<&TestAdequacyEvidence>,
+) -> Result<SensorEvaluation, SensorResolutionError> {
+    let required = resolve_required_sensors(profile, changed_paths, risk)?;
+    let paths = changed_paths
+        .iter()
+        .map(|path| normalize_path(path))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(evaluate_sensor_evidence_inner(
+        profile,
+        &required,
+        evidence,
+        adequacy,
+        Some((&paths, risk)),
+    ))
+}
+
+fn evaluate_sensor_evidence_inner(
+    profile: &SensorProfile,
+    required_sensor_ids: &[SensorId],
+    evidence: &[SensorEvidence],
+    adequacy: Option<&TestAdequacyEvidence>,
+    context: Option<(&[String], Risk)>,
 ) -> SensorEvaluation {
     let definitions = profile
         .sensors
@@ -92,13 +131,38 @@ pub fn evaluate_sensor_evidence(
         }
 
         let item = items[0];
-        match item.status {
-            SensorStatus::Passed => {}
-            SensorStatus::Failed => insert_reason(
+        let definition = definitions.get(sensor_id).copied();
+        if definition.is_none() {
+            insert_reason(
                 &mut reasons,
-                "PK-SENSOR-FAILED",
-                "a required sensor reported an executed failure",
-            ),
+                "PK-SENSOR-UNKNOWN",
+                "required sensor is absent from the sensor profile",
+            );
+            continue;
+        }
+        match item.status {
+            SensorStatus::Passed => {
+                validate_typed_result(item, &mut reasons);
+                if !definition
+                    .unwrap()
+                    .accepted_exit_codes
+                    .contains(&item.exit_code.unwrap_or(i32::MIN))
+                {
+                    insert_reason(
+                        &mut reasons,
+                        "PK-SENSOR-EXIT-CODE",
+                        "sensor exit code is not accepted by the profile",
+                    );
+                }
+            }
+            SensorStatus::Failed => {
+                validate_typed_result(item, &mut reasons);
+                insert_reason(
+                    &mut reasons,
+                    "PK-SENSOR-FAILED",
+                    "a required sensor reported an executed failure",
+                );
+            }
             SensorStatus::TimedOut => insert_reason(
                 &mut reasons,
                 "PK-SENSOR-TIMEOUT",
@@ -115,20 +179,23 @@ pub fn evaluate_sensor_evidence(
                 "a required sensor result could not be parsed",
             ),
             SensorStatus::NotApplicable => {
-                let condition_matches_definition = definitions
-                    .get(sensor_id)
+                let condition_matches_context = context
                     .zip(item.not_applicable_condition_id.as_deref())
-                    .is_some_and(|(definition, condition_id)| {
+                    .is_some_and(|((paths, risk), condition_id)| {
                         definition
-                            .required_when
+                            .unwrap()
+                            .not_applicable_when
                             .iter()
-                            .any(|condition| condition.id == condition_id)
+                            .any(|condition| {
+                                condition.id == condition_id
+                                    && condition_matches(condition, paths, risk)
+                            })
                     });
                 let reason_recorded = item
                     .not_applicable_reason
                     .as_deref()
                     .is_some_and(|reason| !reason.trim().is_empty());
-                if !condition_matches_definition || !reason_recorded {
+                if !condition_matches_context || !reason_recorded {
                     insert_reason(
                         &mut reasons,
                         "PK-SENSOR-NOT-APPLICABLE-INVALID",
@@ -145,12 +212,15 @@ pub fn evaluate_sensor_evidence(
         matches!(
             reason.code.as_str(),
             "PK-SENSOR-FAILED"
+                | "PK-SENSOR-EXIT-CODE"
+                | "PK-SENSOR-RESULT-COUNT-MISMATCH"
                 | "PK-ADEQ-NO-TESTS"
                 | "PK-ADEQ-COUNT-MISMATCH"
                 | "PK-ADEQ-CRITERION-UNMAPPED"
                 | "PK-ADEQ-BEHAVIOR-UNMAPPED"
                 | "PK-ADEQ-NEGATIVE-CASE-MISSING"
                 | "PK-ADEQ-UNEXECUTED-MAPPING"
+                | "PK-ADEQ-DUPLICATE-TEST"
         )
     }) {
         SensorEvaluationStatus::Blocked
@@ -161,6 +231,34 @@ pub fn evaluate_sensor_evidence(
     };
 
     SensorEvaluation { status, reasons }
+}
+
+fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError> {
+    let mut sensors = BTreeSet::new();
+    for sensor in &profile.sensors {
+        if !sensors.insert(sensor.id.as_str()) {
+            return Err(SensorResolutionError::DuplicateSensor(
+                sensor.id.to_string(),
+            ));
+        }
+        let mut conditions = BTreeSet::new();
+        for condition in sensor
+            .required_when
+            .iter()
+            .chain(&sensor.not_applicable_when)
+        {
+            if condition.id.trim().is_empty() || !conditions.insert(condition.id.as_str()) {
+                return Err(SensorResolutionError::InvalidCondition(
+                    condition.id.clone(),
+                ));
+            }
+            for pattern in &condition.path_globs {
+                Glob::new(pattern)
+                    .map_err(|_| SensorResolutionError::InvalidGlob(pattern.clone()))?;
+            }
+        }
+    }
+    Ok(())
 }
 
 fn normalize_path(path: &str) -> Result<String, SensorResolutionError> {
@@ -179,49 +277,12 @@ fn condition_matches(condition: &SensorCondition, paths: &[String], risk: Risk) 
     let risk_matches = condition.risks.is_empty() || condition.risks.contains(&risk);
     let path_matches = condition.path_globs.is_empty()
         || condition.path_globs.iter().any(|pattern| {
-            paths
-                .iter()
-                .any(|path| glob_matches(pattern.as_bytes(), path.as_bytes()))
+            Glob::new(pattern)
+                .ok()
+                .map(|glob| glob.compile_matcher())
+                .is_some_and(|matcher| paths.iter().any(|path| matcher.is_match(path)))
         });
     risk_matches && path_matches
-}
-
-fn glob_matches(pattern: &[u8], value: &[u8]) -> bool {
-    fn matches_from(
-        pattern: &[u8],
-        value: &[u8],
-        pattern_index: usize,
-        value_index: usize,
-        memo: &mut BTreeMap<(usize, usize), bool>,
-    ) -> bool {
-        if let Some(result) = memo.get(&(pattern_index, value_index)) {
-            return *result;
-        }
-        let result = if pattern_index == pattern.len() {
-            value_index == value.len()
-        } else if pattern[pattern_index] == b'*' && pattern.get(pattern_index + 1) == Some(&b'*') {
-            let next = pattern_index + 2;
-            matches_from(pattern, value, next, value_index, memo)
-                || (value_index < value.len()
-                    && matches_from(pattern, value, pattern_index, value_index + 1, memo))
-        } else if pattern[pattern_index] == b'*' {
-            matches_from(pattern, value, pattern_index + 1, value_index, memo)
-                || (value_index < value.len()
-                    && value[value_index] != b'/'
-                    && matches_from(pattern, value, pattern_index, value_index + 1, memo))
-        } else if value_index < value.len()
-            && (pattern[pattern_index] == b'?' && value[value_index] != b'/'
-                || pattern[pattern_index] == value[value_index])
-        {
-            matches_from(pattern, value, pattern_index + 1, value_index + 1, memo)
-        } else {
-            false
-        };
-        memo.insert((pattern_index, value_index), result);
-        result
-    }
-
-    matches_from(pattern, value, 0, 0, &mut BTreeMap::new())
 }
 
 fn evaluate_adequacy(
@@ -229,7 +290,13 @@ fn evaluate_adequacy(
     evidence: Option<&TestAdequacyEvidence>,
     reasons: &mut Vec<Reason>,
 ) {
+    let required = !policy.acceptance_criterion_ids.is_empty()
+        || !policy.changed_behavior_ids.is_empty()
+        || !policy.negative_case_ids.is_empty();
     let Some(evidence) = evidence else {
+        if !required {
+            return;
+        }
         insert_reason(
             reasons,
             "PK-ADEQ-MISSING",
@@ -286,6 +353,18 @@ fn evaluate_adequacy(
         .iter()
         .map(String::as_str)
         .collect::<BTreeSet<_>>();
+    if executed.len() != evidence.executed_test_ids.len()
+        || evidence
+            .executed_test_ids
+            .iter()
+            .any(|test_id| test_id.trim().is_empty())
+    {
+        insert_reason(
+            reasons,
+            "PK-ADEQ-DUPLICATE-TEST",
+            "executed test IDs must be unique and nonempty",
+        );
+    }
     if evidence
         .acceptance_criteria
         .iter()
@@ -298,6 +377,35 @@ fn evaluate_adequacy(
             "PK-ADEQ-UNEXECUTED-MAPPING",
             "adequacy mappings may reference only executed tests",
         );
+    }
+}
+
+fn validate_typed_result(evidence: &SensorEvidence, reasons: &mut Vec<Reason>) {
+    if evidence.resolved_command.is_empty()
+        || evidence.source_digest.is_none()
+        || evidence.configuration_digest.is_none()
+        || evidence
+            .parser_version
+            .as_deref()
+            .is_none_or(|version| version.trim().is_empty())
+        || evidence.exit_code.is_none()
+    {
+        insert_reason(
+            reasons,
+            "PK-SENSOR-RESULT-INCOMPLETE",
+            "executed sensor evidence is missing typed result provenance",
+        );
+    }
+    if let (Some(discovered), Some(executed), Some(passed)) =
+        (evidence.discovered, evidence.executed, evidence.passed)
+    {
+        if discovered != executed || executed != passed {
+            insert_reason(
+                reasons,
+                "PK-SENSOR-RESULT-COUNT-MISMATCH",
+                "sensor result counts must agree",
+            );
+        }
     }
 }
 
@@ -323,17 +431,5 @@ fn insert_reason(reasons: &mut Vec<Reason>, code: &str, message: &str) {
             message: message.to_owned(),
         });
         reasons.sort_by(|left, right| left.code.cmp(&right.code));
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::glob_matches;
-
-    #[test]
-    fn glob_star_does_not_cross_a_directory_boundary() {
-        assert!(glob_matches(b"src/*.rs", b"src/api.rs"));
-        assert!(!glob_matches(b"src/*.rs", b"src/api/mod.rs"));
-        assert!(glob_matches(b"src/**", b"src/api/mod.rs"));
     }
 }

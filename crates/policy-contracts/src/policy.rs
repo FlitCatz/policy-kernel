@@ -46,6 +46,10 @@ pub struct SensorDefinition {
     pub id: SensorId,
     pub required: bool,
     pub required_when: Vec<SensorCondition>,
+    #[serde(default)]
+    pub not_applicable_when: Vec<SensorCondition>,
+    #[serde(default)]
+    pub accepted_exit_codes: Vec<i32>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

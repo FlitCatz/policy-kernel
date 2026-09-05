@@ -17,6 +17,8 @@ fn profile() -> SensorProfile {
                 id: id("compile"),
                 required: true,
                 required_when: vec![],
+                not_applicable_when: vec![],
+                accepted_exit_codes: vec![0],
             },
             SensorDefinition {
                 id: id("api-e2e"),
@@ -26,6 +28,8 @@ fn profile() -> SensorProfile {
                     risks: vec![Risk::High, Risk::Critical],
                     path_globs: vec!["src/api/**".into(), "src/api.rs".into()],
                 }],
+                not_applicable_when: vec![],
+                accepted_exit_codes: vec![0],
             },
             SensorDefinition {
                 id: id("docs"),
@@ -35,6 +39,8 @@ fn profile() -> SensorProfile {
                     risks: vec![],
                     path_globs: vec!["docs/**".into()],
                 }],
+                not_applicable_when: vec![],
+                accepted_exit_codes: vec![0],
             },
         ],
         adequacy: TestAdequacyPolicy {
@@ -62,6 +68,14 @@ fn sensor(sensor_id: &str, status: SensorStatus) -> SensorEvidence {
         result_digest: digest(),
         observed_at: UtcTimestamp::parse("2026-09-04T00:00:00Z").unwrap(),
         trust: TrustClass::CiObserved,
+        resolved_command: vec!["sensor".into()],
+        source_digest: Some(digest()),
+        configuration_digest: Some(digest()),
+        parser_version: Some("1".into()),
+        exit_code: Some(0),
+        discovered: None,
+        executed: None,
+        passed: None,
         not_applicable_condition_id: None,
         not_applicable_reason: None,
     }
@@ -141,13 +155,14 @@ fn an_executed_required_sensor_failure_is_blocked() {
 }
 
 #[test]
-fn not_applicable_needs_a_matching_condition_and_reason() {
+fn context_free_not_applicable_cannot_authorize_a_required_sensor() {
     let mut evidence = sensor("api-e2e", SensorStatus::NotApplicable);
     evidence.not_applicable_condition_id = Some("high-risk-api".into());
     evidence.not_applicable_reason = Some("API condition was evaluated explicitly".into());
     let valid =
         evaluate_sensor_evidence(&profile(), &[id("api-e2e")], &[evidence], Some(&adequate()));
-    assert_eq!(valid.status, SensorEvaluationStatus::Passed);
+    assert_eq!(valid.status, SensorEvaluationStatus::Inconclusive);
+    assert!(valid.has_reason("PK-SENSOR-NOT-APPLICABLE-INVALID"));
 
     let invalid = evaluate_sensor_evidence(
         &profile(),

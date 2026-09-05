@@ -135,7 +135,25 @@ pub struct SensorEvidence {
     pub result_digest: Sha256Digest,
     pub observed_at: UtcTimestamp,
     pub trust: TrustClass,
+    #[serde(default)]
+    pub resolved_command: Vec<String>,
+    #[serde(default)]
+    pub source_digest: Option<Sha256Digest>,
+    #[serde(default)]
+    pub configuration_digest: Option<Sha256Digest>,
+    #[serde(default)]
+    pub parser_version: Option<String>,
+    #[serde(default)]
+    pub exit_code: Option<i32>,
+    #[serde(default)]
+    pub discovered: Option<u64>,
+    #[serde(default)]
+    pub executed: Option<u64>,
+    #[serde(default)]
+    pub passed: Option<u64>,
+    #[serde(default)]
     pub not_applicable_condition_id: Option<String>,
+    #[serde(default)]
     pub not_applicable_reason: Option<String>,
 }
 
@@ -152,6 +170,7 @@ pub struct TestAdequacyEvidence {
     pub acceptance_criteria: Vec<TestMapping>,
     pub changed_behaviors: Vec<TestMapping>,
     pub negative_case_ids: Vec<String>,
+    #[serde(default)]
     pub executed_test_ids: Vec<String>,
     pub discovered: u64,
     pub executed: u64,
