@@ -1,0 +1,22 @@
+name: Task 4 sensors
+
+on:
+  push:
+    branches: [feat/task-4-sensors]
+
+permissions:
+  contents: read
+
+jobs:
+  sensors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Install pinned Rust toolchain
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
+          rustup override set 1.95.0
+      - run: cargo test -p policy-core --test sensors --locked
+      - run: cargo fmt --all --check
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
