@@ -75,7 +75,11 @@ pub fn evaluate_sensor_evidence(
     let mut reasons = Vec::new();
     for sensor_id in required_sensor_ids {
         let Some(items) = by_id.get(sensor_id) else {
-            insert_reason(&mut reasons, "PK-SENSOR-MISSING", "required sensor evidence is missing");
+            insert_reason(
+                &mut reasons,
+                "PK-SENSOR-MISSING",
+                "required sensor evidence is missing",
+            );
             continue;
         };
         if items.len() != 1 {
@@ -195,9 +199,7 @@ fn glob_matches(pattern: &[u8], value: &[u8]) -> bool {
         }
         let result = if pattern_index == pattern.len() {
             value_index == value.len()
-        } else if pattern[pattern_index] == b'*'
-            && pattern.get(pattern_index + 1) == Some(&b'*')
-        {
+        } else if pattern[pattern_index] == b'*' && pattern.get(pattern_index + 1) == Some(&b'*') {
             let next = pattern_index + 2;
             matches_from(pattern, value, next, value_index, memo)
                 || (value_index < value.len()
@@ -228,7 +230,11 @@ fn evaluate_adequacy(
     reasons: &mut Vec<Reason>,
 ) {
     let Some(evidence) = evidence else {
-        insert_reason(reasons, "PK-ADEQ-MISSING", "test adequacy evidence is missing");
+        insert_reason(
+            reasons,
+            "PK-ADEQ-MISSING",
+            "test adequacy evidence is missing",
+        );
         return;
     };
     if evidence.discovered == 0 {
@@ -302,9 +308,9 @@ fn validate_mappings(
     reasons: &mut Vec<Reason>,
 ) {
     if required_ids.iter().any(|required_id| {
-        !mappings.iter().any(|mapping| {
-            mapping.requirement_id == *required_id && !mapping.test_ids.is_empty()
-        })
+        !mappings
+            .iter()
+            .any(|mapping| mapping.requirement_id == *required_id && !mapping.test_ids.is_empty())
     }) {
         insert_reason(reasons, reason_code, "a required test mapping is missing");
     }

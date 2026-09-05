@@ -3,9 +3,7 @@ use policy_contracts::{
     SensorStatus, Sha256Digest, TestAdequacyEvidence, TestAdequacyPolicy, TestMapping, TrustClass,
     UtcTimestamp,
 };
-use policy_core::{
-    evaluate_sensor_evidence, resolve_required_sensors, SensorEvaluationStatus,
-};
+use policy_core::{evaluate_sensor_evidence, resolve_required_sensors, SensorEvaluationStatus};
 
 fn id(value: &str) -> SensorId {
     SensorId::parse(value).unwrap()
@@ -52,10 +50,7 @@ fn sha() -> CommitSha {
 }
 
 fn digest() -> Sha256Digest {
-    Sha256Digest::parse(
-        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    )
-    .unwrap()
+    Sha256Digest::parse("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb").unwrap()
 }
 
 fn sensor(sensor_id: &str, status: SensorStatus) -> SensorEvidence {
@@ -118,7 +113,11 @@ fn missing_timeout_and_unparsable_required_sensors_are_inconclusive() {
     assert_eq!(missing.status, SensorEvaluationStatus::Inconclusive);
     assert!(missing.has_reason("PK-SENSOR-MISSING"));
 
-    for status in [SensorStatus::TimedOut, SensorStatus::Skipped, SensorStatus::Unparsable] {
+    for status in [
+        SensorStatus::TimedOut,
+        SensorStatus::Skipped,
+        SensorStatus::Unparsable,
+    ] {
         let result = evaluate_sensor_evidence(
             &profile(),
             &[id("compile")],
@@ -146,12 +145,8 @@ fn not_applicable_needs_a_matching_condition_and_reason() {
     let mut evidence = sensor("api-e2e", SensorStatus::NotApplicable);
     evidence.not_applicable_condition_id = Some("high-risk-api".into());
     evidence.not_applicable_reason = Some("API condition was evaluated explicitly".into());
-    let valid = evaluate_sensor_evidence(
-        &profile(),
-        &[id("api-e2e")],
-        &[evidence],
-        Some(&adequate()),
-    );
+    let valid =
+        evaluate_sensor_evidence(&profile(), &[id("api-e2e")], &[evidence], Some(&adequate()));
     assert_eq!(valid.status, SensorEvaluationStatus::Passed);
 
     let invalid = evaluate_sensor_evidence(
