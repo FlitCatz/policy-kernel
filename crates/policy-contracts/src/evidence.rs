@@ -135,6 +135,7 @@ pub struct SensorEvidence {
     pub result_digest: Sha256Digest,
     pub observed_at: UtcTimestamp,
     pub trust: TrustClass,
+    pub not_applicable_condition_id: Option<String>,
     pub not_applicable_reason: Option<String>,
 }
 
@@ -151,6 +152,7 @@ pub struct TestAdequacyEvidence {
     pub acceptance_criteria: Vec<TestMapping>,
     pub changed_behaviors: Vec<TestMapping>,
     pub negative_case_ids: Vec<String>,
+    pub executed_test_ids: Vec<String>,
     pub discovered: u64,
     pub executed: u64,
     pub passed: u64,

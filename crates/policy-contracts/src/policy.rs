@@ -30,3 +30,36 @@ pub struct RequiredReviewPolicy {
     pub require_provider_independence: bool,
     pub allowed_providers: Vec<ProviderId>,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SensorProfile {
+    #[serde(deserialize_with = "deserialize_schema_version")]
+    pub schema_version: u32,
+    pub sensors: Vec<SensorDefinition>,
+    pub adequacy: TestAdequacyPolicy,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SensorDefinition {
+    pub id: SensorId,
+    pub required: bool,
+    pub required_when: Vec<SensorCondition>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct SensorCondition {
+    pub id: String,
+    pub risks: Vec<Risk>,
+    pub path_globs: Vec<String>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TestAdequacyPolicy {
+    pub acceptance_criterion_ids: Vec<String>,
+    pub changed_behavior_ids: Vec<String>,
+    pub negative_case_ids: Vec<String>,
+}

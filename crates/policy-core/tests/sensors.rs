@@ -221,3 +221,11 @@ fn missing_adequacy_evidence_is_inconclusive() {
     assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
     assert!(result.has_reason("PK-ADEQ-MISSING"));
 }
+
+#[test]
+fn profile_fixture_satisfies_the_strict_contract() {
+    let parsed: SensorProfile =
+        serde_json::from_str(include_str!("../../../tests/fixtures/sensors/profile.json"))
+            .expect("profile fixture must satisfy the strict sensor contract");
+    assert_eq!(parsed, profile());
+}
