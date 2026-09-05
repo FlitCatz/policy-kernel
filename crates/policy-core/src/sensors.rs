@@ -1,6 +1,6 @@
 use policy_contracts::{
-    Reason, Risk, SensorCondition, SensorDefinition, SensorEvidence, SensorId, SensorProfile,
-    SensorStatus, TestAdequacyEvidence, TestAdequacyPolicy,
+    Reason, Risk, SensorCondition, SensorEvidence, SensorId, SensorProfile, SensorStatus,
+    TestAdequacyEvidence, TestAdequacyPolicy,
 };
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -38,15 +38,22 @@ pub fn resolve_required_sensors(
         .iter()
         .map(|path| normalize_path(path))
         .collect::<Result<Vec<_>, _>>()?;
-    let mut required = BTreeSet::new();
+    let mut required = Vec::new();
+    let mut seen = BTreeSet::new();
 
     for sensor in &profile.sensors {
-        if sensor.required || sensor.required_when.iter().any(|condition| condition_matches(condition, &paths, risk)) {
-            required.insert(sensor.id.clone());
+        if (sensor.required
+            || sensor
+                .required_when
+                .iter()
+                .any(|condition| condition_matches(condition, &paths, risk)))
+            && seen.insert(sensor.id.clone())
+        {
+            required.push(sensor.id.clone());
         }
     }
 
-    Ok(required.into_iter().collect())
+    Ok(required)
 }
 
 pub fn evaluate_sensor_evidence(
