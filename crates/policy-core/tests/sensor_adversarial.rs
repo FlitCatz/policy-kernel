@@ -2,7 +2,9 @@ use policy_contracts::{
     CommitSha, Risk, SensorCondition, SensorDefinition, SensorEvidence, SensorId, SensorProfile,
     SensorStatus, Sha256Digest, TestAdequacyEvidence, TestAdequacyPolicy, TrustClass, UtcTimestamp,
 };
-use policy_core::{evaluate_sensor_evidence_for_change, resolve_required_sensors, SensorEvaluationStatus};
+use policy_core::{
+    evaluate_sensor_evidence_for_change, resolve_required_sensors, SensorEvaluationStatus,
+};
 
 fn id(value: &str) -> SensorId {
     SensorId::parse(value).unwrap()

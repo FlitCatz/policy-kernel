@@ -1,8 +1,8 @@
+use globset::Glob;
 use policy_contracts::{
     Reason, Risk, SensorCondition, SensorEvidence, SensorId, SensorProfile, SensorStatus,
     TestAdequacyEvidence, TestAdequacyPolicy,
 };
-use globset::Glob;
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

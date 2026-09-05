@@ -18,10 +18,6 @@ jobs:
         run: |
           rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
           rustup override set 1.95.0
-      - name: Refresh and expose lockfile for the dependency update
-        run: |
-          cargo generate-lockfile
-          echo "LOCKFILE_BASE64=$(base64 -w0 Cargo.lock)"
-      - run: cargo test -p policy-core --tests
+      - run: cargo test -p policy-core --tests --locked
       - run: cargo fmt --all --check
-      - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --workspace --all-targets --locked -- -D warnings
