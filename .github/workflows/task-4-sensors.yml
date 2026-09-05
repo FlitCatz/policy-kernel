@@ -2,7 +2,8 @@ name: Task 4 sensors
 
 on:
   push:
-    branches: [feat/task-4-sensors]
+    branches: [main, feat/task-4-sensors]
+  pull_request:
 
 permissions:
   contents: read
@@ -17,6 +18,6 @@ jobs:
         run: |
           rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
           rustup override set 1.95.0
-      - run: cargo test -p policy-core --test sensors --locked
+      - run: cargo test -p policy-core --tests --locked
       - run: cargo fmt --all --check
       - run: cargo clippy --workspace --all-targets --locked -- -D warnings
