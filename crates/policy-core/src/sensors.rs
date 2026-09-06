@@ -144,11 +144,7 @@ fn evaluate_sensor_evidence_inner(
             SensorStatus::Passed => {
                 validate_typed_result(item, &mut reasons);
                 if let Some(exit_code) = item.exit_code {
-                    if !definition
-                        .unwrap()
-                        .accepted_exit_codes
-                        .contains(&exit_code)
-                    {
+                    if !definition.unwrap().accepted_exit_codes.contains(&exit_code) {
                         insert_reason(
                             &mut reasons,
                             "PK-SENSOR-EXIT-CODE",

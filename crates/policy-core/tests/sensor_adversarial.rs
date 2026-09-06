@@ -107,14 +107,9 @@ fn missing_exit_code_is_inconclusive_not_blocked() {
 fn partially_recorded_sensor_counts_are_inconclusive() {
     let mut item = evidence(SensorStatus::Passed, Some(0));
     item.discovered = Some(1);
-    let result = evaluate_sensor_evidence_for_change(
-        &profile(),
-        &["src/lib.rs"],
-        Risk::Low,
-        &[item],
-        None,
-    )
-    .unwrap();
+    let result =
+        evaluate_sensor_evidence_for_change(&profile(), &["src/lib.rs"], Risk::Low, &[item], None)
+            .unwrap();
     assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
     assert!(result.has_reason("PK-SENSOR-RESULT-INCOMPLETE"));
 }
