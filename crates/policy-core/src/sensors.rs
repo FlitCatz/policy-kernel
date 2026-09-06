@@ -143,16 +143,18 @@ fn evaluate_sensor_evidence_inner(
         match item.status {
             SensorStatus::Passed => {
                 validate_typed_result(item, &mut reasons);
-                if !definition
-                    .unwrap()
-                    .accepted_exit_codes
-                    .contains(&item.exit_code.unwrap_or(i32::MIN))
-                {
-                    insert_reason(
-                        &mut reasons,
-                        "PK-SENSOR-EXIT-CODE",
-                        "sensor exit code is not accepted by the profile",
-                    );
+                if let Some(exit_code) = item.exit_code {
+                    if !definition
+                        .unwrap()
+                        .accepted_exit_codes
+                        .contains(&exit_code)
+                    {
+                        insert_reason(
+                            &mut reasons,
+                            "PK-SENSOR-EXIT-CODE",
+                            "sensor exit code is not accepted by the profile",
+                        );
+                    }
                 }
             }
             SensorStatus::Failed => {
@@ -396,14 +398,22 @@ fn validate_typed_result(evidence: &SensorEvidence, reasons: &mut Vec<Reason>) {
             "executed sensor evidence is missing typed result provenance",
         );
     }
-    if let (Some(discovered), Some(executed), Some(passed)) =
-        (evidence.discovered, evidence.executed, evidence.passed)
-    {
-        if discovered != executed || executed != passed {
+    match (evidence.discovered, evidence.executed, evidence.passed) {
+        (None, None, None) => {}
+        (Some(discovered), Some(executed), Some(passed)) => {
+            if discovered != executed || executed != passed {
+                insert_reason(
+                    reasons,
+                    "PK-SENSOR-RESULT-COUNT-MISMATCH",
+                    "sensor result counts must agree",
+                );
+            }
+        }
+        _ => {
             insert_reason(
                 reasons,
-                "PK-SENSOR-RESULT-COUNT-MISMATCH",
-                "sensor result counts must agree",
+                "PK-SENSOR-RESULT-INCOMPLETE",
+                "sensor result counts must be either all present or all absent",
             );
         }
     }
