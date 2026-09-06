@@ -89,6 +89,37 @@ fn passed_status_with_unaccepted_exit_code_is_blocked() {
 }
 
 #[test]
+fn missing_exit_code_is_inconclusive_not_blocked() {
+    let result = evaluate_sensor_evidence_for_change(
+        &profile(),
+        &["src/lib.rs"],
+        Risk::Low,
+        &[evidence(SensorStatus::Passed, None)],
+        None,
+    )
+    .unwrap();
+    assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+    assert!(result.has_reason("PK-SENSOR-RESULT-INCOMPLETE"));
+    assert!(!result.has_reason("PK-SENSOR-EXIT-CODE"));
+}
+
+#[test]
+fn partially_recorded_sensor_counts_are_inconclusive() {
+    let mut item = evidence(SensorStatus::Passed, Some(0));
+    item.discovered = Some(1);
+    let result = evaluate_sensor_evidence_for_change(
+        &profile(),
+        &["src/lib.rs"],
+        Risk::Low,
+        &[item],
+        None,
+    )
+    .unwrap();
+    assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+    assert!(result.has_reason("PK-SENSOR-RESULT-INCOMPLETE"));
+}
+
+#[test]
 fn not_applicable_must_match_an_explicit_na_condition_for_this_change() {
     let mut item = evidence(SensorStatus::NotApplicable, None);
     item.not_applicable_condition_id = Some("docs-only".into());
