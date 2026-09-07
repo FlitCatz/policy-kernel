@@ -109,6 +109,7 @@ fn checked_in_schemas_are_deterministic_and_enforce_contract_validation() {
 }
 
 fn assert_contract_constraints(schema_dir: &Path, valid: &[Value; 5]) {
+    let larger_than_u64: Value = serde_json::from_str("18446744073709551616").unwrap();
     let invalid_cases = [
         (
             0,
@@ -145,6 +146,12 @@ fn assert_contract_constraints(schema_dir: &Path, valid: &[Value; 5]) {
         (
             2,
             mutate(&valid[2], |value| {
+                value["sensors"][0]["id"] = json!("\u{0085}")
+            }),
+        ),
+        (
+            2,
+            mutate(&valid[2], |value| {
                 value["sensors"][0]
                     .as_object_mut()
                     .unwrap()
@@ -159,6 +166,12 @@ fn assert_contract_constraints(schema_dir: &Path, valid: &[Value; 5]) {
             3,
             mutate(&valid[3], |value| {
                 value["binding"]["pull_request_number"] = json!(0)
+            }),
+        ),
+        (
+            3,
+            mutate(&valid[3], |value| {
+                value["binding"]["pull_request_number"] = larger_than_u64
             }),
         ),
         (
@@ -189,6 +202,37 @@ fn assert_contract_constraints(schema_dir: &Path, valid: &[Value; 5]) {
             SCHEMAS[schema_index].0
         );
     }
+
+    let sensor_schema: Value =
+        serde_json::from_slice(&fs::read(schema_dir.join("sensor-profile.schema.json")).unwrap())
+            .unwrap();
+    let sensor_validator = jsonschema::draft202012::options()
+        .should_validate_formats(true)
+        .build(&sensor_schema)
+        .unwrap();
+    let rust_non_whitespace = mutate(&valid[2], |value| {
+        value["sensors"][0]["id"] = json!("\u{feff}")
+    });
+    assert!(
+        sensor_validator.is_valid(&rust_non_whitespace),
+        "sensor-profile rejected a string ID accepted by Rust trim validation"
+    );
+
+    let pre_schema: Value = serde_json::from_slice(
+        &fs::read(schema_dir.join("pre-merge-decision.schema.json")).unwrap(),
+    )
+    .unwrap();
+    let pre_validator = jsonschema::draft202012::options()
+        .should_validate_formats(true)
+        .build(&pre_schema)
+        .unwrap();
+    let maximum_u64 = mutate(&valid[3], |value| {
+        value["binding"]["pull_request_number"] = json!(u64::MAX)
+    });
+    assert!(
+        pre_validator.is_valid(&maximum_u64),
+        "pre-merge-decision rejected the maximum valid u64 pull request number"
+    );
 }
 
 fn mutate(value: &Value, update: impl FnOnce(&mut Value)) -> Value {
