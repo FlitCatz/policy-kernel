@@ -1,7 +1,8 @@
 use crate::{
-    deserialize_schema_version, CommitSha, EvidenceBundle, GitHubCheckObservation,
-    GitHubMergeObservation, GitHubPullRequestObservation, PolicySnapshot, PullRequestNumber,
-    RepositoryId, Sha256Digest, UtcTimestamp, WorkItemObservation,
+    deserialize_schema_version, AgentReadyObservation, CommitSha, EvidenceBundle,
+    GitHubCheckObservation, GitHubMergeObservation, GitHubPullRequestObservation, PolicySnapshot,
+    PullRequestNumber, RepositoryId, Risk, SensorProfile, Sha256Digest, UtcTimestamp,
+    WorkItemObservation, WorkflowRunId,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -161,6 +162,22 @@ pub struct PreMergeEvaluationInput {
     pub work_item: WorkItemObservation,
     pub pull_request: GitHubPullRequestObservation,
     pub evidence: EvidenceBundle,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub context: Option<PreMergeContext>,
+}
+
+/// Explicit current-run inputs. Absent legacy context cannot establish readiness.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PreMergeContext {
+    #[serde(deserialize_with = "deserialize_schema_version")]
+    pub schema_version: u32,
+    pub sensor_profile: SensorProfile,
+    /// Known changed paths; an empty list must not represent unknown impact.
+    pub changed_paths: Vec<String>,
+    pub risk: Risk,
+    pub workflow_run_id: WorkflowRunId,
+    pub agent_ready: Option<AgentReadyObservation>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

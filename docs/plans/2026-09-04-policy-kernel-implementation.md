@@ -424,14 +424,17 @@ Task 5 verified: 15 review tests and 53 workspace tests pass; strict workspace C
 
 **Files:**
 - Create: `crates/policy-core/src/pre_merge.rs`
+- Create: `crates/policy-core/src/pre_merge_digest.rs`
 - Create: `crates/policy-core/tests/pre_merge.rs`
 - Create: `tests/fixtures/pre-merge/{ready,missing-agent-ready,head-mismatch,advisory}.json`
+- Modify: `crates/policy-contracts/src/{decision,github,policy}.rs`
+- Modify: `crates/policy-core/src/lib.rs`
 
 **Interfaces:**
 - Consumes: validators from Tasks 3–5 and `PreMergeEvaluationInput`.
 - Produces: `pub fn evaluate_pre_merge(&PreMergeEvaluationInput) -> PreMergeDecision`.
 
-- [ ] **Step 1: Write aggregate gate tests**
+- [x] **Step 1: Write aggregate gate tests**
 
 ```rust
 #[test]
@@ -450,30 +453,48 @@ fn advisory_mode_never_emits_authoritative_decision() {
 }
 ```
 
-- [ ] **Step 2: Run and observe failure**
+- [x] **Step 2: Run and observe failure**
 
 Run: `cargo test -p policy-core --test pre_merge`
 
 Expected: FAIL because the aggregate evaluator is missing.
 
-- [ ] **Step 3: Implement deterministic aggregation**
+- [x] **Step 3: Implement deterministic aggregation**
 
 Validate, in order: schema/policy, repository and exact PR head, authorized `agent-ready` observation, bundle integrity/freshness, execution evidence, test adequacy, review independence/consensus, and waivers. Preserve all reasons but apply precedence `BLOCKED` over `INCONCLUSIVE` over `READY_TO_MERGE`. Compute the decision digest only after normalizing reason order by stable code and evidence digest.
 
-- [ ] **Step 4: Verify deterministic output**
+- [x] **Step 4: Verify deterministic output**
 
 Run the same ready fixture 100 times and assert identical canonical decision bytes and digest. Permute review and sensor input order and assert the same result.
 
-- [ ] **Step 5: Verify and commit**
+Implementation detail: the approved Task 6 contract supplement adds an optional
+versioned evaluation context and a policy-bound sensor-profile digest. Missing
+legacy fields remain readable but cannot establish readiness. See
+`docs/specs/2026-09-07-pre-merge-evaluator-design.md` for the trusted-input boundary,
+policy hash definition, non-circular waiver target and semantic decision digest.
+The existing change-aware sensor evaluator is reused with the union of explicit
+policy and resolved profile requirements. No sensor module changes were needed.
+
+- [x] **Step 5: Verify and commit**
 
 Run: `cargo test -p policy-core --test pre_merge`
 
 Expected: all aggregate and determinism tests PASS.
 
 ```bash
-git add crates/policy-core tests/fixtures/pre-merge
+git add crates/policy-contracts crates/policy-core tests/fixtures/pre-merge docs
 git commit -m "feat: evaluate pre-merge release readiness"
 ```
+
+Task 6 verified (2026-09-07): 21 aggregate tests and 78 workspace tests pass;
+workspace formatting, strict Clippy and whitespace checks pass. Coverage includes
+all gate classes, legacy round trips, strict context schemas, exact freshness
+boundaries, 100 repeated evaluations, valid record permutations, independent
+SHA-256 reference vectors, tampered transport rejection and waiver content binding.
+A read-only code review identified fractional freshness truncation; the issue was
+reproduced, fixed and rechecked. Live CI collection and observation authenticity
+remain the responsibilities of the trusted adapters in Tasks 9–10; this task adds
+no network, command execution or post-merge authorization.
 
 ---
 

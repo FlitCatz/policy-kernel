@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "mode": "authoritative",
+  "evaluation_time": "2026-09-07T09:00:00Z",
+  "policy": {
+    "schema_version": 1,
+    "policy_digest": "977d4fef6ae40140eeb9b40439fc56a9c1344e5cf9f664f87c379373d352d611",
+    "required_check_name": "policy-kernel",
+    "max_evidence_age_seconds": 3600,
+    "authorized_actors": [
+      "release-owner"
+    ],
+    "authorized_waiver_actors": [
+      "release-owner"
+    ],
+    "required_sensor_ids": [
+      "compile",
+      "tests"
+    ],
+    "sensor_profile_digest": "3b1c5bbac368064c4c21998b5cf9c23cf09404928ddaca77f946300939c8a869"
+  },
+  "work_item": {
+    "schema_version": 1,
+    "repository": "FlitCatz/policy-kernel",
+    "work_item_id": "task-6",
+    "authorized": true,
+    "observed_at": "2026-09-07T08:58:00Z"
+  },
+  "pull_request": {
+    "schema_version": 1,
+    "repository": "FlitCatz/policy-kernel",
+    "pull_request_number": 6,
+    "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "state": "open",
+    "is_draft": false,
+    "observed_at": "2026-09-07T08:58:00Z"
+  },
+  "evidence": {
+    "schema_version": 1,
+    "manifest": {
+      "schema_version": 1,
+      "repository": "FlitCatz/policy-kernel",
+      "work_item_id": "task-6",
+      "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "policy_digest": "977d4fef6ae40140eeb9b40439fc56a9c1344e5cf9f664f87c379373d352d611",
+      "source_set_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "workflow_run_id": "run-6",
+      "created_at": "2026-09-07T08:58:00Z",
+      "child_digests": [
+        {
+          "path": "executions",
+          "digest": "e87181e40c3b58847c0ca4385276760f32f4362d4ab0db7dabfc2783d38c7296"
+        },
+        {
+          "path": "findings",
+          "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "path": "knowledge",
+          "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        },
+        {
+          "path": "modifications",
+          "digest": "605d816af2962d64531ddde1a897a0900da21d900146c31043c9e554a2b9dc9b"
+        },
+        {
+          "path": "reviews",
+          "digest": "af9e26021dac3bdba363a9b3b347ad8d234693ca4992b0f226d35b0b93baebf8"
+        },
+        {
+          "path": "sensors",
+          "digest": "bbe999b43dad3f920f911b8eb7b79a353127eaa45cc7fc6064446ef883cc8dfb"
+        },
+        {
+          "path": "test_adequacy",
+          "digest": "9f433ff6cca39e910d7beebd06a817087d3747eeb2f74d424ba524f811eeb3d0"
+        },
+        {
+          "path": "waivers",
+          "digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+        }
+      ]
+    },
+    "modifications": [
+      {
+        "provider": "producer-a",
+        "model": "model-a",
+        "execution_id": "modify-a",
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+        "observed_at": "2026-09-07T08:58:00Z",
+        "trust": "ci_observed"
+      }
+    ],
+    "executions": [
+      {
+        "execution_id": "execute-a",
+        "provider": "producer-a",
+        "model": "model-a",
+        "status": "passed",
+        "command_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+        "input_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "output_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+        "started_at": "2026-09-07T08:57:00Z",
+        "completed_at": "2026-09-07T08:58:00Z",
+        "trust": "ci_observed"
+      }
+    ],
+    "reviews": [
+      {
+        "provider": "reviewer-b",
+        "model": "model-b",
+        "execution_id": "review-b",
+        "status": "approved",
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+        "report_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "observed_at": "2026-09-07T08:58:00Z",
+        "trust": "trusted_runner_attested"
+      },
+      {
+        "provider": "reviewer-c",
+        "model": "model-c",
+        "execution_id": "review-c",
+        "status": "approved",
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+        "report_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "observed_at": "2026-09-07T08:58:00Z",
+        "trust": "trusted_runner_attested"
+      }
+    ],
+    "findings": [],
+    "waivers": [],
+    "sensors": [
+      {
+        "sensor_id": "compile",
+        "status": "passed",
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+        "command_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+        "result_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+        "observed_at": "2026-09-07T08:58:00Z",
+        "trust": "ci_observed",
+        "resolved_command": [
+          "cargo",
+          "test"
+        ],
+        "source_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "configuration_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+        "parser_version": "1",
+        "exit_code": 0,
+        "discovered": 1,
+        "executed": 1,
+        "passed": 1,
+        "not_applicable_condition_id": null,
+        "not_applicable_reason": null
+      },
+      {
+        "sensor_id": "tests",
+        "status": "passed",
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+        "command_digest": "1111111111111111111111111111111111111111111111111111111111111111",
+        "result_digest": "2222222222222222222222222222222222222222222222222222222222222222",
+        "observed_at": "2026-09-07T08:58:00Z",
+        "trust": "ci_observed",
+        "resolved_command": [
+          "cargo",
+          "test"
+        ],
+        "source_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "configuration_digest": "3333333333333333333333333333333333333333333333333333333333333333",
+        "parser_version": "1",
+        "exit_code": 0,
+        "discovered": 1,
+        "executed": 1,
+        "passed": 1,
+        "not_applicable_condition_id": null,
+        "not_applicable_reason": null
+      }
+    ],
+    "test_adequacy": {
+      "acceptance_criteria": [
+        {
+          "requirement_id": "AC-1",
+          "test_ids": [
+            "test-1"
+          ]
+        }
+      ],
+      "changed_behaviors": [
+        {
+          "requirement_id": "BEHAVIOR-1",
+          "test_ids": [
+            "test-1"
+          ]
+        }
+      ],
+      "negative_case_ids": [
+        "NEG-1"
+      ],
+      "executed_test_ids": [
+        "test-1"
+      ],
+      "discovered": 1,
+      "executed": 1,
+      "passed": 1
+    },
+    "knowledge": []
+  },
+  "context": {
+    "schema_version": 1,
+    "sensor_profile": {
+      "schema_version": 1,
+      "sensors": [
+        {
+          "id": "compile",
+          "required": true,
+          "required_when": [],
+          "not_applicable_when": [],
+          "accepted_exit_codes": [
+            0
+          ]
+        },
+        {
+          "id": "tests",
+          "required": true,
+          "required_when": [],
+          "not_applicable_when": [],
+          "accepted_exit_codes": [
+            0
+          ]
+        }
+      ],
+      "adequacy": {
+        "acceptance_criterion_ids": [
+          "AC-1"
+        ],
+        "changed_behavior_ids": [
+          "BEHAVIOR-1"
+        ],
+        "negative_case_ids": [
+          "NEG-1"
+        ]
+      }
+    },
+    "changed_paths": [
+      "src/lib.rs"
+    ],
+    "risk": "high",
+    "workflow_run_id": "run-6",
+    "agent_ready": {
+      "schema_version": 1,
+      "repository": "FlitCatz/policy-kernel",
+      "work_item_id": "task-6",
+      "pull_request_number": 6,
+      "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+      "actor": "release-owner",
+      "label": "agent-ready",
+      "observed_at": "2026-09-07T08:58:00Z",
+      "trust": "ci_observed"
+    }
+  }
+}

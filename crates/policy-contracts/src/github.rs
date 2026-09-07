@@ -1,6 +1,6 @@
 use crate::{
     deserialize_schema_version, CheckConclusion, CommitSha, MergeMethod, PullRequestNumber,
-    RepositoryId, Sha256Digest, UtcTimestamp, WorkItemId, WorkflowRunId,
+    RepositoryId, Sha256Digest, TrustClass, UtcTimestamp, WorkItemId, WorkflowRunId,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -22,6 +22,22 @@ pub struct WorkItemObservation {
     pub work_item_id: WorkItemId,
     pub authorized: bool,
     pub observed_at: UtcTimestamp,
+}
+
+/// A label observation captured by the trusted integration at an exact PR head.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct AgentReadyObservation {
+    #[serde(deserialize_with = "deserialize_schema_version")]
+    pub schema_version: u32,
+    pub repository: RepositoryId,
+    pub work_item_id: WorkItemId,
+    pub pull_request_number: PullRequestNumber,
+    pub head_sha: CommitSha,
+    pub actor: String,
+    pub label: String,
+    pub observed_at: UtcTimestamp,
+    pub trust: TrustClass,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

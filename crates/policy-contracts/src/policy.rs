@@ -23,6 +23,8 @@ pub struct PolicySnapshot {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub authorized_waiver_actors: Vec<String>,
     pub required_sensor_ids: Vec<SensorId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sensor_profile_digest: Option<Sha256Digest>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
