@@ -1,0 +1,7 @@
+{
+  "mode":"authoritative",
+  "policy": {"schema_version":1,"policy_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","required_check_name":"policy-kernel","max_evidence_age_seconds":3600,"authorized_actors":[],"authorized_waiver_actors":["release-owner"],"required_sensor_ids":[]},
+  "repository":"FlitCatz/policy-kernel","head_sha":"cccccccccccccccccccccccccccccccccccccccc","evidence_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","evaluation_time":"2026-09-04T09:00:00Z",
+  "modifications":[{"provider":"producer-a","model":"model-a","execution_id":"modify-a","head_sha":"cccccccccccccccccccccccccccccccccccccccc","observed_at":"2026-09-04T08:55:00Z","trust":"trusted_runner_attested"}],
+  "reviews":[{"provider":"producer-a","model":"model-b","execution_id":"review-a","status":"approved","head_sha":"cccccccccccccccccccccccccccccccccccccccc","report_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","observed_at":"2026-09-04T08:58:00Z","trust":"trusted_runner_attested"}],"findings":[],"waivers":[]
+}

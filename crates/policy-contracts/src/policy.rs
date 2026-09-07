@@ -20,6 +20,8 @@ pub struct PolicySnapshot {
     pub required_check_name: String,
     pub max_evidence_age_seconds: u64,
     pub authorized_actors: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub authorized_waiver_actors: Vec<String>,
     pub required_sensor_ids: Vec<SensorId>,
 }
 

@@ -377,7 +377,7 @@ git commit -m "feat: evaluate sensors and test adequacy"
 - Consumes: review, modification, finding, waiver, policy, and evaluation-time contracts.
 - Produces: `evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation`.
 
-- [ ] **Step 1: Write the decision-table tests**
+- [x] **Step 1: Write the decision-table tests**
 
 ```rust
 #[test_case("critical.json", ReviewStatus::Blocked, "PK-REVIEW-HIGH")]
@@ -391,21 +391,21 @@ fn review_policy_is_fail_closed(name: &str, expected: ReviewStatus, reason: &str
 }
 ```
 
-- [ ] **Step 2: Run and observe failure**
+- [x] **Step 2: Run and observe failure**
 
 Run: `cargo test -p policy-core --test reviews`
 
 Expected: FAIL because review consensus is missing.
 
-- [ ] **Step 3: Implement severity and consensus rules**
+- [x] **Step 3: Implement severity and consensus rules**
 
 Block on any unwaived Critical/High finding. Block when the same stable finding ID is confirmed by two independent providers. Return `INCONCLUSIVE` for an unconfirmed Medium, conflicting report, missing reviewer, duplicate provider/execution ID, or invalid provenance. Record Low/Info without blocking.
 
-- [ ] **Step 4: Implement waiver validation with injected time**
+- [x] **Step 4: Implement waiver validation with injected time**
 
 A waiver is valid only when its authorized human actor is in `PolicySnapshot.authorized_waiver_actors`, and its finding ID, repository, head SHA, evidence digest, non-empty reason, issued timestamp, and expiry all match. Compare expiry to `ReviewEvaluationInput.evaluation_time`; never call `Utc::now()`.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run: `cargo test -p policy-core --test reviews`
 
@@ -417,6 +417,8 @@ git commit -m "feat: enforce independent review consensus"
 ```
 
 ---
+
+Task 5 verified: 15 review tests and 53 workspace tests pass; strict workspace Clippy passes. Review fixes preserve Critical/High blocking, reject unsupported blocked reports, use mode-aware trust, validate waiver identities/time, and exclude ambiguous executions from consensus. Existing workspace-wide formatting differences predate this task; modified review and contract files pass rustfmt.
 
 ### Task 6: Pre-merge evaluator
 

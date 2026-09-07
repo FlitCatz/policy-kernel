@@ -1,0 +1,13 @@
+{
+  "mode":"authoritative",
+  "policy": {"schema_version":1,"policy_digest":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","required_check_name":"policy-kernel","max_evidence_age_seconds":3600,"authorized_actors":[],"authorized_waiver_actors":["release-owner"],"required_sensor_ids":[]},
+  "repository":"FlitCatz/policy-kernel","head_sha":"cccccccccccccccccccccccccccccccccccccccc","evidence_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","evaluation_time":"2026-09-04T09:00:00Z","modifications":[],
+  "reviews":[
+    {"provider":"reviewer-b","model":"model-b","execution_id":"review-b","status":"blocked","head_sha":"cccccccccccccccccccccccccccccccccccccccc","report_digest":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","observed_at":"2026-09-04T08:57:00Z","trust":"trusted_runner_attested"},
+    {"provider":"reviewer-c","model":"model-c","execution_id":"review-c","status":"approved","head_sha":"cccccccccccccccccccccccccccccccccccccccc","report_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd","observed_at":"2026-09-04T08:58:00Z","trust":"trusted_runner_attested"}
+  ],
+  "findings":[
+    {"id":"F-STABLE-2","severity":"medium","summary":"medium issue","reviewer_execution_id":"review-b"},
+    {"id":"F-STABLE-2","severity":"low","summary":"same issue assessed low","reviewer_execution_id":"review-c"}
+  ],"waivers":[]
+}
