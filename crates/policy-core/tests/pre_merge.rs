@@ -251,6 +251,12 @@ fn missing_and_non_success_evidence_cannot_pass() {
         ),
         (
             "/evidence/executions/0/status",
+            json!("truncated"),
+            PreMergeStatus::Inconclusive,
+            "PK-EXEC-TRUNCATED",
+        ),
+        (
+            "/evidence/executions/0/status",
             json!("skipped"),
             PreMergeStatus::Inconclusive,
             "PK-EXEC-SKIPPED",

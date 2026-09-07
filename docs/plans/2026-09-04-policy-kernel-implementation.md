@@ -638,13 +638,13 @@ execution protocol.
 - Consumes: policy-declared explicit argv, allowlisted environment, timeout, output byte limit, repository/head binding.
 - Produces: `ExecutionEvidence`; it never produces a gate decision.
 
-- [ ] **Step 1: Write process-boundary tests**
+- [x] **Step 1: Write process-boundary tests**
 
 ```rust
 #[test]
 fn timeout_and_truncation_are_explicit_non_success() {
-    assert_eq!(collect(timeout_request()).unwrap().status, ExecutionStatus::TimedOut);
-    assert_eq!(collect(truncation_request()).unwrap().status, ExecutionStatus::Truncated);
+    assert_eq!(collect(timeout_request()).unwrap().evidence.status, ExecutionStatus::TimedOut);
+    assert_eq!(collect(truncation_request()).unwrap().evidence.status, ExecutionStatus::Truncated);
 }
 
 #[test]
@@ -653,21 +653,21 @@ fn shell_strings_are_not_accepted() {
 }
 ```
 
-- [ ] **Step 2: Run and observe failure**
+- [x] **Step 2: Run and observe failure**
 
 Run: `cargo test -p evidence-collector`
 
 Expected: FAIL because the collector is missing.
 
-- [ ] **Step 3: Implement explicit-argv execution**
+- [x] **Step 3: Implement explicit-argv execution**
 
 Accept a non-empty `Vec<String>` only; never invoke a shell. Apply the requested working directory, explicit environment allowlist, timeout, stdout/stderr byte limits, and process-group termination. Record resolved executable and version probe output, full argv, cwd, environment-name list without secret values, start/end timestamps, exit code, status, logs, artifact digests, provider/model/execution IDs supplied by the trusted runner, and input/output digests.
 
-- [ ] **Step 4: Document replaceable reviewer execution**
+- [x] **Step 4: Document replaceable reviewer execution**
 
 In `docs/integrations/agent-skills.md`, state that a consuming workflow may combine an external review skill with OMP, `agy`, or another executor. The collector receives only the already selected argv and identities. It never embeds `gemini-reviewer`, chooses a provider/model, manages login, retries, compares failure signatures, owns repair budgets, chooses debugger escalation, or treats model prose as provenance. An isolated debugger's repair becomes new modification evidence and must be reviewed by a provider and execution independent of every contributor.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run: `cargo test -p evidence-collector`
 
@@ -677,6 +677,17 @@ Expected: success, non-zero exit, spawn failure, timeout, truncation, and forbid
 git add crates/evidence-collector tests/fixtures/collector docs/integrations
 git commit -m "feat: collect bounded execution evidence"
 ```
+
+Task 9 verified (2026-09-07): 19 collector tests cover process boundaries,
+literal argv including symlink invocation names, environment isolation,
+shared main/probe deadline, byte-exact logs, group cleanup, artifact bounds,
+descriptor-relative symlink rejection, CLI input and exit behavior. Workspace
+tests (109), formatting, strict Clippy and whitespace checks pass. The collector
+returns `CollectedExecution { evidence, record }`; detailed records are bound by
+the existing evidence digests. Direct collection remains `LocalUntrusted`.
+Task 10 owns runner authentication. Task 8 must regenerate schemas after merging
+the new `ExecutionStatus::Truncated` variant. See
+`docs/integrations/agent-skills.md` for API, limits and integration details.
 
 ---
 

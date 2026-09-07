@@ -1,0 +1,21 @@
+{
+  "argv": [
+    "@fixture",
+    "sleep"
+  ],
+  "cwd": "@workspace",
+  "environment_allowlist": [],
+  "timeout_ms": 100,
+  "stdout_limit_bytes": 1024,
+  "stderr_limit_bytes": 1024,
+  "version_args": [
+    "--version"
+  ],
+  "repository": "example/repo",
+  "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "provider": "runner-provider",
+  "model": "runner-model",
+  "execution_id": "fixture-execution",
+  "input_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "artifact_paths": []
+}
