@@ -1,0 +1,19 @@
+{
+  "number": 42,
+  "state": "closed",
+  "draft": false,
+  "updated_at": "2026-09-07T09:05:00Z",
+  "merged_at": "2026-09-07T09:05:00Z",
+  "merge_commit_sha": "dddddddddddddddddddddddddddddddddddddddd",
+  "base": {
+    "ref": "main",
+    "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "repo": { "full_name": "FlitCatz/policy-kernel" }
+  },
+  "head": {
+    "ref": "feature/task-10",
+    "sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "repo": { "full_name": "FlitCatz/policy-kernel" }
+  },
+  "merged_by": { "login": "release-owner", "type": "User" }
+}

@@ -1,0 +1,7 @@
+{
+  "number": 42,
+  "state": "open",
+  "updated_at": "2026-09-07T08:58:00Z",
+  "repository_url": "https://api.github.com/repos/FlitCatz/policy-kernel",
+  "labels": [{ "name": "agent-ready" }]
+}
