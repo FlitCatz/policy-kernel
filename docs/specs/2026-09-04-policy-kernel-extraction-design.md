@@ -1,7 +1,8 @@
 # Policy Kernel Extraction Design
 
 > Date: 2026-09-04
-> Status: Final specification approved by the human owner; ready for implementation planning
+> Status: Revised design proposal; the 2026-09-04 approval applies only to the original revision
+> Revision: 2026-09-07 — React/TypeScript and C#/.NET verification profiles and bootstrap
 > Source repository: `agent-dev-kit` at `e5f6ec8584cc91fdeca3aab40687c6cdcd303b43`
 
 ## 1. Context
@@ -13,11 +14,16 @@ verification harness. Its current implementation mixes three different concerns:
 2. command, model, and tool execution;
 3. release-policy and evidence evaluation.
 
-Existing harnesses now provide the first two concerns more completely. Codex plus
-Superpowers will own the normal Discuss, Plan, Execute, and local Verify workflow.
-Oh My Pi (OMP) may provide an alternate-provider read-only reviewer and, after a
-bounded number of failed repair attempts, an isolated debugger. The new repository
-will retain only the third concern as a small, deterministic policy kernel.
+Existing harnesses own development workflow and agent orchestration. Codex with
+Superpowers, GSD Core, or another compatible workflow can produce evidence through
+the same contracts; none is required by the kernel. Alternate executors can provide
+independent read-only review or isolated debugging.
+
+The Rust kernel retains deterministic policy evaluation. This repository also
+distributes separately bounded project verification profiles and bootstrap assets
+for React/TypeScript and C#/ASP.NET Core. These assets configure consuming projects;
+they do not become dependencies of policy-core. See
+[project verification and bootstrap](2026-09-07-project-verification-bootstrap-design.md).
 
 This is an extraction into a new repository, not a refactor in place. The goal is
 to preserve policy knowledge and adversarial test cases without carrying forward
@@ -70,7 +76,9 @@ should not be discarded.
   merge;
 - a local advisory CLI using the shared kernel;
 - a CI-authoritative entry point using the shared kernel;
-- content-addressed evidence bundles and machine-readable decisions.
+- content-addressed evidence bundles and machine-readable decisions;
+- separately versioned React/TypeScript and C#/.NET verification profiles;
+- bootstrap configuration assets and a separate installer for consuming projects.
 
 ### 4.2 Out of scope
 
@@ -88,16 +96,16 @@ should not be discarded.
 
 ### 5.1 Normal development
 
-Codex plus Superpowers owns the non-authoritative development workflow:
+A project-selected external harness owns the non-authoritative development workflow:
 
 ```text
 Discuss -> Plan -> Execute -> local Verify
 ```
 
-Superpowers supplies brainstorming, planning, TDD, systematic debugging, review,
-and verification procedures. Codex is normally the implementation producer. These
-workflow states are not policy-kernel lifecycle states and are not synchronized
-into a second orchestration database.
+Codex plus Superpowers is one integration example, not a required runtime.
+The project selects its planning, implementation, review, and repair procedures.
+These workflow states are not policy-kernel lifecycle states and are not
+synchronized into a second orchestration database.
 
 ### 5.2 Independent review and repair
 
@@ -152,8 +160,9 @@ its own declared observation contract and is not inferred from ordinary PR data.
 
 ## 6. GSD Core disposition
 
-GSD Core is removed as a runtime dependency. Its full Discuss, Plan, Execute,
-Verify, and Ship orchestration is not reproduced.
+GSD Core is not a kernel runtime dependency. It may be used as an external
+workflow, but its Discuss, Plan, Execute, Verify, and Ship orchestration is not
+reproduced or synchronized by the kernel.
 
 The kernel retains only minimal release facts evaluated by two explicit functions:
 
@@ -170,7 +179,7 @@ migration adapter outside the production kernel.
 ## 7. Architecture
 
 ```text
-Codex + Superpowers             OMP
+External development harness   Independent executor
 (producer and local checks)     (alternate verifier or debugger)
              |                   |
              +------ evidence ---+
@@ -230,6 +239,11 @@ policy-kernel/
     adr/
   action/
     action.yml
+  profiles/                       # distribution assets, not core dependencies
+    react-typescript/
+    dotnet/
+    fullstack/
+  bootstrap/                      # separate installer and templates
 ```
 
 ### 7.2 `policy-contracts`
@@ -493,8 +507,10 @@ surface. The following are forbidden in `policy-core`:
 
 CI enforces a dependency allowlist, forbidden-symbol scan, public-API review, schema
 compatibility tests, and a clean build from an empty cache. Removed features must
-not appear in CLI help or production schemas. Historical names may appear only in
-provenance and migration documentation.
+not appear in CLI help or production schemas. External tool names may appear in integration documentation, project profile and
+bootstrap assets, and negative test fixtures. They must not enter core APIs or
+policy schemas. The core residue scan and the profile dependency checks have
+separate scopes; permitting a project test tool never permits it inside policy-core.
 
 ## 15. Verification strategy
 
@@ -579,8 +595,9 @@ new architecture, explicit provenance, and a minimal dependency graph.
 
 ## 18. Validation obligations and decision status
 
-This final specification is approved by the human owner, and its independent
-Antigravity critique passed with no unresolved Critical, High, or Medium design
-finding. Repository creation and implementation follow only through the reviewed
-Superpowers `writing-plans` execution plan; this specification alone is not an
-instruction to merge, publish, or change GitHub protection.
+The original 2026-09-04 specification passed independent Antigravity critique.
+That review does not cover this revision. The user has specified React/TypeScript
+and C#/.NET as consuming-project targets. The profile and bootstrap placement and
+tool defaults are the current proposed design, not a recovered quotation from the
+earlier harness-strategy conversation. This document does not authorize merging,
+publishing, or changing GitHub protection. Kernel implementation remains Rust.
