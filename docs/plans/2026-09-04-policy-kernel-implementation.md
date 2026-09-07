@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-> **Status:** Independent Antigravity Plan Gate approved; no unresolved Critical, High, or Medium finding.
+> **Status:** Tasks 1–11 retain the original plan; the integration amendment below is a proposal not covered by the original Antigravity review.
 
 **Goal:** Create a fresh, deterministic Rust `policy-kernel` repository that evaluates CI evidence and protected GitHub merges without carrying GSD Core or agent-harness runtime code.
 
@@ -10,11 +10,11 @@
 
 **Tech Stack:** Rust 2021 workspace; `serde`, `serde_json`, `serde_yaml`, `chrono` with explicit injected timestamps, `sha2`, `hex`, `thiserror`, `clap`, `schemars`, `globset`; `assert_cmd`, `test-case`, and `proptest` for tests; pinned `cargo-mutants` for release mutation analysis; GitHub Actions and `gh` only outside `policy-core`.
 
-**Spec:** `../agent-dev-kit/docs/superpowers/specs/2026-09-04-policy-kernel-extraction-design.md`
+**Spec:** [Kernel design](../specs/2026-09-04-policy-kernel-extraction-design.md) and [project verification/bootstrap design](../specs/2026-09-07-project-verification-bootstrap-design.md)
 
 ## Global Constraints
 
-- Create the local repository at `/Users/dev-r/Repository/playground/policy-kernel`; do not create a remote repository or publish packages.
+- Continue in the existing `FlitCatz/policy-kernel` repository on an isolated change branch; the original local repository creation step is historical. Do not publish packages.
 - Pin `rustc` and Cargo to `1.95.0`; install and require the matching `rustfmt` and `clippy` components.
 - Freeze legacy inputs at source commit `e5f6ec8584cc91fdeca3aab40687c6cdcd303b43` and record every used blob SHA and SHA-256 digest.
 - The new repository has no GSD Core, `.planning`, agent runtime, prompt, model-routing, session, repair-loop, Docker, MCP, TUI, LSP, browser, Hashline, LAT, or CodeGraph production dependency.
@@ -789,3 +789,69 @@ git commit -m "test: enforce policy kernel release gates"
 ```
 
 Do not create a remote, change GitHub protection, or merge. Present the exact final head, policy digest, command evidence, review evidence, and rollback baseline to the human owner for separate authorization.
+
+## Integration amendment — 2026-09-07
+
+This amendment is a design-level work breakdown, not an implementation-ready
+replacement for Tasks 1–11. Read the linked profile/bootstrap design before
+implementing these additions. Refine each new task into an executable plan when
+its prerequisite contracts are available. Do not renumber existing tasks or infer
+their completion from the unchecked historical plan.
+
+### Existing task impact
+
+| Task | Required integration |
+| --- | --- |
+| 2: contracts | Preserve language-neutral contracts; inspect schema fit before any field addition and version breaking changes explicitly. |
+| 4: sensor validation | Cover combined profiles, missing reports, zero required tests, and policy-declared applicability. |
+| 8: CLI/schemas | Keep local evaluation advisory; validate generated profile instances against the actual schemas. |
+| 9: collector | Accept selected argv and collect execution provenance; report normalization is outside the pure core. |
+| 10: CI/Action | Document consuming-project inputs and authoritative reruns of required checks at the evaluated head. |
+| 11: acceptance | Keep Rust release gates; additionally validate profile assets and bootstrap independently before distributing those assets. |
+
+Tasks 3–7 retain their authorization and independence semantics. Profile support
+does not replace the policy-kernel repository's own Rust checks with JS/.NET checks.
+
+### Task 12: Project profiles and report normalization
+
+**Prerequisites:** Tasks 2, 4, 8 and 9.
+**Files:** `profiles/{react-typescript,dotnet,fullstack}/`,
+`tests/fixtures/project-reports/`, `docs/integrations/project-verification.md`.
+**Deliverable:** Three versioned profiles plus external report normalizers producing
+existing SensorEvidence/ExecutionEvidence and adequacy references.
+
+- [ ] Bind explicit argv, working directories, toolchain locks, parser version and applicability to each profile.
+- [ ] Validate profile instances against Task 8 schemas before execution.
+- [ ] Normalize Vitest/Playwright machine reports and the pinned .NET runner's reports; retain counts, failures, skips and original artifact digests.
+- [ ] Verify valid, empty, malformed, stale, skipped, timeout and nonzero-exit fixtures. A zero exit with an absent or empty required report must never satisfy the gate.
+- [ ] Demonstrate fullstack composition requires both projects and the declared API/E2E checks without conflicting sensor IDs.
+- [ ] Document exact local/CI commands and pin compatible versions in each runnable fixture before release.
+
+### Task 13: Bootstrap installer and templates
+
+**Prerequisite:** Task 12; Task 10 for CI templates.
+**Files:** `bootstrap/`, `tests/fixtures/bootstrap/`,
+`docs/integrations/bootstrap.md`.
+**Deliverable:** Separate installer supporting inspect/plan/apply with the behavior
+defined in the bootstrap specification; no new policy-cli authority.
+
+- [ ] Accept target path, selected profile, component paths and a pinned template release.
+- [ ] Preview additions/conflicts, install only missing or unchanged managed files, and record template version and content digests.
+- [ ] Check empty React, empty .NET, combined, and existing-project fixtures.
+- [ ] Verify repeat application is a no-op; edited files and ambiguous project detection produce an explicit conflict without writes.
+- [ ] Reject paths escaping the target, including symlink escapes.
+- [ ] Verify no credentials, provider login, application business logic, or remote protection changes are generated.
+
+### Task 14: Consuming-project acceptance
+
+**Prerequisites:** Tasks 10–13.
+**Files:** `examples/{react-typescript,dotnet,fullstack}/`,
+`docs/integrations/acceptance.md`.
+**Deliverable:** Runnable fixtures and evidence demonstrating the installed checks,
+not merely successful template rendering.
+
+- [ ] Run each profile with its pinned Node/.NET versions in CI.
+- [ ] Introduce a type error, failing component test, rejected API authorization, empty required report, and frontend/backend contract mismatch in separate fixtures; verify each cannot yield authoritative ready.
+- [ ] Verify correction and rerun bind all evidence to the new head; previous-head evidence remains invalid.
+- [ ] Record local advisory and CI-authoritative outcomes separately.
+- [ ] Report unavailable tools/runners as unverified, and retain the native CI baseline until normal promotion requirements are met.
