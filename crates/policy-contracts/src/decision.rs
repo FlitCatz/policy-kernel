@@ -147,6 +147,8 @@ pub struct PostMergeDecision {
     pub schema_version: u32,
     pub status: PostMergeStatus,
     pub binding: DecisionBinding,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merge_commit_sha: Option<CommitSha>,
     pub reasons: Vec<Reason>,
     pub decision_digest: Sha256Digest,
 }
@@ -188,6 +190,7 @@ pub struct PostMergeEvaluationInput {
     pub evaluation_time: UtcTimestamp,
     pub policy: PolicySnapshot,
     pub pre_merge: AuthoritativePreMergeDecision,
-    pub check: GitHubCheckObservation,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub check: Option<GitHubCheckObservation>,
     pub merge: GitHubMergeObservation,
 }

@@ -1,4 +1,4 @@
-use crate::{deserialize_schema_version, ProviderId, SensorId, Sha256Digest};
+use crate::{deserialize_schema_version, MergeMethod, ProviderId, SensorId, Sha256Digest};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +25,12 @@ pub struct PolicySnapshot {
     pub required_sensor_ids: Vec<SensorId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sensor_profile_digest: Option<Sha256Digest>,
+    /// Branches on which a protected merge can authorize shipped state.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub protected_target_branches: Vec<String>,
+    /// Merge methods explicitly accepted by this policy snapshot.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub allowed_merge_methods: Vec<MergeMethod>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

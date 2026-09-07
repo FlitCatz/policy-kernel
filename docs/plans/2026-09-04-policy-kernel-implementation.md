@@ -509,7 +509,7 @@ no network, command execution or post-merge authorization.
 - Consumes: `PostMergeEvaluationInput` containing validated authoritative pre-merge decision, required check, and merge observation.
 - Produces: `pub fn evaluate_post_merge(&PostMergeEvaluationInput) -> PostMergeDecision`.
 
-- [ ] **Step 1: Write merge semantics tests**
+- [x] **Step 1: Write merge semantics tests**
 
 ```rust
 #[test_case("merge.json")]
@@ -534,17 +534,17 @@ fn advisory_decision_is_rejected_before_post_merge_evaluation() {
 }
 ```
 
-- [ ] **Step 2: Run and observe failure**
+- [x] **Step 2: Run and observe failure**
 
 Run: `cargo test -p policy-core --test post_merge`
 
 Expected: FAIL because the post-merge evaluator is missing.
 
-- [ ] **Step 3: Implement the authorization chain**
+- [x] **Step 3: Implement the authorization chain**
 
 Require equality across repository, PR number, `headRefOid`, policy digest, pre-merge decision digest, and project-declared required-check name. Require check conclusion `Success`, check completion before merge time, protected target branch, authorized human merge actor, and declared merge method. Record merge commit OID separately and reject undeclared merge-queue observations with `PK-POST-MERGE-QUEUE-UNSUPPORTED`.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run: `cargo test -p policy-core --test post_merge`
 
@@ -554,6 +554,15 @@ Expected: merge and squash fixtures ship; synthetic, stale, mismatched, unprotec
 git add crates/policy-core tests/fixtures/post-merge
 git commit -m "feat: authorize shipped state from protected merge evidence"
 ```
+
+Task 7 verified (2026-09-07): the focused post-merge suite covers merge and
+squash success, all authorization-chain bindings, missing and unsuccessful
+checks, protected target policy, authorized human actors, declared methods,
+unsupported queues, strict chronology and nanosecond freshness boundaries. It
+also feeds an actual authoritative `evaluate_pre_merge` result through the
+post-merge check anchor. Workspace tests, formatting, strict Clippy and
+whitespace checks pass. Raw GitHub observation authentication remains the Task
+10 adapter boundary.
 
 ---
 

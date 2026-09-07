@@ -13,6 +13,14 @@ pub enum PullRequestState {
     Merged,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum MergeActorType {
+    Human,
+    Bot,
+    App,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct WorkItemObservation {
@@ -80,8 +88,14 @@ pub struct GitHubMergeObservation {
     pub pull_request_number: PullRequestNumber,
     pub head_sha: CommitSha,
     pub merge_commit_sha: CommitSha,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub target_branch: Option<String>,
     pub method: MergeMethod,
     pub protected: bool,
     pub merged_by: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actor_type: Option<MergeActorType>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub via_merge_queue: Option<bool>,
     pub merged_at: UtcTimestamp,
 }

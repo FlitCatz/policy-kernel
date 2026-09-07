@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "evaluation_time": "2026-09-07T10:00:00Z",
+  "policy": {"schema_version":1,"policy_digest":"a56ee2d09f25b8b2b6451b80c5020d3e1d3cf52afef3a69032e575b5bc65c1d4","required_check_name":"policy-kernel","max_evidence_age_seconds":3600,"authorized_actors":["release-owner"],"required_sensor_ids":[],"protected_target_branches":["main"],"allowed_merge_methods":["merge","squash"]},
+  "pre_merge": {"schema_version":1,"mode":"authoritative","advisory":false,"status":"ready_to_merge","binding":{"repository":"FlitCatz/policy-kernel","pull_request_number":7,"head_sha":"cccccccccccccccccccccccccccccccccccccccc","policy_digest":"a56ee2d09f25b8b2b6451b80c5020d3e1d3cf52afef3a69032e575b5bc65c1d4","evidence_digest":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","evaluated_at":"2026-09-07T09:00:00Z"},"reasons":[],"decision_digest":"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"},
+  "check": null,
+  "merge": {"schema_version":1,"repository":"FlitCatz/policy-kernel","pull_request_number":7,"head_sha":"cccccccccccccccccccccccccccccccccccccccc","merge_commit_sha":"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee","target_branch":"main","method":"merge","protected":true,"merged_by":"release-owner","actor_type":"human","via_merge_queue":false,"merged_at":"2026-09-07T09:05:00Z"}
+}
