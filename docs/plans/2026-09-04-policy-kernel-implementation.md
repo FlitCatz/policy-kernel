@@ -842,6 +842,15 @@ git commit -m "test: enforce policy kernel release gates"
 
 Do not create a remote, change GitHub protection, or merge. Present the exact final head, policy digest, command evidence, review evidence, and rollback baseline to the human owner for separate authorization.
 
+**Task 11 implementation status (2026-09-08):** Work is on the isolated
+`feat/task-11-release-gates` branch with Task 8 and Task 9 composed. Tests, strict
+CI/mutation checks, trust documentation and a fixture-only rollback drill are
+implemented; precise freshness regressions also corrected subsecond age handling.
+See [the execution record](../superpowers/plans/2026-09-07-task-11-release-gates.md).
+Task 10 is not yet integrated, live protection capture returned HTTP401, and two
+independent-provider reviews/live shadow evidence are outstanding. Do not treat
+this implementation status as Task 11 release acceptance or promotion approval.
+
 ## Integration amendment — 2026-09-07
 
 This amendment is a design-level work breakdown, not an implementation-ready

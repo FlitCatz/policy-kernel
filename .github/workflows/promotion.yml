@@ -1,0 +1,43 @@
+name: Promotion mutation evidence
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Pinned Rust and mutation tool
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
+          cargo install cargo-mutants --version 27.1.0 --locked
+          mkdir -p verification
+          { git rev-parse HEAD; rustc --version; cargo mutants --version; } > verification/versions.txt
+      - name: Exercise every selected authorization module
+        run: |
+          cargo mutants --no-config -p policy-core \
+            --file crates/policy-core/src/canonical.rs \
+            --file crates/policy-core/src/provenance.rs \
+            --file crates/policy-core/src/reviews.rs \
+            --file crates/policy-core/src/pre_merge.rs \
+            --file crates/policy-core/src/post_merge.rs \
+            --test-workspace false --jobs 2 --timeout 120 --build-timeout 600 \
+            -C --locked --output verification 2>&1 | tee verification/mutation.log
+      - name: Reject incomplete, missed or timed-out mutation evidence
+        if: always()
+        run: python3 scripts/check-mutation-results.py verification/mutants.out/outcomes.json
+      - name: Upload exact-head mutation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mutation-evidence-${{ github.sha }}
+          path: verification/
+          if-no-files-found: error
+          retention-days: 30

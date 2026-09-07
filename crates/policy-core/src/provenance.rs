@@ -137,7 +137,8 @@ pub fn validate_provenance(
         let age = evaluation_time
             .as_datetime()
             .signed_duration_since(timestamp.as_datetime());
-        age.num_seconds() < 0 || age.num_seconds() as u64 > max_evidence_age_seconds
+        !age.to_std()
+            .is_ok_and(|age| age <= std::time::Duration::from_secs(max_evidence_age_seconds))
     }) {
         result.insert(
             "PK-PROV-STALE",

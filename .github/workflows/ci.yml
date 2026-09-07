@@ -1,0 +1,67 @@
+name: Release verification
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-verification-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Pinned Rust toolchain
+        run: rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
+      - name: Verification tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ripgrep
+          cargo install cargo-deny --version 0.20.2 --locked
+          cargo install cargo-audit --version 0.22.2 --locked
+          mkdir -p verification
+          { rustc --version; cargo --version; cargo deny --version; cargo audit --version; git rev-parse HEAD; } > verification/versions.txt
+      - name: Format
+        run: cargo fmt --all --check 2>&1 | tee verification/fmt.log
+      - name: Locked workspace check
+        run: cargo check --workspace --locked 2>&1 | tee verification/check.log
+      - name: Strict Clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings 2>&1 | tee verification/clippy.log
+      - name: Workspace tests
+        run: cargo test --workspace --locked 2>&1 | tee verification/tests.log
+      - name: Verification script adversarial tests
+        run: python3 -m unittest discover -s scripts/tests -v 2>&1 | tee verification/script-tests.log
+      - name: Deterministic schemas
+        run: |
+          cargo run --locked -p xtask -- schema
+          git diff --exit-code -- schemas
+          test -z "$(git ls-files --others --exclude-standard -- schemas)"
+      - name: Dependency policy
+        run: cargo deny check 2>&1 | tee verification/deny.log
+      - name: Advisory audit
+        run: cargo audit 2>&1 | tee verification/audit.log
+      - name: Runtime residue and public API
+        run: |
+          bash scripts/check-residue.sh 2>&1 | tee verification/residue.log
+          cargo doc --no-deps --locked -p policy-core -p policy-contracts
+          bash scripts/check-public-api.sh target/doc schemas 2>&1 | tee verification/public-api.log
+      - name: Clean build with empty target
+        run: |
+          clean_target=$(mktemp -d "$RUNNER_TEMP/policy-clean.XXXXXX")
+          CARGO_TARGET_DIR="$clean_target" cargo build --workspace --locked 2>&1 | tee verification/clean-build.log
+      - name: Upload verification logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-verification-${{ github.sha }}
+          path: verification/
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "repository": "FlitCatz/policy-kernel",
+  "branch": "main",
+  "required_checks": [
+    {
+      "context": "native-ci",
+      "app_id": 123
+    },
+    {
+      "context": "policy-kernel/pre-merge",
+      "app_id": 123
+    }
+  ],
+  "required_approving_review_count": 1,
+  "dismiss_stale_reviews": true,
+  "require_code_owner_reviews": true,
+  "enforce_admins": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}

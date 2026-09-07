@@ -48,3 +48,12 @@ Task 12.
 
 - [Project verification and bootstrap proposal](docs/specs/2026-09-07-project-verification-bootstrap-design.md)
 - [Task 1–5 design impact and contract prerequisites](docs/reviews/2026-09-07-task-1-5-design-impact.md)
+
+## Release verification
+
+Task 11 provides adversarial and property tests, complete obligation-fixture
+execution, fail-closed residue/mutation checks and CI workflows. See the
+[trust model](docs/trust-model.md) and [promotion/rollback protocol](docs/promotion.md).
+Promotion requires Task 10 integration, complete exact-head verification, live
+shadow/rollback evidence and two contributor-independent provider reviews. Local
+checks alone do not satisfy those requirements.

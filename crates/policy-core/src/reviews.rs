@@ -258,9 +258,9 @@ fn validate_review_provenance(input: &ReviewEvaluationInput, reasons: &mut Vec<R
             .evaluation_time
             .as_datetime()
             .signed_duration_since(*timestamp.as_datetime());
-        if timestamp > &input.evaluation_time
-            || age.num_seconds() as u64 > input.policy.max_evidence_age_seconds
-        {
+        if !age.to_std().is_ok_and(|age| {
+            age <= std::time::Duration::from_secs(input.policy.max_evidence_age_seconds)
+        }) {
             insert_reason(
                 reasons,
                 "PK-PROV-STALE",
@@ -359,13 +359,13 @@ fn waiver_state(
             .authorized_waiver_actors
             .iter()
             .all(|actor| !actor.trim().is_empty())
-        && age.num_seconds() >= 0
-        && age.num_seconds() as u64 <= input.policy.max_evidence_age_seconds
+        && age.to_std().is_ok_and(|age| {
+            age <= std::time::Duration::from_secs(input.policy.max_evidence_age_seconds)
+        })
         && waiver.repository == input.repository
         && waiver.head_sha == input.head_sha
         && waiver.evidence_digest == input.evidence_digest
         && !waiver.reason.trim().is_empty()
-        && waiver.issued_at.as_datetime() <= input.evaluation_time.as_datetime()
         && waiver.issued_at.as_datetime() < waiver.expires_at.as_datetime();
     if !authorized || !bindings_match {
         return (

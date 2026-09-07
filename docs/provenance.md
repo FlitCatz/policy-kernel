@@ -58,3 +58,39 @@ GitHub Actions run `33868276500` validated commit
 check, frozen source-inventory test, and exact seven-member workspace metadata check
 all completed successfully. Dependency pins not yet referenced by a crate will enter
 the lockfile when their corresponding implementation task introduces them.
+
+## Task 11 release verification tools
+
+The original plan requested a mutation-tool pin but had not recorded a version.
+Task 11 selects these exact tool versions; they are verification tools and are
+not policy-core dependencies.
+
+| Tool | Exact version | Primary release source |
+| --- | --- | --- |
+| cargo-mutants | 27.1.0 | https://github.com/sourcefrog/cargo-mutants/releases/tag/v27.1.0 |
+| cargo-deny | 0.20.2 | https://github.com/EmbarkStudios/cargo-deny/blob/main/CHANGELOG.md |
+| cargo-audit | 0.22.2 | https://github.com/rustsec/rustsec/releases |
+
+Use `cargo install --locked --version <exact-version> <tool>`; record the
+installed version in each release log. Do not treat an absent tool or incomplete
+run as success. Dependency advisories remain tied to the actual fetched advisory
+database state and must be recorded per candidate.
+
+Task 8 and Task 9 were composed on the Task 11 branch. Task 9's `truncated`
+execution status required regenerating `evidence-bundle.schema.json`; the existing
+schema drift test detected this integration mismatch before Task 11 changes.
+
+Task 11 workflow pins were verified using read-only `git ls-remote` against the
+official repositories:
+
+| Action | Version | Commit |
+| --- | --- | --- |
+| actions/checkout | v4.2.2 | 11bd71901bbe5b1630ceea73d27597364c9af683 |
+| actions/upload-artifact | v4.6.2 | ea165f8d65b6e75b540449e92b4886f43607fa02 |
+
+Workflow syntax/expressions were also checked locally using actionlint 1.7.7.
+`deny.toml` ignores licenses of nonpublished private workspace crates because no
+distribution license was selected; external dependency licenses remain checked.
+Only private path dependencies may omit versions; registry wildcard dependencies
+remain prohibited. Duplicate transitive syn major versions are reported as a
+warning, not silently removed from the graph.

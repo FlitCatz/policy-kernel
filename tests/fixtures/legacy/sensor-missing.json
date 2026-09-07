@@ -1,0 +1,65 @@
+{
+  "profile": {
+    "schema_version": 1,
+    "sensors": [
+      {
+        "id": "compile",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [0]
+      },
+      {
+        "id": "api-e2e",
+        "required": false,
+        "required_when": [
+          {
+            "id": "high-risk-api",
+            "risks": ["high", "critical"],
+            "path_globs": ["src/api/**", "src/api.rs"]
+          }
+        ],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [0]
+      }
+    ],
+    "adequacy": {
+      "acceptance_criterion_ids": ["AC-1"],
+      "changed_behavior_ids": ["BEHAVIOR-1"],
+      "negative_case_ids": ["NEG-1"]
+    }
+  },
+  "required_sensor_ids": ["compile", "api-e2e"],
+  "evidence": [
+    {
+      "sensor_id": "compile",
+      "status": "passed",
+      "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "command_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "observed_at": "2026-09-04T00:00:00Z",
+      "trust": "ci_observed",
+      "resolved_command": ["cargo", "check"],
+      "source_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "configuration_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "parser_version": "1",
+      "exit_code": 0,
+      "discovered": 1,
+      "executed": 1,
+      "passed": 1
+    }
+  ],
+  "adequacy": {
+    "acceptance_criteria": [
+      {"requirement_id": "AC-1", "test_ids": ["test-api"]}
+    ],
+    "changed_behaviors": [
+      {"requirement_id": "BEHAVIOR-1", "test_ids": ["test-api"]}
+    ],
+    "negative_case_ids": ["NEG-1"],
+    "executed_test_ids": ["test-api"],
+    "discovered": 1,
+    "executed": 1,
+    "passed": 1
+  }
+}

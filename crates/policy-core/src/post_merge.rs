@@ -126,18 +126,18 @@ fn validate_authorization_chain(input: &PostMergeEvaluationInput, gates: &mut Ga
         );
     }
 
-    if !is_fresh(
+    if merge.merged_at > input.evaluation_time {
+        gates.unknown(
+            "PK-POST-MERGE-TIME-INVALID",
+            "merge must precede evaluation and remain inside the freshness window",
+        );
+    } else if !is_fresh(
         &merge.merged_at,
         &input.evaluation_time,
         input.policy.max_evidence_age_seconds,
     ) {
-        let code = if merge.merged_at > input.evaluation_time {
-            "PK-POST-MERGE-TIME-INVALID"
-        } else {
-            "PK-POST-MERGE-STALE"
-        };
         gates.unknown(
-            code,
+            "PK-POST-MERGE-STALE",
             "merge must precede evaluation and remain inside the freshness window",
         );
     }

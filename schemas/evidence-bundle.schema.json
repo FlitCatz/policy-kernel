@@ -129,6 +129,7 @@
         "passed",
         "failed",
         "timed_out",
+        "truncated",
         "skipped",
         "unparsable"
       ],

@@ -1,0 +1,48 @@
+{
+  "profile": {
+    "schema_version": 1,
+    "sensors": [
+      {
+        "id": "compile",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [0]
+      }
+    ],
+    "adequacy": {
+      "acceptance_criterion_ids": [],
+      "changed_behavior_ids": [],
+      "negative_case_ids": []
+    }
+  },
+  "required_sensor_ids": ["compile"],
+  "evidence": [
+    {
+      "sensor_id": "compile",
+      "status": "passed",
+      "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "command_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "result_digest": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "observed_at": "2026-09-04T00:00:00Z",
+      "trust": "ci_observed",
+      "resolved_command": ["cargo", "test"],
+      "source_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "configuration_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "parser_version": "1",
+      "exit_code": 0,
+      "discovered": 0,
+      "executed": 0,
+      "passed": 0
+    }
+  ],
+  "adequacy": {
+    "acceptance_criteria": [],
+    "changed_behaviors": [],
+    "negative_case_ids": [],
+    "executed_test_ids": [],
+    "discovered": 0,
+    "executed": 0,
+    "passed": 0
+  }
+}
