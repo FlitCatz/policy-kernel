@@ -14,6 +14,13 @@ pub use policy::*;
 
 pub const SCHEMA_VERSION: u32 = 1;
 
+pub(crate) fn schema_version_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "integer",
+        "const": SCHEMA_VERSION
+    })
+}
+
 pub(crate) fn deserialize_schema_version<'de, D>(deserializer: D) -> Result<u32, D::Error>
 where
     D: serde::Deserializer<'de>,

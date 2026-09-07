@@ -1,0 +1,128 @@
+{
+  "$defs": {
+    "CommitSha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "DecisionBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluated_at": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "pull_request_number": {
+          "$ref": "#/$defs/PullRequestNumber"
+        },
+        "repository": {
+          "$ref": "#/$defs/RepositoryId"
+        }
+      },
+      "required": [
+        "repository",
+        "pull_request_number",
+        "head_sha",
+        "policy_digest",
+        "evidence_digest",
+        "evaluated_at"
+      ],
+      "type": "object"
+    },
+    "EvaluationMode": {
+      "enum": [
+        "advisory",
+        "authoritative"
+      ],
+      "type": "string"
+    },
+    "PreMergeStatus": {
+      "enum": [
+        "blocked",
+        "inconclusive",
+        "ready_to_merge"
+      ],
+      "type": "string"
+    },
+    "PullRequestNumber": {
+      "format": "uint64",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "Reason": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "RepositoryId": {
+      "pattern": "^[^/]+/[^/]+$",
+      "type": "string"
+    },
+    "Sha256Digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "UtcTimestamp": {
+      "format": "date-time",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "advisory": {
+      "type": "boolean"
+    },
+    "binding": {
+      "$ref": "#/$defs/DecisionBinding"
+    },
+    "decision_digest": {
+      "$ref": "#/$defs/Sha256Digest"
+    },
+    "mode": {
+      "$ref": "#/$defs/EvaluationMode"
+    },
+    "reasons": {
+      "items": {
+        "$ref": "#/$defs/Reason"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/PreMergeStatus"
+    }
+  },
+  "required": [
+    "schema_version",
+    "mode",
+    "advisory",
+    "status",
+    "binding",
+    "reasons",
+    "decision_digest"
+  ],
+  "title": "PreMergeDecision",
+  "type": "object"
+}

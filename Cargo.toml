@@ -27,5 +27,6 @@ clap = { version = "=4.5.47", features = ["derive"] }
 schemars = { version = "=1.0.4", features = ["chrono04"] }
 globset = "=0.4.16"
 assert_cmd = "=2.0.17"
+jsonschema = { version = "=0.55.0", default-features = false }
 test-case = "=3.3.1"
 proptest = "=1.7.0"

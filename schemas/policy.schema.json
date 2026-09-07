@@ -1,0 +1,91 @@
+{
+  "$defs": {
+    "MergeMethod": {
+      "enum": [
+        "merge",
+        "squash",
+        "rebase"
+      ],
+      "type": "string"
+    },
+    "SensorId": {
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "Sha256Digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "allowed_merge_methods": {
+      "description": "Merge methods explicitly accepted by this policy snapshot.",
+      "items": {
+        "$ref": "#/$defs/MergeMethod"
+      },
+      "type": "array"
+    },
+    "authorized_actors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "authorized_waiver_actors": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "max_evidence_age_seconds": {
+      "format": "uint64",
+      "minimum": 0,
+      "type": "integer"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/Sha256Digest"
+    },
+    "protected_target_branches": {
+      "description": "Branches on which a protected merge can authorize shipped state.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "required_check_name": {
+      "type": "string"
+    },
+    "required_sensor_ids": {
+      "items": {
+        "$ref": "#/$defs/SensorId"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "sensor_profile_digest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "policy_digest",
+    "required_check_name",
+    "max_evidence_age_seconds",
+    "authorized_actors",
+    "required_sensor_ids"
+  ],
+  "title": "PolicySnapshot",
+  "type": "object"
+}

@@ -21,7 +21,7 @@ macro_rules! string_id {
     ($name:ident, $kind:literal) => {
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
         #[serde(transparent)]
-        pub struct $name(String);
+        pub struct $name(#[schemars(regex(pattern = r"\S"))] String);
 
         impl $name {
             pub fn parse(value: impl Into<String>) -> Result<Self, IdentityError> {
@@ -70,7 +70,7 @@ string_id!(SensorId, "sensor ID");
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(transparent)]
-pub struct RepositoryId(String);
+pub struct RepositoryId(#[schemars(regex(pattern = r"^[^/]+/[^/]+$"))] String);
 
 impl RepositoryId {
     pub fn parse(value: impl Into<String>) -> Result<Self, IdentityError> {
@@ -113,10 +113,10 @@ impl fmt::Display for RepositoryId {
 }
 
 macro_rules! hex_id {
-    ($name:ident, $kind:literal, $length:expr) => {
+    ($name:ident, $kind:literal, $length:expr, $pattern:literal) => {
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
         #[serde(transparent)]
-        pub struct $name(String);
+        pub struct $name(#[schemars(regex(pattern = $pattern))] String);
 
         impl $name {
             pub fn parse(value: impl Into<String>) -> Result<Self, IdentityError> {
@@ -162,12 +162,12 @@ macro_rules! hex_id {
     };
 }
 
-hex_id!(CommitSha, "commit SHA", 40);
-hex_id!(Sha256Digest, "SHA-256 digest", 64);
+hex_id!(CommitSha, "commit SHA", 40, r"^[0-9a-f]{40}$");
+hex_id!(Sha256Digest, "SHA-256 digest", 64, r"^[0-9a-f]{64}$");
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, JsonSchema)]
 #[serde(transparent)]
-pub struct PullRequestNumber(u64);
+pub struct PullRequestNumber(#[schemars(range(min = 1))] u64);
 
 impl PullRequestNumber {
     pub fn new(value: u64) -> Result<Self, IdentityError> {
@@ -190,8 +190,12 @@ impl<'de> Deserialize<'de> for PullRequestNumber {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema)]
-#[schemars(with = "String")]
+#[schemars(schema_with = "utc_timestamp_schema")]
 pub struct UtcTimestamp(DateTime<Utc>);
+
+fn utc_timestamp_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({"type": "string", "format": "date-time"})
+}
 
 impl UtcTimestamp {
     pub fn parse(value: &str) -> Result<Self, IdentityError> {

@@ -42,8 +42,14 @@ for deterministic resolution as the crates begin using them.
 | schemars | 1.0.4 |
 | globset | 0.4.16 |
 | assert_cmd | 2.0.17 |
+| jsonschema | 0.55.0 (development only; default features disabled) |
 | test-case | 3.3.1 |
 | proptest | 1.7.0 |
+
+`jsonschema` is used only by Task 8 tests to execute Draft 2020-12 instance
+validation against the generated files. Its HTTP and file resolution features are
+disabled; the tests resolve only each schema's in-document definitions and run
+offline with timestamp format validation enabled.
 
 ## Verification status
 

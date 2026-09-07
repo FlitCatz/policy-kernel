@@ -578,7 +578,7 @@ whitespace checks pass. Raw GitHub observation authentication remains the Task
 - Consumes: contract parsers and both evaluators.
 - Produces: `policy-cli evaluate-pre`, `inspect`, and deterministic checked-in schemas.
 
-- [ ] **Step 1: Write CLI failure and advisory tests**
+- [x] **Step 1: Write CLI failure and advisory tests**
 
 ```rust
 #[test]
@@ -591,21 +591,21 @@ fn local_pre_merge_is_forced_advisory() {
 }
 ```
 
-- [ ] **Step 2: Run and observe failure**
+- [x] **Step 2: Run and observe failure**
 
 Run: `cargo test -p policy-cli`
 
 Expected: FAIL because commands are missing.
 
-- [ ] **Step 3: Implement CLI without remote mutation**
+- [x] **Step 3: Implement CLI without remote mutation**
 
 Force `EvaluationMode::Advisory` in `evaluate-pre` regardless of file content. Do not expose a local post-merge evaluation command. `inspect` validates and displays a supplied decision or bundle but never evaluates or rewrites it. Parse stdin when path is `-`, write one JSON object to stdout, diagnostics to stderr, and use exit codes 0 for advisory ready, 2 for blocked, 3 for inconclusive, and 64 for invalid input.
 
-- [ ] **Step 4: Generate and verify schemas**
+- [x] **Step 4: Generate and verify schemas**
 
 Add `xtask schema` using `schemars`; sort generated JSON keys before writing. Add a test that regeneration yields no diff and rejects fixtures with unknown fields or schema versions.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run: `cargo test -p policy-cli && cargo run -p xtask -- schema && git diff --exit-code -- schemas`
 
@@ -615,6 +615,15 @@ Expected: CLI tests pass and schema regeneration creates no diff.
 git add crates/policy-cli schemas xtask Cargo.toml Cargo.lock
 git commit -m "feat: add advisory CLI and versioned schemas"
 ```
+
+Task 8 verified (2026-09-07): the advisory CLI covers typed stdin/path input,
+status-specific exits, strict invalid-input handling, evidence-bundle integrity
+and semantically unchanged inspect output. Five deterministic Draft 2020-12
+schemas are checked in and tested with a pinned, offline JSON Schema validator,
+including nested version/unknown-field rejection and the validated identity and
+timestamp constraints enforced by the Rust contracts. The sensor-profile schema
+represents the current contract; Task 12 still owns the complete project-profile
+execution protocol.
 
 ---
 

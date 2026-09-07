@@ -89,6 +89,7 @@ pub struct DecisionBinding {
 #[serde(deny_unknown_fields)]
 pub struct PreMergeDecision {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub mode: EvaluationMode,
     pub advisory: bool,
@@ -144,6 +145,7 @@ impl AuthoritativePreMergeDecision {
 #[serde(deny_unknown_fields)]
 pub struct PostMergeDecision {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub status: PostMergeStatus,
     pub binding: DecisionBinding,
@@ -157,6 +159,7 @@ pub struct PostMergeDecision {
 #[serde(deny_unknown_fields)]
 pub struct PreMergeEvaluationInput {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub mode: EvaluationMode,
     pub evaluation_time: UtcTimestamp,
@@ -173,6 +176,7 @@ pub struct PreMergeEvaluationInput {
 #[serde(deny_unknown_fields)]
 pub struct PreMergeContext {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub sensor_profile: SensorProfile,
     /// Known changed paths; an empty list must not represent unknown impact.
@@ -186,6 +190,7 @@ pub struct PreMergeContext {
 #[serde(deny_unknown_fields)]
 pub struct PostMergeEvaluationInput {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub evaluation_time: UtcTimestamp,
     pub policy: PolicySnapshot,

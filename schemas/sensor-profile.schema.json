@@ -1,0 +1,134 @@
+{
+  "$defs": {
+    "Risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "type": "string"
+    },
+    "SensorCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "path_globs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "risks": {
+          "items": {
+            "$ref": "#/$defs/Risk"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "risks",
+        "path_globs"
+      ],
+      "type": "object"
+    },
+    "SensorDefinition": {
+      "additionalProperties": false,
+      "properties": {
+        "accepted_exit_codes": {
+          "default": [],
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "id": {
+          "$ref": "#/$defs/SensorId"
+        },
+        "not_applicable_when": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SensorCondition"
+          },
+          "type": "array"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "required_when": {
+          "items": {
+            "$ref": "#/$defs/SensorCondition"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "required",
+        "required_when"
+      ],
+      "type": "object"
+    },
+    "SensorId": {
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "TestAdequacyPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance_criterion_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "changed_behavior_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "negative_case_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "acceptance_criterion_ids",
+        "changed_behavior_ids",
+        "negative_case_ids"
+      ],
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "adequacy": {
+      "$ref": "#/$defs/TestAdequacyPolicy"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "sensors": {
+      "items": {
+        "$ref": "#/$defs/SensorDefinition"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "sensors",
+    "adequacy"
+  ],
+  "title": "SensorProfile",
+  "type": "object"
+}
