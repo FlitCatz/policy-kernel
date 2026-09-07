@@ -800,6 +800,12 @@ their completion from the unchecked historical plan.
 
 ### Existing task impact
 
+Implementation inspection and concrete contract gaps are recorded in
+[the Task 1–5 impact review](../reviews/2026-09-07-task-1-5-design-impact.md).
+At that inspection, main contained Tasks 1–3, Task 4 was on its own branch,
+and Task 5 source was not located. Do not treat the table below as completion
+evidence. Resolve the review's contract-fit prerequisites before Task 12.
+
 | Task | Required integration |
 | --- | --- |
 | 2: contracts | Preserve language-neutral contracts; inspect schema fit before any field addition and version breaking changes explicitly. |
@@ -821,6 +827,7 @@ does not replace the policy-kernel repository's own Rust checks with JS/.NET che
 existing SensorEvidence/ExecutionEvidence and adequacy references.
 
 - [ ] Bind explicit argv, working directories, toolchain locks, parser version and applicability to each profile.
+- [ ] Define policy-bound result requirements so a required test report cannot be omitted as a non-test sensor; resolve profile/tool/report bindings and schema compatibility from the Task 1–5 impact review.
 - [ ] Validate profile instances against Task 8 schemas before execution.
 - [ ] Normalize Vitest/Playwright machine reports and the pinned .NET runner's reports; retain counts, failures, skips and original artifact digests.
 - [ ] Verify valid, empty, malformed, stale, skipped, timeout and nonzero-exit fixtures. A zero exit with an absent or empty required report must never satisfy the gate.

@@ -101,6 +101,15 @@ fn evaluate_sensor_evidence_inner(
     adequacy: Option<&TestAdequacyEvidence>,
     context: Option<(&[String], Risk)>,
 ) -> SensorEvaluation {
+    if let Err(error) = validate_profile(profile) {
+        return SensorEvaluation {
+            status: SensorEvaluationStatus::Inconclusive,
+            reasons: vec![Reason {
+                code: "PK-SENSOR-PROFILE-INVALID".to_owned(),
+                message: error.to_string(),
+            }],
+        };
+    }
     let definitions = profile
         .sensors
         .iter()
@@ -397,6 +406,13 @@ fn validate_typed_result(evidence: &SensorEvidence, reasons: &mut Vec<Reason>) {
     match (evidence.discovered, evidence.executed, evidence.passed) {
         (None, None, None) => {}
         (Some(discovered), Some(executed), Some(passed)) => {
+            if discovered == 0 {
+                insert_reason(
+                    reasons,
+                    "PK-ADEQ-NO-TESTS",
+                    "a required sensor discovered no tests",
+                );
+            }
             if discovered != executed || executed != passed {
                 insert_reason(
                     reasons,

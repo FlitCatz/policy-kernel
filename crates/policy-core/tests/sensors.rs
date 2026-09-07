@@ -239,3 +239,91 @@ fn profile_fixture_satisfies_the_strict_contract() {
             .expect("profile fixture must satisfy the strict sensor contract");
     assert_eq!(parsed, profile());
 }
+
+#[test]
+fn fullstack_empty_component_suite_cannot_hide_behind_aggregate_adequacy() {
+    let mut combined = profile();
+    combined.sensors.truncate(2);
+    combined.sensors[0].id = id("frontend:unit");
+    combined.sensors[1].id = id("backend:unit");
+    combined.sensors[1].required = true;
+    let mut frontend = sensor("frontend:unit", SensorStatus::Passed);
+    frontend.discovered = Some(1);
+    frontend.executed = Some(1);
+    frontend.passed = Some(1);
+    let mut backend = sensor("backend:unit", SensorStatus::Passed);
+    backend.discovered = Some(0);
+    backend.executed = Some(0);
+    backend.passed = Some(0);
+
+    let result = policy_core::evaluate_sensor_evidence_for_change(
+        &combined,
+        &["frontend/app.tsx", "backend/Api.cs"],
+        Risk::Low,
+        &[frontend, backend],
+        Some(&adequate()),
+    )
+    .unwrap();
+    assert_eq!(result.status, SensorEvaluationStatus::Blocked);
+    assert!(result.has_reason("PK-ADEQ-NO-TESTS"));
+}
+
+#[test]
+fn fullstack_requires_each_component_and_shared_checks() {
+    let mut combined = profile();
+    combined.sensors.clear();
+    let names = [
+        "frontend:unit",
+        "backend:unit",
+        "shared:contract",
+        "shared:e2e",
+    ];
+    for name in names {
+        let mut definition = profile().sensors.remove(0);
+        definition.id = id(name);
+        combined.sensors.push(definition);
+    }
+    let evidence: Vec<_> = names
+        .iter()
+        .map(|name| sensor(name, SensorStatus::Passed))
+        .collect();
+    let required = resolve_required_sensors(&combined, &["frontend/app.tsx"], Risk::Low).unwrap();
+    assert_eq!(required, names.map(id));
+    assert_eq!(
+        evaluate_sensor_evidence(&combined, &required, &evidence, Some(&adequate())).status,
+        SensorEvaluationStatus::Passed
+    );
+    for missing in 0..names.len() {
+        let mut incomplete = evidence.clone();
+        incomplete.remove(missing);
+        let result = evaluate_sensor_evidence(&combined, &required, &incomplete, Some(&adequate()));
+        assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+        assert!(result.has_reason("PK-SENSOR-MISSING"));
+    }
+}
+
+#[test]
+fn skipped_tests_inside_successful_process_do_not_pass() {
+    let mut evidence = sensor("compile", SensorStatus::Passed);
+    evidence.discovered = Some(2);
+    evidence.executed = Some(1);
+    evidence.passed = Some(1);
+    let result =
+        evaluate_sensor_evidence(&profile(), &[id("compile")], &[evidence], Some(&adequate()));
+    assert_eq!(result.status, SensorEvaluationStatus::Blocked);
+    assert!(result.has_reason("PK-SENSOR-RESULT-COUNT-MISMATCH"));
+}
+
+#[test]
+fn duplicate_composed_sensor_ids_cannot_bypass_context_free_validation() {
+    let mut combined = profile();
+    combined.sensors.push(combined.sensors[0].clone());
+    let result = evaluate_sensor_evidence(
+        &combined,
+        &[id("compile")],
+        &[sensor("compile", SensorStatus::Passed)],
+        Some(&adequate()),
+    );
+    assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+    assert!(result.has_reason("PK-SENSOR-PROFILE-INVALID"));
+}

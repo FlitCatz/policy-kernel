@@ -18,3 +18,4 @@ The kernel remains Rust and harness-independent; profiles and bootstrap are sepa
 - [Plan review record](docs/reviews/2026-09-04-policy-kernel-plan-antigravity-review.md)
 
 - [Project verification and bootstrap proposal](docs/specs/2026-09-07-project-verification-bootstrap-design.md)
+- [Task 1–5 design impact and contract prerequisites](docs/reviews/2026-09-07-task-1-5-design-impact.md)
