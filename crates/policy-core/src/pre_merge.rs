@@ -258,6 +258,10 @@ fn validate_execution(input: &PreMergeEvaluationInput, gates: &mut Gates) {
             ExecutionStatus::TimedOut => {
                 gates.unknown("PK-EXEC-TIMEOUT", "a recorded execution timed out")
             }
+            ExecutionStatus::Truncated => gates.unknown(
+                "PK-EXEC-TRUNCATED",
+                "a recorded execution exceeded its output limit",
+            ),
             ExecutionStatus::Skipped => {
                 gates.unknown("PK-EXEC-SKIPPED", "a recorded execution was skipped")
             }

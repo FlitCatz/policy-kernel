@@ -19,6 +19,7 @@ pub enum ExecutionStatus {
     Passed,
     Failed,
     TimedOut,
+    Truncated,
     Skipped,
     Unparsable,
 }
