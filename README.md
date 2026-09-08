@@ -4,8 +4,9 @@ Deterministic evidence and release-policy evaluation, independent of any agent h
 
 ## Status
 
-Core implementation is in progress. The original design and plan were reviewed;
-the React/TypeScript and C#/.NET profile/bootstrap revision is proposed for review.
+Tasks 1–11 are implemented and composed in this repository. Production promotion
+remains pending the evidence described below. The React/TypeScript and C#/.NET
+profile/bootstrap revision remains proposed for review.
 
 Initial consuming-project targets: React/TypeScript and C#/ASP.NET Core.
 The kernel remains Rust and harness-independent; profiles and bootstrap are separate assets.
@@ -54,6 +55,8 @@ Task 12.
 Task 11 provides adversarial and property tests, complete obligation-fixture
 execution, fail-closed residue/mutation checks and CI workflows. See the
 [trust model](docs/trust-model.md) and [promotion/rollback protocol](docs/promotion.md).
-Promotion requires Task 10 integration, complete exact-head verification, live
+Promotion requires complete exact-head verification, live
 shadow/rollback evidence and two contributor-independent provider reviews. Local
 checks alone do not satisfy those requirements.
+
+- [Task 8–11 integration record](docs/reviews/2026-09-08-main-integration.md)

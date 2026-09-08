@@ -81,6 +81,30 @@ class ResidueCheckerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("forbidden policy-core dependency found", result.stderr)
 
+    def test_hidden_source_residue_fails(self):
+        (self.root / "crates" / "policy-core" / "src" / ".hidden.rs").write_text("gsd-core")
+        result = self.run_checker()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("forbidden runtime residue found", result.stderr)
+
+    def test_ignored_source_residue_fails(self):
+        source = self.root / "crates" / "policy-core" / "src"
+        (source / ".ignore").write_text("legacy.rs\n")
+        (source / "legacy.rs").write_text("gsd-core")
+        result = self.run_checker()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("forbidden runtime residue found", result.stderr)
+
+    def test_empty_action_directory_fails(self):
+        (self.root / "action" / "action.yml").unlink()
+        result = self.run_checker()
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_empty_schema_directory_fails(self):
+        (self.root / "schemas" / "policy.json").unlink()
+        result = self.run_checker()
+        self.assertNotEqual(result.returncode, 0)
+
     def test_missing_required_scan_path_fails(self):
         (self.root / "action" / "action.yml").unlink()
         (self.root / "action").rmdir()

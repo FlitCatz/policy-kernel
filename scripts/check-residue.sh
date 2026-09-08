@@ -21,6 +21,20 @@ for required_path in "${required_paths[@]}"; do
   fi
 done
 
+if [[ ! -s "$repo_root/action/action.yml" && ! -s "$repo_root/action/action.yaml" ]]; then
+  echo 'required Action manifest is missing or empty' >&2
+  exit 1
+fi
+schema_files=("$repo_root"/schemas/*.json)
+has_schema=false
+for schema_file in "${schema_files[@]}"; do
+  if [[ -s "$schema_file" ]]; then has_schema=true; fi
+done
+if [[ "$has_schema" != true ]]; then
+  echo 'required schema files are missing or empty' >&2
+  exit 1
+fi
+
 shopt -s nullglob
 crate_src_paths=("$repo_root"/crates/*/src)
 shopt -u nullglob
@@ -37,7 +51,7 @@ scan_paths=(
   "$repo_root/Cargo.toml"
 )
 set +e
-runtime_matches=$(rg -n "$runtime_pattern" -- "${scan_paths[@]}" 2>&1)
+runtime_matches=$(rg --hidden --no-ignore -n "$runtime_pattern" -- "${scan_paths[@]}" 2>&1)
 runtime_status=$?
 set -e
 case "$runtime_status" in

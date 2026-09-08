@@ -328,6 +328,7 @@
         "discovered": {
           "default": null,
           "format": "uint64",
+          "maximum": 18446744073709551615,
           "minimum": 0,
           "type": [
             "integer",
@@ -337,6 +338,7 @@
         "executed": {
           "default": null,
           "format": "uint64",
+          "maximum": 18446744073709551615,
           "minimum": 0,
           "type": [
             "integer",
@@ -346,6 +348,8 @@
         "exit_code": {
           "default": null,
           "format": "int32",
+          "maximum": 2147483647,
+          "minimum": -2147483648,
           "type": [
             "integer",
             "null"
@@ -381,6 +385,7 @@
         "passed": {
           "default": null,
           "format": "uint64",
+          "maximum": 18446744073709551615,
           "minimum": 0,
           "type": [
             "integer",
@@ -465,11 +470,13 @@
         },
         "discovered": {
           "format": "uint64",
+          "maximum": 18446744073709551615,
           "minimum": 0,
           "type": "integer"
         },
         "executed": {
           "format": "uint64",
+          "maximum": 18446744073709551615,
           "minimum": 0,
           "type": "integer"
         },
@@ -488,6 +495,7 @@
         },
         "passed": {
           "format": "uint64",
+          "maximum": 18446744073709551615,
           "minimum": 0,
           "type": "integer"
         }

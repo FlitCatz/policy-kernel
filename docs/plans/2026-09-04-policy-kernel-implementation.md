@@ -847,7 +847,7 @@ Do not create a remote, change GitHub protection, or merge. Present the exact fi
 CI/mutation checks, trust documentation and a fixture-only rollback drill are
 implemented; precise freshness regressions also corrected subsecond age handling.
 See [the execution record](../superpowers/plans/2026-09-07-task-11-release-gates.md).
-Task 10 is not yet integrated, live protection capture returned HTTP401, and two
+Task 10 is now integrated (see the 2026-09-08 main integration record). Historical live protection capture returned HTTP401, and two
 independent-provider reviews/live shadow evidence are outstanding. Do not treat
 this implementation status as Task 11 release acceptance or promotion approval.
 

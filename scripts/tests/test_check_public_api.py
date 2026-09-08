@@ -71,6 +71,16 @@ class PublicApiCheckerTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("required public API scan path is missing", result.stderr)
 
+    def test_empty_generated_docs_fail(self):
+        (self.docs / "policy_core" / "index.html").unlink()
+        result = self.run_checker()
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_hidden_public_api_residue_fails(self):
+        (self.docs / "policy_core" / ".hidden.html").write_text("gsd-core")
+        result = self.run_checker()
+        self.assertNotEqual(result.returncode, 0)
+
     def test_search_error_fails_closed(self):
         fake_bin = self.root / "bin"
         fake_bin.mkdir()
