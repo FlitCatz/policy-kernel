@@ -1,0 +1,121 @@
+{
+  "$defs": {
+    "CommitSha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "DecisionBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "evaluated_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "pull_request_number": {
+          "$ref": "#/$defs/PullRequestNumber"
+        },
+        "repository": {
+          "$ref": "#/$defs/RepositoryId"
+        }
+      },
+      "required": [
+        "repository",
+        "pull_request_number",
+        "head_sha",
+        "policy_digest",
+        "evidence_digest",
+        "evaluated_at"
+      ],
+      "type": "object"
+    },
+    "PostMergeStatus": {
+      "enum": [
+        "blocked",
+        "inconclusive",
+        "shipped"
+      ],
+      "type": "string"
+    },
+    "PullRequestNumber": {
+      "format": "uint64",
+      "maximum": 18446744073709551615,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "Reason": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "type": "object"
+    },
+    "RepositoryId": {
+      "pattern": "^[^/]+/[^/]+$",
+      "type": "string"
+    },
+    "Sha256Digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "binding": {
+      "$ref": "#/$defs/DecisionBinding"
+    },
+    "decision_digest": {
+      "$ref": "#/$defs/Sha256Digest"
+    },
+    "merge_commit_sha": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CommitSha"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reasons": {
+      "items": {
+        "$ref": "#/$defs/Reason"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/PostMergeStatus"
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "binding",
+    "reasons",
+    "decision_digest"
+  ],
+  "title": "PostMergeDecision",
+  "type": "object"
+}

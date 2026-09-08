@@ -52,6 +52,7 @@ pub struct ArtifactDigest {
 #[serde(deny_unknown_fields)]
 pub struct EvidenceManifest {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub repository: RepositoryId,
     pub work_item_id: WorkItemId,
@@ -194,6 +195,7 @@ pub struct KnowledgeEvidence {
 #[serde(deny_unknown_fields)]
 pub struct EvidenceBundle {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub manifest: EvidenceManifest,
     pub modifications: Vec<ModificationEvidence>,

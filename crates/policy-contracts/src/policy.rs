@@ -15,6 +15,7 @@ pub enum Risk {
 #[serde(deny_unknown_fields)]
 pub struct PolicySnapshot {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub policy_digest: Sha256Digest,
     pub required_check_name: String,
@@ -45,6 +46,7 @@ pub struct RequiredReviewPolicy {
 #[serde(deny_unknown_fields)]
 pub struct SensorProfile {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub sensors: Vec<SensorDefinition>,
     pub adequacy: TestAdequacyPolicy,

@@ -1,0 +1,672 @@
+{
+  "$defs": {
+    "ArtifactDigest": {
+      "additionalProperties": false,
+      "properties": {
+        "digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "digest"
+      ],
+      "type": "object"
+    },
+    "CommitSha": {
+      "pattern": "^[0-9a-f]{40}$",
+      "type": "string"
+    },
+    "EvidenceManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "base_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "child_digests": {
+          "items": {
+            "$ref": "#/$defs/ArtifactDigest"
+          },
+          "type": "array"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "repository": {
+          "$ref": "#/$defs/RepositoryId"
+        },
+        "schema_version": {
+          "const": 1,
+          "type": "integer"
+        },
+        "source_set_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "work_item_id": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "workflow_run_id": {
+          "$ref": "#/$defs/WorkflowRunId"
+        }
+      },
+      "required": [
+        "schema_version",
+        "repository",
+        "work_item_id",
+        "base_sha",
+        "head_sha",
+        "policy_digest",
+        "source_set_digest",
+        "workflow_run_id",
+        "created_at",
+        "child_digests"
+      ],
+      "type": "object"
+    },
+    "ExecutionEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "command_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "completed_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "execution_id": {
+          "$ref": "#/$defs/ExecutionId"
+        },
+        "input_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelId"
+        },
+        "output_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "provider": {
+          "$ref": "#/$defs/ProviderId"
+        },
+        "started_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/ExecutionStatus"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustClass"
+        }
+      },
+      "required": [
+        "execution_id",
+        "provider",
+        "model",
+        "status",
+        "command_digest",
+        "input_digest",
+        "output_digest",
+        "started_at",
+        "completed_at",
+        "trust"
+      ],
+      "type": "object"
+    },
+    "ExecutionId": {
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "ExecutionStatus": {
+      "enum": [
+        "passed",
+        "failed",
+        "timed_out",
+        "skipped",
+        "unparsable"
+      ],
+      "type": "string"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "reviewer_execution_id": {
+          "$ref": "#/$defs/ExecutionId"
+        },
+        "severity": {
+          "$ref": "#/$defs/FindingSeverity"
+        },
+        "summary": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "severity",
+        "summary",
+        "reviewer_execution_id"
+      ],
+      "type": "object"
+    },
+    "FindingSeverity": {
+      "enum": [
+        "info",
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "type": "string"
+    },
+    "KnowledgeEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "configuration_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "content_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "kind": {
+          "$ref": "#/$defs/KnowledgeKind"
+        },
+        "source": {
+          "type": "string"
+        },
+        "source_set_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustClass"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "source",
+        "version",
+        "configuration_digest",
+        "content_digest",
+        "source_set_digest",
+        "head_sha",
+        "trust"
+      ],
+      "type": "object"
+    },
+    "KnowledgeKind": {
+      "enum": [
+        "lat_claim",
+        "code_graph_index"
+      ],
+      "type": "string"
+    },
+    "ModelId": {
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "ModificationEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "execution_id": {
+          "$ref": "#/$defs/ExecutionId"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelId"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/$defs/ProviderId"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustClass"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "execution_id",
+        "head_sha",
+        "observed_at",
+        "trust"
+      ],
+      "type": "object"
+    },
+    "ProviderId": {
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "RepositoryId": {
+      "pattern": "^[^/]+/[^/]+$",
+      "type": "string"
+    },
+    "ReviewEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "execution_id": {
+          "$ref": "#/$defs/ExecutionId"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "model": {
+          "$ref": "#/$defs/ModelId"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "provider": {
+          "$ref": "#/$defs/ProviderId"
+        },
+        "report_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "status": {
+          "$ref": "#/$defs/ReviewStatus"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustClass"
+        }
+      },
+      "required": [
+        "provider",
+        "model",
+        "execution_id",
+        "status",
+        "head_sha",
+        "report_digest",
+        "observed_at",
+        "trust"
+      ],
+      "type": "object"
+    },
+    "ReviewStatus": {
+      "enum": [
+        "approved",
+        "blocked",
+        "inconclusive"
+      ],
+      "type": "string"
+    },
+    "SensorEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "command_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "configuration_digest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256Digest"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "discovered": {
+          "default": null,
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "executed": {
+          "default": null,
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "exit_code": {
+          "default": null,
+          "format": "int32",
+          "maximum": 2147483647,
+          "minimum": -2147483648,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "not_applicable_condition_id": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "not_applicable_reason": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "observed_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "parser_version": {
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "passed": {
+          "default": null,
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "resolved_command": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "result_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "sensor_id": {
+          "$ref": "#/$defs/SensorId"
+        },
+        "source_digest": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Sha256Digest"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "$ref": "#/$defs/SensorStatus"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustClass"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "status",
+        "head_sha",
+        "command_digest",
+        "result_digest",
+        "observed_at",
+        "trust"
+      ],
+      "type": "object"
+    },
+    "SensorId": {
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "SensorStatus": {
+      "enum": [
+        "passed",
+        "failed",
+        "timed_out",
+        "skipped",
+        "not_applicable",
+        "unparsable"
+      ],
+      "type": "string"
+    },
+    "Sha256Digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "TestAdequacyEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance_criteria": {
+          "items": {
+            "$ref": "#/$defs/TestMapping"
+          },
+          "type": "array"
+        },
+        "changed_behaviors": {
+          "items": {
+            "$ref": "#/$defs/TestMapping"
+          },
+          "type": "array"
+        },
+        "discovered": {
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "executed": {
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "executed_test_ids": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "negative_case_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "passed": {
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "acceptance_criteria",
+        "changed_behaviors",
+        "negative_case_ids",
+        "discovered",
+        "executed",
+        "passed"
+      ],
+      "type": "object"
+    },
+    "TestMapping": {
+      "additionalProperties": false,
+      "properties": {
+        "requirement_id": {
+          "type": "string"
+        },
+        "test_ids": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "test_ids"
+      ],
+      "type": "object"
+    },
+    "TrustClass": {
+      "enum": [
+        "local_untrusted",
+        "ci_observed",
+        "trusted_runner_attested"
+      ],
+      "type": "string"
+    },
+    "WaiverEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "type": "string"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "finding_id": {
+          "type": "string"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "issued_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "repository": {
+          "$ref": "#/$defs/RepositoryId"
+        }
+      },
+      "required": [
+        "actor",
+        "finding_id",
+        "repository",
+        "head_sha",
+        "evidence_digest",
+        "reason",
+        "issued_at",
+        "expires_at"
+      ],
+      "type": "object"
+    },
+    "WorkItemId": {
+      "pattern": "\\S",
+      "type": "string"
+    },
+    "WorkflowRunId": {
+      "pattern": "\\S",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "executions": {
+      "items": {
+        "$ref": "#/$defs/ExecutionEvidence"
+      },
+      "type": "array"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "type": "array"
+    },
+    "knowledge": {
+      "items": {
+        "$ref": "#/$defs/KnowledgeEvidence"
+      },
+      "type": "array"
+    },
+    "manifest": {
+      "$ref": "#/$defs/EvidenceManifest"
+    },
+    "modifications": {
+      "items": {
+        "$ref": "#/$defs/ModificationEvidence"
+      },
+      "type": "array"
+    },
+    "reviews": {
+      "items": {
+        "$ref": "#/$defs/ReviewEvidence"
+      },
+      "type": "array"
+    },
+    "schema_version": {
+      "const": 1,
+      "type": "integer"
+    },
+    "sensors": {
+      "items": {
+        "$ref": "#/$defs/SensorEvidence"
+      },
+      "type": "array"
+    },
+    "test_adequacy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TestAdequacyEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "waivers": {
+      "items": {
+        "$ref": "#/$defs/WaiverEvidence"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "manifest",
+    "modifications",
+    "executions",
+    "reviews",
+    "findings",
+    "waivers",
+    "sensors",
+    "knowledge"
+  ],
+  "title": "EvidenceBundle",
+  "type": "object"
+}

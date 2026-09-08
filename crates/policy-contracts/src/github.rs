@@ -25,6 +25,7 @@ pub enum MergeActorType {
 #[serde(deny_unknown_fields)]
 pub struct WorkItemObservation {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub repository: RepositoryId,
     pub work_item_id: WorkItemId,
@@ -37,6 +38,7 @@ pub struct WorkItemObservation {
 #[serde(deny_unknown_fields)]
 pub struct AgentReadyObservation {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub repository: RepositoryId,
     pub work_item_id: WorkItemId,
@@ -52,6 +54,7 @@ pub struct AgentReadyObservation {
 #[serde(deny_unknown_fields)]
 pub struct GitHubPullRequestObservation {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub repository: RepositoryId,
     pub pull_request_number: PullRequestNumber,
@@ -66,6 +69,7 @@ pub struct GitHubPullRequestObservation {
 #[serde(deny_unknown_fields)]
 pub struct GitHubCheckObservation {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub repository: RepositoryId,
     pub pull_request_number: PullRequestNumber,
@@ -83,6 +87,7 @@ pub struct GitHubCheckObservation {
 #[serde(deny_unknown_fields)]
 pub struct GitHubMergeObservation {
     #[serde(deserialize_with = "deserialize_schema_version")]
+    #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub repository: RepositoryId,
     pub pull_request_number: PullRequestNumber,

@@ -10,6 +10,30 @@ the React/TypeScript and C#/.NET profile/bootstrap revision is proposed for revi
 Initial consuming-project targets: React/TypeScript and C#/ASP.NET Core.
 The kernel remains Rust and harness-independent; profiles and bootstrap are separate assets.
 
+## Local CLI
+
+Evaluate a pre-merge input locally:
+
+```bash
+cargo run -p policy-cli -- evaluate-pre tests/fixtures/pre-merge/ready.json
+```
+
+Local evaluation always uses advisory mode, even when the input requests
+authoritative evaluation. It cannot authorize shipping. The command emits one
+JSON decision to stdout and diagnostics to stderr. Exit codes are `0` for ready,
+`2` for blocked, `3` for inconclusive, and `64` for invalid input.
+
+Use `inspect <path>` to validate and display an existing pre-merge decision,
+post-merge decision, or evidence bundle. Inspection preserves the supplied data;
+it does not evaluate it or authenticate its provenance. Both commands accept `-`
+instead of a path to read stdin. Local post-merge evaluation is not exposed.
+
+Generate the checked-in contract schemas with:
+
+```bash
+cargo run -p xtask -- schema
+```
+
 ## Documents
 
 - [Architecture specification](docs/specs/2026-09-04-policy-kernel-extraction-design.md)
