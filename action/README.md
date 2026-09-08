@@ -162,3 +162,23 @@ current workflow run/attempt, and writes a concise step summary.
 
 The Action performs evaluation and Check Run publication only. Merge operations,
 waivers and protection changes remain outside this interface.
+
+## Task10 live transport smoke
+
+`.github/workflows/task-10-live-smoke.yml` runs only for a same-repository PR
+whose head branch is `task10-github-ci`. It invokes the ignored
+`policy-ci/tests/live_github.rs` integration test with explicit opt-in and a
+GitHub Actions token. The test calls the real `policy-ci` binary, fetches the PR
+and current workflow, publishes a Check Run, then reads it back from GitHub.
+
+The input deliberately contains **no execution/review evidence** and an
+**unauthorized work item**. The expected result is `BLOCKED`, process exit code 1,
+and a **failure** Check Run named `policy-kernel/pre-merge`. The smoke test job is
+successful only when that rejection and the head/run/digest bindings are observed.
+It does not establish release readiness, authenticate contributor evidence,
+exercise a protected merge, or configure branch protection. Do not use this
+smoke workflow as a production collector or release gate.
+
+Regular `cargo test --workspace` ignores this network test. Explicit execution
+requires `POLICY_CI_LIVE_SMOKE=1`, Actions identity and the dedicated PR context.
+The local simulated suite continues to test ready and post-merge decisions.
