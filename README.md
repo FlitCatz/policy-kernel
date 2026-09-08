@@ -52,6 +52,18 @@ Task 12.
 
 ## Release verification
 
+Repository verification tools and their tests are implemented in Rust:
+
+```console
+cargo run --locked -p xtask -- check-residue
+cargo run --locked -p xtask -- check-public-api target/doc schemas
+cargo run --locked -p xtask -- check-mutation-results verification/mutants.out/outcomes.json
+cargo test --locked -p xtask
+```
+
+The `xtask rollback-drill` command validates supplied rollback snapshots; see the
+promotion protocol below for its arguments and scope.
+
 Task 11 provides adversarial and property tests, complete obligation-fixture
 execution, fail-closed residue/mutation checks and CI workflows. See the
 [trust model](docs/trust-model.md) and [promotion/rollback protocol](docs/promotion.md).

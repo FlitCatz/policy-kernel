@@ -55,9 +55,61 @@ mod integration {
         fs,
         os::unix::fs::PermissionsExt,
         path::PathBuf,
-        sync::atomic::{AtomicU64, Ordering},
+        sync::{
+            atomic::{AtomicU64, Ordering},
+            OnceLock,
+        },
     };
     static NEXT: AtomicU64 = AtomicU64::new(0);
+
+    // Compile the Rust-only process fixture once, using the dependencies Cargo
+    // built for this integration test. It is not a production binary target.
+    fn fake_gh() -> &'static PathBuf {
+        static EXE: OnceLock<PathBuf> = OnceLock::new();
+        EXE.get_or_init(|| {
+            let deps = std::env::current_exe()
+                .unwrap()
+                .parent()
+                .unwrap()
+                .to_path_buf();
+            let artifact = |name: &str| {
+                let mut paths: Vec<_> = fs::read_dir(&deps)
+                    .unwrap()
+                    .map(|e| e.unwrap().path())
+                    .filter(|p| {
+                        p.file_name()
+                            .unwrap()
+                            .to_string_lossy()
+                            .starts_with(&format!("lib{name}-"))
+                            && p.extension().is_some_and(|e| e == "rlib")
+                    })
+                    .collect();
+                paths.sort_by_key(|p| fs::metadata(p).unwrap().modified().unwrap());
+                paths.pop().expect("Cargo must build fixture dependencies")
+            };
+            let output =
+                std::env::temp_dir().join(format!("policy-ci-fake-gh-{}", std::process::id()));
+            let result = std::process::Command::new("rustc")
+                .args(["--edition=2021", "--crate-name", "policy_ci_fake_gh"])
+                .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/fake_gh.rs"))
+                .arg("-L")
+                .arg(format!("dependency={}", deps.display()))
+                .arg("--extern")
+                .arg(format!("serde_json={}", artifact("serde_json").display()))
+                .arg("--extern")
+                .arg(format!("chrono={}", artifact("chrono").display()))
+                .arg("-o")
+                .arg(&output)
+                .output()
+                .unwrap();
+            assert!(
+                result.status.success(),
+                "{}",
+                String::from_utf8_lossy(&result.stderr)
+            );
+            output
+        })
+    }
 
     struct Fixture {
         root: PathBuf,
@@ -186,40 +238,7 @@ mod integration {
             write(root.join("workflow.json"), workflow);
             fs::create_dir_all(root.join("bin")).unwrap();
             let gh = root.join("bin/gh");
-            fs::write(
-                &gh,
-                r#"#!/usr/bin/env python3
-import json, os, sys, datetime
-root = os.environ['FAKE_GH_ROOT']
-args = sys.argv[1:]
-route = next((s for s in args if s.startswith('/repos/')), '')
-if route.endswith('/actions/runs/9001'):
-    print(open(root + '/workflow.json').read())
-elif route.endswith('/pulls/6'):
-    print(open(root + '/pr.json').read())
-elif route.endswith('/check-runs') and 'POST' in args:
-    data = json.load(sys.stdin)
-    if os.environ.get('MERGE_DURING_POST') == '1':
-        pr = json.load(open(root + '/pr.json'))
-        pr.update({'state':'closed', 'merged':True,
-          'merged_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),
-          'merge_commit_sha':'dddddddddddddddddddddddddddddddddddddddd',
-          'merged_by':{'login':'release-owner','type':'User'}})
-        with open(root + '/pr.json','w') as f: json.dump(pr,f)
-    data.update({'id':6001, 'check_suite':{'id':8001}, 'app':{'id':15368,'slug':'github-actions'}})
-    data.setdefault('started_at',datetime.datetime.now(datetime.timezone.utc).isoformat())
-    for key in ['started_at','completed_at']:
-        data[key] = datetime.datetime.fromisoformat(data[key].replace('Z','+00:00')).replace(microsecond=0).isoformat().replace('+00:00','Z')
-    with open(root+'/published.json','w') as f: json.dump(data,f)
-    print(json.dumps(data))
-elif route.endswith('/check-runs/6001'):
-    print(open(root + '/published.json').read())
-else:
-    print('unexpected route: '+repr(args), file=sys.stderr)
-    sys.exit(1)
-"#,
-            )
-            .unwrap();
+            fs::copy(fake_gh(), &gh).unwrap();
             fs::set_permissions(gh, fs::Permissions::from_mode(0o700)).unwrap();
             fs::write(root.join("output"), "").unwrap();
             fs::write(root.join("summary"), "").unwrap();

@@ -32,7 +32,7 @@ jobs:
             -C --locked --output verification 2>&1 | tee verification/mutation.log
       - name: Reject incomplete, missed or timed-out mutation evidence
         if: always()
-        run: python3 scripts/check-mutation-results.py verification/mutants.out/outcomes.json
+        run: cargo run --locked -p xtask -- check-mutation-results verification/mutants.out/outcomes.json
       - name: Upload exact-head mutation evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

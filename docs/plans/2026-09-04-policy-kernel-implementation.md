@@ -766,7 +766,7 @@ git commit -m "feat: add GitHub CI policy gate adapter"
 **Files:**
 - Create: `crates/policy-core/tests/adversarial_release_gate.rs`
 - Create: `crates/policy-core/tests/legacy_cases.rs`
-- Create: `scripts/check-residue.sh`
+- Create: Rust `xtask check-residue` command
 - Create: `.github/workflows/ci.yml`
 - Create: `deny.toml`
 - Create: `docs/{trust-model,promotion}.md`
@@ -785,16 +785,13 @@ Encode frozen legacy cases as input/expected-decision data, not imports from the
 
 - [ ] **Step 3: Add a residue scan that fails before exclusions are correct**
 
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-if rg -n 'gsd-core|\.planning|gemini-reviewer|\bagy\b|oh-my-pi|\bomp\b|mcp|hashline' \
-  crates/*/src schemas action Cargo.toml; then
-  echo 'forbidden runtime residue found' >&2
-  exit 1
-fi
-cargo tree -p policy-core | rg 'reqwest|octocrab|clap|tokio' && exit 1 || true
+```console
+cargo run --locked -p xtask -- check-residue
 ```
+
+Implement the scanner and adversarial tests in Rust. Include hidden and ignored
+files and fail closed on unreadable inputs, missing required artifacts, or a
+failed dependency-tree command. Do not implement the scanner in Shell or Python.
 
 The scan intentionally excludes tests, provenance, and integration documentation, where negative cases and historical/external names are allowed. A separate public-API test asserts that forbidden runtime names do not occur in exported items or generated schemas.
 
@@ -825,7 +822,7 @@ cargo run -p xtask -- schema
 git diff --exit-code -- schemas
 cargo deny check
 cargo audit
-bash scripts/check-residue.sh
+cargo run --locked -p xtask -- check-residue
 cargo mutants -p policy-core --file crates/policy-core/src/canonical.rs --file crates/policy-core/src/provenance.rs --file crates/policy-core/src/reviews.rs --file crates/policy-core/src/pre_merge.rs --file crates/policy-core/src/post_merge.rs
 ```
 

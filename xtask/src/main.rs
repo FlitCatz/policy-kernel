@@ -6,12 +6,29 @@ use policy_contracts::{
 use schemars::JsonSchema;
 use serde_json::{Map, Value};
 use std::{env, fs, path::Path};
+mod verification;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut arguments = env::args().skip(1);
-    match (arguments.next().as_deref(), arguments.next()) {
-        (Some("schema"), None) => generate_schemas(),
-        _ => Err("usage: cargo run -p xtask -- schema".into()),
+fn main() -> std::process::ExitCode {
+    let args: Vec<String> = env::args().skip(1).collect();
+    let result = match args.as_slice() {
+        [command] if command == "schema" => generate_schemas().map_err(|e| e.to_string()),
+        [command, path] if command == "check-mutation-results" => verification::mutation(Path::new(path)),
+        [command, path] if command == "check-residue" => verification::residue(Path::new(path)),
+        [command] if command == "check-residue" => verification::residue(Path::new(env!("CARGO_MANIFEST_DIR")).join("..").as_path()),
+        [command, docs, schemas] if command == "check-public-api" => verification::public_api(Path::new(docs), Path::new(schemas)),
+        [command, rest @ ..] if command == "rollback-drill" => verification::rollback(rest),
+        _ => Err("usage: xtask schema | check-mutation-results OUTCOMES | check-residue [REPO] | check-public-api DOCS SCHEMAS | rollback-drill --baseline FILE --promoted FILE --restored FILE --evidence-before FILE --evidence-after FILE".into()),
+    };
+    match result {
+        Ok(()) => std::process::ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("xtask: {error}");
+            std::process::ExitCode::from(if args.first().is_some_and(|s| s == "rollback-drill") {
+                64
+            } else {
+                1
+            })
+        }
     }
 }
 

@@ -37,8 +37,6 @@ jobs:
         run: cargo clippy --workspace --all-targets --locked -- -D warnings 2>&1 | tee verification/clippy.log
       - name: Workspace tests
         run: cargo test --workspace --locked 2>&1 | tee verification/tests.log
-      - name: Verification script adversarial tests
-        run: python3 -m unittest discover -s scripts/tests -v 2>&1 | tee verification/script-tests.log
       - name: Deterministic schemas
         run: |
           cargo run --locked -p xtask -- schema
@@ -50,9 +48,9 @@ jobs:
         run: cargo audit 2>&1 | tee verification/audit.log
       - name: Runtime residue and public API
         run: |
-          bash scripts/check-residue.sh 2>&1 | tee verification/residue.log
+          cargo run --locked -p xtask -- check-residue 2>&1 | tee verification/residue.log
           cargo doc --no-deps --locked -p policy-core -p policy-contracts
-          bash scripts/check-public-api.sh target/doc schemas 2>&1 | tee verification/public-api.log
+          cargo run --locked -p xtask -- check-public-api target/doc schemas 2>&1 | tee verification/public-api.log
       - name: Clean build with empty target
         run: |
           clean_target=$(mktemp -d "$RUNNER_TEMP/policy-clean.XXXXXX")

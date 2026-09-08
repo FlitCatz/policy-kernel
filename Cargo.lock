@@ -1337,7 +1337,9 @@ dependencies = [
  "jsonschema",
  "policy-contracts",
  "schemars",
+ "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]

@@ -109,8 +109,8 @@ changed evidence inventories. It does not hash archived artifact content or prov
 the snapshots came from GitHub; those checks belong to the live procedure above.
 
 ```console
-python3 -m unittest discover -s scripts/tests -p test_rollback_drill.py
-python3 scripts/rollback-drill.py --baseline tests/fixtures/rollback/baseline.json --promoted tests/fixtures/rollback/promoted.json --restored tests/fixtures/rollback/restored.json --evidence-before tests/fixtures/rollback/evidence-before.json --evidence-after tests/fixtures/rollback/evidence-after.json
+cargo test --locked -p xtask --test verification rollback
+cargo run --locked -p xtask -- rollback-drill --baseline tests/fixtures/rollback/baseline.json --promoted tests/fixtures/rollback/promoted.json --restored tests/fixtures/rollback/restored.json --evidence-before tests/fixtures/rollback/evidence-before.json --evidence-after tests/fixtures/rollback/evidence-after.json
 ```
 
 A successful result explicitly reports `scope: supplied-snapshots-only` and

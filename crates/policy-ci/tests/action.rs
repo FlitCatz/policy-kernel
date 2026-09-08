@@ -9,7 +9,16 @@ fn action_preserves_literal_arguments_and_rejects_unknown_modes() {
     let root = std::env::temp_dir().join(format!("policy-action-test-{}", std::process::id()));
     fs::create_dir_all(&root).unwrap();
     let fake = root.join("policy-ci");
-    fs::write(&fake, "#!/bin/sh\nprintf '%s\\0' \"$@\"\n").unwrap();
+    let compiled = Command::new("rustc")
+        .args(["--edition=2021", "tests/support/argv.rs", "-o"])
+        .arg(&fake)
+        .output()
+        .unwrap();
+    assert!(
+        compiled.status.success(),
+        "{}",
+        String::from_utf8_lossy(&compiled.stderr)
+    );
     fs::set_permissions(&fake, fs::Permissions::from_mode(0o700)).unwrap();
     let invoke = |mode: &str| {
         Command::new("bash")

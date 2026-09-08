@@ -7,6 +7,28 @@ use policy_contracts::{
 };
 use std::{fs, os::unix::fs::PermissionsExt, time::Duration};
 
+fn process_fixture(path: &std::path::Path, mode: &str) {
+    static EXE: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    let executable = EXE.get_or_init(|| {
+        let output = std::env::temp_dir().join(format!("adapter-fixture-{}", std::process::id()));
+        let result = std::process::Command::new("rustc")
+            .args(["--edition=2021", "tests/support/process.rs", "-o"])
+            .arg(&output)
+            .output()
+            .unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        output
+    });
+    if !path.exists() {
+        fs::copy(executable, path).unwrap();
+    }
+    fs::write(path.with_extension("mode"), mode).unwrap();
+}
+
 const HEAD: &str = "cccccccccccccccccccccccccccccccccccccccc";
 const MERGE: &str = "dddddddddddddddddddddddddddddddddddddddd";
 const DECISION: &str = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
@@ -132,7 +154,7 @@ fn gh_cli_uses_only_the_fixed_pull_request_route() {
     let temp = std::env::temp_dir().join(format!("policy-kernel-fake-gh-{}", std::process::id()));
     fs::create_dir_all(&temp).unwrap();
     let script = temp.join("gh");
-    fs::write(&script, "#!/bin/sh\nprintf '%s\\n' \"$@\"\nprintf '{}'\n").unwrap();
+    process_fixture(&script, "args");
     let mut permissions = fs::metadata(&script).unwrap().permissions();
     permissions.set_mode(0o700);
     fs::set_permissions(&script, permissions).unwrap();
@@ -205,7 +227,7 @@ fn inherited_output_pipe_does_not_extend_gh_timeout() {
     let temp = std::env::temp_dir().join(format!("policy-gh-inherited-{}", std::process::id()));
     fs::create_dir_all(&temp).unwrap();
     let script = temp.join("gh");
-    fs::write(&script, "#!/bin/sh\nsleep 2 &\nexit 0\n").unwrap();
+    process_fixture(&script, "inherited");
     fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
     let api = GhCliApi::new(&script, Duration::from_millis(100), 4096);
     let started = std::time::Instant::now();
@@ -222,14 +244,14 @@ fn gh_fails_closed_on_output_overflow_and_nonzero_exit() {
     let temp = std::env::temp_dir().join(format!("policy-gh-failure-{}", std::process::id()));
     fs::create_dir_all(&temp).unwrap();
     let script = temp.join("gh");
-    fs::write(&script, "#!/bin/sh\nprintf '0123456789'\n").unwrap();
+    process_fixture(&script, "overflow");
     fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
     let api = GhCliApi::new(&script, Duration::from_secs(1), 4);
     assert!(matches!(
         api.pull_request("owner", "repo", 1),
         Err(AdapterError::OutputTooLarge { limit: 4 })
     ));
-    fs::write(&script, "#!/bin/sh\nexit 7\n").unwrap();
+    process_fixture(&script, "failure");
     assert!(matches!(
         api.pull_request("owner", "repo", 1),
         Err(AdapterError::ProcessFailure {
