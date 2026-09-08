@@ -394,6 +394,13 @@ dependencies = [
 [[package]]
 name = "github-adapter"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "policy-contracts",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
 
 [[package]]
 name = "globset"
@@ -689,6 +696,17 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 [[package]]
 name = "policy-ci"
 version = "0.1.0"
+dependencies = [
+ "assert_cmd",
+ "chrono",
+ "clap",
+ "github-adapter",
+ "policy-contracts",
+ "policy-core",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+]
 
 [[package]]
 name = "policy-cli"

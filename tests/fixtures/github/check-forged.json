@@ -1,0 +1,19 @@
+{
+  "id": 6001,
+  "name": "policy-kernel/pre-merge",
+  "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+  "status": "completed",
+  "conclusion": "success",
+  "external_id": "policy-kernel:v1:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "started_at": "2026-09-07T08:58:30Z",
+  "completed_at": "2026-09-07T08:59:00Z",
+  "output": {
+    "title": "READY_TO_MERGE",
+    "summary": "policy-kernel authoritative decision",
+    "text": "{\"completed_at\":\"2026-09-07T08:59:00Z\",\"decision_digest\":\"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\",\"head_sha\":\"cccccccccccccccccccccccccccccccccccccccc\",\"policy_digest\":\"ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\",\"pull_request_number\":42,\"repository\":\"FlitCatz/policy-kernel\",\"schema_version\":1,\"workflow_run_attempt\":2,\"workflow_run_id\":\"9001\"}"
+  },
+  "app": { "id": 999, "slug": "attacker-app" },
+  "check_suite": {
+    "id": 8001
+  }
+}

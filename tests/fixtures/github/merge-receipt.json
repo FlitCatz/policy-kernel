@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "repository": "FlitCatz/policy-kernel",
+  "pull_request_number": 42,
+  "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+  "merge_commit_sha": "dddddddddddddddddddddddddddddddddddddddd",
+  "target_branch": "main",
+  "method": "squash",
+  "protected": true,
+  "merged_by": "release-owner",
+  "actor_type": "human",
+  "via_merge_queue": false,
+  "merged_at": "2026-09-07T09:05:00Z"
+}

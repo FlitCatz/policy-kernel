@@ -705,7 +705,7 @@ the new `ExecutionStatus::Truncated` variant. See
 - Consumes: trusted GitHub JSON and collected evidence.
 - Produces: normalized observations, a dedicated GitHub Check Run carrying exact decision bindings, and authoritative output bound to the workflow run.
 
-- [ ] **Step 1: Write GitHub normalization tests**
+- [x] **Step 1: Write GitHub normalization tests**
 
 ```rust
 #[test]
@@ -728,27 +728,27 @@ fn check_run_binding_payload_stays_bounded() {
 }
 ```
 
-- [ ] **Step 2: Run and observe failure**
+- [x] **Step 2: Run and observe failure**
 
 Run: `cargo test -p github-adapter -p policy-ci`
 
 Expected: FAIL because parser and CI entry point are missing.
 
-- [ ] **Step 3: Implement the adapter boundary**
+- [x] **Step 3: Implement the adapter boundary**
 
 Define a `GitHubApi` trait returning raw JSON bytes and a `GhCliApi` implementation that executes only fixed `gh api` routes with separately supplied owner, repository, issue, PR, check-run, and workflow-run identifiers. Reject repository/name injection before argv construction. Normalize label events, PR `headRefOid`, merge commit OID, branch protection, actor, method, timestamps, required-check conclusion, workflow/run identity, and decision/policy digests.
 
 Add `publish_pre_merge_check(decision, workflow_identity) -> GitHubCheckObservation`. It creates a dedicated Check Run through `POST /repos/{owner}/{repo}/check-runs` with name `policy-kernel/pre-merge`, the evaluated PR `head_sha`, `status: completed`, and `conclusion: success|failure|neutral` mapped from ready/blocked/inconclusive. Set `external_id` to `policy-kernel:v1:<decision_digest>:<policy_digest>` and set `output.text` to canonical JSON containing `schema_version`, `repository`, `pull_request_number`, `head_sha`, `policy_digest`, `decision_digest`, `workflow_run_id`, `workflow_run_attempt`, and `completed_at`. `parse.rs` extracts exactly those fields from `external_id` and `output.text`, rejects disagreement, and binds the API-observed check-run ID and timestamps. The workflow declares `permissions: checks: write, contents: read, pull-requests: read, issues: read`.
 
-- [ ] **Step 4: Implement `policy-ci` authoritative evaluation**
+- [x] **Step 4: Implement `policy-ci` authoritative evaluation**
 
 Require GitHub Actions identity fields, checked-out full head SHA, policy/evidence paths, and a trusted observation directory. Assemble `PreMergeEvaluationInput` with `EvaluationMode::Authoritative`; emit canonical `decision.json`, publish it using `publish_pre_merge_check`, then emit GitHub output fields and a concise step summary. Return non-zero for `BLOCKED` and `INCONCLUSIVE` after publishing the non-success Check Run. A separate `post-merge` command fetches the dedicated Check Run plus merge observations and calls `evaluate_post_merge`.
 
-- [ ] **Step 5: Define the composite Action**
+- [x] **Step 5: Define the composite Action**
 
 `action/action.yml` pins inputs for mode, policy path, evidence path, expected head, and artifact directory. It invokes the already-built `policy-ci` and documents the required minimal GitHub permissions. It does not download moving binaries, call a model, merge, waive, or change branch protection.
 
-- [ ] **Step 6: Verify and commit**
+- [x] **Step 6: Verify and commit**
 
 Run: `cargo test -p github-adapter -p policy-ci`
 

@@ -1,0 +1,16 @@
+{
+  "id": 9001,
+  "run_attempt": 2,
+  "workflow_id": 77,
+  "path": ".github/workflows/policy.yml",
+  "event": "pull_request",
+  "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+  "check_suite_id": 7001,
+  "status": "completed",
+  "conclusion": "success",
+  "created_at": "2026-09-07T08:55:00Z",
+  "updated_at": "2026-09-07T08:59:00Z",
+  "repository": {
+    "full_name": "FlitCatz/policy-kernel"
+  }
+}
