@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "FlitCatz/policy-kernel",
+  "pull_request_number": 42,
+  "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
+  "check_name": "policy-kernel/pre-merge",
+  "check_run_id": 6001,
+  "check_suite_id": 8001,
+  "check_app_id": 15368,
+  "check_app_slug": "github-actions",
+  "workflow_run_id": "9001",
+  "workflow_run_attempt": 2,
+  "workflow_id": 77,
+  "workflow_path": ".github/workflows/policy.yml",
+  "decision_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "policy_digest": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "published_at": "2026-09-07T08:59:00Z",
+  "workflow_head_sha": "cccccccccccccccccccccccccccccccccccccccc"
+}

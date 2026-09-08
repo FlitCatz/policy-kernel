@@ -1,0 +1,19 @@
+{
+  "number": 42,
+  "state": "open",
+  "draft": false,
+  "updated_at": "2026-09-07T08:58:00Z",
+  "merged_at": null,
+  "merge_commit_sha": null,
+  "base": {
+    "ref": "main",
+    "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "repo": { "full_name": "FlitCatz/policy-kernel" }
+  },
+  "head": {
+    "ref": "feature/task-10",
+    "sha": "cccccccccccccccccccccccccccccccccccccccc",
+    "repo": { "full_name": "FlitCatz/policy-kernel" }
+  },
+  "merged_by": null
+}
