@@ -7,7 +7,7 @@
 - Specification: `docs/specs/2026-09-04-policy-kernel-extraction-design.md`
 - Extraction mode: contract-first selective reimplementation
 - Copied production code: none
-- Distribution license: intentionally unset pending owner selection
+- Distribution license: dual-licensed under MIT or Apache-2.0.
 
 The legacy repository is evidence, not a source-tree template. The Rust files below
 are behavioral sources only. Their filesystem access, subprocess execution,
@@ -89,8 +89,8 @@ official repositories:
 | actions/upload-artifact | v4.6.2 | ea165f8d65b6e75b540449e92b4886f43607fa02 |
 
 Workflow syntax/expressions were also checked locally using actionlint 1.7.7.
-`deny.toml` ignores licenses of nonpublished private workspace crates because no
-distribution license was selected; external dependency licenses remain checked.
-Only private path dependencies may omit versions; registry wildcard dependencies
-remain prohibited. Duplicate transitive syn major versions are reported as a
-warning, not silently removed from the graph.
+Every workspace crate inherits the dual MIT or Apache-2.0 license declaration.
+`deny.toml` checks external dependency licenses and permits only private path
+dependencies to omit versions; registry wildcard dependencies remain prohibited.
+Duplicate transitive syn major versions are reported as a warning, not silently
+removed from the graph.
