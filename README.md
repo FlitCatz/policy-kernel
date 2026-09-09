@@ -44,7 +44,6 @@ Task 12.
 
 - [Architecture specification](docs/specs/2026-09-04-policy-kernel-extraction-design.md)
 - [Implementation plan](docs/plans/2026-09-04-policy-kernel-implementation.md)
-- [GSD Core transition and Task 12–14 execution plan](docs/plans/2026-09-08-gsd-transition-and-tasks-12-14.md) — planned; GSD activation precedes Task 12 implementation.
 - [Design review record](docs/reviews/2026-09-04-policy-kernel-design-antigravity-review.md)
 - [Plan review record](docs/reviews/2026-09-04-policy-kernel-plan-antigravity-review.md)
 
