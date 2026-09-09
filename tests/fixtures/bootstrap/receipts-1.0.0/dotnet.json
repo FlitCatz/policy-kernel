@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "installation": {
+    "profile": "dotnet",
+    "release": "1.0.0",
+    "components": {
+      "backend": "."
+    }
+  },
+  "project_profile_schema": 1,
+  "sensor_profile_schema": 2,
+  "evidence_schema": 1,
+  "files": {
+    ".editorconfig": "61078c11afe148dd34389865c6b5ac56a1e5a279bf6f2eebb8e39a47f845bedd",
+    ".policy/USAGE.md": "9a9b66453ce326cf0f1fc3aa72c689d7d9c2a51427feb99d8f8c4606b29bf23f",
+    ".policy/ci/policy-action-README.md": "e682c60b2470fac44d652f561307d8c4c720c55963e8a0d5c4208523012c53f4",
+    ".policy/ci/policy-action.yml": "5f29ac439e11d820299b7f29bd898fe8921e52a68a6d9b81ccab429301aa8c1b",
+    ".policy/ci/verification.yml": "4f68f7c32057944430ba50eacc2bc8d68f377271af19eac3fc25e887a3dd2f74",
+    ".policy/project-profile.json": "63c6934459c5e73a04a6b3fb1bcd739e4500cf881580b8253061a9d51bd2d859",
+    ".policy/sensor-profile.json": "c36bf52b3d0fa625c19685cac3d562c59767eb75c21777596e52f8915eb7e90e",
+    "Directory.Build.props": "ba0c2556aadc8f4fcb4ec35bb552a48bb664d8dbd7a539ca5cb44f3ded4b09c8",
+    "NuGet.Config": "87ab0a5b9a4a3ce42f575f50e7f4f8dd36f1061002ecc55fef28df826f63f37c",
+    "global.json": "ef8540b997ee42d85b48273ec683fdefeea6b0b2c3b97d8f7b7fa818d7b36c0d"
+  }
+}

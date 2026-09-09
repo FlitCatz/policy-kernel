@@ -375,7 +375,6 @@ fn trx(namespace: &str, bytes: &[u8]) -> Result<ParsedReport, ReportError> {
         roxmltree::ParsingOptions {
             allow_dtd: false,
             nodes_limit: 500_000,
-            ..Default::default()
         },
     )
     .map_err(|e| invalid(e.to_string()))?;

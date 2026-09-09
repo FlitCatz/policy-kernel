@@ -5,6 +5,17 @@ use std::collections::BTreeMap;
 pub(crate) const MANIFEST: &str = ".policy/bootstrap-manifest.json";
 pub(crate) const TRANSACTION: &str = ".policy-bootstrap-transaction";
 
+// Keep each release's bytes available for receipt validation and recovery.
+macro_rules! release_asset {
+    ($installation:expr, $path:literal) => {
+        match $installation.release.as_str() {
+            "1.0.0" => include_str!(concat!("../templates/1.0.0/", $path)),
+            "1.0.1" => include_str!(concat!("../templates/1.0.1/", $path)),
+            _ => return Err(invalid("unsupported template release")),
+        }
+    };
+}
+
 pub(crate) fn join(root: &str, file: &str) -> String {
     if root == "." {
         file.into()
@@ -14,17 +25,17 @@ pub(crate) fn join(root: &str, file: &str) -> String {
 }
 
 pub(crate) fn profile(installation: &Installation) -> Result<ProjectProfile> {
-    if installation.release != "1.0.0" {
+    if !matches!(installation.release.as_str(), "1.0.0" | "1.0.1") {
         return Err(invalid(
-            "unsupported template release; expected pinned 1.0.0",
+            "unsupported template release; expected pinned 1.0.0 or 1.0.1",
         ));
     }
     let source = match installation.profile.as_str() {
         "react-typescript" => {
-            include_str!("../templates/1.0.0/profiles/react-typescript/profile.json")
+            release_asset!(installation, "profiles/react-typescript/profile.json")
         }
-        "dotnet" => include_str!("../templates/1.0.0/profiles/dotnet/profile.json"),
-        "fullstack" => include_str!("../templates/1.0.0/profiles/fullstack/profile.json"),
+        "dotnet" => release_asset!(installation, "profiles/dotnet/profile.json"),
+        "fullstack" => release_asset!(installation, "profiles/fullstack/profile.json"),
         _ => return Err(invalid("unsupported profile")),
     };
     let mut profile =
@@ -119,23 +130,23 @@ pub(crate) fn render(installation: &Installation) -> Result<BTreeMap<String, Str
         ),
         (
             ".policy/USAGE.md".into(),
-            include_str!("../templates/1.0.0/USAGE.md").into(),
+            release_asset!(installation, "USAGE.md").into(),
         ),
         (
             ".policy/ci/verification.yml".into(),
-            include_str!("../templates/1.0.0/verification.yml").into(),
+            release_asset!(installation, "verification.yml").into(),
         ),
         (
             ".policy/ci/policy-action.yml".into(),
-            include_str!("../templates/1.0.0/action/action.yml").into(),
+            release_asset!(installation, "action/action.yml").into(),
         ),
         (
             ".policy/ci/policy-action-README.md".into(),
-            include_str!("../templates/1.0.0/action/README.md").into(),
+            release_asset!(installation, "action/README.md").into(),
         ),
         (
             ".editorconfig".into(),
-            include_str!("../templates/1.0.0/editorconfig").into(),
+            release_asset!(installation, "editorconfig").into(),
         ),
     ]);
     for component in &profile.components {
@@ -145,45 +156,39 @@ pub(crate) fn render(installation: &Installation) -> Result<BTreeMap<String, Str
                 (".npmrc", "engine-strict=true\naudit=true\n"),
                 (
                     "tsconfig.json",
-                    include_str!("../templates/1.0.0/tsconfig.json"),
+                    release_asset!(installation, "tsconfig.json"),
                 ),
                 (
                     "eslint.config.mjs",
-                    include_str!("../templates/1.0.0/eslint.config.mjs"),
+                    release_asset!(installation, "eslint.config.mjs"),
                 ),
                 (
                     "vite.config.ts",
-                    include_str!("../templates/1.0.0/vite.config.ts"),
+                    release_asset!(installation, "vite.config.ts"),
                 ),
                 (
                     "vitest.config.ts",
-                    include_str!("../templates/1.0.0/vitest.config.ts"),
+                    release_asset!(installation, "vitest.config.ts"),
                 ),
             ],
             "backend" => &[
-                (
-                    "global.json",
-                    include_str!("../templates/1.0.0/global.json"),
-                ),
+                ("global.json", release_asset!(installation, "global.json")),
                 (
                     "Directory.Build.props",
-                    include_str!("../templates/1.0.0/Directory.Build.props"),
+                    release_asset!(installation, "Directory.Build.props"),
                 ),
-                (
-                    "NuGet.Config",
-                    include_str!("../templates/1.0.0/NuGet.Config"),
-                ),
+                ("NuGet.Config", release_asset!(installation, "NuGet.Config")),
             ],
             "shared" => &[
                 (".node-version", "22.18.0\n"),
                 (".npmrc", "engine-strict=true\naudit=true\n"),
                 (
                     "vitest.contract.config.ts",
-                    include_str!("../templates/1.0.0/vitest.contract.config.ts"),
+                    release_asset!(installation, "vitest.contract.config.ts"),
                 ),
                 (
                     "playwright.config.ts",
-                    include_str!("../templates/1.0.0/playwright.config.ts"),
+                    release_asset!(installation, "playwright.config.ts"),
                 ),
             ],
             _ => return Err(invalid("unsupported component")),

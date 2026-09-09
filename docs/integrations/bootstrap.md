@@ -1,10 +1,10 @@
 # Bootstrap installer
 
 Task 13 adds the separate Rust `policy-bootstrap` workspace package under
-`bootstrap/`. Implementation and regression tests are present; compilation,
-tests and consuming-project execution are **not_run** under the existing user
-instruction. This is not a verified template release. Task 12 verification and
-Task 14 native positive/negative acceptance remain open.
+`bootstrap/`. Task 14 has compiled and run the Rust regressions and exercises this
+installer through consumer staging. Native and CI acceptance are tracked in the
+[Task 14 execution record](../reviews/2026-09-09-task-14-consuming-acceptance.md).
+This is not a verified template release.
 
 ## Inputs and commands
 
@@ -56,11 +56,12 @@ Receipt claims must match the known template inventory; editing the receipt
 cannot claim arbitrary files for replacement or uninstall.
 
 Release resources, including profiles and Task 10 action copies, live under
-`bootstrap/templates/1.0.0/`. After release, retain these bytes and introduce a
-new directory for changes. Recovery needs the old inventory. Version 1.0.0 has
-no prior released version to upgrade from; managed updates support changed
-component selection with before/after text. Future releases must retain old
-renderers and add cross-version regression cases.
+`bootstrap/templates/1.0.0/` and `bootstrap/templates/1.0.1/`. The 1.0.0 bytes
+remain unchanged for receipt validation and recovery. Version 1.0.1 pins
+Vite 7.3.6, Vitest 4.1.11 and Playwright 1.55.1. Select `--release 1.0.1`
+explicitly after reviewing and updating the consumer manifests/lockfiles.
+Cross-version tests cover upgrade, downgrade, repeated installation, uninstall
+and preservation of local edits, including frozen receipts from the old runner.
 
 The plan reports `add`, `unchanged`, `update`, `remove`, or `conflict` for each
 file. `before_digest`/`after_digest` bind bytes; `previous`/`content` expose old

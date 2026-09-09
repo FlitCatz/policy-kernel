@@ -103,6 +103,39 @@ fn advisory_mode_never_emits_authoritative_decision() {
 }
 
 #[test]
+fn consuming_project_simulation_failed_required_sensor_cannot_authorize() {
+    let mut value = raw("ready");
+    value["evidence"]["sensors"][0]["status"] = json!("failed");
+    value["evidence"]["sensors"][0]["passed"] = json!(0);
+    seal(&mut value);
+
+    assert_result(value, PreMergeStatus::Blocked, "PK-SENSOR-FAILED");
+}
+
+#[test]
+fn consuming_project_simulation_empty_required_report_cannot_authorize() {
+    let mut value = raw("ready");
+    for field in ["discovered", "executed", "passed"] {
+        value["evidence"]["sensors"][1][field] = json!(0);
+    }
+    seal(&mut value);
+
+    assert_result(value, PreMergeStatus::Blocked, "PK-ADEQ-NO-TESTS");
+}
+
+#[test]
+fn consuming_project_simulation_passed_local_sensor_cannot_authorize() {
+    let mut value = raw("ready");
+    for sensor in value["evidence"]["sensors"].as_array_mut().unwrap() {
+        assert_eq!(sensor["status"], json!("passed"));
+        sensor["trust"] = json!("local_untrusted");
+    }
+    seal(&mut value);
+
+    assert_result(value, PreMergeStatus::Inconclusive, "PK-PROV-UNTRUSTED");
+}
+
+#[test]
 fn every_binding_and_agent_authorization_is_checked() {
     for (pointer, replacement, code) in [
         (

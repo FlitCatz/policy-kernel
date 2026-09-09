@@ -1,10 +1,11 @@
 # Project verification
 
 Task 12 implementation includes the Rust `project-verification` crate, three
-versioned profile assets and report adapters. Runtime verification is `not_run`:
-the current user instruction prohibits tests and consumer execution. These assets
-are not a verified release. The separate [bootstrap installer](bootstrap.md) now
-installs versioned configuration; its runtime verification is also `not_run`.
+versioned profile assets and report adapters. Task 14 has run the Rust regression
+suites; native producer and consuming-project certification is tracked separately
+in the [acceptance execution record](../reviews/2026-09-09-task-14-consuming-acceptance.md).
+These assets are not a verified release. The separate [bootstrap installer](bootstrap.md)
+installs versioned configuration.
 
 ## Required result contract
 

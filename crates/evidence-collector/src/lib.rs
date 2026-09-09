@@ -296,12 +296,18 @@ pub fn collect(request: CollectionRequest) -> Result<CollectedExecution, Collect
         artifact_paths: fields.artifact_paths,
     };
     let execution = process::run(&command, &command.argv[1..], &environment, deadline);
-    let version_probe = if execution.status == ExecutionStatus::Passed {
+    // Completed negative checks still need tool identity; incomplete or damaged
+    // executions cannot justify a probe. Both processes retain one deadline.
+    let version_probe = if execution.status == ExecutionStatus::Passed
+        || (execution.status == ExecutionStatus::Failed
+            && execution.exit_code.is_some()
+            && execution.error.is_none())
+    {
         process::run(&command, &command.version_args, &environment, deadline)
     } else {
         ProcessRecord::empty(
             ExecutionStatus::Skipped,
-            Some("main execution did not pass".into()),
+            Some("main execution did not complete normally".into()),
         )
     };
     let (artifacts, artifact_errors) =

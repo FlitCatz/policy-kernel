@@ -69,11 +69,32 @@ pub struct ReportSpec {
     pub path: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Impact {
     Known { paths: Vec<String>, risk: Risk },
     Unknown,
+}
+
+impl<'de> Deserialize<'de> for Impact {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // Internally tagged unit variants ignore remaining map entries. A private
+        // zero-field struct variant makes `deny_unknown_fields` apply to `unknown`.
+        #[derive(Deserialize)]
+        #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+        enum StrictImpact {
+            Known { paths: Vec<String>, risk: Risk },
+            Unknown {},
+        }
+
+        Ok(match StrictImpact::deserialize(deserializer)? {
+            StrictImpact::Known { paths, risk } => Self::Known { paths, risk },
+            StrictImpact::Unknown {} => Self::Unknown,
+        })
+    }
 }
 
 /// Uses the same schema generator as the CLI's schema output, then semantic checks.
@@ -114,7 +135,7 @@ impl ProjectProfile {
     pub fn validate(&self) -> Result<(), Error> {
         if self.schema_version != 1
             || !identifier(&self.id)
-            || self.version != "1.0.0"
+            || !matches!(self.version.as_str(), "1.0.0" | "1.0.1")
             || self.components.is_empty()
             || self.sensors.is_empty()
         {

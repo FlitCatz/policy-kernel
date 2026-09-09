@@ -142,6 +142,17 @@ fn exact_output_limit_is_allowed_and_binary_logs_are_lossless() {
 }
 
 #[test]
+fn ordinary_nonzero_exit_still_records_tool_version_without_passing() {
+    let dir = Workspace::new();
+    let result = run(request(&dir, &["fail"]));
+    assert_eq!(result.record.execution.status, ExecutionStatus::Failed);
+    assert_eq!(result.record.execution.exit_code, Some(7));
+    assert_eq!(result.record.version_probe.status, ExecutionStatus::Passed);
+    assert_eq!(result.record.version_probe.stdout, b"fixture 1\n");
+    assert_eq!(result.evidence.status, ExecutionStatus::Failed);
+}
+
+#[test]
 fn nonzero_spawn_and_probe_failures_never_pass() {
     let dir = Workspace::new();
     let result = run(request(&dir, &["fail"]));
@@ -152,6 +163,7 @@ fn nonzero_spawn_and_probe_failures_never_pass() {
     let result = run(value);
     assert_eq!(result.evidence.status, ExecutionStatus::Failed);
     assert!(result.record.execution.error.is_some());
+    assert_eq!(result.record.version_probe.status, ExecutionStatus::Skipped);
     let mut value = request(&dir, &["ok"]);
     value["version_args"] = json!(["fail"]);
     assert_eq!(run(value).evidence.status, ExecutionStatus::Failed);
@@ -319,12 +331,14 @@ fn stderr_and_probe_output_limits_cannot_pass() {
     let result = run(value);
     assert_eq!(result.evidence.status, ExecutionStatus::Truncated);
     assert_eq!(result.record.execution.stderr.len(), 64);
+    assert_eq!(result.record.version_probe.status, ExecutionStatus::Skipped);
     let mut value = request(&dir, &["ok"]);
     value["version_args"] = json!(["bytes", "4096"]);
     assert_eq!(run(value).evidence.status, ExecutionStatus::Truncated);
     let result = run(request(&dir, &["signal"]));
     assert_eq!(result.evidence.status, ExecutionStatus::Failed);
     assert_eq!(result.record.execution.exit_code, None);
+    assert_eq!(result.record.version_probe.status, ExecutionStatus::Skipped);
 }
 
 #[test]

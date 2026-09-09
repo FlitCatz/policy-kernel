@@ -1,5 +1,5 @@
-use project_verification::reports::{ReportFormat, TestOutcome, parse_report};
-use serde_json::{Value, json};
+use project_verification::reports::{parse_report, ReportFormat, TestOutcome};
+use serde_json::{json, Value};
 
 const VITEST: &[u8] = include_bytes!("../../../tests/fixtures/project-reports/vitest.json");
 const PLAYWRIGHT: &[u8] = include_bytes!("../../../tests/fixtures/project-reports/playwright.json");
@@ -117,12 +117,10 @@ fn playwright_retries_expected_failures_global_errors_and_skips_are_not_success(
     value["errors"] = json!([{"message":"worker crashed"}]);
     let report = parse_json(ReportFormat::PlaywrightJson, &value).unwrap();
     assert!(!report.successful);
-    assert!(
-        report
-            .messages
-            .iter()
-            .any(|message| message.contains("worker crashed"))
-    );
+    assert!(report
+        .messages
+        .iter()
+        .any(|message| message.contains("worker crashed")));
     let mut value = original.clone();
     value["suites"][0]["specs"][0]["tests"][0]["results"][0]["retry"] = json!(1);
     assert!(

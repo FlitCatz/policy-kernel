@@ -1,0 +1,19 @@
+[package]
+name = "policy-acceptance"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+policy-bootstrap = { path = "../bootstrap" }
+project-verification = { path = "../crates/project-verification" }
+policy-contracts = { path = "../crates/policy-contracts" }
+policy-core = { path = "../crates/policy-core" }
+serde.workspace = true
+serde_json.workspace = true
+clap.workspace = true
+roxmltree = "=0.20.0"
+
+[dev-dependencies]
+tempfile = "=3.27.0"

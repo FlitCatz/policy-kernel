@@ -7,13 +7,17 @@ requirements in the collector. Empty or skipped-only reports never succeed.
 
 | Format | Supported producer | Parser version |
 | --- | --- | --- |
-| `vitest_json` | Vitest 3.2.4 JSON reporter | `vitest-json-3.2.4/v1` |
-| `playwright_json` | Playwright 1.55.0 JSON reporter | `playwright-json-1.55.0/v1` |
+| `vitest_json` | Vitest 3.2.4 / 4.1.11 JSON reporter | `vitest-json-3.2.4/v1` |
+| `playwright_json` | Playwright 1.55.0 / 1.55.1 JSON reporter | `playwright-json-1.55.0/v1` |
 | `trx` | VSTest 17.14.1 TRX logger, flat unit results | `vstest-trx-17.14.1/v1` |
 
 Producer versions are compatibility pins, not claims that untrusted input proves
 which executable produced it. Fixtures in `tests/fixtures/project-reports/` are
 hand-authored minimal examples of the supported fields, not captured executions.
+Parser identifiers retain their original names because the normalized field
+contract is unchanged. Actual producer versions remain separately bound by the
+installed profile and checked version probes. Task 14 retains native execution
+reports for the 1.0.1 producers; see the acceptance execution record.
 Unrelated reporter metadata is ignored. Required summary counters, run timestamps,
 outcomes, and identity fields must be present and well typed. Summary counters must
 agree with individual tests; duplicate normalized identities are rejected. Input

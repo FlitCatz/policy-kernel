@@ -14,6 +14,90 @@ fn request(target: &Path, profile: &str) -> Request {
     }
 }
 
+// Catches losing receipt ownership across releases or retaining vulnerable pins.
+#[test]
+fn security_release_upgrades_old_receipts_and_uninstalls_cleanly() {
+    for profile in ["react-typescript", "dotnet", "fullstack"] {
+        let temp = tempfile::tempdir().unwrap();
+        let old = request(temp.path(), profile);
+        apply(&plan(old.clone()).unwrap()).unwrap();
+        let frozen_receipt = match profile {
+            "react-typescript" => include_bytes!(
+                "../../tests/fixtures/bootstrap/receipts-1.0.0/react-typescript.json"
+            )
+            .as_slice(),
+            "dotnet" => include_bytes!("../../tests/fixtures/bootstrap/receipts-1.0.0/dotnet.json")
+                .as_slice(),
+            _ => include_bytes!("../../tests/fixtures/bootstrap/receipts-1.0.0/fullstack.json")
+                .as_slice(),
+        };
+        let receipt = temp.path().join(".policy/bootstrap-manifest.json");
+        assert_eq!(fs::read(&receipt).unwrap(), frozen_receipt);
+        fs::write(&receipt, frozen_receipt).unwrap();
+        let mut updated = old.clone();
+        updated.installation.release = "1.0.1".into();
+        let upgrade = plan(updated.clone()).unwrap();
+        assert!(upgrade.conflicts.is_empty(), "{:?}", upgrade.conflicts);
+        assert!(upgrade.files.iter().any(|f| f.action == Action::Update));
+        apply(&upgrade).unwrap();
+        assert!(plan(updated.clone())
+            .unwrap()
+            .files
+            .iter()
+            .all(|f| f.action == Action::Unchanged));
+        // Old inventory must still be usable, including a downgrade and re-upgrade.
+        apply(&plan(old).unwrap()).unwrap();
+        apply(&plan(updated.clone()).unwrap()).unwrap();
+        updated.operation = Operation::Uninstall;
+        apply(&plan(updated).unwrap()).unwrap();
+        assert!(!temp.path().join(".policy/bootstrap-manifest.json").exists());
+    }
+}
+
+#[test]
+fn cross_release_upgrade_preserves_locally_edited_managed_files() {
+    let temp = tempfile::tempdir().unwrap();
+    let mut req = request(temp.path(), "react-typescript");
+    apply(&plan(req.clone()).unwrap()).unwrap();
+    let receipt = fs::read(temp.path().join(".policy/bootstrap-manifest.json")).unwrap();
+    fs::write(temp.path().join("vitest.config.ts"), "consumer edit").unwrap();
+    req.installation.release = "1.0.1".into();
+    let upgrade = plan(req).unwrap();
+    assert!(!upgrade.conflicts.is_empty());
+    assert!(apply(&upgrade).is_err());
+    assert_eq!(
+        fs::read_to_string(temp.path().join("vitest.config.ts")).unwrap(),
+        "consumer edit"
+    );
+    assert_eq!(
+        fs::read(temp.path().join(".policy/bootstrap-manifest.json")).unwrap(),
+        receipt
+    );
+}
+
+#[test]
+fn security_release_requires_updated_consumer_dependencies() {
+    let temp = tempfile::tempdir().unwrap();
+    let mut req = request(temp.path(), "react-typescript");
+    req.installation.release = "1.0.1".into();
+    fs::write(
+        temp.path().join("package.json"),
+        r#"{"devDependencies":{"vite":"7.1.3","vitest":"3.2.4"}}"#,
+    )
+    .unwrap();
+    let outdated = plan(req.clone()).unwrap();
+    assert!(!outdated.conflicts.is_empty());
+    assert!(apply(&outdated).is_err());
+    fs::write(
+        temp.path().join("package.json"),
+        r#"{"devDependencies":{"vite":"7.3.6","vitest":"4.1.11"}}"#,
+    )
+    .unwrap();
+    let updated = plan(req).unwrap();
+    assert!(updated.conflicts.is_empty(), "{:?}", updated.conflicts);
+    apply(&updated).unwrap();
+}
+
 // Catches incorrect composition and accidental application scaffolding.
 #[test]
 fn empty_profiles_install_configuration_and_repeat_without_writes() {
