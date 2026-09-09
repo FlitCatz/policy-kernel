@@ -8,6 +8,7 @@ members = [
     "crates/evidence-collector",
     "crates/github-adapter",
     "crates/project-verification",
+    "bootstrap",
     "xtask",
 ]
 

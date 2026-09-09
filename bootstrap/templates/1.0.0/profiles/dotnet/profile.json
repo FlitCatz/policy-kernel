@@ -1,0 +1,294 @@
+{
+  "schema_version": 1,
+  "id": "dotnet",
+  "version": "1.0.0",
+  "components": [
+    {
+      "id": "backend",
+      "root": "."
+    }
+  ],
+  "sensors": [
+    {
+      "definition": {
+        "id": "backend:build",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "build",
+        "App.csproj",
+        "--no-restore",
+        "--configuration",
+        "Release",
+        "-warnaserror"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "9.0.304",
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props"
+      ],
+      "pins": [
+        {
+          "path": "global.json",
+          "pointer": "/sdk/version",
+          "expected": "9.0.304"
+        }
+      ],
+      "timeout_ms": 300000,
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ]
+    },
+    {
+      "definition": {
+        "id": "backend:format",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "format",
+        "App.csproj",
+        "--verify-no-changes",
+        "--no-restore"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "9.0.304",
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props"
+      ],
+      "pins": [
+        {
+          "path": "global.json",
+          "pointer": "/sdk/version",
+          "expected": "9.0.304"
+        }
+      ],
+      "timeout_ms": 300000,
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ]
+    },
+    {
+      "definition": {
+        "id": "backend:dependencies",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "restore",
+        "App.csproj",
+        "--locked-mode",
+        "--force",
+        "--no-http-cache",
+        "-p:NuGetAudit=true",
+        "-p:NuGetAuditMode=all",
+        "-p:NuGetAuditLevel=low",
+        "-p:WarningsAsErrors=NU1900%3BNU1901%3BNU1902%3BNU1903%3BNU1904%3BNU1905",
+        "--configfile",
+        "NuGet.Config",
+        "-p:NoWarn=",
+        "-p:WarningsNotAsErrors="
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "9.0.304",
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props"
+      ],
+      "pins": [
+        {
+          "path": "global.json",
+          "pointer": "/sdk/version",
+          "expected": "9.0.304"
+        }
+      ],
+      "timeout_ms": 300000,
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ]
+    },
+    {
+      "definition": {
+        "id": "backend:unit",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "test",
+        "Tests/Unit/Unit.Tests.csproj",
+        "--no-restore",
+        "--configuration",
+        "Release",
+        "--logger",
+        "trx;LogFileName=unit.trx",
+        "--results-directory",
+        ".policy-reports/unit"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "9.0.304",
+      "report": {
+        "format": "trx",
+        "path": ".policy-reports/unit/unit.trx"
+      },
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props",
+        "Tests/Unit/Unit.Tests.csproj",
+        "Tests/Unit/packages.lock.json"
+      ],
+      "pins": [
+        {
+          "path": "global.json",
+          "pointer": "/sdk/version",
+          "expected": "9.0.304"
+        },
+        {
+          "path": "Tests/Unit/packages.lock.json",
+          "pointer": "/dependencies/net9.0/Microsoft.NET.Test.Sdk/resolved",
+          "expected": "17.14.1"
+        }
+      ],
+      "timeout_ms": 300000,
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ]
+    },
+    {
+      "definition": {
+        "id": "backend:integration",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "test",
+        "Tests/Integration/Integration.Tests.csproj",
+        "--no-restore",
+        "--configuration",
+        "Release",
+        "--logger",
+        "trx;LogFileName=integration.trx",
+        "--results-directory",
+        ".policy-reports/integration"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "9.0.304",
+      "report": {
+        "format": "trx",
+        "path": ".policy-reports/integration/integration.trx"
+      },
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props",
+        "Tests/Integration/Integration.Tests.csproj",
+        "Tests/Integration/packages.lock.json"
+      ],
+      "pins": [
+        {
+          "path": "global.json",
+          "pointer": "/sdk/version",
+          "expected": "9.0.304"
+        },
+        {
+          "path": "Tests/Integration/packages.lock.json",
+          "pointer": "/dependencies/net9.0/Microsoft.NET.Test.Sdk/resolved",
+          "expected": "17.14.1"
+        }
+      ],
+      "timeout_ms": 300000,
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ]
+    }
+  ],
+  "adequacy": {
+    "acceptance_criterion_ids": [],
+    "changed_behavior_ids": [],
+    "negative_case_ids": []
+  }
+}
