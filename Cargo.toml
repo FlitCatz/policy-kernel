@@ -7,6 +7,7 @@ members = [
     "crates/policy-ci",
     "crates/evidence-collector",
     "crates/github-adapter",
+    "crates/project-verification",
     "xtask",
 ]
 

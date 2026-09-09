@@ -85,10 +85,13 @@ fn validate_policy_and_bindings(input: &PreMergeEvaluationInput, gates: &mut Gat
         manifest.schema_version,
     ];
     if let Some(context) = &input.context {
-        versions.extend([
-            context.schema_version,
-            context.sensor_profile.schema_version,
-        ]);
+        versions.push(context.schema_version);
+        if context.sensor_profile.validate_version().is_err() {
+            gates.unknown(
+                "PK-PRE-SCHEMA-UNSUPPORTED",
+                "sensor profile version or result requirements are unsupported",
+            );
+        }
         if let Some(ready) = &context.agent_ready {
             versions.push(ready.schema_version);
         }

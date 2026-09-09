@@ -1,0 +1,1 @@
+{"errors":[],"stats":{"startTime":"2025-09-01T00:00:00Z","expected":1,"unexpected":0,"flaky":0,"skipped":0},"suites":[{"specs":[{"id":"login-spec","tests":[{"projectId":"chromium","status":"expected","expectedStatus":"passed","annotations":[],"results":[{"status":"passed","retry":0,"startTime":"2025-09-01T00:00:01Z","errors":[]}]}]}]}]}

@@ -675,3 +675,89 @@ fn typed_context_and_agent_observation_reject_unsupported_or_unknown_wire_fields
         value
     );
 }
+
+#[test]
+fn policy_bound_v2_test_counts_are_enforced_before_authoritative_ready() {
+    let mut value = raw("ready");
+    value["context"]["sensor_profile"]["schema_version"] = json!(2);
+    for definition in value["context"]["sensor_profile"]["sensors"]
+        .as_array_mut()
+        .unwrap()
+    {
+        definition["result_requirement"] = json!("process");
+    }
+    seal_policy(&mut value);
+    assert_eq!(
+        evaluate_pre_merge(&input(value.clone())).status,
+        PreMergeStatus::ReadyToMerge
+    );
+    let sensor_id = value["evidence"]["sensors"][0]["sensor_id"].clone();
+    let definition = value["context"]["sensor_profile"]["sensors"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|definition| definition["id"] == sensor_id)
+        .unwrap();
+    definition["result_requirement"] = json!("test_counts");
+    for field in ["discovered", "executed", "passed"] {
+        value["evidence"]["sensors"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove(field);
+    }
+    seal_policy(&mut value);
+    seal(&mut value);
+    assert_result(
+        value.clone(),
+        PreMergeStatus::Inconclusive,
+        "PK-SENSOR-RESULT-INCOMPLETE",
+    );
+    for field in ["discovered", "executed", "passed"] {
+        value["evidence"]["sensors"][0][field] = json!(1);
+    }
+    seal(&mut value);
+    let decision = evaluate_pre_merge(&input(value));
+    assert_eq!(
+        decision.status,
+        PreMergeStatus::ReadyToMerge,
+        "{:?}",
+        decision.reasons
+    );
+}
+
+#[test]
+fn policy_bound_configuration_digest_survives_transport_resealing() {
+    let mut value = raw("ready");
+    value["context"]["sensor_profile"]["schema_version"] = json!(2);
+    let evidence = value["evidence"]["sensors"][0].clone();
+    for definition in value["context"]["sensor_profile"]["sensors"]
+        .as_array_mut()
+        .unwrap()
+    {
+        definition["result_requirement"] = json!("process");
+        if definition["id"] == evidence["sensor_id"] {
+            definition["result_binding"] = json!({
+                "configuration_digest": evidence["configuration_digest"],
+                "parser_version": evidence["parser_version"],
+                "resolved_command": evidence["resolved_command"]
+            });
+        }
+    }
+    seal_policy(&mut value);
+    assert_eq!(
+        evaluate_pre_merge(&input(value.clone())).status,
+        PreMergeStatus::ReadyToMerge
+    );
+    let replacement = if evidence["configuration_digest"] == json!("f".repeat(64)) {
+        "e"
+    } else {
+        "f"
+    };
+    value["evidence"]["sensors"][0]["configuration_digest"] = json!(replacement.repeat(64));
+    seal(&mut value);
+    assert_result(
+        value,
+        PreMergeStatus::Inconclusive,
+        "PK-SENSOR-RESULT-BINDING",
+    );
+}

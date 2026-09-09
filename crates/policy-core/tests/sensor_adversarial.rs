@@ -27,6 +27,8 @@ fn profile() -> SensorProfile {
             required_when: vec![],
             not_applicable_when: vec![condition("docs-only", "docs/**")],
             accepted_exit_codes: vec![0],
+            result_requirement: None,
+            result_binding: None,
         }],
         adequacy: TestAdequacyPolicy {
             acceptance_criterion_ids: vec![],

@@ -35,10 +35,13 @@ Generate the five checked-in contract schemas from the workspace with
 `cargo run -p xtask -- schema`. The built `xtask schema` command resolves the
 workspace and output directory independently of its caller's working directory;
 callers outside the workspace can launch it with Cargo's `--manifest-path`.
-The current `sensor-profile` schema describes the existing `SensorProfile`
-contract only. It is not the complete project profile execution protocol;
-working-directory, tool-version and report-binding requirements remain part of
-Task 12.
+The `sensor-profile` schema describes kernel result requirements and bindings.
+The separate Rust `project-verification` crate adds project-profile validation,
+read-only preparation, bounded execution and Vitest/Playwright/TRX normalization.
+Its three profile assets and runtime verification remain unverified under the
+current test-execution restriction. See [project verification](docs/integrations/project-verification.md)
+for compatibility and [the execution record](docs/reviews/2026-09-09-task-12-project-profiles.md)
+for remaining work and unexecuted validation.
 
 ## Documents
 

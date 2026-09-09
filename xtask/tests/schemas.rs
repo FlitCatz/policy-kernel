@@ -87,7 +87,7 @@ fn checked_in_schemas_are_deterministic_and_enforce_contract_validation() {
         );
 
         let mut wrong_version = instance.clone();
-        wrong_version["schema_version"] = json!(2);
+        wrong_version["schema_version"] = json!(99);
         assert!(
             !validator.is_valid(&wrong_version),
             "{name} accepted an unsupported schema version"
@@ -257,4 +257,32 @@ fn unique_temp_dir() -> PathBuf {
         "policy-kernel-xtask-{}-{nanos}",
         std::process::id()
     ))
+}
+
+#[test]
+fn sensor_profile_schema_matches_versioned_result_requirements() {
+    let schema: Value =
+        serde_json::from_str(include_str!("../../schemas/sensor-profile.schema.json")).unwrap();
+    let validator = jsonschema::draft202012::options().build(&schema).unwrap();
+    let legacy: Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/sensors/profile.json")).unwrap();
+    assert!(validator.is_valid(&legacy));
+    let mut v2 = legacy.clone();
+    v2["schema_version"] = json!(2);
+    assert!(!validator.is_valid(&v2));
+    for definition in v2["sensors"].as_array_mut().unwrap() {
+        definition["result_requirement"] = json!("test_counts");
+    }
+    assert!(validator.is_valid(&v2));
+    for requirement in [json!("process"), json!("test_counts")] {
+        v2["sensors"][0]["result_requirement"] = requirement.clone();
+        assert!(validator.is_valid(&v2));
+        let mut wrong_v1 = legacy.clone();
+        wrong_v1["sensors"][0]["result_requirement"] = requirement;
+        assert!(!validator.is_valid(&wrong_v1));
+    }
+    for invalid in [Value::Null, json!("unknown")] {
+        v2["sensors"][0]["result_requirement"] = invalid;
+        assert!(!validator.is_valid(&v2));
+    }
 }

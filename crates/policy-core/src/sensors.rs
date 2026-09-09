@@ -1,7 +1,7 @@
 use globset::Glob;
 use policy_contracts::{
-    Reason, Risk, SensorCondition, SensorEvidence, SensorId, SensorProfile, SensorStatus,
-    TestAdequacyEvidence, TestAdequacyPolicy,
+    Reason, Risk, SensorCondition, SensorEvidence, SensorId, SensorProfile,
+    SensorResultRequirement, SensorStatus, TestAdequacyEvidence, TestAdequacyPolicy,
 };
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -26,6 +26,8 @@ impl SensorEvaluation {
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum SensorResolutionError {
+    #[error("{0}")]
+    InvalidVersion(&'static str),
     #[error("changed path contains a parent-directory segment: {0}")]
     ParentTraversal(String),
     #[error("sensor profile contains duplicate sensor ID: {0}")]
@@ -151,6 +153,35 @@ fn evaluate_sensor_evidence_inner(
         }
         match item.status {
             SensorStatus::Passed => {
+                if definition
+                    .unwrap()
+                    .result_binding
+                    .as_ref()
+                    .is_some_and(|binding| {
+                        item.configuration_digest.as_ref() != Some(&binding.configuration_digest)
+                            || item.parser_version.as_deref()
+                                != Some(binding.parser_version.as_str())
+                            || item.resolved_command != binding.resolved_command
+                    })
+                {
+                    insert_reason(
+                        &mut reasons,
+                        "PK-SENSOR-RESULT-BINDING",
+                        "sensor result does not match its policy-bound configuration, parser, and command",
+                    );
+                }
+                if definition.unwrap().result_requirement
+                    == Some(SensorResultRequirement::TestCounts)
+                    && (item.discovered.is_none()
+                        || item.executed.is_none()
+                        || item.passed.is_none())
+                {
+                    insert_reason(
+                        &mut reasons,
+                        "PK-SENSOR-RESULT-INCOMPLETE",
+                        "sensor profile requires discovered, executed, and passed test counts",
+                    );
+                }
                 validate_typed_result(item, &mut reasons);
                 if let Some(exit_code) = item.exit_code {
                     if !definition.unwrap().accepted_exit_codes.contains(&exit_code) {
@@ -241,6 +272,9 @@ fn evaluate_sensor_evidence_inner(
 }
 
 fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError> {
+    profile
+        .validate_version()
+        .map_err(SensorResolutionError::InvalidVersion)?;
     let mut sensors = BTreeSet::new();
     for sensor in &profile.sensors {
         if !sensors.insert(sensor.id.as_str()) {

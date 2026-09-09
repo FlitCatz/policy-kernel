@@ -19,6 +19,8 @@ fn profile() -> SensorProfile {
                 required_when: vec![],
                 not_applicable_when: vec![],
                 accepted_exit_codes: vec![0],
+                result_requirement: None,
+                result_binding: None,
             },
             SensorDefinition {
                 id: id("api-e2e"),
@@ -30,6 +32,8 @@ fn profile() -> SensorProfile {
                 }],
                 not_applicable_when: vec![],
                 accepted_exit_codes: vec![0],
+                result_requirement: None,
+                result_binding: None,
             },
             SensorDefinition {
                 id: id("docs"),
@@ -41,6 +45,8 @@ fn profile() -> SensorProfile {
                 }],
                 not_applicable_when: vec![],
                 accepted_exit_codes: vec![0],
+                result_requirement: None,
+                result_binding: None,
             },
         ],
         adequacy: TestAdequacyPolicy {
@@ -326,4 +332,132 @@ fn duplicate_composed_sensor_ids_cannot_bypass_context_free_validation() {
     );
     assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
     assert!(result.has_reason("PK-SENSOR-PROFILE-INVALID"));
+}
+
+#[test]
+fn v2_test_sensor_requires_complete_nonzero_counts_despite_aggregate_success() {
+    let mut profile = profile();
+    profile.schema_version = 2;
+    for definition in &mut profile.sensors {
+        definition.result_requirement = Some(policy_contracts::SensorResultRequirement::TestCounts);
+    }
+    // Exercise every incomplete combination, not just entirely absent counts.
+    for mask in 0..7 {
+        let mut item = sensor("compile", SensorStatus::Passed);
+        item.discovered = (mask & 1 != 0).then_some(1);
+        item.executed = (mask & 2 != 0).then_some(1);
+        item.passed = (mask & 4 != 0).then_some(1);
+        let result =
+            evaluate_sensor_evidence(&profile, &[id("compile")], &[item], Some(&adequate()));
+        assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+        assert!(result.has_reason("PK-SENSOR-RESULT-INCOMPLETE"));
+    }
+    for (counts, expected, reason) in [
+        (
+            (0, 0, 0),
+            SensorEvaluationStatus::Blocked,
+            Some("PK-ADEQ-NO-TESTS"),
+        ),
+        (
+            (2, 1, 1),
+            SensorEvaluationStatus::Blocked,
+            Some("PK-SENSOR-RESULT-COUNT-MISMATCH"),
+        ),
+        ((1, 1, 1), SensorEvaluationStatus::Passed, None),
+    ] {
+        let mut item = sensor("compile", SensorStatus::Passed);
+        item.discovered = Some(counts.0);
+        item.executed = Some(counts.1);
+        item.passed = Some(counts.2);
+        let result =
+            evaluate_sensor_evidence(&profile, &[id("compile")], &[item], Some(&adequate()));
+        assert_eq!(result.status, expected);
+        if let Some(reason) = reason {
+            assert!(result.has_reason(reason));
+        }
+    }
+    profile.sensors[0].result_requirement =
+        Some(policy_contracts::SensorResultRequirement::Process);
+    assert_eq!(
+        evaluate_sensor_evidence(
+            &profile,
+            &[id("compile")],
+            &[sensor("compile", SensorStatus::Passed)],
+            Some(&adequate())
+        )
+        .status,
+        SensorEvaluationStatus::Passed
+    );
+}
+
+#[test]
+fn directly_constructed_invalid_profile_versions_fail_both_evaluation_paths() {
+    for (version, requirement) in [
+        (99, None),
+        (2, None),
+        (1, Some(policy_contracts::SensorResultRequirement::Process)),
+    ] {
+        let mut profile = profile();
+        profile.schema_version = version;
+        profile.sensors[0].result_requirement = requirement;
+        assert!(resolve_required_sensors(&profile, &["src/api.rs"], Risk::High).is_err());
+        let result = evaluate_sensor_evidence(
+            &profile,
+            &[id("compile")],
+            &[sensor("compile", SensorStatus::Passed)],
+            Some(&adequate()),
+        );
+        assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+        assert!(result.has_reason("PK-SENSOR-PROFILE-INVALID"));
+    }
+}
+
+#[test]
+fn policy_bound_result_provenance_cannot_be_substituted() {
+    let mut profile = profile();
+    profile.schema_version = 2;
+    for definition in &mut profile.sensors {
+        definition.result_requirement = Some(policy_contracts::SensorResultRequirement::Process);
+    }
+    profile.sensors[0].result_binding = Some(policy_contracts::SensorResultBinding {
+        configuration_digest: digest(),
+        parser_version: "1".into(),
+        resolved_command: vec!["sensor".into()],
+    });
+    let evaluate =
+        |item| evaluate_sensor_evidence(&profile, &[id("compile")], &[item], Some(&adequate()));
+    assert_eq!(
+        evaluate(sensor("compile", SensorStatus::Passed)).status,
+        SensorEvaluationStatus::Passed
+    );
+    for field in 0..3 {
+        let mut item = sensor("compile", SensorStatus::Passed);
+        match field {
+            0 => item.configuration_digest = Some(Sha256Digest::parse("c".repeat(64)).unwrap()),
+            1 => item.parser_version = Some("2".into()),
+            _ => item.resolved_command.push("--changed".into()),
+        }
+        let result = evaluate(item);
+        assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+        assert!(result.has_reason("PK-SENSOR-RESULT-BINDING"));
+    }
+    for field in 0..5 {
+        let mut invalid = profile.clone();
+        let binding = invalid.sensors[0].result_binding.as_mut().unwrap();
+        match field {
+            0 => binding.parser_version = " ".into(),
+            1 => binding.parser_version = "parser\0".into(),
+            2 => binding.resolved_command.clear(),
+            3 => binding.resolved_command[0] = " ".into(),
+            _ => binding.resolved_command.push("arg\0".into()),
+        }
+        assert!(resolve_required_sensors(&invalid, &[], Risk::Low).is_err());
+        let result = evaluate_sensor_evidence(
+            &invalid,
+            &[id("compile")],
+            &[sensor("compile", SensorStatus::Passed)],
+            Some(&adequate()),
+        );
+        assert!(result.has_reason("PK-SENSOR-PROFILE-INVALID"));
+    }
 }

@@ -66,6 +66,12 @@
             "$ref": "#/$defs/SensorCondition"
           },
           "type": "array"
+        },
+        "result_binding": {
+          "$ref": "#/$defs/SensorResultBinding"
+        },
+        "result_requirement": {
+          "$ref": "#/$defs/SensorResultRequirement"
         }
       },
       "required": [
@@ -77,6 +83,40 @@
     },
     "SensorId": {
       "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+      "type": "string"
+    },
+    "SensorResultBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "configuration_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "parser_version": {
+          "type": "string"
+        },
+        "resolved_command": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "configuration_digest",
+        "parser_version",
+        "resolved_command"
+      ],
+      "type": "object"
+    },
+    "SensorResultRequirement": {
+      "enum": [
+        "process",
+        "test_counts"
+      ],
+      "type": "string"
+    },
+    "Sha256Digest": {
+      "pattern": "^[0-9a-f]{64}$",
       "type": "string"
     },
     "TestAdequacyPolicy": {
@@ -111,12 +151,33 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "else": {
+    "properties": {
+      "sensors": {
+        "items": {
+          "required": [
+            "result_requirement"
+          ]
+        }
+      }
+    }
+  },
+  "if": {
+    "properties": {
+      "schema_version": {
+        "const": 1
+      }
+    }
+  },
   "properties": {
     "adequacy": {
       "$ref": "#/$defs/TestAdequacyPolicy"
     },
     "schema_version": {
-      "const": 1,
+      "enum": [
+        1,
+        2
+      ],
       "type": "integer"
     },
     "sensors": {
@@ -131,6 +192,28 @@
     "sensors",
     "adequacy"
   ],
+  "then": {
+    "properties": {
+      "sensors": {
+        "items": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "result_requirement"
+                ]
+              },
+              {
+                "required": [
+                  "result_binding"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
   "title": "SensorProfile",
   "type": "object"
 }
