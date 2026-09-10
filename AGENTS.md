@@ -1,3 +1,19 @@
-# 구현 언어 정책
+# Implementation language policy
 
-이 저장소의 실행 로직, CLI, 검증 도구, 보고서 변환기, bootstrap 설치기와 테스트는 Rust로 구현한다. Python 스크립트는 추가하지 않는다. Shell/YAML은 Rust 도구 호출과 CI 설정에 필요한 최소한으로 제한한다.
+Implement this repository's execution logic, CLIs, verification tools, report
+converters, bootstrap installer, and tests in Rust. Do not add Python scripts.
+Limit shell and YAML to the minimum needed to invoke Rust tools and configure CI.
+
+# Documentation maintenance
+
+- Update `README.md` and `README_KO.md` together when CLI behavior, profiles,
+  bootstrap, verification procedures, or current status changes.
+- Do not claim that production promotion, an authoritative CI decision, or a
+  protected-branch merge is complete based only on local tests or fixture
+  verification. Ground current-status claims in the relevant execution record and
+  trust/promotion documentation.
+- Preserve historical execution records as statements of their contemporaneous
+  facts. Describe later status separately in a README or new status document;
+  do not rewrite historical records to match the current state.
+- Check documented commands, arguments, and exit codes against the implementation.
+  After documentation changes, verify Markdown relative links and `git diff --check`.
