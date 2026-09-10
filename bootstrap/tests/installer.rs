@@ -14,6 +14,62 @@ fn request(target: &Path, profile: &str) -> Request {
     }
 }
 
+#[test]
+fn shared_audit_release_preserves_pins_and_round_trips_previous_receipts() {
+    for profile_id in ["react-typescript", "dotnet", "fullstack"] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut req = request(temp.path(), profile_id);
+        req.installation.release = "1.0.1".into();
+        apply(&plan(req.clone()).unwrap()).unwrap();
+        let receipt_path = temp.path().join(".policy/bootstrap-manifest.json");
+        let old_receipt = fs::read(&receipt_path).unwrap();
+        let profile_path = temp.path().join(".policy/project-profile.json");
+        let old_profile: serde_json::Value =
+            serde_json::from_slice(&fs::read(&profile_path).unwrap()).unwrap();
+        req.installation.release = "1.0.2".into();
+        let upgrade = plan(req.clone()).unwrap();
+        assert!(upgrade.conflicts.is_empty());
+        apply(&upgrade).unwrap();
+        let mut new_profile: serde_json::Value =
+            serde_json::from_slice(&fs::read(&profile_path).unwrap()).unwrap();
+        assert_eq!(new_profile["version"], "1.0.2");
+        new_profile["version"] = "1.0.1".into();
+        if profile_id == "fullstack" {
+            let sensors = new_profile["sensors"].as_array_mut().unwrap();
+            let index = sensors
+                .iter()
+                .position(|s| s["definition"]["id"] == "shared:dependencies")
+                .unwrap();
+            let mut shared = sensors.remove(index);
+            assert_eq!(shared["component"], "shared");
+            shared["component"] = "frontend".into();
+            shared["definition"]["id"] = "frontend:dependencies".into();
+            let frontend = sensors
+                .iter()
+                .find(|s| s["definition"]["id"] == "frontend:dependencies")
+                .unwrap();
+            assert_eq!(&shared, frontend);
+        }
+        assert_eq!(
+            new_profile, old_profile,
+            "existing sensor pins and commands must remain frozen"
+        );
+        assert!(plan(req.clone())
+            .unwrap()
+            .files
+            .iter()
+            .all(|f| f.action == Action::Unchanged));
+        req.installation.release = "1.0.1".into();
+        apply(&plan(req.clone()).unwrap()).unwrap();
+        assert_eq!(fs::read(&receipt_path).unwrap(), old_receipt);
+        req.installation.release = "1.0.2".into();
+        apply(&plan(req.clone()).unwrap()).unwrap();
+        req.operation = Operation::Uninstall;
+        apply(&plan(req).unwrap()).unwrap();
+        assert!(!receipt_path.exists());
+    }
+}
+
 // Catches losing receipt ownership across releases or retaining vulnerable pins.
 #[test]
 fn security_release_upgrades_old_receipts_and_uninstalls_cleanly() {

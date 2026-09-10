@@ -11,6 +11,7 @@ macro_rules! release_asset {
         match $installation.release.as_str() {
             "1.0.0" => include_str!(concat!("../templates/1.0.0/", $path)),
             "1.0.1" => include_str!(concat!("../templates/1.0.1/", $path)),
+            "1.0.2" => include_str!(concat!("../templates/1.0.2/", $path)),
             _ => return Err(invalid("unsupported template release")),
         }
     };
@@ -25,9 +26,9 @@ pub(crate) fn join(root: &str, file: &str) -> String {
 }
 
 pub(crate) fn profile(installation: &Installation) -> Result<ProjectProfile> {
-    if !matches!(installation.release.as_str(), "1.0.0" | "1.0.1") {
+    if !matches!(installation.release.as_str(), "1.0.0" | "1.0.1" | "1.0.2") {
         return Err(invalid(
-            "unsupported template release; expected pinned 1.0.0 or 1.0.1",
+            "unsupported template release; expected pinned 1.0.0, 1.0.1 or 1.0.2",
         ));
     }
     let source = match installation.profile.as_str() {

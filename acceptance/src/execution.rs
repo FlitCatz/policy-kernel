@@ -519,7 +519,7 @@ pub fn execute(
     // Select the pinned SDK even when a CI image has additional newer SDKs installed.
     fs::write(
         output.join("global.json"),
-        include_str!("../../bootstrap/templates/1.0.1/global.json"),
+        include_str!("../../bootstrap/templates/1.0.2/global.json"),
     )?;
     let (available, observations) = runtimes(&output, profile);
     let harness_observation = crate::harness::observe(harness)?;

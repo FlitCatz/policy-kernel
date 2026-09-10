@@ -135,7 +135,7 @@ impl ProjectProfile {
     pub fn validate(&self) -> Result<(), Error> {
         if self.schema_version != 1
             || !identifier(&self.id)
-            || !matches!(self.version.as_str(), "1.0.0" | "1.0.1")
+            || !matches!(self.version.as_str(), "1.0.0" | "1.0.1" | "1.0.2")
             || self.components.is_empty()
             || self.sensors.is_empty()
         {

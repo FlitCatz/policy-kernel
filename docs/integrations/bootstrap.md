@@ -56,9 +56,11 @@ Receipt claims must match the known template inventory; editing the receipt
 cannot claim arbitrary files for replacement or uninstall.
 
 Release resources, including profiles and Task 10 action copies, live under
-`bootstrap/templates/1.0.0/` and `bootstrap/templates/1.0.1/`. The 1.0.0 bytes
-remain unchanged for receipt validation and recovery. Version 1.0.1 pins
-Vite 7.3.6, Vitest 4.1.11 and Playwright 1.55.1. Select `--release 1.0.1`
+`bootstrap/templates/1.0.0/`, `bootstrap/templates/1.0.1/` and
+`bootstrap/templates/1.0.2/`. Historical bytes remain unchanged for receipt
+validation and recovery. Version 1.0.2 retains the 1.0.1 pins
+Vite 7.3.6, Vitest 4.1.11 and Playwright 1.55.1, and audits fullstack's shared
+npm graph as well as its frontend graph. Select `--release 1.0.2`
 explicitly after reviewing and updating the consumer manifests/lockfiles.
 Cross-version tests cover upgrade, downgrade, repeated installation, uninstall
 and preservation of local edits, including frozen receipts from the old runner.

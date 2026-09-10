@@ -147,8 +147,28 @@ pub enum SensorResultRequirement {
 #[serde(deny_unknown_fields)]
 pub struct SensorResultBinding {
     pub configuration_digest: Sha256Digest,
+    #[schemars(schema_with = "binding_nonblank_string_schema")]
     pub parser_version: String,
+    #[schemars(schema_with = "binding_command_schema")]
     pub resolved_command: Vec<String>,
+}
+
+fn binding_nonblank_string_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    // Match Rust str::trim's Unicode White_Space set, rather than regex \s.
+    schemars::json_schema!({
+        "type": "string",
+        "pattern": r"[^\u0009-\u000d\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]",
+        "not": {"pattern": "\u{0000}"}
+    })
+}
+
+fn binding_command_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "array",
+        "minItems": 1,
+        "prefixItems": [binding_nonblank_string_schema(generator)],
+        "items": {"type": "string", "not": {"pattern": "\u{0000}"}}
+    })
 }
 
 fn deserialize_result_binding<'de, D: serde::Deserializer<'de>>(

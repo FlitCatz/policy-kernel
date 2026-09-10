@@ -2,6 +2,58 @@ use policy_acceptance::stage;
 use std::fs;
 
 #[test]
+fn shared_only_dependency_audit_failure_blocks_fullstack_acceptance() {
+    use policy_contracts::{Risk, SensorEvidence};
+    use policy_core::{evaluate_sensor_evidence_for_change, SensorEvaluationStatus};
+    let tmp = tempfile::tempdir().unwrap();
+    let target = tmp.path().canonicalize().unwrap().join("consumer");
+    let examples = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples");
+    stage(&examples, "fullstack", &target).unwrap();
+    let profile = project_verification::parse_profile(
+        &fs::read_to_string(target.join(".policy/project-profile.json")).unwrap(),
+    )
+    .unwrap()
+    .sensor_profile();
+    let mut evidence: Vec<SensorEvidence> = profile
+        .sensors
+        .iter()
+        .map(|sensor| {
+            serde_json::from_value(serde_json::json!({
+                "sensor_id": sensor.id, "status": "passed", "head_sha": "a".repeat(40),
+                "command_digest": "b".repeat(64), "result_digest": "c".repeat(64),
+                "observed_at": "2026-09-10T00:00:00Z", "trust": "local_untrusted",
+                "resolved_command": ["tool"], "source_digest": "d".repeat(64),
+                "configuration_digest": "e".repeat(64), "parser_version": "1", "exit_code": 0,
+                "discovered": 1, "executed": 1, "passed": 1
+            }))
+            .unwrap()
+        })
+        .collect();
+    let evaluate = |items: &[SensorEvidence]| {
+        evaluate_sensor_evidence_for_change(
+            &profile,
+            &["package-lock.json"],
+            Risk::Low,
+            items,
+            None,
+        )
+        .unwrap()
+    };
+    assert_eq!(evaluate(&evidence).status, SensorEvaluationStatus::Passed);
+    for item in &mut evidence {
+        if item.sensor_id.as_str() == "shared:dependencies" {
+            item.status = policy_contracts::SensorStatus::Failed;
+            item.exit_code = Some(1);
+        }
+    }
+    let failed = evaluate(&evidence);
+    assert_eq!(failed.status, SensorEvaluationStatus::Blocked);
+    assert!(failed.has_reason("PK-SENSOR-FAILED"));
+    evidence.retain(|item| item.sensor_id.as_str() != "shared:dependencies");
+    assert!(evaluate(&evidence).has_reason("PK-SENSOR-MISSING"));
+}
+
+#[test]
 fn installs_real_profile_without_clobbering_an_existing_destination() {
     let tmp = tempfile::tempdir().unwrap();
     let tmp = tmp.path().canonicalize().unwrap();

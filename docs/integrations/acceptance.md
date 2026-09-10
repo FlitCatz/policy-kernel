@@ -1,6 +1,6 @@
 # Consuming-project acceptance
 
-Task 14 exercises the installed 1.0.1 security-update profiles against actual example
+Task 14 exercises the installed 1.0.2 profiles against actual example
 applications. `policy-acceptance` is Rust; the user-approved language exception
 is limited to native app and test sources under `examples/`. The existing Rust
 release workflow and consumer native checks remain required. These examples do
@@ -16,6 +16,9 @@ cases, and exit 2. Restore uses checked-in npm/NuGet lockfiles. It never fabrica
 lock entries or silently updates the profile pins to make a check green.
 
 The 1.0.1 release pins Vite 7.3.6, Vitest 4.1.11 and Playwright 1.55.1.
+Release 1.0.2 retains those pins and adds the required `shared:dependencies`
+audit for fullstack's separate root npm graph. Both frontend and shared graphs
+must pass; fullstack now has 15 required sensors.
 The previous 1.0.0 template bytes remain available for existing receipts.
 The npm lockfiles were regenerated in clean temporary directories using npm
 11.6.2 because npm 10.9.3 crashes while resolving Vitest 4 peer dependencies.

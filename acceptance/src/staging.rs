@@ -58,7 +58,7 @@ pub fn stage(examples: &Path, profile: &str, target: &Path) -> Result<()> {
         target: target.to_path_buf(),
         installation: Installation {
             profile: profile.into(),
-            release: "1.0.1".into(),
+            release: "1.0.2".into(),
             components: BTreeMap::new(),
         },
         operation: Operation::Install,

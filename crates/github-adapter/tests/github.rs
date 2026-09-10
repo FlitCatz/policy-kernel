@@ -236,6 +236,12 @@ fn inherited_output_pipe_does_not_extend_gh_timeout() {
         Err(AdapterError::Timeout(_))
     ));
     assert!(started.elapsed() < Duration::from_secs(1));
+    assert!(script.with_extension("started").exists());
+    std::thread::sleep(Duration::from_millis(500));
+    assert!(
+        !script.with_extension("survived").exists(),
+        "descendant survived API timeout"
+    );
     fs::remove_dir_all(temp).unwrap();
 }
 
@@ -260,6 +266,51 @@ fn gh_fails_closed_on_output_overflow_and_nonzero_exit() {
         })
     ));
     fs::remove_dir_all(temp).unwrap();
+}
+
+#[test]
+fn gh_cleans_descendants_on_every_process_exit_path() {
+    for mode in [
+        "success-descendant",
+        "failure-descendant",
+        "overflow-descendant",
+        "blocked-input",
+    ] {
+        let temp =
+            std::env::temp_dir().join(format!("policy-gh-cleanup-{mode}-{}", std::process::id()));
+        fs::create_dir_all(&temp).unwrap();
+        let executable = temp.join("gh");
+        process_fixture(&executable, mode);
+        let api = GhCliApi::new(&executable, Duration::from_millis(200), 4);
+        let result = if mode == "blocked-input" {
+            api.create_check_run("owner", "repo", &vec![b'x'; 16 * 1024])
+        } else {
+            api.pull_request("owner", "repo", 1)
+        };
+        match mode {
+            "success-descendant" => assert_eq!(result.unwrap(), b"{}"),
+            "failure-descendant" => assert!(matches!(
+                result,
+                Err(AdapterError::ProcessFailure {
+                    status: Some(7),
+                    ..
+                })
+            )),
+            "overflow-descendant" => assert!(matches!(
+                result,
+                Err(AdapterError::OutputTooLarge { limit: 4 })
+            )),
+            "blocked-input" => assert!(matches!(result, Err(AdapterError::Timeout(_)))),
+            _ => unreachable!(),
+        }
+        assert!(executable.with_extension("started").exists());
+        std::thread::sleep(Duration::from_millis(500));
+        assert!(
+            !executable.with_extension("survived").exists(),
+            "descendant survived {mode}"
+        );
+        fs::remove_dir_all(temp).unwrap();
+    }
 }
 
 #[test]

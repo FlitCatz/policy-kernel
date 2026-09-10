@@ -260,6 +260,60 @@ fn unique_temp_dir() -> PathBuf {
 }
 
 #[test]
+fn sensor_profile_schema_matches_result_binding_deserialization() {
+    let schema: Value =
+        serde_json::from_str(include_str!("../../schemas/sensor-profile.schema.json")).unwrap();
+    let validator = jsonschema::draft202012::options().build(&schema).unwrap();
+    let cases = [
+        ("", json!(["cargo"]), false),
+        (" \t\r\n", json!(["cargo"]), false),
+        (
+            "\u{0085}\u{00a0}\u{1680}\u{2007}\u{2028}\u{202f}\u{205f}\u{3000}",
+            json!(["cargo"]),
+            false,
+        ),
+        ("parser\0version", json!(["cargo"]), false),
+        ("v1", json!([]), false),
+        ("v1", json!([""]), false),
+        ("v1", json!([" \t\n"]), false),
+        ("v1", json!(["\u{0085}\u{3000}"]), false),
+        ("v1", json!(["car\0go"]), false),
+        ("v1", json!(["cargo", "test\0"]), false),
+        ("v1", json!(["cargo", "", " \t", "test\n"]), true),
+        (" v1\n", json!([" cargo\n"]), true),
+        ("\u{feff}", json!(["\u{feff}"]), true),
+        ("\u{200b}", json!(["\u{200b}"]), true),
+    ];
+    for (parser, command, expected) in cases {
+        let profile = json!({
+            "schema_version": 2,
+            "sensors": [{
+                "id": "unit", "required": true, "required_when": [],
+                "result_requirement": "process",
+                "result_binding": {
+                    "configuration_digest": "b".repeat(64),
+                    "parser_version": parser, "resolved_command": command
+                }
+            }],
+            "adequacy": {
+                "acceptance_criterion_ids": [], "changed_behavior_ids": [],
+                "negative_case_ids": []
+            }
+        });
+        assert_eq!(
+            serde_json::from_value::<policy_contracts::SensorProfile>(profile.clone()).is_ok(),
+            expected,
+            "Rust: parser={parser:?}, command={command}"
+        );
+        assert_eq!(
+            validator.is_valid(&profile),
+            expected,
+            "schema: parser={parser:?}, command={command}"
+        );
+    }
+}
+
+#[test]
 fn sensor_profile_schema_matches_versioned_result_requirements() {
     let schema: Value =
         serde_json::from_str(include_str!("../../schemas/sensor-profile.schema.json")).unwrap();
