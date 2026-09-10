@@ -1,0 +1,16 @@
+{
+  "name": "policy-kernel-fullstack-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "npm@10.9.3",
+  "engines": {
+    "node": "22.18.0",
+    "npm": "10.9.3"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.55.1",
+    "typescript": "5.9.2",
+    "vitest": "4.1.11"
+  }
+}

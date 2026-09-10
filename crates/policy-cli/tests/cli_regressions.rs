@@ -215,7 +215,9 @@ fn inspect_rejects_duplicate_root_and_nested_contract_fields() {
 
 #[test]
 fn local_post_merge_evaluation_is_not_exposed() {
-    let output = run(&["evaluate-post", "-"], Some("{}"));
+    // Unknown commands exit before reading stdin; writing to that closed pipe
+    // races the child exit and can fail with BrokenPipe on CI.
+    let output = run(&["evaluate-post", "-"], None);
 
     assert_eq!(output.status.code(), Some(64));
     assert!(output.stdout.is_empty());

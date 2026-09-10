@@ -163,11 +163,32 @@ fn detect(root: &Root, plan: &mut Plan, installation: &Installation) -> Result<(
                     plan.conflicts.push(format!("ambiguous or unsupported frontend tools: {package_path}; pinned Vite/Vitest profile requires explicit compatible tooling"));
                 }
                 for (tool, pin) in [
-                    ("vite", "7.1.3"),
+                    (
+                        "vite",
+                        if installation.release == "1.0.0" {
+                            "7.1.3"
+                        } else {
+                            "7.3.6"
+                        },
+                    ),
                     ("typescript", "5.9.2"),
                     ("eslint", "9.34.0"),
-                    ("vitest", "3.2.4"),
-                    ("@playwright/test", "1.55.0"),
+                    (
+                        "vitest",
+                        if installation.release == "1.0.0" {
+                            "3.2.4"
+                        } else {
+                            "4.1.11"
+                        },
+                    ),
+                    (
+                        "@playwright/test",
+                        if installation.release == "1.0.0" {
+                            "1.55.0"
+                        } else {
+                            "1.55.1"
+                        },
+                    ),
                     ("@typescript-eslint/parser", "8.42.0"),
                     ("jsdom", "26.1.0"),
                 ] {

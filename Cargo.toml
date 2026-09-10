@@ -9,6 +9,7 @@ members = [
     "crates/github-adapter",
     "crates/project-verification",
     "bootstrap",
+    "acceptance",
     "xtask",
 ]
 

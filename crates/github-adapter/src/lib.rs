@@ -2,6 +2,7 @@
 
 mod gh;
 mod parse;
+mod process;
 
 pub use gh::{GhCliApi, GitHubApi};
 pub use parse::{
