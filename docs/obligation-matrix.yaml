@@ -31,7 +31,7 @@ obligations:
     evaluator: reviews
     fixture: tests/fixtures/reviews/self-review.json
     changed_by_design: true
-    approving_spec_path: docs/specs/2026-09-04-policy-kernel-extraction-design.md
+    approving_spec_path: docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md
     approving_spec_section: "### 5.2 Independent review and repair"
     preserved_rule: A verifier must be provider- and execution-independent from every code contributor.
     rejected_coupling: Provider CLI allowlists, command execution, configuration lookup, and last-modifier-only identity checks.
@@ -65,7 +65,7 @@ obligations:
     evaluator: reviews
     fixture: tests/fixtures/reviews/waiver-expired.json
     changed_by_design: true
-    approving_spec_path: docs/specs/2026-09-04-policy-kernel-extraction-design.md
+    approving_spec_path: docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md
     approving_spec_section: "## 12. Failure semantics"
     preserved_rule: A human waiver binds actor, finding, repository, head, evidence digest, reason, issuance, and expiry.
     rejected_coupling: Ambient clocks, hard-coded actors, self-waiver, and lifecycle state mutation.
@@ -115,7 +115,7 @@ obligations:
     evaluator: pre_merge
     fixture: tests/fixtures/pre-merge/missing-agent-ready.json
     changed_by_design: true
-    approving_spec_path: docs/specs/2026-09-04-policy-kernel-extraction-design.md
+    approving_spec_path: docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md
     approving_spec_section: "## 6. GSD Core disposition"
     preserved_rule: Pre-merge readiness requires an authorized agent-ready observation and complete evidence for the exact PR head.
     rejected_coupling: GitHub API calls, gh subprocesses, issue comment mutation, and trusting a label without its event actor.
@@ -133,7 +133,7 @@ obligations:
     evaluator: post_merge
     fixture: tests/fixtures/post-merge/missing-check.json
     changed_by_design: true
-    approving_spec_path: docs/specs/2026-09-04-policy-kernel-extraction-design.md
+    approving_spec_path: docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md
     approving_spec_section: "### 5.3 Authoritative evaluation"
     preserved_rule: Shipped requires a protected merge matching the evaluated PR head and the exact successful required-check decision digest.
     rejected_coupling: GSD lifecycle transitions, local evidence files, ambient clocks, shelling out to gh, and treating merge commit OID as PR head.
