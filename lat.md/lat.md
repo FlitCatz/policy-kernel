@@ -1,0 +1,13 @@
+# policy-kernel knowledge graph
+
+This directory is the LAT navigation layer for the repository. Canonical technical
+content remains in [the repository documentation](../docs/); this graph provides
+short paths between the concepts an agent or maintainer needs to understand.
+
+- [[overview]]
+- [[status]]
+- [[tasks]]
+- [[trust-boundaries]]
+
+Start with [Current status](../docs/status.md) and the
+[Task index](../docs/tasks/README.md).

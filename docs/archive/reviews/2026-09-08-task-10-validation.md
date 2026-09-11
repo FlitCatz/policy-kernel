@@ -3,7 +3,7 @@
 Task 10 adds the GitHub adapter, authoritative `policy-ci` pre/post-merge commands,
 and reusable composite Action. It preserves the existing pure evaluator and
 contract schemas. The Action consumption contract is in
-[`action/README.md`](../../action/README.md).
+[`action/README.md`](../../../action/README.md).
 
 ## Verification
 

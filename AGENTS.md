@@ -15,5 +15,8 @@ Limit shell and YAML to the minimum needed to invoke Rust tools and configure CI
 - Preserve historical execution records as statements of their contemporaneous
   facts. Describe later status separately in a README or new status document;
   do not rewrite historical records to match the current state.
+- Treat `docs/status.md` as the current-status authority and
+  `docs/tasks/task-NN/` as the Task-specific landing pages. Preserve dated plans,
+  specifications, and reviews in `docs/archive/`.
 - Check documented commands, arguments, and exit codes against the implementation.
   After documentation changes, verify Markdown relative links and `git diff --check`.

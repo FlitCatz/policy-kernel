@@ -43,8 +43,8 @@
 
 | 항목 | 현재 구현과 남은 조건 |
 | --- | --- |
-| 필수 knowledge/index 증거 | `PolicySnapshot` (`policy.rs:16`)에 필수 knowledge 선언이 없고 provenance는 제출된 knowledge만 순회한다. CodeGraph를 프로젝트 정책상 필수로 지정·강제할 수 없다. [추출 설계 §10.2](../specs/2026-09-04-policy-kernel-extraction-design.md), 원래 Task 3 요구와의 차이이며 [trust-model](../trust-model.md)도 이미 인정한 누락이다. 일반 정책에서 knowledge가 비어 있는 것 자체는 오류가 아니다. |
-| 수집 → 인증된 CI 판정 연결 | collector와 project-verification은 `LocalUntrusted`를 유지한다. production `policy-ci`는 외부 controller가 만든 `identity.json`과 증거를 소비하며, 이를 발행하는 production controller는 저장소에 없다. [Action 계약](../../action/README.md)은 이 책임을 외부에 명시적으로 둔다. 단순히 JSON을 신뢰 디렉터리에 놓는 것으로 해결할 수 없다. 실제 소비 프로젝트에서 인증된 수집·독립 리뷰·정책 채택·보호된 merge까지 연결한 READY/SHIPPED 검증이 남는다. |
+| 필수 knowledge/index 증거 | `PolicySnapshot` (`policy.rs:16`)에 필수 knowledge 선언이 없고 provenance는 제출된 knowledge만 순회한다. CodeGraph를 프로젝트 정책상 필수로 지정·강제할 수 없다. [추출 설계 §10.2](../specs/2026-09-04-policy-kernel-extraction-design.md), 원래 Task 3 요구와의 차이이며 [trust-model](../../trust-model.md)도 이미 인정한 누락이다. 일반 정책에서 knowledge가 비어 있는 것 자체는 오류가 아니다. |
+| 수집 → 인증된 CI 판정 연결 | collector와 project-verification은 `LocalUntrusted`를 유지한다. production `policy-ci`는 외부 controller가 만든 `identity.json`과 증거를 소비하며, 이를 발행하는 production controller는 저장소에 없다. [Action 계약](../../../action/README.md)은 이 책임을 외부에 명시적으로 둔다. 단순히 JSON을 신뢰 디렉터리에 놓는 것으로 해결할 수 없다. 실제 소비 프로젝트에서 인증된 수집·독립 리뷰·정책 채택·보호된 merge까지 연결한 READY/SHIPPED 검증이 남는다. |
 
 현재 Task 14는 실제 네이티브 검사와 로컬 증거를 검증한다. CI에서 실행되어도 summary의 `ci_authoritative`는 계속 `unverified`이다. 이 동작은 신뢰 모델에 부합하지만, 원래 Task 14의 실제 authoritative 판정 인수조건 전체를 충족하지는 않는다. 별도의 core simulation 테스트와 실제 GitHub 승인은 구분해야 한다.
 
@@ -106,7 +106,7 @@ CLI의 GitHub 접근은 실패했으나 연결된 GitHub 앱으로 run/job/log/a
 
 계약/core/CLI/스키마, GitHub·CI·수집기, 프로젝트 검증·보고서·bootstrap, acceptance·xtask·workflow 및 관련 설계·테스트를 검토했다. advisory 강제, digest와 head 결합, 모든 수정자에 대한 리뷰 독립성, waiver와 시간 경계, required test counts, merge/squash 구분, 보고서 변조·경로 제한, bootstrap 복구·구버전 receipt는 기존 검사와 이번 실행에서 의도한 동작을 확인했다.
 
-세 보조 검토는 동일 provider의 엔지니어링 검토이다. [promotion 프로토콜](../promotion.md)이 요구하는 두 독립 provider 승인, 실제 보호 merge, 14일/30개 head shadow 관측, 실제 보호 설정 rollback을 대신하지 않는다. 현재 보호 설정·계정 기능은 이번에 재확인하지 않았으므로 이전 문서의 제한을 현재 사실로 단정하지 않는다.
+세 보조 검토는 동일 provider의 엔지니어링 검토이다. [promotion 프로토콜](../../promotion.md)이 요구하는 두 독립 provider 승인, 실제 보호 merge, 14일/30개 head shadow 관측, 실제 보호 설정 rollback을 대신하지 않는다. 현재 보호 설정·계정 기능은 이번에 재확인하지 않았으므로 이전 문서의 제한을 현재 사실로 단정하지 않는다.
 
 추가 조사 후보: .NET dependency 센서는 App.csproj만 명시적으로 재감사하고 테스트 프로젝트는 `--no-restore`로 실행한다. 다만 설치 시 restore와 TreatWarningsAsErrors도 작동하므로 테스트 전용 취약점의 전체 실행 우회는 재현하지 않았고 확정 결함 수에 포함하지 않았다.
 

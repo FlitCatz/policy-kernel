@@ -24,11 +24,12 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 ## Status and scope
 
-Tasks 1–14 are implemented in this workspace. The kernel, bootstrap assets, and
-consumer-acceptance harness have Rust regression coverage. This does not claim a
-production promotion: the live shadow window, protected-merge evidence, and
-independent-provider reviews in the [promotion protocol](docs/promotion.md)
-remain separate requirements.
+Tasks 1–14 are implemented in this workspace. The [current status](docs/status.md)
+and [Task index](docs/tasks/README.md) identify the supporting evidence and
+remaining operational conditions. This does not claim a production promotion:
+the live shadow window, protected-merge evidence, and independent-provider
+reviews in the [promotion protocol](docs/promotion.md) remain separate
+requirements.
 
 The project is Rust-first. Repository execution logic, CLIs, verification tools,
 report conversion, bootstrap installation, and tests are Rust. JavaScript,
@@ -163,9 +164,10 @@ documented with the action.
 
 ## Further reading
 
-- [Architecture specification](docs/specs/2026-09-04-policy-kernel-extraction-design.md)
+- [Architecture specification](docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md)
 - [Trust model](docs/trust-model.md)
 - [Promotion and rollback protocol](docs/promotion.md)
-- [Project verification and bootstrap design](docs/specs/2026-09-07-project-verification-bootstrap-design.md)
-- [Task 14 consumer-acceptance execution record](docs/reviews/2026-09-09-task-14-consuming-acceptance.md)
+- [Project verification and bootstrap design](docs/archive/specs/2026-09-07-project-verification-bootstrap-design.md)
+- [Current status](docs/status.md)
+- [Task index](docs/tasks/README.md)
 - [Repository CI workflows](.github/workflows/)

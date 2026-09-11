@@ -22,10 +22,10 @@
 
 ## 현재 상태와 범위
 
-이 워크스페이스에는 Task 1–14가 구현되어 있습니다. 커널, bootstrap 자산, 소비 프로젝트
-인수 검증기는 Rust 회귀 테스트를 갖추고 있습니다. 이것이 운영 환경 프로모션 완료를
-뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에 정의된 실제 shadow 기간,
-보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
+이 워크스페이스에는 Task 1–14가 구현되어 있습니다. 근거와 남은 운영 조건은
+[현재 상태](docs/status.md)와 [Task 색인](docs/tasks/README.md)에서 확인할 수 있습니다.
+이것이 운영 환경 프로모션 완료를 뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에
+정의된 실제 shadow 기간, 보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
 
 프로젝트는 Rust 우선 정책을 따릅니다. 저장소의 실행 로직, CLI, 검증 도구, 보고서 변환,
 bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript와 C#은 `examples/`
@@ -151,9 +151,10 @@ checkout에서 실행하거나 로컬 `policy-cli` 출력을 필수 검사로 �
 
 ## 추가 문서
 
-- [아키텍처 명세](docs/specs/2026-09-04-policy-kernel-extraction-design.md)
+- [아키텍처 명세](docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md)
 - [신뢰 모델](docs/trust-model.md)
 - [프로모션 및 롤백 프로토콜](docs/promotion.md)
-- [프로젝트 검증 및 bootstrap 설계](docs/specs/2026-09-07-project-verification-bootstrap-design.md)
-- [Task 14 소비 프로젝트 인수 검증 실행 기록](docs/reviews/2026-09-09-task-14-consuming-acceptance.md)
+- [프로젝트 검증 및 bootstrap 설계](docs/archive/specs/2026-09-07-project-verification-bootstrap-design.md)
+- [현재 상태](docs/status.md)
+- [Task 색인](docs/tasks/README.md)
 - [저장소 CI workflow](.github/workflows/)

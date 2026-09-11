@@ -3,7 +3,7 @@
 Task 12 implementation includes the Rust `project-verification` crate, three
 versioned profile assets and report adapters. Task 14 has run the Rust regression
 suites; native producer and consuming-project certification is tracked separately
-in the [acceptance execution record](../reviews/2026-09-09-task-14-consuming-acceptance.md).
+in the [acceptance execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md).
 These assets are not a verified release. The separate [bootstrap installer](bootstrap.md)
 installs versioned configuration.
 
@@ -189,5 +189,5 @@ Additional pin references: [Node/npm](https://raw.githubusercontent.com/nodejs/n
 [.NET SDK releases](https://builds.dotnet.microsoft.com/dotnet/release-metadata/9.0/releases.json),
 [NuGet audit behavior](https://learn.microsoft.com/en-us/nuget/concepts/auditing-packages).
 
-See [the execution plan](../plans/2026-09-09-task-12-project-profiles.md) and
-[implementation status](../reviews/2026-09-09-task-12-project-profiles.md).
+See [the execution plan](../archive/plans/2026-09-09-task-12-project-profiles.md) and
+[implementation status](../archive/reviews/2026-09-09-task-12-project-profiles.md).
