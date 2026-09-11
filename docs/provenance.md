@@ -4,7 +4,7 @@
 
 - Repository: `FlitCatz/agent-dev-kit`
 - Commit: `e5f6ec8584cc91fdeca3aab40687c6cdcd303b43`
-- Specification: `docs/specs/2026-09-04-policy-kernel-extraction-design.md`
+- Specification: `docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md`
 - Extraction mode: contract-first selective reimplementation
 - Copied production code: none
 - Distribution license: dual-licensed under MIT or Apache-2.0.

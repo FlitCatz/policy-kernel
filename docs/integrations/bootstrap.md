@@ -3,7 +3,7 @@
 Task 13 adds the separate Rust `policy-bootstrap` workspace package under
 `bootstrap/`. Task 14 has compiled and run the Rust regressions and exercises this
 installer through consumer staging. Native and CI acceptance are tracked in the
-[Task 14 execution record](../reviews/2026-09-09-task-14-consuming-acceptance.md).
+[Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md).
 This is not a verified template release.
 
 ## Inputs and commands
@@ -160,5 +160,5 @@ operation before writes. Unowned files and application directories remain; no
 recursive directory removal occurs. Interrupted uninstall uses the same journal
 to restore original managed contents.
 
-See the [execution record](../reviews/2026-09-09-task-13-bootstrap.md) for actual
+See the [execution record](../archive/reviews/2026-09-09-task-13-bootstrap.md) for actual
 verification status and remaining release gates.

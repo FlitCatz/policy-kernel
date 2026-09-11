@@ -27,15 +27,15 @@ Rust 구현 언어 정책은 유지한다. 내부 crate를 실행 시 교체하�
 
 **코드에서 확인한 제한**
 
-- [ProjectSensor](../../crates/project-verification/src/profile.rs)의 35행부터 명령, 기대 버전, 입력 파일, JSON pin, 환경 allowlist, 제한시간을 데이터로 받는다. 기존 구조를 확장 기반으로 사용할 수 있다.
+- [ProjectSensor](../../../crates/project-verification/src/profile.rs)의 35행부터 명령, 기대 버전, 입력 파일, JSON pin, 환경 allowlist, 제한시간을 데이터로 받는다. 기존 구조를 확장 기반으로 사용할 수 있다.
 - 같은 파일의 134행부터 프로필 릴리스를 세 버전으로 제한하고, 232행부터 프로젝트 종류와 필수 컴포넌트를 고정한다. 새 프로필을 배포할 때 현재는 Rust 코드 변경도 필요하다.
-- [bootstrap 감지 로직](../../bootstrap/src/plan.rs)의 157행부터 Vite 부재 또는 Next.js·react-scripts·Angular·Jest 존재를 충돌로 처리하고, 특정 패키지 버전 문자열을 요구한다. 205행부터 `App.csproj`, 225행부터 `net9.0`, 253행 부근에서 npm 외 lockfile을 제한한다.
-- [bootstrap 템플릿 로직](../../bootstrap/src/templates.rs)은 릴리스 자산을 `include_str!`로 내장하고 Node 버전 등을 직접 렌더링한다. 현재 [설치 선택값](../../bootstrap/src/plan.rs)은 profile/release/components이며 독립적인 도구·버전 선택 필드가 없다.
-- [보고서 처리](../../crates/project-verification/src/reports.rs)는 세 가지 `ReportFormat` enum으로 제한한다. 새 테스트 도구가 다른 보고서 구조를 내보내면 명령 변경만으로 지원할 수 없다.
-- [실행 준비](../../crates/project-verification/src/run.rs)의 121행은 `backend:dependencies`라는 센서 ID에 NuGet XML 검증을 연결한다. 도구 선택을 일반화할 때 이런 도구별 검증도 함께 분리해야 한다.
-- [인수검증 실행기](../../acceptance/src/execution.rs)는 런타임 버전, npm 설치, Playwright 설치, .NET 프로젝트 경로와 실패 시나리오를 직접 정의한다. 프로필 옵션을 추가하면 인수검증과 CI도 같은 선택을 사용해야 한다.
+- [bootstrap 감지 로직](../../../bootstrap/src/plan.rs)의 157행부터 Vite 부재 또는 Next.js·react-scripts·Angular·Jest 존재를 충돌로 처리하고, 특정 패키지 버전 문자열을 요구한다. 205행부터 `App.csproj`, 225행부터 `net9.0`, 253행 부근에서 npm 외 lockfile을 제한한다.
+- [bootstrap 템플릿 로직](../../../bootstrap/src/templates.rs)은 릴리스 자산을 `include_str!`로 내장하고 Node 버전 등을 직접 렌더링한다. 현재 [설치 선택값](../../../bootstrap/src/plan.rs)은 profile/release/components이며 독립적인 도구·버전 선택 필드가 없다.
+- [보고서 처리](../../../crates/project-verification/src/reports.rs)는 세 가지 `ReportFormat` enum으로 제한한다. 새 테스트 도구가 다른 보고서 구조를 내보내면 명령 변경만으로 지원할 수 없다.
+- [실행 준비](../../../crates/project-verification/src/run.rs)의 121행은 `backend:dependencies`라는 센서 ID에 NuGet XML 검증을 연결한다. 도구 선택을 일반화할 때 이런 도구별 검증도 함께 분리해야 한다.
+- [인수검증 실행기](../../../acceptance/src/execution.rs)는 런타임 버전, npm 설치, Playwright 설치, .NET 프로젝트 경로와 실패 시나리오를 직접 정의한다. 프로필 옵션을 추가하면 인수검증과 CI도 같은 선택을 사용해야 한다.
 
-특히 parser 식별자 `vitest-json-3.2.4/v1`은 실제 도구 버전이 반드시 3.2.4여야 한다는 의미가 아니다. 현재 동일 파서가 Vitest 4.1.11에도 사용된다. [보고서 계약 문서](../integrations/report-formats.md)는 parser 식별자의 역사적 이름과 실제 producer 버전을 구분한다. 옵션화에서도 **파서 계약 버전, 지원 producer 범위, 실제 실행 버전**을 구별해야 한다.
+특히 parser 식별자 `vitest-json-3.2.4/v1`은 실제 도구 버전이 반드시 3.2.4여야 한다는 의미가 아니다. 현재 동일 파서가 Vitest 4.1.11에도 사용된다. [보고서 계약 문서](../../integrations/report-formats.md)는 parser 식별자의 역사적 이름과 실제 producer 버전을 구분한다. 옵션화에서도 **파서 계약 버전, 지원 producer 범위, 실제 실행 버전**을 구별해야 한다.
 
 **실제로 확인한 입력 확장 범위**
 

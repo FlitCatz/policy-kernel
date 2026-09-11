@@ -138,5 +138,5 @@ The setup actions are commit-pinned to upstream releases
 [setup-dotnet 4.3.1](https://github.com/actions/setup-dotnet/releases/tag/v4.3.1).
 Adding the workflow is not evidence that it ran.
 
-See the [Task 14 execution record](../reviews/2026-09-09-task-14-consuming-acceptance.md)
+See the [Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
 for actual commands, results, and open native/CI acceptance requirements.

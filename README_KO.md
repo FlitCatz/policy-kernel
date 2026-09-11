@@ -151,9 +151,9 @@ checkout에서 실행하거나 로컬 `policy-cli` 출력을 필수 검사로 �
 
 ## 추가 문서
 
-- [아키텍처 명세](docs/specs/2026-09-04-policy-kernel-extraction-design.md)
+- [아키텍처 명세](docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md)
 - [신뢰 모델](docs/trust-model.md)
 - [프로모션 및 롤백 프로토콜](docs/promotion.md)
-- [프로젝트 검증 및 bootstrap 설계](docs/specs/2026-09-07-project-verification-bootstrap-design.md)
-- [Task 14 소비 프로젝트 인수 검증 실행 기록](docs/reviews/2026-09-09-task-14-consuming-acceptance.md)
+- [프로젝트 검증 및 bootstrap 설계](docs/archive/specs/2026-09-07-project-verification-bootstrap-design.md)
+- [Task 14 소비 프로젝트 인수 검증 실행 기록](docs/archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
 - [저장소 CI workflow](.github/workflows/)

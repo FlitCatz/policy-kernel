@@ -163,9 +163,9 @@ documented with the action.
 
 ## Further reading
 
-- [Architecture specification](docs/specs/2026-09-04-policy-kernel-extraction-design.md)
+- [Architecture specification](docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md)
 - [Trust model](docs/trust-model.md)
 - [Promotion and rollback protocol](docs/promotion.md)
-- [Project verification and bootstrap design](docs/specs/2026-09-07-project-verification-bootstrap-design.md)
-- [Task 14 consumer-acceptance execution record](docs/reviews/2026-09-09-task-14-consuming-acceptance.md)
+- [Project verification and bootstrap design](docs/archive/specs/2026-09-07-project-verification-bootstrap-design.md)
+- [Task 14 consumer-acceptance execution record](docs/archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
 - [Repository CI workflows](.github/workflows/)
