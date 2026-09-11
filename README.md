@@ -150,6 +150,28 @@ Read [project verification](docs/integrations/project-verification.md),
 and [consumer acceptance](docs/integrations/acceptance.md) before using these
 tools in a project.
 
+## Local code graph
+
+This repository uses [CodeGraph](https://github.com/colbymchenry/codegraph) as a
+local development aid for Rust source structure and impact analysis. It is not a
+CI input, policy evidence, or release-approval mechanism. The generated
+`.codegraph/` SQLite index is intentionally ignored by Git.
+
+Install the CLI once, connect it to Codex, then create or refresh this
+repository's index:
+
+```console
+npm install -g @colbymchenry/codegraph
+codegraph install --target=codex --location=global --yes
+codegraph init
+codegraph status
+```
+
+Restart Codex after the MCP installation. With the index available, use the
+`codegraph_explore` MCP tool for structural questions, or use CLI commands such
+as `codegraph explore "How does pre-merge evaluation flow?"` and
+`codegraph impact PolicySnapshot`.
+
 ## CI integration
 
 The checked-in composite [GitHub Action](action/README.md) invokes an

@@ -139,6 +139,27 @@ cargo run --locked -p policy-acceptance -- run --profile fullstack --output /pri
 [bootstrap](docs/integrations/bootstrap.md), [보고서 형식](docs/integrations/report-formats.md),
 [소비 프로젝트 인수 검증](docs/integrations/acceptance.md)을 읽어 보세요.
 
+## 로컬 코드 그래프
+
+이 저장소는 Rust 소스 구조와 영향 분석을 위한 로컬 개발 보조 도구로
+[CodeGraph](https://github.com/colbymchenry/codegraph)를 사용합니다. 이는 CI 입력,
+정책 증거 또는 릴리스 승인 수단이 아닙니다. 생성되는 `.codegraph/` SQLite 인덱스는
+의도적으로 Git에서 제외합니다.
+
+CLI를 한 번 설치하고 Codex에 연결한 다음, 이 저장소의 인덱스를 생성하거나 갱신합니다.
+
+```console
+npm install -g @colbymchenry/codegraph
+codegraph install --target=codex --location=global --yes
+codegraph init
+codegraph status
+```
+
+MCP 설치 뒤에는 Codex를 재시작하세요. 인덱스를 사용할 수 있으면 구조 관련 질문에는
+`codegraph_explore` MCP 도구를 사용하고, CLI에서는
+`codegraph explore "How does pre-merge evaluation flow?"` 또는
+`codegraph impact PolicySnapshot` 같은 명령을 사용할 수 있습니다.
+
 ## CI 통합
 
 체크인된 복합 [GitHub Action](action/README.md)은 `PATH`에 이미 구축되어 신뢰할 수 있는

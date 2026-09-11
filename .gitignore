@@ -1,5 +1,6 @@
 /target/
 /.worktrees/
+/.codegraph/
 __pycache__/
 *.py[cod]
 /mutants.out*/
