@@ -24,9 +24,14 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 ## Status and scope
 
-Tasks 1–14 are implemented in this workspace. The [current status](docs/status.md)
-and [Task index](docs/tasks/README.md) identify the supporting evidence and
-remaining operational conditions. This does not claim a production promotion:
+Tasks 1–14 provide implemented components in this workspace. The
+[current status](docs/status.md) and [Task index](docs/tasks/README.md) identify the supporting evidence and
+remaining implementation, integration, and operational conditions.
+[Task 15](docs/tasks/task-15/README.md) tracks compatible tool/version selection,
+runtime independence, dependency and knowledge evidence gaps, and authenticated
+consumer integration. Follow its landing page and the current-status document
+for completed corrections and remaining work.
+This does not claim a production promotion:
 the live shadow window, protected-merge evidence, and independent-provider
 reviews in the [promotion protocol](docs/promotion.md) remain separate
 requirements.
@@ -38,8 +43,15 @@ declarative tool configuration under `examples/`.
 
 ## Requirements
 
-- Rust **1.95.0** with `rustfmt` and `clippy`, as pinned by
-  [rust-toolchain.toml](rust-toolchain.toml).
+- For source builds, Rust **1.85.0** is the declared native workspace minimum. The checked-in
+  [rust-toolchain.toml](rust-toolchain.toml) keeps **1.95.0** with `rustfmt` and
+  `clippy` as the reproducible development and release-verification default.
+  See [Rust and dependency compatibility](docs/integrations/rust-compatibility.md).
+- The exercised `policy-cli`, collector, project-verification, and bootstrap
+  binary paths do not require Rust or an agent framework at runtime. A compatible
+  OS/system runtime and caller-selected external tools are still required.
+  Repository verification commands such as `xtask check-residue` require Cargo
+  and its selected Rust tooling.
 - Git for the CI adapter and consumer-acceptance harness.
 - Node 22.18.0 / npm 10.9.3 and .NET SDK 9.0.304 only to run native consumer
   profiles. See [consumer acceptance](docs/integrations/acceptance.md).
@@ -55,8 +67,10 @@ cargo fmt --all -- --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 ```
 
-The workspace uses exact dependency pins and a checked-in `Cargo.lock`. Use
-`--locked` for reproducible builds and checks.
+The manifests use reviewed compatible dependency ranges and the checked-in
+`Cargo.lock` records the exact tested resolution. Use `--locked` for reproducible
+builds and checks; a newly resolvable compatible version is not automatically a
+tested version.
 
 ### Try local advisory evaluation
 
@@ -122,11 +136,17 @@ reports. The result remains local and advisory until a consumer binds it into th
 trusted CI path.
 
 ```console
-cargo run --locked -p project-verification -- validate-profile profiles/fullstack/profile.json
+cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.0.2/profiles/fullstack/profile.json
 cargo run --locked -p project-verification -- schema
 cargo run --locked -p project-verification -- prepare --input request.json
 cargo run --locked -p project-verification -- run --input request.json
 ```
+
+The repository-root `profiles/fullstack/profile.json` is a retained 1.0.0 asset
+with 14 sensors; it is not the current fullstack example. Release 1.0.2 has 15
+required sensors, including `shared:dependencies`. After bootstrap installation,
+validate the selected copy at `.policy/project-profile.json`. See the
+[profile asset guide](profiles/README.md) for the historical/current distinction.
 
 `policy-bootstrap` installs reviewed, pinned configuration into an existing
 consumer directory. Inspect and save a plan before applying it; `apply`

@@ -89,19 +89,21 @@ mod integration {
             };
             let output =
                 std::env::temp_dir().join(format!("policy-ci-fake-gh-{}", std::process::id()));
-            let result = std::process::Command::new("rustc")
-                .args(["--edition=2021", "--crate-name", "policy_ci_fake_gh"])
-                .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/fake_gh.rs"))
-                .arg("-L")
-                .arg(format!("dependency={}", deps.display()))
-                .arg("--extern")
-                .arg(format!("serde_json={}", artifact("serde_json").display()))
-                .arg("--extern")
-                .arg(format!("chrono={}", artifact("chrono").display()))
-                .arg("-o")
-                .arg(&output)
-                .output()
-                .unwrap();
+            let result = std::process::Command::new(
+                std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()),
+            )
+            .args(["--edition=2021", "--crate-name", "policy_ci_fake_gh"])
+            .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/fake_gh.rs"))
+            .arg("-L")
+            .arg(format!("dependency={}", deps.display()))
+            .arg("--extern")
+            .arg(format!("serde_json={}", artifact("serde_json").display()))
+            .arg("--extern")
+            .arg(format!("chrono={}", artifact("chrono").display()))
+            .arg("-o")
+            .arg(&output)
+            .output()
+            .unwrap();
             assert!(
                 result.status.success(),
                 "{}",

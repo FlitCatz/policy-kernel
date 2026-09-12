@@ -14,11 +14,12 @@ path instead of the `/tmp` alias. Relative targets resolve from the current
 directory; parent traversal and the filesystem root are rejected. Components
 use portable relative paths; `.` explicitly denotes the target root.
 
-The following are future usage commands, not commands executed during Task 13:
+The following examples select the current supported template release explicitly;
+they are usage commands, not evidence that Task 13 executed them:
 
 ```console
-rtk cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.0.0 --component frontend=apps/web --component backend=apps/api
-rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.0 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
+rtk cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.0.2 --component frontend=apps/web --component backend=apps/api
+rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.2 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
 rtk cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-plan.json
 ```
 
@@ -32,8 +33,10 @@ use `.`; fullstack defaults are `frontend`, `backend`, and shared `.`. Repeat
 `--component ID=PATH` to override roots. Unknown/duplicate components, overlapping
 application roots, reserved paths and template file/directory collisions are
 rejected. Fullstack shared may be the target root or a disjoint component.
-`--release` is required; only the embedded `1.0.0` candidate is recognized.
-No latest-release lookup, download or package restore occurs.
+`--release` is required. The embedded releases `1.0.0`, `1.0.1`, and `1.0.2`
+are recognized; there is no implicit latest release. Use `1.0.2` for a new
+installation unless an explicitly reviewed compatibility requirement selects a
+historical release. No release lookup, download, or package restore occurs.
 
 Exit codes: `0` means a conflict-free plan or successful apply/recovery; `2` means
 a plan has conflicts; `64` means invalid input, unsafe filesystem access, stale
@@ -58,9 +61,11 @@ cannot claim arbitrary files for replacement or uninstall.
 Release resources, including profiles and Task 10 action copies, live under
 `bootstrap/templates/1.0.0/`, `bootstrap/templates/1.0.1/` and
 `bootstrap/templates/1.0.2/`. Historical bytes remain unchanged for receipt
-validation and recovery. Version 1.0.2 retains the 1.0.1 pins
-Vite 7.3.6, Vitest 4.1.11 and Playwright 1.55.1, and audits fullstack's shared
-npm graph as well as its frontend graph. Select `--release 1.0.2`
+validation and recovery. Version 1.0.2 retains the 1.0.1 pins (Vite 7.3.6,
+Vitest 4.1.11, and Playwright 1.55.1) and adds the required
+`shared:dependencies` sensor, so its fullstack profile has 15 sensors and audits
+the shared npm graph as well as the frontend graph. Versions 1.0.0 and 1.0.1
+retain 14 sensors and do not perform that shared audit. Select `--release 1.0.2`
 explicitly after reviewing and updating the consumer manifests/lockfiles.
 Cross-version tests cover upgrade, downgrade, repeated installation, uninstall
 and preservation of local edits, including frozen receipts from the old runner.
@@ -87,15 +92,27 @@ files contain declarative tool configuration only; no application implementation
 test cases or check-running scripts are generated. YAML is limited to the existing
 Rust CI adapter and a Rust verification invocation.
 
-The release preserves Task 12's native candidate pins. Frontend defaults add
+The releases use the direct profile pins below. Frontend defaults also include
 `@typescript-eslint/parser` 8.42.0 and `jsdom` 26.1.0, binding installed package
 manifests and package-lock entries to their sensors. These versions have upstream
 release records, but the combined matrix has not been executed here:
 [typescript-eslint 8.42.0](https://github.com/typescript-eslint/typescript-eslint/releases/tag/v8.42.0),
 [jsdom 26.1.0](https://github.com/jsdom/jsdom/releases/tag/26.1.0).
 The bootstrap profile selects `eslint.config.mjs` explicitly and includes these
-dependencies. Its digest differs from Task 12's base asset: prepare/adopt the
-actual installed profile instead of reusing a base digest.
+dependencies.
+
+| Tool | 1.0.0 | 1.0.1 | 1.0.2 |
+| --- | --- | --- | --- |
+| Node / npm | 22.18.0 / 10.9.3 | 22.18.0 / 10.9.3 | 22.18.0 / 10.9.3 |
+| TypeScript / ESLint | 5.9.2 / 9.34.0 | 5.9.2 / 9.34.0 | 5.9.2 / 9.34.0 |
+| Vite / Vitest | 7.1.3 / 3.2.4 | 7.3.6 / 4.1.11 | 7.3.6 / 4.1.11 |
+| Playwright | 1.55.0 | 1.55.1 | 1.55.1 |
+| typescript-eslint parser / jsdom | 8.42.0 / 26.1.0 | 8.42.0 / 26.1.0 | 8.42.0 / 26.1.0 |
+| .NET SDK / VSTest Test SDK | 9.0.304 / 17.14.1 | 9.0.304 / 17.14.1 | 9.0.304 / 17.14.1 |
+
+An installed profile's digest differs from the repository-root historical asset
+when its release or component roots differ. Prepare and adopt the actual
+`.policy/project-profile.json`; do not reuse a base-asset digest.
 
 `prerequisites` lists absent native input files not supplied by the template:
 package/application manifests, lockfiles, installed dependencies and real .NET
@@ -148,10 +165,12 @@ are outside the guarantee. Rollback restores content, not timestamps, inode
 identity, ownership or extended attributes. New files/directories use owner-only
 access.
 
-Uninstall uses the same saved-plan mechanism and requires the recorded selection:
+Uninstall uses the same saved-plan mechanism. Read the
+`.policy/bootstrap-manifest.json` receipt and pass exactly its recorded profile,
+release, and component mapping; the example matches the 1.0.2 installation above:
 
 ```console
-rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.0 --component frontend=apps/web --component backend=apps/api --uninstall > /absolute/bootstrap-uninstall.json
+rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.2 --component frontend=apps/web --component backend=apps/api --uninstall > /absolute/bootstrap-uninstall.json
 rtk cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-uninstall.json
 ```
 

@@ -59,11 +59,21 @@ list does not mean unknown. The supplied assets deliberately use a conservative
 always-required baseline, including integration/contract/E2E; consumers can adopt
 reviewed conditional policies where the project contract permits them.
 
-The three assets are [React/TypeScript](../../profiles/react-typescript/profile.json),
-[.NET](../../profiles/dotnet/profile.json) and
-[fullstack](../../profiles/fullstack/profile.json). Standalone component roots are
-`.`; fullstack uses `frontend/`, `backend/`, and a `shared` component at the root.
-Each application component has a required test suite with namespaced sensor IDs.
+The three repository-root assets are retained historical 1.0.0 profiles:
+[React/TypeScript](../../profiles/react-typescript/profile.json),
+[.NET](../../profiles/dotnet/profile.json), and
+[fullstack](../../profiles/fullstack/profile.json). The historical fullstack
+profile has 14 sensors. Do not treat these stable compatibility assets as an
+implicit latest release; see the [profile asset guide](../../profiles/README.md).
+
+For current direct validation, select an explicit 1.0.2 asset under
+`bootstrap/templates/1.0.2/profiles/`, or validate the
+`.policy/project-profile.json` produced by a reviewed 1.0.2 bootstrap plan. The
+1.0.2 fullstack profile has 15 required sensors: it adds
+`shared:dependencies` to the 14-sensor historical set. Standalone component
+roots are `.`; fullstack uses `frontend/`, `backend/`, and a `shared` component
+at the root. Each application component has a required test suite with
+namespaced sensor IDs.
 
 The assets describe an existing Vite/npm application and an existing .NET 9
 application with `App.csproj`, `Tests/Unit/Unit.Tests.csproj` and
@@ -74,12 +84,18 @@ The per-sensor `inputs` list is the exact required file list. JSON pointers in
 global.json SDK version, and Microsoft.NET.Test.Sdk in each test project's lock.
 Changing paths or tool versions requires a new adopted profile digest.
 
-| Tool | Asset pin |
-| --- | --- |
-| Node / npm | 22.18.0 / 10.9.3 |
-| TypeScript / ESLint / Vite | 5.9.2 / 9.34.0 / 7.1.3 |
-| Vitest / Playwright | 3.2.4 / 1.55.0 |
-| .NET SDK / VSTest Test SDK | 9.0.304 / 17.14.1 |
+| Tool | Root historical 1.0.0 | Bootstrap 1.0.2 |
+| --- | --- | --- |
+| Node / npm | 22.18.0 / 10.9.3 | 22.18.0 / 10.9.3 |
+| TypeScript / ESLint | 5.9.2 / 9.34.0 | 5.9.2 / 9.34.0 |
+| Vite / Vitest | 7.1.3 / 3.2.4 | 7.3.6 / 4.1.11 |
+| Playwright | 1.55.0 | 1.55.1 |
+| typescript-eslint parser / jsdom | Not pinned by these root assets | 8.42.0 / 26.1.0 |
+| .NET SDK / VSTest Test SDK | 9.0.304 / 17.14.1 | 9.0.304 / 17.14.1 |
+
+Embedded bootstrap 1.0.0 is not byte-identical to the root 1.0.0 profiles: it
+already adds the parser/jsdom bindings. See the
+[bootstrap release table](bootstrap.md) for the embedded assets.
 
 These are fixed compatibility candidates, not a claim of current recommended
 versions or a tested toolchain matrix. Restore dependencies and browser binaries
@@ -102,13 +118,15 @@ successful sensor merely because another test passed.
 The commands below are usage documentation, not commands executed during this task:
 
 ```console
-rtk cargo run --locked -p project-verification -- validate-profile profiles/fullstack/profile.json
+rtk cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.0.2/profiles/fullstack/profile.json
 rtk cargo run --locked -p project-verification -- schema
 rtk cargo run --locked -p project-verification -- prepare --input request.json
 rtk cargo run --locked -p project-verification -- run --input request.json
 ```
 
 `validate-profile` returns the typed profile digest and an unbound sensor profile.
+To validate a bootstrapped consumer instead, replace the path with
+`/absolute/project/.policy/project-profile.json`.
 `schema` emits the project schema from the same Rust types used by validation;
 it does not overwrite the existing five kernel schemas. `prepare` only reads and
 validates inputs, returning checked configurations and a candidate bound sensor

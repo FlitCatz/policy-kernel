@@ -1,4 +1,6 @@
 [toolchain]
+# Reproducible development/release default, not the minimum compiler or a
+# consumer-runtime dependency. Override with cargo +1.85.0 (workspace MSRV).
 channel = "1.95.0"
 profile = "minimal"
 components = ["rustfmt", "clippy"]

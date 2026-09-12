@@ -5,5 +5,5 @@ the implemented scope, dated verification evidence, and conditions not
 demonstrated in production.
 
 [[overview]] explains the repository's role. [[tasks]] maps evidence to Tasks
-1–14. [[trust-boundaries]] explains why local evidence cannot by itself authorize
-a release.
+1–15, including the Task 15 follow-up in progress. [[trust-boundaries]] explains why
+local evidence cannot by itself authorize a release.

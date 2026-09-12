@@ -22,8 +22,11 @@
 
 ## 현재 상태와 범위
 
-이 워크스페이스에는 Task 1–14가 구현되어 있습니다. 근거와 남은 운영 조건은
+이 워크스페이스에는 Task 1–14의 구성요소가 구현되어 있습니다. 근거와 남은 구현·통합·운영 조건은
 [현재 상태](docs/status.md)와 [Task 색인](docs/tasks/README.md)에서 확인할 수 있습니다.
+[Task 15](docs/tasks/task-15/README.md)는 호환 도구·버전 선택, 실행 독립성,
+의존성·knowledge 증거의 누락 및 인증된 소비 프로젝트 통합을 추적합니다.
+완료된 수정과 남은 작업은 해당 Task 랜딩 페이지와 현재 상태 문서에서 확인하세요.
 이것이 운영 환경 프로모션 완료를 뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에
 정의된 실제 shadow 기간, 보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
 
@@ -33,7 +36,14 @@ bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript
 
 ## 요구 사항
 
-- [rust-toolchain.toml](rust-toolchain.toml)에 고정된 `rustfmt`, `clippy` 포함 Rust **1.95.0**
+- 소스 빌드에는 Rust **1.85.0** 이상을 요구합니다.
+  [rust-toolchain.toml](rust-toolchain.toml)은 재현 가능한 개발 및 릴리스 검증의
+  기본값으로 `rustfmt`, `clippy`를 포함한 **1.95.0**을 유지합니다. 자세한 내용은
+  [Rust 및 의존성 호환성](docs/integrations/rust-compatibility.md)을 참고하세요.
+- 검증한 `policy-cli`, collector, project-verification, bootstrap 바이너리
+  실행 경로에는 Rust나 에이전트 프레임워크 설치가 필요하지 않습니다.
+  호환 OS·시스템 런타임과 호출자가 선택한 외부 도구는 필요합니다.
+  `xtask check-residue` 같은 저장소 검증 명령은 Cargo와 선택된 Rust 도구가 필요합니다.
 - CI 어댑터와 소비 프로젝트 인수 검증에 필요한 Git
 - 네이티브 소비 프로젝트 프로필을 실행할 때만 Node 22.18.0 / npm 10.9.3 및 .NET SDK 9.0.304.
   자세한 내용은 [소비 프로젝트 인수 검증](docs/integrations/acceptance.md)을 참고하세요.
@@ -49,8 +59,9 @@ cargo fmt --all -- --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 ```
 
-워크스페이스는 정확한 의존성 버전과 `Cargo.lock`을 관리합니다. 재현 가능한 빌드와 검증을
-위해 `--locked`를 사용하세요.
+manifest는 검토된 호환 의존성 범위를 사용하고, 체크인된 `Cargo.lock`은 정확히 테스트된
+해결 결과를 기록합니다. 재현 가능한 빌드와 검증에는 `--locked`를 사용하세요. 새로 해결
+가능해진 호환 버전이 자동으로 테스트된 버전이 되는 것은 아닙니다.
 
 ### 로컬 자문 평가 실행
 
@@ -113,11 +124,17 @@ VSTest TRX 보고서를 정규화합니다. 이 결과는 로컬 자문용입니
 소비 프로젝트가 신뢰할 수 있는 CI 경로에 결과를 바인딩해야 합니다.
 
 ```console
-cargo run --locked -p project-verification -- validate-profile profiles/fullstack/profile.json
+cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.0.2/profiles/fullstack/profile.json
 cargo run --locked -p project-verification -- schema
 cargo run --locked -p project-verification -- prepare --input request.json
 cargo run --locked -p project-verification -- run --input request.json
 ```
+
+저장소 루트의 `profiles/fullstack/profile.json`은 센서 14개인 1.0.0 과거
+자산으로 유지되며, 현재 fullstack 예제가 아닙니다. 릴리스 1.0.2에는
+`shared:dependencies`를 포함한 필수 센서 15개가 있습니다. Bootstrap 설치
+후에는 선택된 `.policy/project-profile.json`을 검증하세요. 과거 자산과
+현재 자산의 구분은 [프로필 자산 안내](profiles/README.md)를 참고하세요.
 
 `policy-bootstrap`은 검토된 고정 설정을 기존 소비 프로젝트 디렉터리에 설치합니다. 적용 전
 계획을 검사하고 저장하세요. `apply`는 파일을 변경하기 전에 계획을 다시 검증합니다.

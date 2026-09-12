@@ -2,6 +2,7 @@
 name = "policy-bootstrap"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 
@@ -13,9 +14,9 @@ clap.workspace = true
 sha2.workspace = true
 hex.workspace = true
 thiserror.workspace = true
-rustix = { version = "=1.1.4", features = ["fs"] }
-roxmltree = "=0.20.0"
+rustix = { workspace = true, features = ["fs"] }
+roxmltree.workspace = true
 
 [dev-dependencies]
-tempfile = "=3.27.0"
+tempfile.workspace = true
 assert_cmd.workspace = true

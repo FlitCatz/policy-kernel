@@ -290,15 +290,25 @@ fn schemas(path: &Path) -> Result<()> {
     Err("required schema files are missing or empty".into())
 }
 fn forbidden(text: &str) -> bool {
-    let lower = text.to_lowercase();
-    ["gsd-core", ".planning", "gemini-reviewer", "oh-my-pi"]
-        .iter()
-        .any(|s| lower.contains(s))
+    let lower = text.to_lowercase().replace('_', "-");
+    [
+        "superpowers",
+        "agent-skills",
+        "gsd-core",
+        ".planning",
+        "gemini-reviewer",
+        "oh-my-pi",
+    ]
+    .iter()
+    .any(|s| lower.contains(s))
         || lower
             .split(|c: char| !c.is_alphanumeric() && c != '_')
             .any(|word| ["agy", "omp", "mcp", "hashline"].contains(&word))
 }
 fn scan(path: &Path) -> Result<()> {
+    scan_runtime(path, false)
+}
+fn scan_runtime(path: &Path, skip_docs: bool) -> Result<()> {
     let metadata = fs::symlink_metadata(path)
         .map_err(|e| format!("cannot inspect {}: {e}", path.display()))?;
     if metadata.file_type().is_symlink() {
@@ -312,9 +322,12 @@ fn scan(path: &Path) -> Result<()> {
             .map_err(|e| e.to_string())?;
         entries.sort();
         for entry in entries {
-            scan(&entry)?;
+            scan_runtime(&entry, skip_docs)?;
         }
     } else if metadata.is_file() {
+        if skip_docs && path.extension().is_some_and(|e| e == "md") {
+            return Ok(());
+        }
         if forbidden(&String::from_utf8_lossy(&read(path)?)) {
             return Err(format!(
                 "forbidden runtime/public API residue found: {}",
@@ -337,15 +350,19 @@ fn check_dependencies(text: &str) -> Result<()> {
 }
 pub fn residue(root: &Path) -> Result<()> {
     nonempty(&root.join("Cargo.toml"))?;
+    nonempty(&root.join("Cargo.lock"))?;
     schemas(&root.join("schemas"))?;
     if nonempty(&root.join("action/action.yml")).is_err() {
         nonempty(&root.join("action/action.yaml"))?;
     }
     let mut sources = Vec::new();
     for entry in fs::read_dir(root.join("crates")).map_err(|e| e.to_string())? {
-        let path = entry.map_err(|e| e.to_string())?.path().join("src");
+        let package = entry.map_err(|e| e.to_string())?.path();
+        let path = package.join("src");
         if path.is_dir() {
             sources.push(path);
+            sources.push(package.join("Cargo.toml"));
+            scan_optional(&package.join("build.rs"), false)?;
         }
     }
     if sources.is_empty() {
@@ -355,10 +372,35 @@ pub fn residue(root: &Path) -> Result<()> {
         root.join("schemas"),
         root.join("action"),
         root.join("Cargo.toml"),
+        root.join("Cargo.lock"),
     ]);
     for path in sources {
         scan(&path)?;
     }
+    for package in ["bootstrap", "acceptance", "xtask"] {
+        let path = root.join(package);
+        scan_optional(&path.join("Cargo.toml"), false)?;
+        scan_optional(&path.join("build.rs"), false)?;
+        if package != "xtask" {
+            scan_optional(&path.join("src"), false)?;
+        } else if path.join("src").is_dir() {
+            // This scanner defines the deny-list itself; other verification
+            // implementations are product code and must still be checked.
+            for entry in fs::read_dir(path.join("src")).map_err(|e| e.to_string())? {
+                let entry = entry.map_err(|e| e.to_string())?.path();
+                if entry.file_name().is_some_and(|n| n != "verification.rs") {
+                    scan(&entry)?;
+                }
+            }
+        }
+    }
+    for path in [".github/workflows", ".cargo", "scripts", "build.rs"] {
+        scan_optional(&root.join(path), true)?;
+    }
+    // Templates can contain executable/configuration assets, but their prose
+    // and historical examples do not constitute a runtime dependency.
+    scan_optional(&root.join("bootstrap/templates"), true)?;
+    scan_cargo_targets(root)?;
     let output = Command::new("cargo")
         .args(["tree", "--locked", "-p", "policy-core"])
         .current_dir(root)
@@ -372,6 +414,132 @@ pub fn residue(root: &Path) -> Result<()> {
     }
     check_dependencies(&String::from_utf8_lossy(&output.stdout))?;
     println!("runtime residue scan passed");
+    Ok(())
+}
+
+fn scan_optional(path: &Path, skip_docs: bool) -> Result<()> {
+    match fs::symlink_metadata(path) {
+        Ok(_) => scan_runtime(path, skip_docs),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(e) => Err(format!("cannot inspect {}: {e}", path.display())),
+    }
+}
+
+fn scan_cargo_targets(root: &Path) -> Result<()> {
+    // Cargo metadata is read-only: it discovers custom build/bin/lib paths and
+    // additional workspace members without executing their build scripts.
+    let output = Command::new("cargo")
+        .args([
+            "metadata",
+            "--locked",
+            "--offline",
+            "--no-deps",
+            "--format-version",
+            "1",
+        ])
+        .current_dir(root)
+        .output()
+        .map_err(|e| format!("cannot run cargo metadata: {e}"))?;
+    if !output.status.success() {
+        return Err(format!(
+            "cargo metadata failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+    let metadata: serde_json::Value =
+        serde_json::from_slice(&output.stdout).map_err(|e| e.to_string())?;
+    let members = metadata["workspace_members"]
+        .as_array()
+        .ok_or("missing workspace members")?;
+    let packages = metadata["packages"]
+        .as_array()
+        .ok_or("missing workspace packages")?;
+    let root = root.canonicalize().map_err(|e| e.to_string())?;
+    for package in packages.iter().filter(|p| members.contains(&p["id"])) {
+        let manifest = Path::new(
+            package["manifest_path"]
+                .as_str()
+                .ok_or("missing manifest path")?,
+        );
+        scan_workspace_path(&root, manifest)?;
+        let directory = manifest.parent().ok_or("missing package directory")?;
+        for target in package["targets"]
+            .as_array()
+            .ok_or("missing Cargo targets")?
+        {
+            let kinds = target["kind"].as_array().ok_or("missing target kind")?;
+            if kinds
+                .iter()
+                .any(|k| ["test", "example", "bench"].contains(&k.as_str().unwrap_or("")))
+            {
+                continue;
+            }
+            let source = Path::new(target["src_path"].as_str().ok_or("missing target source")?);
+            let parent = source.parent().ok_or("missing target directory")?;
+            // Root-level targets can import sibling Rust modules too. Inspect
+            // package Rust sources while excluding conventional test/artifact
+            // directories; don't treat historical prose as a build dependency.
+            if parent == directory {
+                scan_package_rust(&root, directory)?;
+            } else if parent == root.join("xtask/src") {
+                scan_workspace_path(&root, source)?;
+            } else {
+                scan_workspace_path(&root, parent)?;
+            }
+        }
+    }
+    Ok(())
+}
+
+fn scan_workspace_path(root: &Path, path: &Path) -> Result<()> {
+    if !path
+        .canonicalize()
+        .map_err(|e| e.to_string())?
+        .starts_with(root)
+    {
+        return Err(format!(
+            "runtime source is outside scanned workspace: {}",
+            path.display()
+        ));
+    }
+    scan_runtime(path, true)
+}
+
+fn scan_package_rust(root: &Path, path: &Path) -> Result<()> {
+    let metadata = fs::symlink_metadata(path).map_err(|e| e.to_string())?;
+    if metadata.file_type().is_symlink() {
+        return Err(format!("scan refuses symlink: {}", path.display()));
+    }
+    if metadata.is_dir() {
+        let mut entries = fs::read_dir(path)
+            .map_err(|e| e.to_string())?
+            .map(|e| e.map(|e| e.path()))
+            .collect::<std::io::Result<Vec<_>>>()
+            .map_err(|e| e.to_string())?;
+        entries.sort();
+        for entry in entries {
+            let name = entry.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if [
+                "tests",
+                "benches",
+                "examples",
+                "docs",
+                "target",
+                "node_modules",
+                ".git",
+                ".worktrees",
+                ".codegraph",
+                ".superpowers",
+            ]
+            .contains(&name)
+            {
+                continue;
+            }
+            scan_package_rust(root, &entry)?;
+        }
+    } else if path.extension().is_some_and(|e| e == "rs") {
+        scan_workspace_path(root, path)?;
+    }
     Ok(())
 }
 pub fn public_api(docs: &Path, schema_dir: &Path) -> Result<()> {

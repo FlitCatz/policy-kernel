@@ -314,6 +314,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "tempfile",
  "thiserror",
 ]
 
@@ -751,6 +752,7 @@ dependencies = [
  "policy-core",
  "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]

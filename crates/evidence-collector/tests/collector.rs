@@ -37,12 +37,14 @@ fn executable() -> &'static PathBuf {
     static EXE: OnceLock<PathBuf> = OnceLock::new();
     EXE.get_or_init(|| {
         let path = std::env::temp_dir().join(format!("collector-fixture-{}", std::process::id()));
-        assert!(Command::new("rustc")
-            .args(["--edition=2021", "tests/support/fixture.rs", "-o"])
-            .arg(&path)
-            .status()
-            .unwrap()
-            .success());
+        assert!(
+            Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()))
+                .args(["--edition=2021", "tests/support/fixture.rs", "-o"])
+                .arg(&path)
+                .status()
+                .unwrap()
+                .success()
+        );
         path
     })
 }
