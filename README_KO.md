@@ -27,6 +27,7 @@
 [Task 15](docs/tasks/task-15/README.md)는 호환 도구·버전 선택, 실행 독립성,
 의존성·knowledge 증거의 누락 및 인증된 소비 프로젝트 통합을 추적합니다.
 완료된 수정과 남은 작업은 해당 Task 랜딩 페이지와 현재 상태 문서에서 확인하세요.
+15.10까지의 로컬 구현·검증은 완료했으며, 15.11은 해당 후보의 실제 CI·운영 증거가 필요합니다.
 이것이 운영 환경 프로모션 완료를 뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에
 정의된 실제 shadow 기간, 보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
 
@@ -45,8 +46,12 @@ bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript
   호환 OS·시스템 런타임과 호출자가 선택한 외부 도구는 필요합니다.
   `xtask check-residue` 같은 저장소 검증 명령은 Cargo와 선택된 Rust 도구가 필요합니다.
 - CI 어댑터와 소비 프로젝트 인수 검증에 필요한 Git
-- 네이티브 소비 프로젝트 프로필을 실행할 때만 Node 22.18.0 / npm 10.9.3 및 .NET SDK 9.0.304.
-  자세한 내용은 [소비 프로젝트 인수 검증](docs/integrations/acceptance.md)을 참고하세요.
+- 네이티브 도구는 채택된 [선택 계약](docs/integrations/tool-selection.md)을 따릅니다.
+  내장 프로필의 설치 선택은 Node 22.18.0 / npm 10.9.3 및 .NET SDK 9.0.304이며,
+  추가 React/Jest 소비 조합은 Node 22.19.0 / npm 10.9.4를 선택합니다.
+  요청 호환 범위, 정확한 설치 선택, 실제 관측 버전은 각각 기록합니다.
+- 인증 컨트롤러와 암호 검증 테스트에는 OpenSSL이 필요합니다. 소유자가 관리할 신뢰 기준은
+  [컨트롤러 참조 구현](action/controller.md)을 참고하세요.
 
 ## 시작하기
 
@@ -112,6 +117,10 @@ cargo run --locked -p xtask -- check-mutation-results verification/mutants.out/o
 cargo test --locked -p xtask
 ```
 
+`check-mutation-results`의 기본 범위는 core 권한 판정 모듈 다섯 개 전체입니다.
+Task 15는 `--scope controller`, `--scope workflow-source`도 각각 검사합니다.
+추가 범위에서도 정확한 변이 인벤토리를 확인하며 기존 core 검사를 대체하지 않습니다.
+
 `xtask rollback-drill`은 호출자가 제공한 정규화 snapshot만 비교합니다. GitHub를 조회하거나
 변경하지 않습니다. 필수 인수와 실제 롤백 절차는
 [프로모션 및 롤백](docs/promotion.md)에 설명되어 있습니다.
@@ -119,29 +128,35 @@ cargo test --locked -p xtask
 ## 프로젝트 검증과 bootstrap
 
 `project-verification`은 채택된 프로젝트 프로필과 검증된 소스 인벤토리로부터 로컬 관측값을
-만듭니다. React/TypeScript, .NET, 풀스택의 세 자산을 지원하며 Vitest JSON, Playwright JSON,
-VSTest TRX 보고서를 정규화합니다. 이 결과는 로컬 자문용입니다. 권한 있는 결정을 뒷받침하려면
+만듭니다. React/TypeScript, .NET, 풀스택 자산과 사용자 프로필을 지원하며 Vitest JSON,
+Jest JSON, Playwright JSON, VSTest TRX 보고서를 정규화합니다. 이 결과는 로컬 자문용입니다. 권한 있는 결정을 뒷받침하려면
 소비 프로젝트가 신뢰할 수 있는 CI 경로에 결과를 바인딩해야 합니다.
 
+스키마 2의 의존성 감사는 선택한 그래프를 각각 검사합니다. npm 설치와 감사는
+dev·optional·peer 의존성을 명시적으로 포함하여 npm 설정으로 누락되지 않도록 합니다.
+네이티브 인수검증은 Vitest·TRX·Playwright 프로세스가 성공해도 빈 보고서나 누락된
+보고서를 거부하고, 수정 후 새 head 검증과 이전 head 결과 거부를 확인합니다.
+
 ```console
-cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.0.2/profiles/fullstack/profile.json
+cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.0/profiles/fullstack/profile.json
 cargo run --locked -p project-verification -- schema
 cargo run --locked -p project-verification -- prepare --input request.json
 cargo run --locked -p project-verification -- run --input request.json
 ```
 
 저장소 루트의 `profiles/fullstack/profile.json`은 센서 14개인 1.0.0 과거
-자산으로 유지되며, 현재 fullstack 예제가 아닙니다. 릴리스 1.0.2에는
-`shared:dependencies`를 포함한 필수 센서 15개가 있습니다. Bootstrap 설치
+자산으로 유지됩니다. 동결된 릴리스 1.0.2에는 `shared:dependencies`를 포함한
+필수 센서 15개가 있습니다. 현재 1.1.0은 프로필 schema 2를 사용하며 Unit·Integration
+NuGet 감사를 각각 추가해 필수 센서가 17개입니다. Bootstrap 설치
 후에는 선택된 `.policy/project-profile.json`을 검증하세요. 과거 자산과
 현재 자산의 구분은 [프로필 자산 안내](profiles/README.md)를 참고하세요.
 
-`policy-bootstrap`은 검토된 고정 설정을 기존 소비 프로젝트 디렉터리에 설치합니다. 적용 전
+`policy-bootstrap`은 검토된 선택 설정을 기존 소비 프로젝트 디렉터리에 설치합니다. 적용 전
 계획을 검사하고 저장하세요. `apply`는 파일을 변경하기 전에 계획을 다시 검증합니다.
 
 ```console
-cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.0.2 --component frontend=apps/web --component backend=apps/api
-cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.2 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
+cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api
+cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
 cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-plan.json
 ```
 
@@ -186,6 +201,10 @@ checkout에서 실행하거나 로컬 `policy-cli` 출력을 필수 검사로 �
 
 `policy-ci`에는 `pre-merge`, `post-merge` 명령이 있고 authoritative 모드만 허용합니다.
 필요한 runner 제어 관측값과 CLI 인수는 action 문서에 설명되어 있습니다.
+[인증 컨트롤러 참조 구현](action/controller.md)은 독립 관측자와 제공자의 서명을 검증한 뒤
+receipt를 발행합니다. 로컬 암호 테스트가 실제 제공자 서비스 배포를 입증하지는 않습니다.
+정책 schema 2는 필수 knowledge를 명시할 수 있으며, 선언이 없는 정책은 계속 빈 knowledge를
+허용합니다.
 
 ## 추가 문서
 

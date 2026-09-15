@@ -5,7 +5,7 @@ mod failure;
 pub mod harness;
 mod process;
 mod staging;
-pub use staging::stage;
+pub use staging::{stage, stage_profile};
 
 pub fn negative_verified(
     baseline: &BTreeMap<String, bool>,

@@ -19,6 +19,8 @@ pub fn evaluate_pre_merge(input: &PreMergeEvaluationInput) -> PreMergeDecision {
         input.policy.max_evidence_age_seconds,
     );
     gates.extend(PreMergeStatus::Inconclusive, provenance.reasons().to_vec());
+    let knowledge = crate::provenance::validate_required_knowledge(input);
+    gates.extend(PreMergeStatus::Inconclusive, knowledge.reasons().to_vec());
     validate_execution(input, &mut gates);
     validate_sensors(input, &mut gates);
 
@@ -78,7 +80,6 @@ fn validate_policy_and_bindings(input: &PreMergeEvaluationInput, gates: &mut Gat
     let pr = &input.pull_request;
     let mut versions = vec![
         input.schema_version,
-        policy.schema_version,
         input.work_item.schema_version,
         pr.schema_version,
         input.evidence.schema_version,
@@ -101,7 +102,9 @@ fn validate_policy_and_bindings(input: &PreMergeEvaluationInput, gates: &mut Gat
             "pre-merge evaluation context is required",
         );
     }
-    if versions.iter().any(|version| *version != SCHEMA_VERSION) {
+    if versions.iter().any(|version| *version != SCHEMA_VERSION)
+        || policy.validate_version().is_err()
+    {
         gates.unknown(
             "PK-PRE-SCHEMA-UNSUPPORTED",
             "all runtime schema versions must be supported",

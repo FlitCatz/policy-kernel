@@ -363,11 +363,60 @@ mod tests {
                 profile: "dotnet".into(),
                 release: "1.0.0".into(),
                 components: BTreeMap::new(),
+                user_profile: None,
             },
             operation: Operation::Install,
         })
         .unwrap();
         (temp, root, plan)
+    }
+
+    #[test]
+    fn custom_profile_recovery_ignores_mutable_source_and_rejects_forged_entries() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = Root::open(&temp.path().canonicalize().unwrap()).unwrap();
+        let legacy = project_verification::parse_profile(include_str!(
+            "../templates/1.0.2/profiles/dotnet/profile.json"
+        ))
+        .unwrap();
+        let profile = project_verification::selection::upgrade_profile(legacy).unwrap();
+        root.create("custom.json", json(&profile).unwrap().as_bytes())
+            .unwrap();
+        let planned = plan::plan(Request {
+            target: root.path.clone(),
+            installation: Installation {
+                profile: String::new(),
+                release: "1.1.0".into(),
+                components: BTreeMap::new(),
+                user_profile: Some(crate::UserProfile {
+                    path: "custom.json".into(),
+                    digest: String::new(),
+                }),
+            },
+            operation: Operation::Install,
+        })
+        .unwrap();
+        let journal = journal(&root, &planned).unwrap();
+        root.mkdir(TRANSACTION).unwrap();
+        root.create(JOURNAL, json(&journal).unwrap().as_bytes())
+            .unwrap();
+        for directory in &journal.directories {
+            root.mkdir(directory).unwrap();
+        }
+        let entry = &journal.entries[0];
+        root.create(&entry.path, entry.after.as_deref().unwrap())
+            .unwrap();
+        std::fs::write(root.path.join("custom.json"), "edited source").unwrap();
+        recover(&root.path).unwrap();
+        assert!(!root.exists(TRANSACTION).unwrap());
+        assert!(!root.exists(&entry.path).unwrap());
+        assert_eq!(root.read("custom.json").unwrap().unwrap(), b"edited source");
+
+        let mut forged = journal;
+        forged.entries[0].path = "custom.json".into();
+        forged.entries[0].before = Some(b"edited source".to_vec());
+        assert!(validate(&root, &forged).is_err());
+        assert_eq!(root.read("custom.json").unwrap().unwrap(), b"edited source");
     }
 
     // Catches continuing after a failed publish and losing earlier writes.

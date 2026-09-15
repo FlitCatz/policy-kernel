@@ -10,10 +10,14 @@ requirements in the collector. Empty or skipped-only reports never succeed.
 | `vitest_json` | Vitest 3.2.4 / 4.1.11 JSON reporter | `vitest-json-3.2.4/v1` |
 | `playwright_json` | Playwright 1.55.0 / 1.55.1 JSON reporter | `playwright-json-1.55.0/v1` |
 | `trx` | VSTest 17.14.1 TRX logger, flat unit results | `vstest-trx-17.14.1/v1` |
+| `jest_json` | Jest 30.2.0 JSON output | `jest-json/v1` |
 
-Producer versions are compatibility pins, not claims that untrusted input proves
-which executable produced it. Fixtures in `tests/fixtures/project-reports/` are
-hand-authored minimal examples of the supported fields, not captured executions.
+Producer versions identify exercised combinations, not claims that untrusted input proves
+which executable produced it. Schema 2 separates adapter intervals from actual
+observations; see the [selection contract](tool-selection.md). Earlier fixtures in
+`tests/fixtures/project-reports/` are hand-authored minimal examples. `jest.json`
+was captured from the native Jest fixture, with path and timestamp normalized for
+deterministic parsing tests; raw native runs retain the original reports.
 Parser identifiers retain their original names because the normalized field
 contract is unchanged. Actual producer versions remain separately bound by the
 installed profile and checked version probes. Task 14 retains native execution
@@ -76,6 +80,18 @@ nested data-driven result structures require a future explicit adapter version.
 
 Rust regression cases cover normal reports, count mismatches, missing fields,
 duplicate identities, skips, failures, empty reports, Playwright retry/expected
-failure/global errors, and TRX namespace/DTD rejection. Execution: `not_run` under
-the current task restriction. Producer-backed fixture capture and real consumer
-integration remain separate validation work.
+failure/global errors, and TRX namespace/DTD rejection. The current native harness
+and its additional Jest test exercise real producers; see [acceptance](acceptance.md).
+These local observations do not authenticate hosted CI or authorize promotion.
+
+## Jest
+
+The [Jest 30 CLI contract](https://jestjs.io/docs/30.0/cli) provides `--json`
+and `--outputFile`. The adapter validates counters and each assertion, suite
+failures, runtime errors, interruptions, snapshots and open handles. Every executed
+test must report exactly one invocation; retry history, expected failures, skips,
+todo, snapshot updates/unmatched/unchecked snapshots, empty discovery and absent
+or malformed reports fail. Identities use the namespace, reported file and full
+test name; duplicates are rejected. The native fixture uses Node syntax checking
+and React server rendering, and explicitly exercises empty, missing, skipped and
+retried report cases as well as failing assertions, correction and head replay.

@@ -12,26 +12,38 @@ verification; project profiles; transactional bootstrap; and native consumer
 acceptance. The [Task index](tasks/README.md) describes each scope and its
 supporting records.
 
-## Follow-up in progress and remaining implementation
+## Task 15 local implementation and external conditions
 
-[Task 15](tasks/task-15/README.md) consolidates compatibility and runtime
-independence, current profile/documentation corrections, complete dependency
-auditing, mandatory knowledge evidence, and authenticated collection-to-CI
-integration. Its first batch (15.01–15.03) is implemented and locally verified:
-current examples use bootstrap 1.0.2, isolated built-binary tests exercise operation
-without agent configuration or Rust on PATH, and the locked workspace builds/tests
-with Rust 1.85.0 and 1.95.0 on macOS ARM64. The added Linux/macOS compiler CI matrix
-is configured, not yet observed for this candidate.
+[Task 15](tasks/task-15/README.md) now implements shared tool/version/path selection,
+schema 2 user profiles and safe 1.1.0 bootstrap receipts, Jest report support,
+complete selected dependency graph auditing, policy-declared required knowledge,
+and a cryptographically authenticated controller reference. Frozen 1.0.0–1.0.2
+assets and legacy policy/receipt semantics remain available. Current fullstack
+1.1.0 has 17 required sensors including separate .NET app, Unit and Integration audits.
 
-Tool/profile selection, complete dependency auditing, required knowledge, and
-authenticated consumer integration remain pending. First-batch regression checks
-do not complete Task 15's broader native acceptance and promotion requirements.
+Local native React, .NET, fullstack and alternate React/Jest runs passed on macOS
+ARM64. Rust 1.85.0 and 1.95.0 each passed 340 workspace tests; three ignored tests
+are counted separately (two native network cases were executed explicitly, one
+live GitHub smoke remains ignored). Native empty/missing report and nested npm
+omission regressions passed. Final mutation checks covered 461 mutants: 448 caught,
+13 unviable, zero missed or timed out. Local 15.10 checks and the 15.12 record are complete;
+see the [follow-up execution record](archive/reviews/2026-09-15-task-15-follow-up-verification.md).
+These observations were collected before committing the follow-up. Branch
+publication does not establish hosted verification or a production release.
 
-The policy contract still cannot declare mandatory knowledge/index presence.
-The production observation controller remains an external integration requirement;
-native acceptance is advisory. These are implementation/integration gaps as well
-as the separate live promotion conditions below. Local CodeGraph tooling does not
-satisfy mandatory knowledge evidence or authenticate CI observations.
+The controller verifies owner-configured observer/producer signatures and creates
+version 2 workflow-bound receipts. Its local cryptographic/CI transport tests use
+fixture keys and simulated GitHub. Actual attester services, complete production
+ledger ingestion, isolated deployment, publishing App credentials and independently
+observed required knowledge remain the consuming owner's responsibility. Collector
+output remains LocalUntrusted; local CodeGraph/LAT files do not authenticate it.
+
+Read-only GitHub checks on 2026-09-15 succeeded for repository metadata and found
+an existing successful Release verification run on base `bb7dab9`. That run does
+not cover the Task 15 follow-up candidate. The private repository's main protection
+endpoint currently returns HTTP 403 with a GitHub Pro/public-repository requirement.
+The owner subsequently authorized committing and pushing the feature branch.
+No billing, visibility, protection or promotion settings were changed.
 
 The three defects from the final codebase review were remediated in `5841d8b`,
 including the fullstack shared audit in bootstrap 1.0.2. Task 15 preserves those
@@ -40,6 +52,9 @@ historical root profile assets or earlier execution records.
 
 ## Verified evidence
 
+- The [Task 15 follow-up record](archive/reviews/2026-09-15-task-15-follow-up-verification.md)
+  records the new selection/audit/knowledge/controller behavior, native results,
+  source and executable bindings, and current external constraints.
 - The [Task 15 foundation verification record](archive/reviews/2026-09-12-task-15-foundation-verification.md)
   records the first implementation batch, framework-reference classification,
   two-compiler local checks, and the boundaries of that evidence.

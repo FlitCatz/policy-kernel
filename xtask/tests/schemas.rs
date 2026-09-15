@@ -340,3 +340,136 @@ fn sensor_profile_schema_matches_versioned_result_requirements() {
         assert!(!validator.is_valid(&v2));
     }
 }
+
+#[test]
+fn knowledge_policy_schema_matches_versioned_rust_contract() {
+    let schema: Value =
+        serde_json::from_str(include_str!("../../schemas/policy.schema.json")).unwrap();
+    let validator = jsonschema::draft202012::options().build(&schema).unwrap();
+    let ready: Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    let legacy = ready["policy"].clone();
+    let mut v2 = legacy.clone();
+    v2["schema_version"] = json!(2);
+    v2["required_knowledge"] = json!([{
+        "kind": "code_graph_index", "source": "ci/codegraph",
+        "required_when": [{"risks": ["high"], "path_globs": ["src/**"]}]
+    }]);
+    let old_schema: Value = serde_json::from_str(include_str!(
+        "../../tests/fixtures/contracts/policy-v1.schema.json"
+    ))
+    .unwrap();
+    let old_reader = jsonschema::draft202012::options()
+        .build(&old_schema)
+        .unwrap();
+    assert!(old_reader.is_valid(&legacy));
+    assert!(!old_reader.is_valid(&v2));
+    let mut hidden_declaration = v2.clone();
+    hidden_declaration["schema_version"] = json!(1);
+    assert!(!old_reader.is_valid(&hidden_declaration));
+    let mut cases = vec![("legacy", legacy.clone(), true), ("v2", v2.clone(), true)];
+    for version in [0, 1, 3, 99] {
+        cases.push((
+            "wrong version",
+            mutate(&v2, |value| value["schema_version"] = json!(version)),
+            false,
+        ));
+    }
+    for declaration in [json!([]), Value::Null] {
+        cases.push((
+            "legacy declaration",
+            mutate(&legacy, |value| value["required_knowledge"] = declaration),
+            false,
+        ));
+    }
+    cases.push((
+        "empty v2 declaration",
+        mutate(&v2, |value| value["required_knowledge"] = json!([])),
+        true,
+    ));
+    cases.push((
+        "absent v2 declaration",
+        mutate(&v2, |value| {
+            value.as_object_mut().unwrap().remove("required_knowledge");
+        }),
+        true,
+    ));
+    for (pointer, replacement) in [
+        ("/required_knowledge", Value::Null),
+        ("/required_knowledge/0/kind", json!("unknown")),
+        ("/required_knowledge/0/source", json!("")),
+        ("/required_knowledge/0/source", json!(" \t\n")),
+        (
+            "/required_knowledge/0/source",
+            json!("\u{0085}\u{00a0}\u{1680}\u{2007}\u{2028}\u{202f}\u{205f}\u{3000}"),
+        ),
+        ("/required_knowledge/0/source", json!("ci\0codegraph")),
+        ("/required_knowledge/0/required_when", Value::Null),
+        (
+            "/required_knowledge/0/required_when/0/risks/0",
+            json!("unknown"),
+        ),
+        (
+            "/required_knowledge/0/required_when/0/path_globs",
+            json!("src/**"),
+        ),
+    ] {
+        cases.push((
+            "invalid field",
+            mutate(&v2, |value| {
+                *value.pointer_mut(pointer).unwrap() = replacement
+            }),
+            false,
+        ));
+    }
+    for pointer in [
+        "/required_knowledge/0",
+        "/required_knowledge/0/required_when/0",
+    ] {
+        cases.push((
+            "unknown field",
+            mutate(&v2, |value| {
+                value
+                    .pointer_mut(pointer)
+                    .unwrap()
+                    .as_object_mut()
+                    .unwrap()
+                    .insert("unexpected".into(), json!(true));
+            }),
+            false,
+        ));
+    }
+    for field in ["kind", "source", "required_when"] {
+        cases.push((
+            "missing requirement field",
+            mutate(&v2, |value| {
+                value["required_knowledge"][0]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove(field);
+            }),
+            false,
+        ));
+    }
+    for source in ["\u{feff}", "\u{200b}", " ci/codegraph "] {
+        cases.push((
+            "nonblank Rust source",
+            mutate(&v2, |value| {
+                value["required_knowledge"][0]["source"] = json!(source)
+            }),
+            true,
+        ));
+    }
+    for (name, instance, expected) in cases {
+        assert_eq!(
+            serde_json::from_value::<policy_contracts::PolicySnapshot>(instance.clone()).is_ok(),
+            expected,
+            "Rust {name}: {instance}"
+        );
+        assert_eq!(
+            validator.is_valid(&instance),
+            expected,
+            "schema {name}: {instance}"
+        );
+    }
+}

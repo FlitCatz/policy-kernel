@@ -1,0 +1,1180 @@
+{
+  "schema_version": 2,
+  "id": "fullstack",
+  "version": "1.1.0",
+  "components": [
+    {
+      "id": "frontend",
+      "root": "frontend"
+    },
+    {
+      "id": "backend",
+      "root": "backend"
+    },
+    {
+      "id": "shared",
+      "root": "."
+    }
+  ],
+  "sensors": [
+    {
+      "definition": {
+        "id": "frontend:node",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:typecheck",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/typescript/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/typescript/package.json",
+        "tsconfig.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:lint",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/eslint/bin/eslint.js",
+        ".",
+        "--max-warnings=0",
+        "--config",
+        "eslint.config.mjs"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/eslint/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/eslint/package.json",
+        "eslint.config.mjs",
+        "node_modules/@typescript-eslint/parser/package.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:build",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/vite/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/vite/package.json",
+        "vite.config.ts"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:unit",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--retry=0",
+        "--reporter=json",
+        "--outputFile=.policy-reports/unit.json"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/vitest/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": {
+        "format": "vitest_json",
+        "path": ".policy-reports/unit.json"
+      },
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/vitest/package.json",
+        "vitest.config.ts",
+        "node_modules/jsdom/package.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:dependencies",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "npm",
+        "audit",
+        "--audit-level=low",
+        "--include=dev",
+        "--include=optional",
+        "--include=peer"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        ".npmrc"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "backend:build",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "build",
+        "App.csproj",
+        "--no-restore",
+        "--configuration",
+        "Release",
+        "-warnaserror"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "backend:format",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "format",
+        "App.csproj",
+        "--verify-no-changes",
+        "--no-restore"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "backend:dependencies",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "restore",
+        "App.csproj",
+        "--locked-mode",
+        "--force",
+        "--no-http-cache",
+        "-p:NuGetAudit=true",
+        "-p:NuGetAuditMode=all",
+        "-p:NuGetAuditLevel=low",
+        "-p:WarningsAsErrors=NU1900%3BNU1901%3BNU1902%3BNU1903%3BNU1904%3BNU1905",
+        "--configfile",
+        "NuGet.Config",
+        "-p:NoWarn=",
+        "-p:WarningsNotAsErrors="
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "backend:unit",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "test",
+        "Tests/Unit/Unit.Tests.csproj",
+        "--no-restore",
+        "--configuration",
+        "Release",
+        "--logger",
+        "trx;LogFileName=unit.trx",
+        "--results-directory",
+        ".policy-reports/unit"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ],
+      "report": {
+        "format": "trx",
+        "path": ".policy-reports/unit/unit.trx"
+      },
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props",
+        "Tests/Unit/Unit.Tests.csproj",
+        "Tests/Unit/packages.lock.json"
+      ],
+      "pins": [
+        {
+          "path": "Tests/Unit/packages.lock.json",
+          "pointer": "/dependencies/net9.0/Microsoft.NET.Test.Sdk/resolved",
+          "expected": "17.14.1"
+        }
+      ],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "backend:integration",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "test",
+        "Tests/Integration/Integration.Tests.csproj",
+        "--no-restore",
+        "--configuration",
+        "Release",
+        "--logger",
+        "trx;LogFileName=integration.trx",
+        "--results-directory",
+        ".policy-reports/integration"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ],
+      "report": {
+        "format": "trx",
+        "path": ".policy-reports/integration/integration.trx"
+      },
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props",
+        "Tests/Integration/Integration.Tests.csproj",
+        "Tests/Integration/packages.lock.json"
+      ],
+      "pins": [
+        {
+          "path": "Tests/Integration/packages.lock.json",
+          "pointer": "/dependencies/net9.0/Microsoft.NET.Test.Sdk/resolved",
+          "expected": "17.14.1"
+        }
+      ],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "shared:node",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "shared",
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "shared:dependencies",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "shared",
+      "argv": [
+        "npm",
+        "audit",
+        "--audit-level=low",
+        "--include=dev",
+        "--include=optional",
+        "--include=peer"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        ".npmrc"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "shared:contract",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "shared",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--config",
+        "vitest.contract.config.ts",
+        "--retry=0",
+        "--reporter=json",
+        "--outputFile=.policy-reports/contract.json"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/vitest/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": {
+        "format": "vitest_json",
+        "path": ".policy-reports/contract.json"
+      },
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/vitest/package.json",
+        "vitest.contract.config.ts"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "shared:e2e",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "shared",
+      "argv": [
+        "node",
+        "node_modules/@playwright/test/cli.js",
+        "test",
+        "--config",
+        "playwright.config.ts",
+        "--retries=0"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/@playwright/test/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": {
+        "format": "playwright_json",
+        "path": ".policy-reports/e2e.json"
+      },
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/@playwright/test/package.json",
+        "playwright.config.ts"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "backend:unit-dependencies",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "restore",
+        "Tests/Unit/Unit.Tests.csproj",
+        "--locked-mode",
+        "--force",
+        "--no-http-cache",
+        "-p:NuGetAudit=true",
+        "-p:NuGetAuditMode=all",
+        "-p:NuGetAuditLevel=low",
+        "-p:WarningsAsErrors=NU1900%3BNU1901%3BNU1902%3BNU1903%3BNU1904%3BNU1905",
+        "--configfile",
+        "NuGet.Config",
+        "-p:NoWarn=",
+        "-p:WarningsNotAsErrors="
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props",
+        "Tests/Unit/Unit.Tests.csproj",
+        "Tests/Unit/packages.lock.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "backend:integration-dependencies",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "backend",
+      "argv": [
+        "dotnet",
+        "restore",
+        "Tests/Integration/Integration.Tests.csproj",
+        "--locked-mode",
+        "--force",
+        "--no-http-cache",
+        "-p:NuGetAudit=true",
+        "-p:NuGetAuditMode=all",
+        "-p:NuGetAuditLevel=low",
+        "-p:WarningsAsErrors=NU1900%3BNU1901%3BNU1902%3BNU1903%3BNU1904%3BNU1905",
+        "--configfile",
+        "NuGet.Config",
+        "-p:NoWarn=",
+        "-p:WarningsNotAsErrors="
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "DOTNET_CLI_HOME",
+        "DOTNET_ROOT",
+        "HOME",
+        "NUGET_PACKAGES",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "global.json",
+        "App.csproj",
+        "packages.lock.json",
+        "NuGet.Config",
+        "Directory.Build.props",
+        "Tests/Integration/Integration.Tests.csproj",
+        "Tests/Integration/packages.lock.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    }
+  ],
+  "adequacy": {
+    "acceptance_criterion_ids": [],
+    "changed_behavior_ids": [],
+    "negative_case_ids": []
+  },
+  "selection": {
+    "schema_version": 1,
+    "tools": {
+      "backend:build": {
+        "executable": "dotnet",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=9.0.100, <10.0.0",
+          "normalization": "plain",
+          "provision": "9.0.304"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "backend:dependencies": {
+        "executable": "dotnet",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=9.0.100, <10.0.0",
+          "normalization": "plain",
+          "provision": "9.0.304"
+        },
+        "capabilities": [
+          "process",
+          "nuget_audit"
+        ]
+      },
+      "backend:format": {
+        "executable": "dotnet",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=9.0.100, <10.0.0",
+          "normalization": "plain",
+          "provision": "9.0.304"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "backend:integration": {
+        "executable": "dotnet",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=9.0.100, <10.0.0",
+          "normalization": "plain",
+          "provision": "9.0.304"
+        },
+        "capabilities": [
+          "process",
+          "trx"
+        ]
+      },
+      "backend:integration-dependencies": {
+        "executable": "dotnet",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=9.0.100, <10.0.0",
+          "normalization": "plain",
+          "provision": "9.0.304"
+        },
+        "capabilities": [
+          "process",
+          "nuget_audit"
+        ]
+      },
+      "backend:unit": {
+        "executable": "dotnet",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=9.0.100, <10.0.0",
+          "normalization": "plain",
+          "provision": "9.0.304"
+        },
+        "capabilities": [
+          "process",
+          "trx"
+        ]
+      },
+      "backend:unit-dependencies": {
+        "executable": "dotnet",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=9.0.100, <10.0.0",
+          "normalization": "plain",
+          "provision": "9.0.304"
+        },
+        "capabilities": [
+          "process",
+          "nuget_audit"
+        ]
+      },
+      "frontend:build": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/vite/package.json').version"
+        ],
+        "version": {
+          "requirement": "=7.3.6",
+          "normalization": "plain",
+          "provision": "7.3.6"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:dependencies": {
+        "executable": "npm",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=10.9.3, <11.0.0",
+          "normalization": "plain",
+          "provision": "10.9.3"
+        },
+        "capabilities": [
+          "process",
+          "npm_audit"
+        ]
+      },
+      "frontend:lint": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/eslint/package.json').version"
+        ],
+        "version": {
+          "requirement": "=9.34.0",
+          "normalization": "plain",
+          "provision": "9.34.0"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:node": {
+        "executable": "node",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=22.18.0, <23.0.0",
+          "normalization": "node",
+          "provision": "22.18.0"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:typecheck": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/typescript/package.json').version"
+        ],
+        "version": {
+          "requirement": "=5.9.2",
+          "normalization": "plain",
+          "provision": "5.9.2"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:unit": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/vitest/package.json').version"
+        ],
+        "version": {
+          "requirement": "=4.1.11",
+          "normalization": "plain",
+          "provision": "4.1.11"
+        },
+        "capabilities": [
+          "process",
+          "vitest_json"
+        ]
+      },
+      "shared:contract": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/vitest/package.json').version"
+        ],
+        "version": {
+          "requirement": "=4.1.11",
+          "normalization": "plain",
+          "provision": "4.1.11"
+        },
+        "capabilities": [
+          "process",
+          "vitest_json"
+        ]
+      },
+      "shared:dependencies": {
+        "executable": "npm",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=10.9.3, <11.0.0",
+          "normalization": "plain",
+          "provision": "10.9.3"
+        },
+        "capabilities": [
+          "process",
+          "npm_audit"
+        ]
+      },
+      "shared:e2e": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/@playwright/test/package.json').version"
+        ],
+        "version": {
+          "requirement": "=1.55.1",
+          "normalization": "plain",
+          "provision": "1.55.1"
+        },
+        "capabilities": [
+          "process",
+          "playwright_json"
+        ]
+      },
+      "shared:node": {
+        "executable": "node",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=22.18.0, <23.0.0",
+          "normalization": "node",
+          "provision": "22.18.0"
+        },
+        "capabilities": [
+          "process"
+        ]
+      }
+    },
+    "bindings": {
+      "backend:build": "backend:build",
+      "backend:dependencies": "backend:dependencies",
+      "backend:format": "backend:format",
+      "backend:integration": "backend:integration",
+      "backend:integration-dependencies": "backend:integration-dependencies",
+      "backend:unit": "backend:unit",
+      "backend:unit-dependencies": "backend:unit-dependencies",
+      "frontend:build": "frontend:build",
+      "frontend:dependencies": "frontend:dependencies",
+      "frontend:lint": "frontend:lint",
+      "frontend:node": "frontend:node",
+      "frontend:typecheck": "frontend:typecheck",
+      "frontend:unit": "frontend:unit",
+      "shared:contract": "shared:contract",
+      "shared:dependencies": "shared:dependencies",
+      "shared:e2e": "shared:e2e",
+      "shared:node": "shared:node"
+    },
+    "packages": [
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/typescript/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1typescript/version",
+        "requirement": "=5.9.2"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/eslint/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1eslint/version",
+        "requirement": "=9.34.0"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/@typescript-eslint/parser/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1@typescript-eslint~1parser/version",
+        "requirement": "=8.42.0"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/vite/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1vite/version",
+        "requirement": "=7.3.6"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/vitest/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1vitest/version",
+        "requirement": "=4.1.11"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/jsdom/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1jsdom/version",
+        "requirement": "=26.1.0"
+      },
+      {
+        "component": "shared",
+        "installed_manifest": "node_modules/vitest/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1vitest/version",
+        "requirement": "=4.1.11"
+      },
+      {
+        "component": "shared",
+        "installed_manifest": "node_modules/@playwright/test/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1@playwright~1test/version",
+        "requirement": "=1.55.1"
+      }
+    ],
+    "graphs": [
+      {
+        "id": "frontend-packages",
+        "component": "frontend",
+        "role": "application",
+        "manifest": "package.json",
+        "lockfile": "package-lock.json",
+        "adapter": "npm",
+        "tool": "frontend:dependencies",
+        "audit_sensor": "frontend:dependencies",
+        "target_framework": null
+      },
+      {
+        "id": "backend-dependencies",
+        "component": "backend",
+        "role": "application",
+        "manifest": "App.csproj",
+        "lockfile": "packages.lock.json",
+        "adapter": "nuget",
+        "tool": "backend:dependencies",
+        "audit_sensor": "backend:dependencies",
+        "target_framework": "net9.0"
+      },
+      {
+        "id": "backend-unit-dependencies",
+        "component": "backend",
+        "role": "unit",
+        "manifest": "Tests/Unit/Unit.Tests.csproj",
+        "lockfile": "Tests/Unit/packages.lock.json",
+        "adapter": "nuget",
+        "tool": "backend:unit-dependencies",
+        "audit_sensor": "backend:unit-dependencies",
+        "target_framework": "net9.0"
+      },
+      {
+        "id": "backend-integration-dependencies",
+        "component": "backend",
+        "role": "integration",
+        "manifest": "Tests/Integration/Integration.Tests.csproj",
+        "lockfile": "Tests/Integration/packages.lock.json",
+        "adapter": "nuget",
+        "tool": "backend:integration-dependencies",
+        "audit_sensor": "backend:integration-dependencies",
+        "target_framework": "net9.0"
+      },
+      {
+        "id": "shared-packages",
+        "component": "shared",
+        "role": "shared",
+        "manifest": "package.json",
+        "lockfile": "package-lock.json",
+        "adapter": "npm",
+        "tool": "shared:dependencies",
+        "audit_sensor": "shared:dependencies",
+        "target_framework": null
+      }
+    ],
+    "runtime_files": [
+      {
+        "component": "frontend",
+        "path": ".node-version",
+        "tool": "frontend:node",
+        "format": "node_version"
+      },
+      {
+        "component": "backend",
+        "path": "global.json",
+        "tool": "backend:dependencies",
+        "format": "dotnet_global"
+      },
+      {
+        "component": "shared",
+        "path": ".node-version",
+        "tool": "shared:node",
+        "format": "node_version"
+      }
+    ]
+  }
+}

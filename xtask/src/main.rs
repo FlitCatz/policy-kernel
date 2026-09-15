@@ -13,11 +13,12 @@ fn main() -> std::process::ExitCode {
     let result = match args.as_slice() {
         [command] if command == "schema" => generate_schemas().map_err(|e| e.to_string()),
         [command, path] if command == "check-mutation-results" => verification::mutation(Path::new(path)),
+        [command, path, flag, scope] if command == "check-mutation-results" && flag == "--scope" => verification::mutation_scope(Path::new(path), scope),
         [command, path] if command == "check-residue" => verification::residue(Path::new(path)),
         [command] if command == "check-residue" => verification::residue(Path::new(env!("CARGO_MANIFEST_DIR")).join("..").as_path()),
         [command, docs, schemas] if command == "check-public-api" => verification::public_api(Path::new(docs), Path::new(schemas)),
         [command, rest @ ..] if command == "rollback-drill" => verification::rollback(rest),
-        _ => Err("usage: xtask schema | check-mutation-results OUTCOMES | check-residue [REPO] | check-public-api DOCS SCHEMAS | rollback-drill --baseline FILE --promoted FILE --restored FILE --evidence-before FILE --evidence-after FILE".into()),
+        _ => Err("usage: xtask schema | check-mutation-results OUTCOMES [--scope core|controller|workflow-source] | check-residue [REPO] | check-public-api DOCS SCHEMAS | rollback-drill --baseline FILE --promoted FILE --restored FILE --evidence-before FILE --evidence-after FILE".into()),
     };
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,

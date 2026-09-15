@@ -1,64 +1,69 @@
 # Task 15 — Compatibility, runtime independence, and verification completion
 
-## Purpose
-
-Consolidate the remaining review findings into executable work: remove mandatory
-workflow-framework coupling if present, support project-selected compatible tools
-and versions, complete dependency and knowledge evidence requirements, and connect
-collection to authenticated CI evaluation.
-
 ## Current status
 
-In progress. The first implementation batch covers 15.01–15.03: current profile
-entry points, framework-independent binary execution, and Rust build compatibility.
-These changes are locally verified; the configured hosted compatibility matrix
-has not yet been observed. See the
-[foundation verification record](../../archive/reviews/2026-09-12-task-15-foundation-verification.md).
+Local implementation and verification for 15.01–15.10, and the 15.12 documentation
+record, are complete in the existing `feat/task-15-compatibility` worktree.
+Task 15 as a whole remains incomplete: 15.11 requires
+candidate-specific external services, approvals and live evidence.
 
-The consolidated plan was written against
-`abd6cb0a1fcd1440cc96a05bfe4ce00280742511` on 2026-09-11; its original checklist
-is preserved as planning history. This page tracks subsequent implementation.
+The [follow-up verification record](../../archive/reviews/2026-09-15-task-15-follow-up-verification.md)
+identifies the uncommitted candidate, actual commands, source/executable bindings,
+native results and remaining constraints. The
+[foundation record](../../archive/reviews/2026-09-12-task-15-foundation-verification.md)
+retains its earlier 15.01–15.03 facts. The dated 2026-09-11 plan and earlier reviews
+remain historical; this page tracks subsequent implementation.
 
 ## Work packages
 
-| ID | Deliverable | Status |
+| ID | Deliverable | Current state |
 | --- | --- | --- |
-| 15.01 | Correct current profile entry points and remaining status documentation | Locally verified |
-| 15.02 | Prove operation without workflow frameworks; remove runtime coupling if found | Locally verified for documented paths |
-| 15.03 | Separate Rust build compatibility from consumer runtime requirements | Locally verified on macOS ARM64; hosted matrix pending |
-| 15.04 | Unify tool, runtime, package, and project-path selection | Pending |
-| 15.05 | Separate profile contracts from releases; preserve bootstrap ownership | Pending |
-| 15.06 | Add replaceable tool and report adapters with explicit compatibility | Pending |
-| 15.07 | Audit every selected dependency graph, including .NET test projects | Pending |
-| 15.08 | Enforce explicitly required knowledge/index evidence | Pending |
-| 15.09 | Implement and verify the authenticated collection-to-CI integration | Pending |
-| 15.10 | Run compatibility, regression, and native acceptance verification | Partial: first-batch local Rust regression checks only |
-| 15.11 | Collect candidate-specific live promotion evidence | Pending external execution |
-| 15.12 | Publish final status, support boundaries, and evidence links | In progress; final handoff pending |
+| 15.01 | Current profile entry points | Updated together in both READMEs; 1.1.0 is explicit, historical profiles retained |
+| 15.02 | Framework independence | Isolated built-binary regressions retained for four documented product paths |
+| 15.03 | Rust compatibility and locked builds | Rust 1.85.0 / 1.95.0 local macOS ARM64 verification; hosted changed-candidate matrix pending |
+| 15.04 | Common tool/runtime/package/path selection | Implemented across profile, bootstrap, runner, acceptance, CI inputs and evidence |
+| 15.05 | User profiles and receipt ownership | Schema 2 / release 1.1.0; user source remains unowned; old receipts/assets and recovery retained |
+| 15.06 | Supported adapters and alternate consumption | npm/NuGet roles explicit; Jest 30.2.0 React SSR consumer with alternate Node/npm and web path |
+| 15.07 | Every selected dependency graph | Separate app/Unit/Integration/shared audits; renamed sensor checks; conditional test-only NuGet bypass reproduced and rejected |
+| 15.08 | Explicit required knowledge | Policy schema 2 enforcement, policy digest, provenance and old-reader/schema regressions |
+| 15.09 | Authenticated production reference | Observer/producer signatures, complete inventory and exact run/workflow/App bindings; local cryptographic CI tests |
+| 15.10 | Compatibility and regression verification | Local checks complete: 340 tests on each Rust version, four native combinations, 448 caught / 13 unviable mutations with zero missed/timeouts; hosted observations pending in 15.11 |
+| 15.11 | Live candidate and promotion evidence | External execution/authorization required; no completed promotion claim |
+| 15.12 | Documentation and execution record | Local record complete with commands, source/artifact bindings and explicit hosted/operational gaps |
 
-The next implementation boundary is 15.04's shared selection contract. Native
-tool versions, built-in profile release restrictions, test-project audit coverage,
-required knowledge, and authenticated collection behavior have not changed in
-this first batch.
+## External conditions
 
-## Evidence and limits
+Local verification used worktree changes based on
+`bb7dab9cc329f4b7445fa4acbfc37ed44106d7ce`. The owner subsequently authorized
+committing and pushing `feat/task-15-compatibility`; the archived verification
+record preserves its pre-publication observations. No new worktree, merge or
+production promotion was performed.
 
-The three defects in the first review were remediated in `5841d8b`; their regression
-coverage must be preserved. Framework names in historical records or exclusion
-tests do not establish a runtime dependency. The .NET test-only audit concern
-still requires a reproduction before it is classified as a confirmed bypass.
+On 2026-09-15 repository metadata was readable and admin permissions were reported.
+The main branch protection endpoint returned HTTP 403 requiring GitHub Pro or a
+public repository. A successful Release verification run exists for the base
+commit only; it is not evidence for the follow-up candidate.
 
-Local implementation and validation can finish before production prerequisites
-are available. Track those states separately; Task 15 as a whole remains incomplete
-while required live evidence is missing. Writing this plan does not perform or
-authorize a production promotion.
+The consuming owner still needs to supply/adopt the exact candidate, policy and
+profile, independent observer/producer identities and keys, complete execution
+ledger, isolated controller/publication environment, publishing App/workflow
+identity, and two reviewers independent of each other and all modifiers.
+Changing account/visibility/protection settings and operational promotion still
+require separate authorization. The promotion protocol
+also requires its owner approvals, 14 days / 30 distinct heads of shadow
+observations, protected merge, post-merge decision and live rollback evidence.
+Local fixture signatures or a directory outside a checkout do not satisfy these.
 
-## Related implementation and references
+## References
 
-- [Consolidated work plan (한국어)](../../archive/plans/2026-09-11-task-15-compatibility-and-verification.md)
-- [Final codebase verification](../../archive/reviews/2026-09-10-final-codebase-verification.md)
+- [Approved consolidated plan](../../archive/plans/2026-09-11-task-15-compatibility-and-verification.md)
+- [Common selection and support contract](../../integrations/tool-selection.md)
+- [Bootstrap and user-profile ownership](../../integrations/bootstrap.md)
+- [Report adapters](../../integrations/report-formats.md)
+- [Native acceptance](../../integrations/acceptance.md)
+- [Authenticated controller](../../../action/controller.md)
+- [Final codebase review](../../archive/reviews/2026-09-10-final-codebase-verification.md)
 - [Dependency optionality review](../../archive/reviews/2026-09-10-dependency-optionality-review.md)
-- [Task 14 remediation](../../archive/reviews/2026-09-10-task14-remediation.md)
 - [Current status](../../status.md)
 - [Trust model](../../trust-model.md)
 - [Promotion protocol](../../promotion.md)

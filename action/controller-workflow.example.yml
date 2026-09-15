@@ -1,0 +1,35 @@
+# Documentation only. Install on an owner-controlled publication runner after
+# deploying authenticated observer/producer services. Never run PR code there.
+name: Authenticated policy reference
+on:
+  workflow_dispatch:
+permissions:
+  checks: write
+  contents: read
+  pull-requests: read
+  issues: read
+  actions: read
+jobs:
+  policy:
+    runs-on: [self-hosted, isolated-policy-publisher]
+    steps:
+      # The owner scheduler installs the exact-head checkout, current request,
+      # and signed envelope. This example does not authenticate arbitrary uploads.
+      - name: Authenticate collection
+        run: >-
+          /opt/policy-kernel/bin/policy-controller
+          --config /controller/current-request.json
+          --checkout "$GITHUB_WORKSPACE"
+          --signed-observation /incoming/signed-observation.json
+          --output "/controller/run-${{ github.run_id }}-attempt-${{ github.run_attempt }}"
+      - uses: FlitCatz/policy-kernel/action@<full-reviewed-commit-sha>
+        env:
+          GH_TOKEN: ${{ secrets.POLICY_PUBLISHING_APP_TOKEN }}
+        with:
+          executable-path: /opt/policy-kernel/bin/policy-ci
+          mode: pre-merge
+          expected-head: <owner-scheduler-observed-full-PR-head>
+          policy-path: /controller/run-${{ github.run_id }}-attempt-${{ github.run_attempt }}/policy.json
+          evidence-path: /controller/run-${{ github.run_id }}-attempt-${{ github.run_attempt }}/evidence.json
+          trusted-observation-directory: /controller/run-${{ github.run_id }}-attempt-${{ github.run_attempt }}
+          artifact-directory: /controller/result-${{ github.run_id }}-attempt-${{ github.run_attempt }}

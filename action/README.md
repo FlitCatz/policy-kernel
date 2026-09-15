@@ -1,6 +1,7 @@
 # Policy kernel Action
 
-This composite Action invokes an **already-built, trusted `policy-ci` on PATH**.
+This composite Action invokes an **already-built, owner-installed `policy-ci` at
+an absolute path** (`executable-path`, default `/opt/policy-kernel/bin/policy-ci`).
 The runner also needs `git` and authenticated `gh`. Build the binary from an
 approved kernel revision with `cargo build --locked -p policy-ci`; install it on
 the runner before invoking the Action. Run from `GITHUB_WORKSPACE`, checked out at
@@ -31,6 +32,7 @@ After trusted observation/evidence collection and installing the binary:
   env:
     GH_TOKEN: ${{ github.token }}
   with:
+    executable-path: /opt/policy-kernel/bin/policy-ci
     mode: pre-merge
     policy-path: /trusted/policy.json
     evidence-path: /trusted/evidence.json
@@ -60,7 +62,8 @@ Putting a local report outside the checkout does not make it trusted. The CLI
 rejects a trusted directory inside the checkout and symlinked observation files;
 filesystem location alone is not proof of origin.
 
-`identity.json` has exactly these fields:
+Legacy externally authenticated runner integrations use `identity.json` version 1
+with exactly these fields:
 
 ```json
 {
@@ -101,6 +104,16 @@ current-run evidence it observed or independently authenticated. Local evidence
 retains its untrusted classification. The CLI checks receipt bindings against
 Actions environment fields and a fetched workflow-run response. It separately
 compares the actual Git checkout and fetched PR head to `head_sha`.
+
+The [authenticated collection reference](controller.md) produces version 2
+receipts, adding required `workflow_ref` and `workflow_source_sha` fields. The
+consumer compares these with `GITHUB_WORKFLOW_REF` and `GITHUB_WORKFLOW_SHA`.
+The latter identifies the workflow definition commit, independently of both the
+evaluated PR head and the trigger commit. Version 1 retains its existing trusted
+runner contract; it cannot carry version 2 fields. Neither receipt version is a
+public verifier for arbitrary JSON. Protect the consuming process and receipt
+directory from contributor code, including processes running under the same OS
+identity. See the reference's key ownership and service isolation requirements.
 
 For **pre-merge**, also provide:
 

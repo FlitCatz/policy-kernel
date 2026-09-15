@@ -31,6 +31,8 @@ remaining implementation, integration, and operational conditions.
 runtime independence, dependency and knowledge evidence gaps, and authenticated
 consumer integration. Follow its landing page and the current-status document
 for completed corrections and remaining work.
+Local implementation and verification through 15.10 are complete; 15.11 still
+requires candidate-specific hosted and operational evidence.
 This does not claim a production promotion:
 the live shadow window, protected-merge evidence, and independent-provider
 reviews in the [promotion protocol](docs/promotion.md) remain separate
@@ -53,8 +55,12 @@ declarative tool configuration under `examples/`.
   Repository verification commands such as `xtask check-residue` require Cargo
   and its selected Rust tooling.
 - Git for the CI adapter and consumer-acceptance harness.
-- Node 22.18.0 / npm 10.9.3 and .NET SDK 9.0.304 only to run native consumer
-  profiles. See [consumer acceptance](docs/integrations/acceptance.md).
+- Native tools follow the adopted [selection contract](docs/integrations/tool-selection.md).
+  Built-in provisioning chooses Node 22.18.0 / npm 10.9.3 and .NET SDK 9.0.304;
+  the additional React/Jest consumer chooses Node 22.19.0 / npm 10.9.4.
+  Requests, exact provisioning choices and actual observations remain distinct.
+- OpenSSL for the authenticated controller and its cryptographic tests; see the
+  [controller reference](action/controller.md) for owner-controlled trust anchors.
 
 ## Get started
 
@@ -123,6 +129,10 @@ cargo run --locked -p xtask -- check-mutation-results verification/mutants.out/o
 cargo test --locked -p xtask
 ```
 
+`check-mutation-results` defaults to all five core authorization modules.
+Task 15 additionally checks `--scope controller` and `--scope workflow-source`;
+these scopes retain exact inventory checks and do not replace the core gate.
+
 `xtask rollback-drill` compares caller-supplied normalized snapshots only. It
 does not query or change GitHub. Its arguments and the live rollback procedure
 are documented in [promotion and rollback](docs/promotion.md).
@@ -131,30 +141,38 @@ are documented in [promotion and rollback](docs/promotion.md).
 
 `project-verification` turns an adopted project profile and checked source
 inventory into local observations. It supports React/TypeScript, .NET, and
-full-stack assets and normalizes Vitest JSON, Playwright JSON, and VSTest TRX
+full-stack assets and user profiles, and normalizes Vitest JSON, Jest JSON,
+Playwright JSON, and VSTest TRX
 reports. The result remains local and advisory until a consumer binds it into the
 trusted CI path.
 
+Schema 2 dependency audits cover each selected graph. npm installation and audit
+explicitly include dev, optional and peer dependencies, including when npm
+configuration would otherwise omit them.
+Native acceptance also checks empty and missing Vitest, TRX and Playwright reports
+with successful producer exits, corrections and rejection of earlier-head results.
+
 ```console
-cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.0.2/profiles/fullstack/profile.json
+cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.0/profiles/fullstack/profile.json
 cargo run --locked -p project-verification -- schema
 cargo run --locked -p project-verification -- prepare --input request.json
 cargo run --locked -p project-verification -- run --input request.json
 ```
 
 The repository-root `profiles/fullstack/profile.json` is a retained 1.0.0 asset
-with 14 sensors; it is not the current fullstack example. Release 1.0.2 has 15
-required sensors, including `shared:dependencies`. After bootstrap installation,
+with 14 sensors. Frozen release 1.0.2 has 15 required sensors including
+`shared:dependencies`; current release 1.1.0 uses profile schema 2 and has 17,
+adding separate Unit and Integration NuGet audits. After bootstrap installation,
 validate the selected copy at `.policy/project-profile.json`. See the
 [profile asset guide](profiles/README.md) for the historical/current distinction.
 
-`policy-bootstrap` installs reviewed, pinned configuration into an existing
+`policy-bootstrap` installs reviewed, selected configuration into an existing
 consumer directory. Inspect and save a plan before applying it; `apply`
 revalidates the plan before it changes files.
 
 ```console
-cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.0.2 --component frontend=apps/web --component backend=apps/api
-cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.2 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
+cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api
+cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
 cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-plan.json
 ```
 
@@ -202,7 +220,11 @@ checkout or treat local `policy-cli` output as a required check.
 
 `policy-ci` has `pre-merge` and `post-merge` commands and accepts only
 authoritative mode. Its runner-controlled observations and CLI arguments are
-documented with the action.
+documented with the action. The [authenticated controller reference](action/controller.md)
+verifies independent observer and producer signatures before issuing a receipt;
+its local cryptographic tests do not establish deployed provider services.
+Policy schema 2 can require explicit knowledge evidence. Policies with no such
+requirement continue to allow an empty knowledge collection.
 
 ## Further reading
 

@@ -1,0 +1,249 @@
+{
+  "schema_version": 2,
+  "id": "react-typescript",
+  "version": "1.1.0",
+  "components": [
+    {
+      "id": "frontend",
+      "root": "web"
+    }
+  ],
+  "sensors": [
+    {
+      "definition": {
+        "id": "frontend:node",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": null,
+      "inputs": [
+        ".node-version",
+        "package.json",
+        "package-lock.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:syntax",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "--check",
+        "src/Greeting.cjs"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": null,
+      "inputs": [
+        "src/Greeting.cjs",
+        "package.json",
+        "package-lock.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:unit",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/jest/bin/jest.js",
+        "--runInBand",
+        "--json",
+        "--outputFile=jest-report.json"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/jest/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": {
+        "format": "jest_json",
+        "path": "jest-report.json"
+      },
+      "inputs": [
+        "jest.config.cjs",
+        "src/Greeting.cjs",
+        "tests/Greeting.test.cjs",
+        "package.json",
+        "package-lock.json",
+        "node_modules/jest/package.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:audit",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "npm",
+        "audit",
+        "--audit-level=low",
+        "--include=dev",
+        "--include=optional",
+        "--include=peer"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    }
+  ],
+  "adequacy": {
+    "acceptance_criterion_ids": [],
+    "changed_behavior_ids": [],
+    "negative_case_ids": []
+  },
+  "selection": {
+    "schema_version": 1,
+    "tools": {
+      "node": {
+        "executable": "node",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=22.18.0, <23.0.0",
+          "normalization": "node",
+          "provision": "22.19.0"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "npm": {
+        "executable": "npm",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=10.9.3, <11.0.0",
+          "normalization": "plain",
+          "provision": "10.9.4"
+        },
+        "capabilities": [
+          "process",
+          "npm_audit"
+        ]
+      },
+      "jest": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/jest/package.json').version"
+        ],
+        "version": {
+          "requirement": ">=30.2.0, <31.0.0",
+          "normalization": "plain",
+          "provision": "30.2.0"
+        },
+        "capabilities": [
+          "jest_json"
+        ]
+      }
+    },
+    "bindings": {
+      "frontend:node": "node",
+      "frontend:syntax": "node",
+      "frontend:unit": "jest",
+      "frontend:audit": "npm"
+    },
+    "packages": [
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/jest/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1jest/version",
+        "requirement": ">=30.2.0, <31.0.0"
+      }
+    ],
+    "graphs": [
+      {
+        "id": "web-packages",
+        "component": "frontend",
+        "role": "application",
+        "manifest": "package.json",
+        "lockfile": "package-lock.json",
+        "adapter": "npm",
+        "tool": "npm",
+        "audit_sensor": "frontend:audit",
+        "target_framework": null
+      }
+    ],
+    "runtime_files": [
+      {
+        "component": "frontend",
+        "path": ".node-version",
+        "tool": "node",
+        "format": "node_version"
+      }
+    ]
+  }
+}

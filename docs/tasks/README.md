@@ -24,7 +24,7 @@ statements are not rewritten when later work changes the current state.
 | --- | --- | --- |
 | [Task 01](task-01/README.md) | Foundation, provenance, and obligation baseline | Implemented |
 | [Task 02](task-02/README.md) | Versioned contracts and strict deserialization | Implemented |
-| [Task 03](task-03/README.md) | Canonical bundle integrity and trust validation | Core implemented; mandatory knowledge enforcement tracked in Task 15 |
+| [Task 03](task-03/README.md) | Canonical bundle integrity and trust validation | Implemented, including policy-declared required knowledge |
 | [Task 04](task-04/README.md) | Sensor applicability and test adequacy | Implemented |
 | [Task 05](task-05/README.md) | Review consensus and human waivers | Implemented |
 | [Task 06](task-06/README.md) | Pre-merge evaluation | Implemented |
@@ -36,6 +36,6 @@ statements are not rewritten when later work changes the current state.
 | [Task 12](task-12/README.md) | Project profiles and report normalization | Implemented; historical records retain their original verification state |
 | [Task 13](task-13/README.md) | Transactional bootstrap installer | Implemented; historical records retain their original verification state |
 | [Task 14](task-14/README.md) | Consuming-project acceptance | Locally verified; authoritative production evidence not demonstrated |
-| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | In progress; 15.01–15.03 locally verified, remaining scope pending |
+| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Local 15.01–15.09 implementation present; final checks and external 15.11 evidence tracked |
 
 For the repository-wide latest status, read [Current status](../status.md).

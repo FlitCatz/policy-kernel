@@ -11,9 +11,10 @@ Locally verified; authoritative production evidence not demonstrated.
 ## Evidence and limits
 
 The execution record documents local native acceptance and its limits. The final codebase verification records findings and remaining integration work.
-[Task 15](../task-15/README.md) tracks compatibility expansion, remaining audit
-coverage, and authenticated consumer integration while preserving the remediation
-regressions.
+[Task 15](../task-15/README.md) adds schema 2 selection, all selected graph audits,
+React/Jest native acceptance and the authenticated controller reference while
+preserving remediation regressions. Its current record includes the conditional
+.NET test-only audit reproduction and keeps local/hosted/operational evidence separate.
 
 ## Related implementation and references
 

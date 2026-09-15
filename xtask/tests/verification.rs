@@ -78,6 +78,79 @@ fn mutation_accepts_complete_inventory() {
     success(&out);
     assert!(String::from_utf8_lossy(&out.stdout).contains("5 mutants across 5"));
 }
+
+#[test]
+fn additional_mutation_scopes_keep_exact_inventory_and_cannot_replace_core_coverage() {
+    for (scope, file, function) in [
+        (
+            "controller",
+            "crates/policy-ci/src/controller.rs",
+            "produce",
+        ),
+        (
+            "workflow-source",
+            "crates/policy-ci/src/main.rs",
+            "workflow_source_matches",
+        ),
+    ] {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("outcomes.json");
+        let mut payload = results();
+        payload["outcomes"].as_array_mut().unwrap().truncate(2);
+        payload["total_mutants"] = json!(1);
+        payload["caught"] = json!(1);
+        payload["outcomes"][1]["scenario"]["Mutant"]["package"] = json!("policy-ci");
+        payload["outcomes"][1]["scenario"]["Mutant"]["file"] = json!(file);
+        payload["outcomes"][1]["scenario"]["Mutant"]["function"] =
+            json!({"function_name":function});
+        write(&path, &payload);
+        write(&temp.path().join("mutants.json"), &inventory(&payload));
+        success(&run(&[
+            "check-mutation-results",
+            path.to_str().unwrap(),
+            "--scope",
+            scope,
+        ]));
+        failure(&run(&["check-mutation-results", path.to_str().unwrap()]));
+        failure(&run(&[
+            "check-mutation-results",
+            path.to_str().unwrap(),
+            "--scope",
+            "arbitrary",
+        ]));
+        for (pointer, value) in [
+            (
+                "/outcomes/1/scenario/Mutant/file",
+                json!("crates/policy-ci/src/unrelated.rs"),
+            ),
+            ("/outcomes/1/scenario/Mutant/package", json!("policy-core")),
+            ("/end_time", json!(null)),
+        ] {
+            let mut invalid = payload.clone();
+            *invalid.pointer_mut(pointer).unwrap() = value;
+            write(&path, &invalid);
+            write(&temp.path().join("mutants.json"), &inventory(&invalid));
+            failure(&run(&[
+                "check-mutation-results",
+                path.to_str().unwrap(),
+                "--scope",
+                scope,
+            ]));
+        }
+        if scope == "workflow-source" {
+            payload["outcomes"][1]["scenario"]["Mutant"]["function"]["function_name"] =
+                json!("unrelated");
+            write(&path, &payload);
+            write(&temp.path().join("mutants.json"), &inventory(&payload));
+            failure(&run(&[
+                "check-mutation-results",
+                path.to_str().unwrap(),
+                "--scope",
+                scope,
+            ]));
+        }
+    }
+}
 #[test]
 fn mutation_rejects_incomplete_or_bad_results() {
     let valid = results();

@@ -51,11 +51,35 @@ Task 11. A completed nonempty run must contain zero missed mutations and zero
 timeouts; unviable mutants remain separately counted, never counted as killed.
 Tool failure, missing files, incomplete outcomes and skipped coverage cannot pass.
 
-Knowledge claims and indexes provide context, not approvals. Present index evidence
-is checked against the head and source-set binding. The current policy contract
-cannot declare mandatory knowledge/index presence; a stale supplied index test
-does not establish enforcement of a missing required index. That contract gap
-must be resolved before claiming such a project requirement is protected.
+Knowledge claims and indexes provide context, not approvals. Policy schema v2 can
+declare `required_knowledge` entries with `kind` (`lat_claim` or `code_graph_index`),
+an exact `source` identity, and `required_when` conditions. An empty condition list
+means always required. Otherwise any condition applies when both its `risks` and
+`path_globs` match the current change; an empty dimension matches everything.
+Globs use sensor path normalization, including rejection of parent traversal.
+Duplicate kind/source declarations and malformed conditions fail closed.
+
+Each applicable requirement needs exactly one matching observation. Missing
+knowledge, wrong kind, wrong source, head mismatch, source-set mismatch, insufficient
+trust, duplicate observations, and invalid tool-version metadata have separate
+`PK-KNOWLEDGE-*` reasons. Required knowledge must be `ci_observed` or
+`trusted_runner_attested`, including in advisory evaluation. An adopted CodeGraph
+requirement therefore needs CI regeneration or a trusted attestation binding its
+exact tool version, index configuration digest, content digest, source-set digest,
+and head. A local `.codegraph/` directory or LAT navigation document does not
+satisfy that obligation. The controller must authenticate those observations;
+caller-created trust labels remain insufficient. Knowledge cannot replace tests
+or independent reviews.
+
+The declaration and policy schema version enter the policy digest, and all
+knowledge metadata enters the evidence and decision digests. Evidence bound to a
+previous policy is rejected after adopting or changing a requirement. The new
+reader preserves v1 policy serialization and digests, and accepts v2 policies
+with no declaration without requiring knowledge. A v1 policy cannot carry
+`required_knowledge`, even an empty array or null; v2 rejects null. Old readers
+reject v2 and unknown declarations. Evidence and decision wire versions remain
+v1 because their existing fields already carry the required bindings. Existing
+checks on supplied optional knowledge remain in force.
 Project profiles and bootstrap are separate Tasks 12–14. Do not interpret the current SensorProfile
 schema as proof that report normalization or a consuming project actually ran.
 

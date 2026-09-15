@@ -1,7 +1,7 @@
 use crate::canonical_sha256;
 use policy_contracts::{
-    EvaluationMode, EvidenceBundle, ModificationEvidence, Reason, ReviewEvidence, TrustClass,
-    UtcTimestamp,
+    EvaluationMode, EvidenceBundle, ModificationEvidence, PreMergeEvaluationInput, Reason,
+    ReviewEvidence, TrustClass, UtcTimestamp,
 };
 use serde::Serialize;
 use std::collections::BTreeSet;
@@ -16,6 +16,134 @@ const REQUIRED_CHILD_PATHS: [&str; 8] = [
     "test_adequacy",
     "waivers",
 ];
+
+/// Presence is a policy obligation, separate from validating supplied evidence.
+/// Trust classes here are assertions authenticated by the controller boundary.
+pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> ValidationResult {
+    let mut result = ValidationResult::default();
+    if input.policy.required_knowledge.is_empty() {
+        return result;
+    }
+    let Some(context) = &input.context else {
+        result.insert(
+            "PK-KNOWLEDGE-CONTEXT-INVALID",
+            "knowledge requirements need the current change context",
+        );
+        return result;
+    };
+    let paths = context
+        .changed_paths
+        .iter()
+        .map(|path| crate::sensors::normalize_path(path))
+        .collect::<Result<Vec<_>, _>>();
+    let Ok(paths) = paths else {
+        result.insert(
+            "PK-KNOWLEDGE-CONTEXT-INVALID",
+            "knowledge change paths contain parent traversal",
+        );
+        return result;
+    };
+    for (index, requirement) in input.policy.required_knowledge.iter().enumerate() {
+        let invalid = requirement.source.trim().is_empty()
+            || requirement.source.contains('\0')
+            || input.policy.required_knowledge[..index]
+                .iter()
+                .any(|other| other.kind == requirement.kind && other.source == requirement.source)
+            || requirement
+                .required_when
+                .iter()
+                .flat_map(|condition| &condition.path_globs)
+                .any(|pattern| {
+                    pattern.trim().is_empty()
+                        || pattern.contains('\0')
+                        || globset::Glob::new(pattern).is_err()
+                });
+        if invalid {
+            result.insert("PK-KNOWLEDGE-POLICY-INVALID", "knowledge requirements need unique kind/source identities and valid nonempty globs");
+            continue;
+        }
+        let applies = requirement.required_when.is_empty()
+            || requirement.required_when.iter().any(|condition| {
+                (condition.risks.is_empty() || condition.risks.contains(&context.risk))
+                    && (condition.path_globs.is_empty()
+                        || condition.path_globs.iter().any(|pattern| {
+                            let matcher = globset::Glob::new(pattern)
+                                .expect("validated glob")
+                                .compile_matcher();
+                            paths.iter().any(|path| matcher.is_match(path))
+                        }))
+            });
+        if !applies {
+            continue;
+        }
+        let matches: Vec<_> = input
+            .evidence
+            .knowledge
+            .iter()
+            .filter(|item| item.kind == requirement.kind && item.source == requirement.source)
+            .collect();
+        let description = format!(
+            "required {:?} knowledge from {:?}",
+            requirement.kind, requirement.source
+        );
+        if matches.is_empty() {
+            if input.evidence.knowledge.is_empty() {
+                result.insert("PK-KNOWLEDGE-MISSING", &format!("{description} is missing"));
+            } else {
+                if !input
+                    .evidence
+                    .knowledge
+                    .iter()
+                    .any(|item| item.kind == requirement.kind)
+                {
+                    result.insert(
+                        "PK-KNOWLEDGE-KIND-MISMATCH",
+                        &format!("{description} has no matching kind"),
+                    );
+                } else {
+                    result.insert(
+                        "PK-KNOWLEDGE-SOURCE-MISMATCH",
+                        &format!("{description} has no matching source for its kind"),
+                    );
+                }
+            }
+            continue;
+        }
+        if matches.len() != 1 {
+            result.insert(
+                "PK-KNOWLEDGE-DUPLICATE",
+                &format!("{description} must have exactly one observation"),
+            );
+        }
+        for evidence in matches {
+            if evidence.head_sha != input.evidence.manifest.head_sha {
+                result.insert(
+                    "PK-KNOWLEDGE-HEAD-MISMATCH",
+                    &format!("{description} does not bind the evaluated head"),
+                );
+            }
+            if evidence.source_set_digest != input.evidence.manifest.source_set_digest {
+                result.insert(
+                    "PK-KNOWLEDGE-SOURCE-SET-MISMATCH",
+                    &format!("{description} does not bind the evaluated source set"),
+                );
+            }
+            if evidence.trust == TrustClass::LocalUntrusted {
+                result.insert(
+                    "PK-KNOWLEDGE-UNTRUSTED",
+                    &format!("{description} requires CI observation or trusted-runner attestation"),
+                );
+            }
+            if evidence.version.trim().is_empty() || evidence.version.contains('\0') {
+                result.insert(
+                    "PK-KNOWLEDGE-METADATA-INVALID",
+                    &format!("{description} must record a nonblank tool version without NUL"),
+                );
+            }
+        }
+    }
+    result
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ValidationResult {

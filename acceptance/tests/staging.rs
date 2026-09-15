@@ -2,7 +2,7 @@ use policy_acceptance::stage;
 use std::fs;
 
 #[test]
-fn shared_only_dependency_audit_failure_blocks_fullstack_acceptance() {
+fn each_dependency_graph_failure_or_missing_audit_blocks_fullstack_acceptance() {
     use policy_contracts::{Risk, SensorEvidence};
     use policy_core::{evaluate_sensor_evidence_for_change, SensorEvaluationStatus};
     let tmp = tempfile::tempdir().unwrap();
@@ -14,7 +14,7 @@ fn shared_only_dependency_audit_failure_blocks_fullstack_acceptance() {
     )
     .unwrap()
     .sensor_profile();
-    let mut evidence: Vec<SensorEvidence> = profile
+    let evidence: Vec<SensorEvidence> = profile
         .sensors
         .iter()
         .map(|sensor| {
@@ -40,17 +40,44 @@ fn shared_only_dependency_audit_failure_blocks_fullstack_acceptance() {
         .unwrap()
     };
     assert_eq!(evaluate(&evidence).status, SensorEvaluationStatus::Passed);
-    for item in &mut evidence {
-        if item.sensor_id.as_str() == "shared:dependencies" {
-            item.status = policy_contracts::SensorStatus::Failed;
-            item.exit_code = Some(1);
+    for audit in [
+        "frontend:dependencies",
+        "shared:dependencies",
+        "backend:dependencies",
+        "backend:unit-dependencies",
+        "backend:integration-dependencies",
+    ] {
+        let mut changed = evidence.clone();
+        let item = changed
+            .iter_mut()
+            .find(|item| item.sensor_id.as_str() == audit)
+            .unwrap();
+        item.status = policy_contracts::SensorStatus::Failed;
+        item.exit_code = Some(1);
+        let failed = evaluate(&changed);
+        assert_eq!(failed.status, SensorEvaluationStatus::Blocked, "{audit}");
+        assert!(failed.has_reason("PK-SENSOR-FAILED"), "{audit}");
+        for status in [
+            policy_contracts::SensorStatus::TimedOut,
+            policy_contracts::SensorStatus::Skipped,
+        ] {
+            changed
+                .iter_mut()
+                .find(|item| item.sensor_id.as_str() == audit)
+                .unwrap()
+                .status = status;
+            assert_ne!(
+                evaluate(&changed).status,
+                SensorEvaluationStatus::Passed,
+                "{audit}"
+            );
         }
+        changed.retain(|item| item.sensor_id.as_str() != audit);
+        assert!(
+            evaluate(&changed).has_reason("PK-SENSOR-MISSING"),
+            "{audit}"
+        );
     }
-    let failed = evaluate(&evidence);
-    assert_eq!(failed.status, SensorEvaluationStatus::Blocked);
-    assert!(failed.has_reason("PK-SENSOR-FAILED"));
-    evidence.retain(|item| item.sensor_id.as_str() != "shared:dependencies");
-    assert!(evaluate(&evidence).has_reason("PK-SENSOR-MISSING"));
 }
 
 #[test]

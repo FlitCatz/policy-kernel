@@ -1,0 +1,416 @@
+{
+  "schema_version": 2,
+  "id": "react-typescript",
+  "version": "1.1.0",
+  "components": [
+    {
+      "id": "frontend",
+      "root": "."
+    }
+  ],
+  "sensors": [
+    {
+      "definition": {
+        "id": "frontend:node",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:typecheck",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/typescript/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/typescript/package.json",
+        "tsconfig.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:lint",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/eslint/bin/eslint.js",
+        ".",
+        "--max-warnings=0",
+        "--config",
+        "eslint.config.mjs"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/eslint/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/eslint/package.json",
+        "eslint.config.mjs",
+        "node_modules/@typescript-eslint/parser/package.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:build",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/vite/bin/vite.js",
+        "build"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/vite/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/vite/package.json",
+        "vite.config.ts"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:unit",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--retry=0",
+        "--reporter=json",
+        "--outputFile=.policy-reports/unit.json"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/vitest/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": {
+        "format": "vitest_json",
+        "path": ".policy-reports/unit.json"
+      },
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        "node_modules/vitest/package.json",
+        "vitest.config.ts",
+        "node_modules/jsdom/package.json"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:dependencies",
+        "required": true,
+        "required_when": [],
+        "not_applicable_when": [],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "npm",
+        "audit",
+        "--audit-level=low",
+        "--include=dev",
+        "--include=optional",
+        "--include=peer"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "HOME",
+        "PATH"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json",
+        ".node-version",
+        ".npmrc"
+      ],
+      "pins": [],
+      "timeout_ms": 300000
+    }
+  ],
+  "adequacy": {
+    "acceptance_criterion_ids": [],
+    "changed_behavior_ids": [],
+    "negative_case_ids": []
+  },
+  "selection": {
+    "schema_version": 1,
+    "tools": {
+      "frontend:build": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/vite/package.json').version"
+        ],
+        "version": {
+          "requirement": "=7.3.6",
+          "normalization": "plain",
+          "provision": "7.3.6"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:dependencies": {
+        "executable": "npm",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=10.9.3, <11.0.0",
+          "normalization": "plain",
+          "provision": "10.9.3"
+        },
+        "capabilities": [
+          "process",
+          "npm_audit"
+        ]
+      },
+      "frontend:lint": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/eslint/package.json').version"
+        ],
+        "version": {
+          "requirement": "=9.34.0",
+          "normalization": "plain",
+          "provision": "9.34.0"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:node": {
+        "executable": "node",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=22.18.0, <23.0.0",
+          "normalization": "node",
+          "provision": "22.18.0"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:typecheck": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/typescript/package.json').version"
+        ],
+        "version": {
+          "requirement": "=5.9.2",
+          "normalization": "plain",
+          "provision": "5.9.2"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "frontend:unit": {
+        "executable": "node",
+        "version_args": [
+          "-p",
+          "require('./node_modules/vitest/package.json').version"
+        ],
+        "version": {
+          "requirement": "=4.1.11",
+          "normalization": "plain",
+          "provision": "4.1.11"
+        },
+        "capabilities": [
+          "process",
+          "vitest_json"
+        ]
+      }
+    },
+    "bindings": {
+      "frontend:build": "frontend:build",
+      "frontend:dependencies": "frontend:dependencies",
+      "frontend:lint": "frontend:lint",
+      "frontend:node": "frontend:node",
+      "frontend:typecheck": "frontend:typecheck",
+      "frontend:unit": "frontend:unit"
+    },
+    "packages": [
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/typescript/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1typescript/version",
+        "requirement": "=5.9.2"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/eslint/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1eslint/version",
+        "requirement": "=9.34.0"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/@typescript-eslint/parser/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1@typescript-eslint~1parser/version",
+        "requirement": "=8.42.0"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/vite/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1vite/version",
+        "requirement": "=7.3.6"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/vitest/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1vitest/version",
+        "requirement": "=4.1.11"
+      },
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/jsdom/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1jsdom/version",
+        "requirement": "=26.1.0"
+      }
+    ],
+    "graphs": [
+      {
+        "id": "frontend-packages",
+        "component": "frontend",
+        "role": "application",
+        "manifest": "package.json",
+        "lockfile": "package-lock.json",
+        "adapter": "npm",
+        "tool": "frontend:dependencies",
+        "audit_sensor": "frontend:dependencies",
+        "target_framework": null
+      }
+    ],
+    "runtime_files": [
+      {
+        "component": "frontend",
+        "path": ".node-version",
+        "tool": "frontend:node",
+        "format": "node_version"
+      }
+    ]
+  }
+}

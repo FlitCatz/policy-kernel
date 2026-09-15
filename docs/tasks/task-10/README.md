@@ -11,8 +11,10 @@ Implemented; production evidence remains incomplete.
 ## Evidence and limits
 
 The implementation and smoke validation are recorded, but live required-check and protected-merge evidence must be collected for the chosen candidate.
-The trusted observation controller and authenticated consumer integration remain
-follow-up work in [Task 15](../task-15/README.md).
+[Task 15](../task-15/README.md) adds the
+[authenticated controller reference](../../../action/controller.md), cryptographic
+fixture tests and version 2 workflow-source binding. Actual isolated controller
+and independently observing producer services remain deployment prerequisites.
 
 ## Related implementation and references
 

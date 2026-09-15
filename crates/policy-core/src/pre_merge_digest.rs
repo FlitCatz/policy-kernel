@@ -5,6 +5,8 @@ use policy_contracts::{
 use serde_json::{json, Value};
 
 /// Hash the complete policy snapshot except its self-referential digest field.
+/// The v2 knowledge declaration and policy version are included. Empty knowledge
+/// is omitted by serialization, preserving the historical v1 policy preimage.
 pub fn pre_merge_policy_digest(policy: &PolicySnapshot) -> Result<Sha256Digest, CanonicalError> {
     let mut value = serde_json::to_value(policy)?;
     value

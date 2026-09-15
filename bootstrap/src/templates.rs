@@ -12,6 +12,7 @@ macro_rules! release_asset {
             "1.0.0" => include_str!(concat!("../templates/1.0.0/", $path)),
             "1.0.1" => include_str!(concat!("../templates/1.0.1/", $path)),
             "1.0.2" => include_str!(concat!("../templates/1.0.2/", $path)),
+            "1.1.0" => include_str!(concat!("../templates/1.1.0/", $path)),
             _ => return Err(invalid("unsupported template release")),
         }
     };
@@ -26,9 +27,15 @@ pub(crate) fn join(root: &str, file: &str) -> String {
 }
 
 pub(crate) fn profile(installation: &Installation) -> Result<ProjectProfile> {
-    if !matches!(installation.release.as_str(), "1.0.0" | "1.0.1" | "1.0.2") {
+    if installation.user_profile.is_some() {
+        return Err(invalid("user profile must be loaded from the plan input"));
+    }
+    if !matches!(
+        installation.release.as_str(),
+        "1.0.0" | "1.0.1" | "1.0.2" | "1.1.0"
+    ) {
         return Err(invalid(
-            "unsupported template release; expected pinned 1.0.0, 1.0.1 or 1.0.2",
+            "unsupported template release; expected 1.0.0, 1.0.1, 1.0.2 or 1.1.0",
         ));
     }
     let source = match installation.profile.as_str() {
@@ -109,10 +116,31 @@ pub(crate) fn profile(installation: &Installation) -> Result<ProjectProfile> {
 }
 
 pub(crate) fn normalized(installation: &Installation) -> Result<Installation> {
+    if let Some(source) = &installation.user_profile {
+        validate_user_path(&source.path)?;
+        if installation.release != "1.1.0"
+            || !matches!(
+                installation.profile.as_str(),
+                "react-typescript" | "dotnet" | "fullstack"
+            )
+            || !installation.components.is_empty()
+            || source.digest.len() != 64
+            || !source
+                .digest
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+        {
+            return Err(invalid(
+                "invalid user profile selection; use release 1.1.0 without component overrides",
+            ));
+        }
+        return Ok(installation.clone());
+    }
     let profile = profile(installation)?;
     Ok(Installation {
         profile: installation.profile.clone(),
         release: installation.release.clone(),
+        user_profile: None,
         components: profile
             .components
             .into_iter()
@@ -122,6 +150,29 @@ pub(crate) fn normalized(installation: &Installation) -> Result<Installation> {
 }
 
 pub(crate) fn render(installation: &Installation) -> Result<BTreeMap<String, String>> {
+    if installation.user_profile.is_some() {
+        normalized(installation)?;
+        // These exact static bytes and locations are the complete ownership
+        // inventory. User input can never supply owned bytes or destinations.
+        return Ok(BTreeMap::from([
+            (
+                ".policy/USAGE.md".into(),
+                include_str!("../templates/1.1.0/USER-PROFILE.md").into(),
+            ),
+            (
+                ".policy/ci/verification.yml".into(),
+                release_asset!(installation, "verification.yml").into(),
+            ),
+            (
+                ".policy/ci/policy-action.yml".into(),
+                release_asset!(installation, "action/action.yml").into(),
+            ),
+            (
+                ".policy/ci/policy-action-README.md".into(),
+                release_asset!(installation, "action/README.md").into(),
+            ),
+        ]));
+    }
     let profile = profile(installation)?;
     let mut files = BTreeMap::from([
         (".policy/project-profile.json".into(), json(&profile)?),
@@ -219,4 +270,20 @@ pub(crate) fn render(installation: &Installation) -> Result<BTreeMap<String, Str
         }
     }
     Ok(files)
+}
+
+pub(crate) fn validate_user_path(path: &str) -> Result<()> {
+    if !relative(path, false)
+        || path.split('/').any(|part| {
+            matches!(
+                part.to_ascii_lowercase().as_str(),
+                ".git" | ".policy" | TRANSACTION
+            )
+        })
+    {
+        return Err(invalid(
+            "user profile must be a checkout-relative file outside installer-owned directories",
+        ));
+    }
+    Ok(())
 }

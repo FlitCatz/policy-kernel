@@ -28,6 +28,7 @@ fn action_preserves_literal_arguments_and_rejects_unknown_modes() {
                 format!("{}:{}", root.display(), std::env::var("PATH").unwrap()),
             )
             .env("POLICY_COMMAND", mode)
+            .env("POLICY_EXECUTABLE", &fake)
             .env("POLICY_PATH", "a path/$(exit 9).json")
             .env("POLICY_EVIDENCE", "evidence with spaces.json")
             .env("POLICY_HEAD", "head")

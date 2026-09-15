@@ -32,6 +32,11 @@ pub enum Scenario {
     ComponentFailure,
     ApiAuthorization,
     EmptyReport,
+    MissingReport,
+    EmptyTrxReport,
+    MissingTrxReport,
+    EmptyE2eReport,
+    MissingE2eReport,
     ContractMismatch,
 }
 
@@ -43,6 +48,11 @@ impl Scenario {
             Self::ComponentFailure => "component-failure",
             Self::ApiAuthorization => "api-authorization",
             Self::EmptyReport => "empty-report",
+            Self::MissingReport => "missing-report",
+            Self::EmptyTrxReport => "empty-trx-report",
+            Self::MissingTrxReport => "missing-trx-report",
+            Self::EmptyE2eReport => "empty-e2e-report",
+            Self::MissingE2eReport => "missing-e2e-report",
             Self::ContractMismatch => "contract-mismatch",
         }
     }
@@ -50,7 +60,11 @@ impl Scenario {
         match self {
             Self::Baseline => None,
             Self::TypeError => Some("frontend:typecheck"),
-            Self::ComponentFailure | Self::EmptyReport => Some("frontend:unit"),
+            Self::ComponentFailure | Self::EmptyReport | Self::MissingReport => {
+                Some("frontend:unit")
+            }
+            Self::EmptyTrxReport | Self::MissingTrxReport => Some("backend:unit"),
+            Self::EmptyE2eReport | Self::MissingE2eReport => Some("shared:e2e"),
             Self::ApiAuthorization => Some("backend:integration"),
             Self::ContractMismatch => Some("shared:contract"),
         }
@@ -58,11 +72,22 @@ impl Scenario {
     pub fn for_profile(profile: &str) -> Result<Vec<Self>> {
         let mut cases = vec![Self::Baseline];
         match profile {
-            "react-typescript" => {
-                cases.extend([Self::TypeError, Self::ComponentFailure, Self::EmptyReport])
-            }
-            "dotnet" => cases.push(Self::ApiAuthorization),
-            "fullstack" => cases.push(Self::ContractMismatch),
+            "react-typescript" => cases.extend([
+                Self::TypeError,
+                Self::ComponentFailure,
+                Self::EmptyReport,
+                Self::MissingReport,
+            ]),
+            "dotnet" => cases.extend([
+                Self::ApiAuthorization,
+                Self::EmptyTrxReport,
+                Self::MissingTrxReport,
+            ]),
+            "fullstack" => cases.extend([
+                Self::ContractMismatch,
+                Self::EmptyE2eReport,
+                Self::MissingE2eReport,
+            ]),
             _ => return Err("unknown profile".into()),
         }
         Ok(cases)
@@ -114,86 +139,102 @@ fn json(path: &Path, value: &impl Serialize) -> Result<()> {
     Ok(())
 }
 
-fn runtimes(root: &Path, profile: &str) -> (bool, BTreeMap<String, String>) {
+fn runtimes(
+    root: &Path,
+    profile: &project_verification::ProjectProfile,
+) -> (bool, BTreeMap<String, String>) {
     let mut observations = BTreeMap::new();
     let mut available = true;
-    let requirements = match profile {
-        "react-typescript" => vec![("node", "v22.18.0"), ("npm", "10.9.3")],
-        "dotnet" => vec![("dotnet", "9.0.304")],
-        _ => vec![
-            ("node", "v22.18.0"),
-            ("npm", "10.9.3"),
-            ("dotnet", "9.0.304"),
-        ],
+    let Some(selection) = &profile.selection else {
+        return (
+            false,
+            BTreeMap::from([("selection".into(), "missing explicit tool selection".into())]),
+        );
     };
-    for (tool, expected) in requirements {
-        let observed = match command(root, tool, &["--version"]).output() {
-            Ok(output) if output.status.success() => {
-                String::from_utf8_lossy(&output.stdout).trim().to_owned()
+    let requirements: std::collections::BTreeSet<_> = selection
+        .runtime_files
+        .iter()
+        .map(|r| &r.tool)
+        .chain(selection.graphs.iter().map(|g| &g.tool))
+        .collect();
+    for id in requirements {
+        let tool = &selection.tools[id];
+        let args: Vec<_> = tool.version_args.iter().map(String::as_str).collect();
+        let observed = match command(root, &tool.executable, &args).output() {
+            Ok(output) if output.status.success() => match tool.observe(&output.stdout) {
+                Ok(version) => version,
+                Err(error) => {
+                    available = false;
+                    format!("incompatible: {error}")
+                }
+            },
+            Ok(output) => {
+                available = false;
+                format!(
+                    "unavailable: {}",
+                    String::from_utf8_lossy(&output.stderr).trim()
+                )
             }
-            Ok(output) => format!(
-                "unavailable: {}",
-                String::from_utf8_lossy(&output.stderr).trim()
-            ),
-            Err(error) => format!("unavailable: {error}"),
+            Err(error) => {
+                available = false;
+                format!("unavailable: {error}")
+            }
         };
-        available &= observed == expected;
         observations.insert(
-            tool.into(),
-            format!("expected {expected}; observed {observed}"),
+            id.clone(),
+            format!(
+                "executable {}; argv {:?}; requested {}; provision {}; observed {observed}",
+                tool.executable,
+                tool.version_args,
+                tool.version.requirement,
+                tool.version.provision
+            ),
         );
     }
     (available, observations)
 }
 
-fn provision(root: &Path, profile: &str, logs: &Path) -> Result<()> {
-    let frontend = if profile == "fullstack" {
-        root.join("frontend")
-    } else {
-        root.into()
-    };
-    let backend = if profile == "fullstack" {
-        root.join("backend")
-    } else {
-        root.into()
-    };
-    if profile != "dotnet" {
+fn provision(root: &Path, logs: &Path) -> Result<()> {
+    let profile = parse_profile(&fs::read_to_string(
+        root.join(".policy/project-profile.json"),
+    )?)?;
+    let selection = profile
+        .selection
+        .as_ref()
+        .ok_or("provisioning requires explicit selection")?;
+    for (index, graph) in selection.graphs.iter().enumerate() {
+        let component = profile
+            .components
+            .iter()
+            .find(|c| c.id == graph.component)
+            .ok_or("missing component")?;
+        let argv = graph.install_argv(&selection.tools[&graph.tool]);
+        let args: Vec<_> = argv[1..].iter().map(String::as_str).collect();
         checked(
-            &frontend,
-            "npm",
-            &["ci", "--ignore-scripts", "--no-audit", "--no-fund"],
-            &logs.join("npm-frontend.log"),
+            &root.join(&component.root),
+            &argv[0],
+            &args,
+            &logs.join(format!("restore-graph-{index}.log")),
         )?;
     }
-    if profile == "fullstack" {
-        checked(
-            root,
-            "npm",
-            &["ci", "--ignore-scripts", "--no-audit", "--no-fund"],
-            &logs.join("npm-shared.log"),
-        )?;
-        checked(
-            root,
-            "node",
-            &[
-                "node_modules/@playwright/test/cli.js",
-                "install",
-                "chromium",
-            ],
-            &logs.join("playwright-install.log"),
-        )?;
-    }
-    if profile != "react-typescript" {
-        for (name, project) in [
-            ("app", "App.csproj"),
-            ("unit", "Tests/Unit/Unit.Tests.csproj"),
-            ("integration", "Tests/Integration/Integration.Tests.csproj"),
-        ] {
+    for sensor in &profile.sensors {
+        if sensor.report.as_ref().is_some_and(|r| {
+            r.format == project_verification::reports::ReportFormat::PlaywrightJson
+        }) {
+            let component = profile
+                .components
+                .iter()
+                .find(|c| c.id == sensor.component)
+                .ok_or("missing component")?;
+            let cli = sensor
+                .argv
+                .get(1)
+                .ok_or("missing selected Playwright CLI")?;
             checked(
-                &backend,
-                "dotnet",
-                &["restore", project, "--locked-mode"],
-                &logs.join(format!("restore-{name}.log")),
+                &root.join(&component.root),
+                &sensor.argv[0],
+                &[cli, "install", "chromium"],
+                &logs.join("playwright-install.log"),
             )?;
         }
     }
@@ -277,7 +318,7 @@ fn phase(root: &Path, profile: &str, directory: &Path, label: &str) -> Result<Ph
         let request = request(root, &head, label)?;
         json(&directory.join("request.json"), &request)?;
         let _servers = if profile == "fullstack" {
-            Some(Servers::start(root, directory)?)
+            Some(Servers::start(root, directory, &request.profile)?)
         } else {
             None
         };
@@ -379,6 +420,40 @@ fn mutate(root: &Path, scenario: Scenario) -> Result<()> {
                 "acceptance-empty/**/*.test.ts",
             )?;
         }
+        Scenario::MissingReport
+        | Scenario::MissingTrxReport
+        | Scenario::MissingE2eReport
+        | Scenario::EmptyTrxReport
+        | Scenario::EmptyE2eReport => {
+            let path = root.join(".policy/project-profile.json");
+            let mut profile = parse_profile(&fs::read_to_string(&path)?)?;
+            let sensor = profile
+                .sensors
+                .iter_mut()
+                .find(|sensor| Some(sensor.definition.id.as_str()) == scenario.sensor())
+                .ok_or("missing report scenario sensor")?;
+            match scenario {
+                Scenario::EmptyTrxReport => sensor.argv.extend([
+                    "--filter".into(),
+                    "FullyQualifiedName~Task15IntentionallyAbsentTest".into(),
+                ]),
+                Scenario::EmptyE2eReport => sensor.argv.extend([
+                    "--grep".into(),
+                    "Task15IntentionallyAbsentTest".into(),
+                    "--pass-with-no-tests".into(),
+                ]),
+                _ => {
+                    // Keep the real producer command, but request a report it does not emit.
+                    sensor
+                        .report
+                        .as_mut()
+                        .ok_or("missing report contract")?
+                        .path = ".policy-reports/task15-intentionally-missing-report".into();
+                }
+            }
+            profile.validate()?;
+            fs::write(path, serde_json::to_vec_pretty(&profile)?)?;
+        }
     }
     Ok(())
 }
@@ -403,7 +478,7 @@ fn run_case(
     let run = (|| -> Result<()> {
         stage(examples, profile, &root)?;
         if restore {
-            provision(&root, profile, directory)?;
+            provision(&root, directory)?;
         }
         git(&root, &["init", "--initial-branch=acceptance"])?;
         let baseline_head = commit(&root, "Baseline consumer")?;
@@ -430,6 +505,20 @@ fn run_case(
             })
             .collect();
         case.phases.insert("negative".into(), negative);
+        if matches!(
+            scenario,
+            Scenario::MissingReport | Scenario::MissingTrxReport | Scenario::MissingE2eReport
+        ) {
+            // Preserve the real producer's unexpected output for inspection, then
+            // clear it before correction. This output never satisfies the missing contract.
+            let baseline: RunResult =
+                serde_json::from_slice(&fs::read(directory.join("baseline/result.json"))?)?;
+            retain_reports(
+                &root,
+                &directory.join("negative/unrequested-output"),
+                &baseline,
+            )?;
+        }
         git(
             &root,
             &[
@@ -516,12 +605,17 @@ pub fn execute(
     let output: PathBuf = output.canonicalize()?;
     let examples = examples.canonicalize()?;
     let harness = examples.parent().ok_or("examples has no parent")?;
-    // Select the pinned SDK even when a CI image has additional newer SDKs installed.
-    fs::write(
-        output.join("global.json"),
-        include_str!("../../bootstrap/templates/1.0.2/global.json"),
-    )?;
-    let (available, observations) = runtimes(&output, profile);
+    let selected_profile = crate::staging::builtin_profile(profile)?;
+    let ci_inputs = project_verification::selection::ci_inputs(&selected_profile)?;
+    // Host preflight uses the selected SDK even when the CI image has newer SDKs.
+    if let Some(version) = ci_inputs.get("dotnet_version") {
+        json(
+            &output.join("global.json"),
+            &serde_json::json!({"sdk":{"version":version,"rollForward":"disable","allowPrerelease":false}}),
+        )?;
+    }
+    json(&output.join("selection-inputs.json"), &ci_inputs)?;
+    let (available, observations) = runtimes(&output, &selected_profile);
     let harness_observation = crate::harness::observe(harness)?;
     let mut summary = Summary { schema_version: 1, profile: profile.into(), status: "unverified".into(),
         local_advisory: "not_run".into(), ci_authoritative: "unverified: requires authenticated CI observations, adopted policy and independent approvals".into(),

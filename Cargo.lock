@@ -737,9 +737,11 @@ dependencies = [
  "github-adapter",
  "policy-contracts",
  "policy-core",
+ "rustix",
  "serde",
  "serde_json",
  "serde_yaml",
+ "tempfile",
 ]
 
 [[package]]

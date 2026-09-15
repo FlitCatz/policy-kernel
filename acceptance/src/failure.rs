@@ -3,6 +3,39 @@ use policy_contracts::{ExecutionStatus, SensorStatus};
 use project_verification::{reports::TestOutcome, run::NormalizedSensor};
 use serde::Serialize;
 
+fn empty_trx_summary(bytes: &[u8]) -> crate::Result<bool> {
+    let document = roxmltree::Document::parse(std::str::from_utf8(bytes)?)?;
+    let root = document.root_element();
+    let namespace = "http://microsoft.com/schemas/VisualStudio/TeamTest/2010";
+    if !root.has_tag_name((namespace, "TestRun"))
+        || root
+            .descendants()
+            .any(|node| node.has_tag_name("Results") || node.has_tag_name("UnitTestResult"))
+    {
+        return Ok(false);
+    }
+    let counters: Vec<_> = root
+        .descendants()
+        .filter(|node| node.has_tag_name((namespace, "Counters")))
+        .collect();
+    Ok(counters.len() == 1
+        && counters[0]
+            .parent()
+            .is_some_and(|node| node.has_tag_name((namespace, "ResultSummary")))
+        && [
+            "total",
+            "executed",
+            "passed",
+            "failed",
+            "error",
+            "timeout",
+            "aborted",
+            "notExecuted",
+        ]
+        .iter()
+        .all(|field| counters[0].attribute(*field) == Some("0")))
+}
+
 fn failed_names(sensor: &NormalizedSensor) -> crate::Result<Vec<String>> {
     let report = sensor
         .configuration
@@ -28,7 +61,7 @@ fn names_from_report(
 ) -> crate::Result<Vec<String>> {
     use project_verification::reports::ReportFormat;
     match format {
-        ReportFormat::VitestJson => {
+        ReportFormat::VitestJson | ReportFormat::JestJson => {
             let value: serde_json::Value = serde_json::from_slice(bytes)?;
             Ok(value["testResults"]
                 .as_array()
@@ -87,6 +120,8 @@ pub struct FailureObservation {
     pub version_matches: bool,
     pub discovered: Option<u64>,
     pub executed: Option<u64>,
+    pub missing_report: bool,
+    pub empty_native_trx: bool,
     pub failed_tests: Vec<String>,
     pub failed_test_names: Vec<String>,
     pub failed_test_messages: Vec<String>,
@@ -104,10 +139,60 @@ impl FailureObservation {
             exit_code: process.exit_code,
             version_matches: version.status == ExecutionStatus::Passed
                 && version.exit_code == Some(0)
-                && String::from_utf8_lossy(&version.stdout).trim()
-                    == sensor.configuration.sensor.version_stdout.trim(),
+                && match &sensor.result.observed_version {
+                    Some(actual) => {
+                        let stdout = String::from_utf8_lossy(&version.stdout);
+                        let normalized = stdout.trim().strip_prefix('v').unwrap_or(stdout.trim());
+                        project_verification::selection::numeric_version(normalized).is_ok()
+                            && normalized == actual
+                    }
+                    None => {
+                        String::from_utf8_lossy(&version.stdout).trim()
+                            == sensor.configuration.sensor.version_stdout.trim()
+                    }
+                },
             discovered: parsed.map(|r| r.discovered),
             executed: parsed.map(|r| r.executed),
+            missing_report: sensor
+                .configuration
+                .sensor
+                .report
+                .as_ref()
+                .is_some_and(|report| {
+                    sensor.result.original_report.is_none()
+                        && sensor
+                            .collection
+                            .record
+                            .artifact_errors
+                            .iter()
+                            .any(|error| error.contains(&report.path))
+                        && std::fs::symlink_metadata(
+                            sensor.configuration.component_root.join(&report.path),
+                        )
+                        .is_err_and(|error| error.kind() == std::io::ErrorKind::NotFound)
+                }),
+            empty_native_trx: (|| -> crate::Result<bool> {
+                let report = sensor
+                    .configuration
+                    .sensor
+                    .report
+                    .as_ref()
+                    .ok_or("no report")?;
+                if report.format != project_verification::reports::ReportFormat::Trx {
+                    return Ok(false);
+                }
+                let original = sensor
+                    .result
+                    .original_report
+                    .as_ref()
+                    .ok_or("no bound report")?;
+                let bytes = std::fs::read(sensor.configuration.component_root.join(&report.path))?;
+                if project_verification::bytes_digest(&bytes) != original.digest {
+                    return Ok(false);
+                }
+                empty_trx_summary(&bytes)
+            })()
+            .unwrap_or(false),
             failed_tests: parsed
                 .map(|r| {
                     r.tests
@@ -144,10 +229,37 @@ impl FailureObservation {
         if !scenario.rejecting_sensors().contains(&sensor) {
             return false;
         }
-        if !self.version_matches || self.sensor_status != SensorStatus::Failed {
+        if !self.version_matches {
             return false;
         }
-        if scenario == Scenario::EmptyReport {
+        // VSTest emits a zero-counter summary without Results when its filter
+        // matches no tests. The production parser correctly rejects that shape.
+        if scenario == Scenario::EmptyTrxReport && self.sensor_status == SensorStatus::Unparsable {
+            return self.process_status == ExecutionStatus::Passed
+                && self.exit_code == Some(0)
+                && self.empty_native_trx
+                && self.discovered.is_none()
+                && self.executed.is_none()
+                && self.failed_tests.is_empty();
+        }
+        if self.sensor_status != SensorStatus::Failed {
+            return false;
+        }
+        if matches!(
+            scenario,
+            Scenario::MissingReport | Scenario::MissingTrxReport | Scenario::MissingE2eReport
+        ) {
+            return self.process_status == ExecutionStatus::Passed
+                && self.exit_code == Some(0)
+                && self.discovered.is_none()
+                && self.executed.is_none()
+                && self.missing_report
+                && self.failed_tests.is_empty();
+        }
+        if matches!(
+            scenario,
+            Scenario::EmptyReport | Scenario::EmptyTrxReport | Scenario::EmptyE2eReport
+        ) {
             return self.process_status == ExecutionStatus::Passed
                 && self.exit_code == Some(0)
                 && self.discovered == Some(0)
@@ -252,6 +364,8 @@ mod tests {
             version_matches: true,
             discovered: Some(1),
             executed: Some(1),
+            missing_report: false,
+            empty_native_trx: false,
             failed_tests: vec!["frontend:unit:hashed-id".into()],
             failed_test_names: vec![
                 "renders a valid greeting payload supplied through component props".into(),
@@ -308,6 +422,56 @@ mod tests {
         assert!(observed.proves(Scenario::EmptyReport));
         observed.discovered = None;
         assert!(!observed.proves(Scenario::EmptyReport));
+    }
+
+    #[test]
+    fn missing_report_requires_successful_native_process_and_absent_artifact() {
+        for scenario in [
+            Scenario::MissingReport,
+            Scenario::MissingTrxReport,
+            Scenario::MissingE2eReport,
+        ] {
+            let mut observed = failure();
+            observed.process_status = ExecutionStatus::Passed;
+            observed.exit_code = Some(0);
+            observed.discovered = None;
+            observed.executed = None;
+            observed.failed_tests.clear();
+            assert!(!observed.proves(scenario));
+            observed.missing_report = true;
+            assert!(observed.proves(scenario));
+            observed.process_status = ExecutionStatus::TimedOut;
+            assert!(!observed.proves(scenario));
+            observed.process_status = ExecutionStatus::Passed;
+            observed.exit_code = Some(1);
+            assert!(!observed.proves(scenario));
+        }
+    }
+
+    #[test]
+    fn empty_native_trx_requires_bound_zero_summary_without_test_results() {
+        let report = br#"<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><ResultSummary><Counters total="0" executed="0" passed="0" failed="0" error="0" timeout="0" aborted="0" notExecuted="0" /></ResultSummary></TestRun>"#;
+        assert!(empty_trx_summary(report).unwrap());
+        let text = std::str::from_utf8(report).unwrap();
+        for changed in [
+            text.replace("total=\"0\"", "total=\"1\""),
+            text.replace("</TestRun>", "<Results /></TestRun>"),
+            text.replace("<ResultSummary>", "<ResultSummary><Counters total=\"0\" />"),
+        ] {
+            assert!(!empty_trx_summary(changed.as_bytes()).unwrap());
+        }
+        let mut observed = failure();
+        observed.sensor_status = SensorStatus::Unparsable;
+        observed.process_status = ExecutionStatus::Passed;
+        observed.exit_code = Some(0);
+        observed.discovered = None;
+        observed.executed = None;
+        observed.failed_tests.clear();
+        assert!(!observed.proves(Scenario::EmptyTrxReport));
+        observed.empty_native_trx = true;
+        assert!(observed.proves(Scenario::EmptyTrxReport));
+        observed.process_status = ExecutionStatus::TimedOut;
+        assert!(!observed.proves(Scenario::EmptyTrxReport));
     }
 
     #[test]

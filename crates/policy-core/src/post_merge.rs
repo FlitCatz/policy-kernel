@@ -39,14 +39,15 @@ pub fn evaluate_post_merge(input: &PostMergeEvaluationInput) -> PostMergeDecisio
 fn validate_policy_and_versions(input: &PostMergeEvaluationInput, gates: &mut Gates) {
     let mut versions = vec![
         input.schema_version,
-        input.policy.schema_version,
         input.pre_merge.as_decision().schema_version,
         input.merge.schema_version,
     ];
     if let Some(check) = &input.check {
         versions.push(check.schema_version);
     }
-    if versions.iter().any(|version| *version != SCHEMA_VERSION) {
+    if versions.iter().any(|version| *version != SCHEMA_VERSION)
+        || input.policy.validate_version().is_err()
+    {
         gates.unknown(
             "PK-POST-SCHEMA-UNSUPPORTED",
             "all runtime schema versions must be supported",

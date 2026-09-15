@@ -59,6 +59,10 @@ struct IdentityReceipt {
     workflow_head_sha: CommitSha,
     workflow_id: u64,
     workflow_path: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    workflow_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    workflow_source_sha: Option<CommitSha>,
     check_app_id: u64,
     check_app_slug: String,
     policy_digest: Sha256Digest,
@@ -86,6 +90,19 @@ fn main() {
         }
     }
 }
+fn workflow_source_matches(receipt: &IdentityReceipt, workflow_ref: &str) -> bool {
+    match receipt.schema_version {
+        1 => receipt.workflow_ref.is_none() && receipt.workflow_source_sha.is_none(),
+        2 => {
+            receipt.workflow_ref.as_deref() == Some(workflow_ref)
+                && receipt.workflow_source_sha.as_ref().is_some_and(|sha| {
+                    env::var("GITHUB_WORKFLOW_SHA").as_deref() == Ok(sha.as_str())
+                })
+        }
+        _ => false,
+    }
+}
+
 fn run(cli: Cli) -> Result<bool> {
     let (options, post_merge) = match cli.command {
         Mode::PreMerge(options) => (options, false),
@@ -137,7 +154,7 @@ fn run(cli: Cli) -> Result<bool> {
     let trigger = required_env("GITHUB_SHA")?;
     let workflow_ref = required_env("GITHUB_WORKFLOW_REF")?;
     let expected_ref = format!("{}/{}@", receipt.repository, receipt.workflow_path);
-    if receipt.schema_version != SCHEMA_VERSION
+    if !workflow_source_matches(&receipt, &workflow_ref)
         || receipt.repository.as_str() != repository
         || receipt.head_sha != *expected
         || receipt.workflow_run_id.as_str() != run_id

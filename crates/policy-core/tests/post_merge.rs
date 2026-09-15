@@ -42,6 +42,29 @@ fn assert_reason(value: Value, status: PostMergeStatus, reason: &str) {
 }
 
 #[test]
+fn policy_v2_preserves_the_bound_post_merge_authorization_chain() {
+    let mut value = raw("merge.json");
+    value["policy"]["schema_version"] = json!(2);
+    value["policy"]["required_knowledge"] = json!([{
+        "kind": "code_graph_index", "source": "ci/codegraph", "required_when": []
+    }]);
+    let policy: policy_contracts::PolicySnapshot =
+        serde_json::from_value(value["policy"].clone()).unwrap();
+    let digest = json!(pre_merge_policy_digest(&policy).unwrap());
+    value["policy"]["policy_digest"] = digest.clone();
+    value["pre_merge"]["binding"]["policy_digest"] = digest.clone();
+    value["check"]["policy_digest"] = digest;
+    let input: PostMergeEvaluationInput = serde_json::from_value(value).unwrap();
+    let decision = evaluate_post_merge(&input);
+    assert_eq!(
+        decision.status,
+        PostMergeStatus::Shipped,
+        "{:?}",
+        decision.reasons
+    );
+}
+
+#[test]
 fn merge_and_squash_ship_with_a_distinct_merge_commit_sha() {
     for name in ["merge.json", "squash.json"] {
         let input = load(name);

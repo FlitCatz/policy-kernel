@@ -18,6 +18,17 @@ pub struct Installation {
     pub release: String,
     #[serde(default)]
     pub components: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user_profile: Option<UserProfile>,
+}
+
+/// An input binding, never an installer ownership claim.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct UserProfile {
+    pub path: String,
+    /// Empty for a new request; planning binds the exact source bytes.
+    pub digest: String,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -88,9 +99,17 @@ pub(crate) struct Manifest {
 
 pub(crate) fn manifest(installation: &Installation, files: &BTreeMap<String, String>) -> Manifest {
     Manifest {
-        schema_version: 1,
+        schema_version: if installation.release == "1.1.0" {
+            2
+        } else {
+            1
+        },
         installation: installation.clone(),
-        project_profile_schema: 1,
+        project_profile_schema: if installation.release == "1.1.0" {
+            2
+        } else {
+            1
+        },
         sensor_profile_schema: 2,
         evidence_schema: 1,
         files: files
@@ -265,6 +284,55 @@ fn detect(root: &Root, plan: &mut Plan, installation: &Installation) -> Result<(
     Ok(())
 }
 
+fn detect_selected(
+    root: &Root,
+    plan: &mut Plan,
+    profile: &project_verification::ProjectProfile,
+    proposed: &BTreeMap<String, String>,
+) -> Result<()> {
+    let selection = profile
+        .selection
+        .as_ref()
+        .ok_or_else(|| invalid("missing selection contract"))?;
+    for component in &profile.components {
+        directory(root, plan, &component.root)?;
+        let mut files = BTreeMap::new();
+        for input in selection.inputs(&component.id) {
+            let path = join(&component.root, &input);
+            match observe(root, plan, &path)?
+                .or_else(|| proposed.get(&path).map(|s| s.as_bytes().to_vec()))
+            {
+                Some(bytes) => {
+                    files.insert(input, bytes);
+                }
+                None => plan.prerequisites.push(path),
+            }
+        }
+        for runtime in selection
+            .runtime_files
+            .iter()
+            .filter(|r| r.component == component.id)
+        {
+            if let Some(bytes) = files.get(&runtime.path) {
+                if let Err(error) = selection.validate_runtime_file(runtime, bytes) {
+                    plan.conflicts
+                        .push(format!("{}: {error}", join(&component.root, &runtime.path)));
+                }
+            }
+        }
+        // Check each available graph/package independently, so absent installed
+        // packages cannot mask a conflicting runtime or application lockfile.
+        if let Err(error) = project_verification::selection::validate_available_component_files(
+            selection,
+            &component.id,
+            &files,
+        ) {
+            plan.conflicts.push(format!("{}: {error}", component.root));
+        }
+    }
+    Ok(())
+}
+
 /// Inspection and planning share the same read-only snapshot to avoid a detection/plan gap.
 pub fn inspect(request: Request) -> Result<Plan> {
     plan(request)
@@ -273,6 +341,58 @@ pub fn inspect(request: Request) -> Result<Plan> {
 pub fn plan(mut request: Request) -> Result<Plan> {
     let root = Root::open(&request.target)?;
     request.target = root.path.clone();
+    // Source contents are needed only to plan installation. Receipt validation,
+    // recovery and removal deliberately do not load this mutable user input.
+    let mut user_source = None;
+    if let Some(source) = &mut request.installation.user_profile {
+        templates::validate_user_path(&source.path)?;
+        if request.operation == Operation::Uninstall {
+            let bytes = root
+                .read(MANIFEST)?
+                .ok_or_else(|| invalid("no managed installation to uninstall"))?;
+            owned(&bytes)?;
+            let receipt: Manifest = serde_json::from_slice(&bytes)?;
+            let recorded = receipt
+                .installation
+                .user_profile
+                .as_ref()
+                .ok_or_else(|| invalid("recorded installation does not use a user profile"))?;
+            if source.path != recorded.path
+                || (!source.digest.is_empty() && source.digest != recorded.digest)
+            {
+                return Err(invalid("uninstall user profile selection mismatch"));
+            }
+            source.digest = recorded.digest.clone();
+            if request.installation.profile.is_empty() {
+                request.installation.profile = receipt.installation.profile;
+            }
+        } else {
+            let bytes = root
+                .read(&source.path)?
+                .ok_or_else(|| invalid("user profile is missing"))?;
+            let actual = digest(&bytes);
+            if !source.digest.is_empty() && source.digest != actual {
+                return Err(invalid("user profile changed since planning"));
+            }
+            let profile = project_verification::parse_profile(
+                std::str::from_utf8(&bytes).map_err(|_| invalid("user profile must be UTF-8"))?,
+            )
+            .map_err(|e| invalid(e.to_string()))?;
+            if profile.schema_version != 2 {
+                return Err(invalid(
+                    "user profile installation requires project schema 2",
+                ));
+            }
+            if !request.installation.profile.is_empty()
+                && request.installation.profile != profile.id
+            {
+                return Err(invalid("user profile family does not match selection"));
+            }
+            request.installation.profile = profile.id.clone();
+            source.digest = actual;
+            user_source = Some(profile);
+        }
+    }
     request.installation = templates::normalized(&request.installation)?;
     if root.exists(TRANSACTION)? {
         return Err(invalid("unfinished transaction; recover before planning"));
@@ -293,6 +413,11 @@ pub fn plan(mut request: Request) -> Result<Plan> {
         None => BTreeMap::new(),
     };
     let installation = result.request.installation.clone();
+    if result.request.operation == Operation::Install {
+        if let Some(source) = &installation.user_profile {
+            observe(&root, &mut result, &source.path)?;
+        }
+    }
     let mut new = match result.request.operation {
         Operation::Install => templates::render(&installation)?,
         Operation::Uninstall => {
@@ -311,8 +436,18 @@ pub fn plan(mut request: Request) -> Result<Plan> {
     if result.request.operation == Operation::Install {
         let receipt = json(&manifest(&installation, &new))?;
         new.insert(MANIFEST.into(), receipt);
-        detect(&root, &mut result, &installation)?;
-        let profile = templates::profile(&installation)?;
+        let profile = match user_source {
+            Some(profile) => profile,
+            None => {
+                if installation.release != "1.1.0" {
+                    detect(&root, &mut result, &installation)?;
+                }
+                templates::profile(&installation)?
+            }
+        };
+        if profile.selection.is_some() {
+            detect_selected(&root, &mut result, &profile, &new)?;
+        }
         for sensor in &profile.sensors {
             let component = profile
                 .components

@@ -4,6 +4,7 @@ mod paths;
 pub mod profile;
 pub mod reports;
 pub mod run;
+pub mod selection;
 
 pub use profile::{parse_profile, ProjectProfile};
 pub use run::{run, RunRequest, RunResult};

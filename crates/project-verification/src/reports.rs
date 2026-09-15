@@ -13,6 +13,7 @@ pub enum ReportFormat {
     VitestJson,
     PlaywrightJson,
     Trx,
+    JestJson,
 }
 
 impl ReportFormat {
@@ -21,6 +22,7 @@ impl ReportFormat {
             Self::VitestJson => "vitest-json-3.2.4/v1",
             Self::PlaywrightJson => "playwright-json-1.55.0/v1",
             Self::Trx => "vstest-trx-17.14.1/v1",
+            Self::JestJson => "jest-json/v1",
         }
     }
 }
@@ -145,7 +147,54 @@ pub fn parse_report(
         ReportFormat::VitestJson => vitest(namespace, &v),
         ReportFormat::PlaywrightJson => playwright(namespace, &v),
         ReportFormat::Trx => unreachable!(),
+        ReportFormat::JestJson => jest(namespace, &v),
     }
+}
+
+fn jest(namespace: &str, value: &Value) -> Result<ParsedReport, ReportError> {
+    // Jest shares assertion/count structure with Vitest, but carries additional
+    // interruption, runtime-error, snapshot, and retry signals. Never ignore these.
+    if field(value, "wasInterrupted")?.as_bool() != Some(false)
+        || count(value, "numRuntimeErrorTestSuites")? != 0
+        || !array(value, "openHandles")?.is_empty()
+    {
+        return Err(invalid(
+            "Jest interrupted, retained handles, or runtime errors",
+        ));
+    }
+    let snapshot = field(value, "snapshot")?;
+    if field(snapshot, "failure")?.as_bool() != Some(false)
+        || field(snapshot, "didUpdate")?.as_bool() != Some(false)
+        || [
+            "added",
+            "filesRemoved",
+            "filesUnmatched",
+            "filesUpdated",
+            "unchecked",
+            "unmatched",
+            "updated",
+        ]
+        .into_iter()
+        .any(|key| count(snapshot, key).ok() != Some(0))
+    {
+        return Err(invalid(
+            "Jest snapshot mismatch, update, or missing summary",
+        ));
+    }
+    for suite in array(value, "testResults")? {
+        for test in array(suite, "assertionResults")? {
+            let status = string(test, "status")?;
+            if (matches!(status, "passed" | "failed") && count(test, "invocations")? != 1)
+                || !array(test, "retryReasons")?.is_empty()
+                || field(test, "failing")?.as_bool() != Some(false)
+            {
+                return Err(invalid(
+                    "Jest retries or expected-failure tests are not passing evidence",
+                ));
+            }
+        }
+    }
+    vitest(namespace, value)
 }
 
 fn vitest(namespace: &str, v: &Value) -> Result<ParsedReport, ReportError> {

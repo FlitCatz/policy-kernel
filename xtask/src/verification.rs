@@ -57,6 +57,20 @@ fn identity(value: &Value) -> Result<String> {
     serde_json::to_string(&fields).map_err(|e| e.to_string())
 }
 pub fn mutation(path: &Path) -> Result<()> {
+    mutation_scope(path, "core")
+}
+
+pub fn mutation_scope(path: &Path, scope: &str) -> Result<()> {
+    let (package, required_files, function): (&str, &[&str], Option<&str>) = match scope {
+        "core" => ("policy-core", &FILES, None),
+        "controller" => ("policy-ci", &["crates/policy-ci/src/controller.rs"], None),
+        "workflow-source" => (
+            "policy-ci",
+            &["crates/policy-ci/src/main.rs"],
+            Some("workflow_source_matches"),
+        ),
+        _ => return Err("unsupported mutation scope".into()),
+    };
     let p: Value = load(path)?;
     if p["cargo_mutants_version"] != "27.1.0" {
         return Err("unexpected cargo-mutants version; expected 27.1.0".into());
@@ -93,8 +107,11 @@ pub fn mutation(path: &Path) -> Result<()> {
             return Err("invalid mutation scenario".into());
         }
         let mutant = &scenario["Mutant"];
-        if mutant["package"] != "policy-core" {
-            return Err("every mutation must belong to policy-core".into());
+        if mutant["package"] != package {
+            return Err(format!("every mutation must belong to {package}"));
+        }
+        if function.is_some_and(|name| mutant["function"]["function_name"] != name) {
+            return Err("unexpected mutated function for selected scope".into());
         }
         let file = mutant["file"]
             .as_str()
@@ -133,7 +150,10 @@ pub fn mutation(path: &Path) -> Result<()> {
     if declared[4] != 0 || declared[1] == 0 {
         return Err("no caught viable mutations or unclassified successes".into());
     }
-    let required: BTreeSet<String> = FILES.into_iter().map(str::to_owned).collect();
+    let required: BTreeSet<String> = required_files
+        .iter()
+        .map(|file| (*file).to_owned())
+        .collect();
     if !files.is_subset(&required) {
         return Err("unexpected mutated files".into());
     }

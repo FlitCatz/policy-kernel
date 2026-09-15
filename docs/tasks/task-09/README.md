@@ -25,6 +25,10 @@ signal exit. Probe success never upgrades a failed main command.
 
 ## Related implementation and references
 
+[Task 15](../task-15/README.md) adds selected-tool preflight in project verification
+and a separate authenticated controller. Direct collector output is unchanged;
+only independently authenticated reconstruction can create trusted evidence.
+
 - [2026-09-07-task-9-collector-design.md](../../archive/superpowers/specs/2026-09-07-task-9-collector-design.md)
 - [2026-09-07-task-9-collector.md](../../archive/superpowers/plans/2026-09-07-task-9-collector.md)
 - [2026-09-07-task-9-collector-review.md](../../archive/reviews/2026-09-07-task-9-collector-review.md)
