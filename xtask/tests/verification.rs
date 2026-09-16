@@ -78,6 +78,79 @@ fn mutation_accepts_complete_inventory() {
     success(&out);
     assert!(String::from_utf8_lossy(&out.stdout).contains("5 mutants across 5"));
 }
+
+#[test]
+fn additional_mutation_scopes_keep_exact_inventory_and_cannot_replace_core_coverage() {
+    for (scope, file, function) in [
+        (
+            "controller",
+            "crates/policy-ci/src/controller.rs",
+            "produce",
+        ),
+        (
+            "workflow-source",
+            "crates/policy-ci/src/main.rs",
+            "workflow_source_matches",
+        ),
+    ] {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("outcomes.json");
+        let mut payload = results();
+        payload["outcomes"].as_array_mut().unwrap().truncate(2);
+        payload["total_mutants"] = json!(1);
+        payload["caught"] = json!(1);
+        payload["outcomes"][1]["scenario"]["Mutant"]["package"] = json!("policy-ci");
+        payload["outcomes"][1]["scenario"]["Mutant"]["file"] = json!(file);
+        payload["outcomes"][1]["scenario"]["Mutant"]["function"] =
+            json!({"function_name":function});
+        write(&path, &payload);
+        write(&temp.path().join("mutants.json"), &inventory(&payload));
+        success(&run(&[
+            "check-mutation-results",
+            path.to_str().unwrap(),
+            "--scope",
+            scope,
+        ]));
+        failure(&run(&["check-mutation-results", path.to_str().unwrap()]));
+        failure(&run(&[
+            "check-mutation-results",
+            path.to_str().unwrap(),
+            "--scope",
+            "arbitrary",
+        ]));
+        for (pointer, value) in [
+            (
+                "/outcomes/1/scenario/Mutant/file",
+                json!("crates/policy-ci/src/unrelated.rs"),
+            ),
+            ("/outcomes/1/scenario/Mutant/package", json!("policy-core")),
+            ("/end_time", json!(null)),
+        ] {
+            let mut invalid = payload.clone();
+            *invalid.pointer_mut(pointer).unwrap() = value;
+            write(&path, &invalid);
+            write(&temp.path().join("mutants.json"), &inventory(&invalid));
+            failure(&run(&[
+                "check-mutation-results",
+                path.to_str().unwrap(),
+                "--scope",
+                scope,
+            ]));
+        }
+        if scope == "workflow-source" {
+            payload["outcomes"][1]["scenario"]["Mutant"]["function"]["function_name"] =
+                json!("unrelated");
+            write(&path, &payload);
+            write(&temp.path().join("mutants.json"), &inventory(&payload));
+            failure(&run(&[
+                "check-mutation-results",
+                path.to_str().unwrap(),
+                "--scope",
+                scope,
+            ]));
+        }
+    }
+}
 #[test]
 fn mutation_rejects_incomplete_or_bad_results() {
     let valid = results();
@@ -330,6 +403,147 @@ fn scans_include_hidden_and_ignored_files() {
         fs::write(t.path().join(path), "hashline runtime").unwrap();
         failure(&public_api(t.path()));
     }
+}
+
+#[test]
+fn scans_cover_installer_acceptance_build_hooks_manifests_and_ci() {
+    for (path, text) in [
+        ("bootstrap/src/main.rs", "superpowers::initialize();"),
+        ("acceptance/src/process.rs", "agent_skills::run();"),
+        (
+            "bootstrap/templates/next/verification.yml",
+            "run: gsd-core verify",
+        ),
+        (
+            "bootstrap/Cargo.toml",
+            "[dependencies]\nsuperpowers = \"1\"",
+        ),
+        (
+            "acceptance/build.rs",
+            "fn main() { agent_skills::install(); }",
+        ),
+        (
+            "crates/policy-core/Cargo.toml",
+            "[dependencies]\nagent-skills = \"1\"",
+        ),
+        (
+            "crates/policy-core/build.rs",
+            "fn main() { gsd_core::install(); }",
+        ),
+        (
+            "Cargo.lock",
+            "version=4\n[[package]]\nname=\"superpowers\"\nversion=\"1.0.0\"",
+        ),
+        (".github/workflows/ci.yml", "run: superpowers verify"),
+        ("xtask/src/helper.rs", "gsd_core::run();"),
+    ] {
+        let t = scan_repo();
+        let path = t.path().join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, text).unwrap();
+        let out = residue(t.path());
+        failure(&out);
+        assert!(
+            String::from_utf8_lossy(&out.stderr).contains("forbidden"),
+            "{}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+}
+
+#[test]
+fn historical_docs_and_negative_test_fixtures_are_not_runtime_dependencies() {
+    let t = scan_repo();
+    for path in [
+        "docs/archive/old-plan.md",
+        "bootstrap/tests/negative.rs",
+        "acceptance/tests/negative.rs",
+        "xtask/tests/negative.rs",
+        "bootstrap/templates/next/README.md",
+    ] {
+        let path = t.path().join(path);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(path, "superpowers agent-skills gsd-core").unwrap();
+    }
+    success(&residue(t.path()));
+}
+
+#[test]
+fn declared_custom_cargo_build_hooks_are_runtime_inputs() {
+    let t = scan_repo();
+    fs::write(
+        t.path().join("crates/policy-core/Cargo.toml"),
+        "[package]\nname=\"policy-core\"\nversion=\"0.1.0\"\nedition=\"2021\"\nbuild=\"hooks/install.rs\"\n",
+    ).unwrap();
+    let hooks = t.path().join("crates/policy-core/hooks");
+    fs::create_dir(&hooks).unwrap();
+    fs::write(
+        hooks.join("install.rs"),
+        "fn main() { superpowers::install(); }",
+    )
+    .unwrap();
+    let out = residue(t.path());
+    failure(&out);
+    assert!(String::from_utf8_lossy(&out.stderr).contains("forbidden"));
+}
+
+#[test]
+fn cargo_workspace_members_outside_conventional_directories_are_scanned() {
+    let t = scan_repo();
+    fs::write(
+        t.path().join("Cargo.toml"),
+        "[workspace]\nmembers=[\"crates/policy-core\",\"tools/helper\"]\nresolver=\"2\"\n",
+    )
+    .unwrap();
+    fs::write(
+        t.path().join("Cargo.lock"),
+        "version=4\n[[package]]\nname=\"policy-core\"\nversion=\"0.1.0\"\n[[package]]\nname=\"helper\"\nversion=\"0.1.0\"\n",
+    ).unwrap();
+    let helper = t.path().join("tools/helper");
+    fs::create_dir_all(helper.join("src")).unwrap();
+    fs::write(
+        helper.join("Cargo.toml"),
+        "[package]\nname=\"helper\"\nversion=\"0.1.0\"\nedition=\"2021\"\n",
+    )
+    .unwrap();
+    fs::write(helper.join("src/main.rs"), "fn main() {}").unwrap();
+    success(&residue(t.path()));
+    fs::write(
+        helper.join("src/main.rs"),
+        "fn main() { agent_skills::run(); }",
+    )
+    .unwrap();
+    let out = residue(t.path());
+    failure(&out);
+    assert!(String::from_utf8_lossy(&out.stderr).contains("forbidden"));
+}
+
+#[test]
+fn root_level_custom_targets_include_sibling_rust_modules_not_tests() {
+    let t = scan_repo();
+    let package = t.path().join("crates/policy-core");
+    fs::write(package.join("Cargo.toml"), "[package]\nname=\"policy-core\"\nversion=\"0.1.0\"\nedition=\"2021\"\nbuild=\"custom_build.rs\"\n").unwrap();
+    fs::write(
+        package.join("custom_build.rs"),
+        "mod helper; fn main() { helper::install(); }",
+    )
+    .unwrap();
+    fs::create_dir(package.join("tests")).unwrap();
+    fs::write(
+        package.join("tests/negative.rs"),
+        "// superpowers agent-skills gsd-core",
+    )
+    .unwrap();
+    fs::write(package.join("helper.rs"), "pub fn install() {}").unwrap();
+    success(&residue(t.path()));
+    fs::write(
+        package.join("helper.rs"),
+        "pub fn install() { gsd_core::install(); }",
+    )
+    .unwrap();
+    let out = residue(t.path());
+    failure(&out);
+    assert!(String::from_utf8_lossy(&out.stderr).contains("forbidden"));
 }
 #[test]
 fn scans_fail_closed_on_missing_empty_or_invalid_inputs() {

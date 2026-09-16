@@ -8,7 +8,10 @@ use evidence_collector::{collect, CollectedExecution, CollectionRequest};
 use policy_contracts::*;
 use policy_core::canonical_sha256;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeSet, path::PathBuf};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::PathBuf,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -55,6 +58,10 @@ pub struct NormalizedResult {
     pub original_report: Option<ArtifactDigest>,
     pub parsed: Option<ParsedReport>,
     pub errors: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub observed_version: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version_preflight_digest: Option<Sha256Digest>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,6 +71,8 @@ pub struct NormalizedSensor {
     pub collection: CollectedExecution,
     pub configuration: ConfigurationBinding,
     pub result: NormalizedResult,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version_preflight: Option<CollectedExecution>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -116,9 +125,23 @@ fn configuration(
         .ok_or_else(|| invalid("missing component"))?;
     let cwd = paths::directory(&request.root, &component.root)?;
     let mut inputs = Vec::new();
-    for path in &sensor.inputs {
+    let mut selected_inputs: BTreeSet<_> = sensor.inputs.iter().cloned().collect();
+    if let Some(selection) = &request.profile.selection {
+        selected_inputs.extend(selection.inputs(&sensor.component));
+    }
+    let mut selected_files = BTreeMap::new();
+    for path in &selected_inputs {
         let bytes = paths::read(&cwd, path)?;
-        if sensor.definition.id.as_str() == "backend:dependencies" {
+        let nuget_audit = request.profile.selection.as_ref().map_or(
+            sensor.definition.id.as_str() == "backend:dependencies",
+            |selection| {
+                selection.graphs.iter().any(|g| {
+                    g.audit_sensor == sensor.definition.id.as_str()
+                        && g.adapter == crate::selection::DependencyAdapter::Nuget
+                })
+            },
+        );
+        if nuget_audit {
             validate_audit_input(path, &bytes)?;
         }
         for pin in sensor.pins.iter().filter(|pin| &pin.path == path) {
@@ -138,6 +161,10 @@ fn configuration(
             path: path.clone(),
             digest: bytes_digest(&bytes),
         });
+        selected_files.insert(path.clone(), bytes);
+    }
+    if let Some(selection) = &request.profile.selection {
+        crate::selection::validate_component_files(selection, &sensor.component, &selected_files)?;
     }
     inputs.sort_by(|a, b| a.path.cmp(&b.path));
     Ok(ConfigurationBinding {
@@ -161,12 +188,29 @@ fn validate_audit_input(path: &str, bytes: &[u8]) -> Result<(), Error> {
         std::str::from_utf8(bytes).map_err(|_| invalid("audit configuration must be UTF-8"))?;
     let document =
         roxmltree::Document::parse(text).map_err(|e| invalid(format!("audit XML: {e}")))?;
-    if document
-        .descendants()
-        .any(|n| n.has_tag_name("NuGetAuditSuppress"))
-    {
+    if document.descendants().any(|n| {
+        n.has_tag_name("NuGetAuditSuppress")
+            || n.has_tag_name("NuGetLockFilePath")
+            || n.attribute("TreatAsLocalProperty")
+                .is_some_and(|properties| {
+                    properties.split(';').any(|property| {
+                        [
+                            "NuGetAudit",
+                            "NuGetAuditMode",
+                            "NuGetAuditLevel",
+                            "WarningsAsErrors",
+                            "NoWarn",
+                            "WarningsNotAsErrors",
+                            "RestoreLockedMode",
+                            "NuGetLockFilePath",
+                        ]
+                        .iter()
+                        .any(|protected| property.trim().eq_ignore_ascii_case(protected))
+                    })
+                })
+    }) {
         return Err(invalid(
-            "the default audit profile does not accept suppressed advisories",
+            "audit contract rejects suppressed advisories or locally overridden audit properties",
         ));
     }
     if path.ends_with("NuGet.Config")
@@ -352,6 +396,15 @@ fn collection_request(
     request: &RunRequest,
     configuration: &ConfigurationBinding,
 ) -> Result<CollectionRequest, Error> {
+    Ok(CollectionRequest::try_from_json(&serde_json::to_string(
+        &collection_request_value(request, configuration)?,
+    )?)?)
+}
+
+fn collection_request_value(
+    request: &RunRequest,
+    configuration: &ConfigurationBinding,
+) -> Result<serde_json::Value, Error> {
     let sensor = &configuration.sensor;
     if let Some(report) = &sensor.report {
         paths::require_absent(&configuration.component_root, &report.path)?;
@@ -374,17 +427,63 @@ fn collection_request(
         "input_digest":input_digest,
         "artifact_paths":sensor.report.iter().map(|r| r.path.clone()).collect::<Vec<_>>()
     });
-    Ok(CollectionRequest::try_from_json(&serde_json::to_string(
-        &value,
-    )?)?)
+    Ok(value)
 }
 
 fn run_sensor(
     request: &RunRequest,
     configuration: ConfigurationBinding,
 ) -> Result<NormalizedSensor, Error> {
+    let preflight = if let Some(selection) = &request.profile.selection {
+        let tool = selection.tool_for(&configuration.sensor)?;
+        let mut value = collection_request_value(request, &configuration)?;
+        value["argv"] = serde_json::json!(std::iter::once(tool.executable.clone())
+            .chain(tool.version_args.clone())
+            .collect::<Vec<_>>());
+        value["artifact_paths"] = serde_json::json!([]);
+        value["execution_id"] = serde_json::json!(format!(
+            "{}:{}:version-preflight",
+            request.execution_id, configuration.sensor.definition.id
+        ));
+        let probe = collect(CollectionRequest::try_from_json(&serde_json::to_string(
+            &value,
+        )?)?)?;
+        if probe.evidence.status != ExecutionStatus::Passed {
+            return Err(invalid(format!(
+                "version preflight failed for {}",
+                configuration.sensor.definition.id
+            )));
+        }
+        let actual = tool.observe(&probe.record.execution.stdout)?;
+        if tool.observe(&probe.record.version_probe.stdout)? != actual {
+            return Err(invalid("version changed during preflight"));
+        }
+        source_files(request)?;
+        if canonical_sha256(&self::configuration(request, &configuration.sensor)?)?
+            != canonical_sha256(&configuration)?
+        {
+            return Err(invalid("configuration changed during version preflight"));
+        }
+        Some((probe, actual))
+    } else {
+        None
+    };
     let collection = collect(collection_request(request, &configuration)?)?;
-    normalize_collection(request, configuration, collection)
+    let mut normalized = normalize_collection(request, configuration, collection)?;
+    if let Some((probe, actual)) = preflight {
+        if normalized.result.observed_version.as_ref() != Some(&actual)
+            || normalized.collection.record.command.resolved_executable
+                != probe.record.command.resolved_executable
+        {
+            return Err(invalid(
+                "selected executable/version changed after preflight",
+            ));
+        }
+        normalized.result.version_preflight_digest = Some(canonical_sha256(&probe)?);
+        normalized.version_preflight = Some(probe);
+        normalized.evidence.result_digest = canonical_sha256(&normalized.result)?;
+    }
+    Ok(normalized)
 }
 
 /// Normalization is exposed separately for deterministic transport and failure regressions.
@@ -461,6 +560,8 @@ pub fn normalize_collection(
         original_report: None,
         parsed: None,
         errors: vec![],
+        observed_version: None,
+        version_preflight_digest: None,
     };
     let mut status = match collection.evidence.status {
         ExecutionStatus::Passed => SensorStatus::Passed,
@@ -478,20 +579,37 @@ pub fn normalize_collection(
         status = SensorStatus::Failed;
         result.errors.push("execution record did not pass".into());
     }
+    let version_result = if let Some(selection) = &request.profile.selection {
+        selection
+            .tool_for(sensor)?
+            .observe(&collection.record.version_probe.stdout)
+            .map(Some)
+    } else if std::str::from_utf8(&collection.record.version_probe.stdout)
+        .ok()
+        .map(str::trim)
+        == Some(sensor.version_stdout.trim())
+    {
+        Ok(None)
+    } else {
+        Err(invalid(
+            "tool version probe did not match the pinned output",
+        ))
+    };
     if collection.record.version_probe.status != ExecutionStatus::Passed
         || collection.record.version_probe.exit_code != Some(0)
         || collection.record.version_probe.error.is_some()
-        || std::str::from_utf8(&collection.record.version_probe.stdout)
-            .ok()
-            .map(str::trim)
-            != Some(sensor.version_stdout.trim())
+        || version_result.is_err()
     {
-        result
-            .errors
-            .push("tool version probe did not match the pinned output".into());
+        result.errors.push(
+            version_result
+                .err()
+                .map_or_else(|| "tool version probe failed".into(), |e| e.to_string()),
+        );
         if status == SensorStatus::Passed {
             status = SensorStatus::Unparsable;
         }
+    } else {
+        result.observed_version = version_result?;
     }
     if let Some(report) = &sensor.report {
         let parsed = (|| -> Result<ParsedReport, Error> {
@@ -566,5 +684,6 @@ pub fn normalize_collection(
         collection,
         configuration,
         result,
+        version_preflight: None,
     })
 }

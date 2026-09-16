@@ -75,6 +75,7 @@ fn real_actions_run_publishes_and_reads_back_blocked_decision() {
         authorized_waiver_actors: vec![],
         required_sensor_ids: vec![],
         sensor_profile_digest: Some(canonical_sha256(&profile).unwrap()),
+        required_knowledge: vec![],
         protected_target_branches: vec![],
         allowed_merge_methods: vec![],
     };

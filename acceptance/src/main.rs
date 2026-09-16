@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use policy_acceptance::{
     execution::{execute, Scenario},
-    stage,
+    stage, stage_profile,
 };
 use std::{path::PathBuf, process::ExitCode};
 
@@ -17,8 +17,15 @@ enum Commands {
     Stage {
         #[arg(long, default_value = "examples")]
         examples: PathBuf,
+        #[arg(
+            long,
+            required_unless_present = "profile_file",
+            conflicts_with = "profile_file"
+        )]
+        profile: Option<String>,
+        /// Source-relative schema2 profile in a complete fixture tree supplied by --examples.
         #[arg(long)]
-        profile: String,
+        profile_file: Option<String>,
         #[arg(long)]
         output: PathBuf,
     },
@@ -42,8 +49,17 @@ fn main() -> ExitCode {
         Commands::Stage {
             examples,
             profile,
+            profile_file,
             output,
-        } => stage(&examples, &profile, &output).map(|()| true),
+        } => match profile_file {
+            Some(path) => stage_profile(&examples, &path, &output),
+            None => stage(
+                &examples,
+                profile.as_deref().expect("clap requires profile"),
+                &output,
+            ),
+        }
+        .map(|()| true),
         Commands::Run {
             examples,
             profile,

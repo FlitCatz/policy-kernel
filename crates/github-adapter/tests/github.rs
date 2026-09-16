@@ -11,11 +11,12 @@ fn process_fixture(path: &std::path::Path, mode: &str) {
     static EXE: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
     let executable = EXE.get_or_init(|| {
         let output = std::env::temp_dir().join(format!("adapter-fixture-{}", std::process::id()));
-        let result = std::process::Command::new("rustc")
-            .args(["--edition=2021", "tests/support/process.rs", "-o"])
-            .arg(&output)
-            .output()
-            .unwrap();
+        let result =
+            std::process::Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()))
+                .args(["--edition=2021", "tests/support/process.rs", "-o"])
+                .arg(&output)
+                .output()
+                .unwrap();
         assert!(
             result.status.success(),
             "{}",

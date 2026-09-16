@@ -1,11 +1,23 @@
-# Collecting evidence from replaceable reviewer executors
+# Collecting evidence from external reviewer executors
 
-A consuming workflow may combine an external review skill with OMP, `agy`, or
-another executor. The workflow selects the policy-declared argv and supplies the
-provider, model and execution IDs. `evidence-collector` runs that selection once
-and records observations. It never embeds `gemini-reviewer`, selects a provider
-or model, manages login, retries, compares failure signatures, owns repair budgets,
-chooses debugger escalation, or treats model prose as provenance.
+This file keeps its historical path so existing links continue to work. Despite
+the filename, it is an integration note, not an agent-skills library or a runtime
+requirement for any named orchestration framework.
+
+A consuming workflow may invoke any external reviewer executable that satisfies
+its reviewed command and structured-output contract. The workflow selects the
+policy-declared argv and supplies the provider, model, and execution IDs.
+`evidence-collector` runs that selection once and records observations. It does
+not embed a reviewer, select a provider or model, manage login, retry, compare
+failure signatures, own repair budgets, choose debugger escalation, or treat
+model prose as provenance.
+
+The policy CLI, collector, project verification, and bootstrap installer do not
+load or require user-global agent plugins, skill directories, planning state, or
+agent configuration. Their absence does not prevent the supported CLI paths from
+starting. Caller-selected external tools are different: an executable named in
+`argv`, its credentials, and any report files required by that integration must
+still be provisioned by the caller.
 
 An isolated debugger's repair becomes new modification evidence. It must be
 reviewed by a provider and execution independent of every contributor, including
@@ -56,9 +68,13 @@ credentials, so workflows must control log access and configure safe output.
 
 Linux and macOS are supported. Other platforms fail before execution. The main
 command and version probe share one monotonic timeout, at most one hour. A version
-probe uses the same resolved executable and its supplied `version_args`, cwd and
-environment; it runs only after the main command passes. A failed probe makes
-the whole collection non-success. A skipped probe is recorded explicitly.
+probe uses the same resolved executable and its supplied `version_args`, cwd, and
+environment. It runs after either a successful main command or an ordinary
+nonzero exit that produced an exit code without a collection error. This retains
+tool identity for a completed negative check. It is skipped after incomplete or
+damaged execution such as spawn failure, timeout, truncation, or signal exit. A
+failed probe makes an otherwise successful collection non-success; it cannot
+upgrade a failed main command. A skipped probe is recorded explicitly.
 
 Each stdout/stderr limit is 1 byte to 16 MiB. Exactly reaching a limit is allowed;
 observing any additional byte produces `truncated` and terminates the process

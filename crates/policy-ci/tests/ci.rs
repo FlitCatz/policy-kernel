@@ -62,6 +62,32 @@ mod integration {
     };
     static NEXT: AtomicU64 = AtomicU64::new(0);
 
+    include!("support/controller.rs");
+
+    #[test]
+    fn legacy_receipts_cannot_partially_adopt_authenticated_workflow_fields() {
+        for (field, value) in [
+            (
+                "workflow_ref",
+                "FlitCatz/policy-kernel/.github/workflows/policy.yml@refs/heads/main",
+            ),
+            (
+                "workflow_source_sha",
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            ),
+        ] {
+            let fixture = Fixture::new("ready");
+            let path = fixture.trusted.join("identity.json");
+            let mut receipt: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+            assert_eq!(receipt["schema_version"], 1);
+            receipt[field] = json!(value);
+            fs::write(path, serde_json::to_vec(&receipt).unwrap()).unwrap();
+            let output = fixture.command().output().unwrap();
+            assert_eq!(output.status.code(), Some(2), "{field}");
+            assert!(!fixture.root.join("published.json").exists());
+        }
+    }
+
     // Compile the Rust-only process fixture once, using the dependencies Cargo
     // built for this integration test. It is not a production binary target.
     fn fake_gh() -> &'static PathBuf {
@@ -89,19 +115,21 @@ mod integration {
             };
             let output =
                 std::env::temp_dir().join(format!("policy-ci-fake-gh-{}", std::process::id()));
-            let result = std::process::Command::new("rustc")
-                .args(["--edition=2021", "--crate-name", "policy_ci_fake_gh"])
-                .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/fake_gh.rs"))
-                .arg("-L")
-                .arg(format!("dependency={}", deps.display()))
-                .arg("--extern")
-                .arg(format!("serde_json={}", artifact("serde_json").display()))
-                .arg("--extern")
-                .arg(format!("chrono={}", artifact("chrono").display()))
-                .arg("-o")
-                .arg(&output)
-                .output()
-                .unwrap();
+            let result = std::process::Command::new(
+                std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()),
+            )
+            .args(["--edition=2021", "--crate-name", "policy_ci_fake_gh"])
+            .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/fake_gh.rs"))
+            .arg("-L")
+            .arg(format!("dependency={}", deps.display()))
+            .arg("--extern")
+            .arg(format!("serde_json={}", artifact("serde_json").display()))
+            .arg("--extern")
+            .arg(format!("chrono={}", artifact("chrono").display()))
+            .arg("-o")
+            .arg(&output)
+            .output()
+            .unwrap();
             assert!(
                 result.status.success(),
                 "{}",
@@ -271,6 +299,10 @@ mod integration {
                 .env("GITHUB_RUN_ID", "9001")
                 .env("GITHUB_RUN_ATTEMPT", "2")
                 .env("GITHUB_SHA", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+                .env(
+                    "GITHUB_WORKFLOW_SHA",
+                    "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+                )
                 .env(
                     "GITHUB_WORKFLOW_REF",
                     "FlitCatz/policy-kernel/.github/workflows/policy.yml@refs/heads/main",

@@ -1,6 +1,30 @@
 use policy_contracts::*;
 
 #[test]
+fn knowledge_policy_v2_is_explicit_and_legacy_policies_round_trip() {
+    let ready: serde_json::Value =
+        serde_json::from_str(include_str!("../../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    let legacy = ready["policy"].clone();
+    let parsed: PolicySnapshot = serde_json::from_value(legacy.clone()).unwrap();
+    assert_eq!(serde_json::to_value(parsed).unwrap(), legacy);
+    let mut v2 = legacy.clone();
+    v2["schema_version"] = serde_json::json!(2);
+    v2["required_knowledge"] = serde_json::json!([{
+        "kind": "code_graph_index", "source": "ci/codegraph", "required_when": []
+    }]);
+    assert!(serde_json::from_value::<PolicySnapshot>(v2.clone()).is_ok());
+    for version in [0, 1, 3, 99] {
+        v2["schema_version"] = serde_json::json!(version);
+        assert!(serde_json::from_value::<PolicySnapshot>(v2.clone()).is_err());
+    }
+    for declaration in [serde_json::json!([]), serde_json::Value::Null] {
+        let mut invalid = legacy.clone();
+        invalid["required_knowledge"] = declaration;
+        assert!(serde_json::from_value::<PolicySnapshot>(invalid).is_err());
+    }
+}
+
+#[test]
 fn unknown_schema_version_is_rejected() {
     let error = serde_json::from_str::<PreMergeEvaluationInput>(include_str!(
         "../../../tests/fixtures/contracts/unknown-version.json"

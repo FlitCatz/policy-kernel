@@ -9,6 +9,48 @@ concurrency:
   group: release-verification-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  rust-compatibility:
+    name: Rust ${{ matrix.rust }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.85.0", "1.95.0"]
+        os: [ubuntu-latest, macos-latest]
+    env:
+      # A job selection must override the repository's release default.
+      RUSTUP_TOOLCHAIN: ${{ matrix.rust }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Selected compatible Rust compiler
+        run: |
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal --no-self-update
+          echo "RUSTC=$(rustup which --toolchain "$RUSTUP_TOOLCHAIN" rustc)" >> "$GITHUB_ENV"
+          echo "RUSTDOC=$(rustup which --toolchain "$RUSTUP_TOOLCHAIN" rustdoc)" >> "$GITHUB_ENV"
+      - name: Record actual build selection
+        run: |
+          mkdir -p verification
+          { "$RUSTC" --version --verbose; rustup run "$RUSTUP_TOOLCHAIN" cargo --version; git rev-parse HEAD; } > verification/versions.txt
+      - name: Locked workspace build
+        run: rustup run "$RUSTUP_TOOLCHAIN" cargo build --workspace --locked 2>&1 | tee verification/build.log
+      - name: Workspace tests including isolated binary execution
+        run: rustup run "$RUSTUP_TOOLCHAIN" cargo test --workspace --locked 2>&1 | tee verification/tests.log
+      - name: Preserve dependency resolution
+        run: git diff --exit-code -- Cargo.lock
+      - name: Upload compatibility observations
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: rust-compatibility-${{ matrix.rust }}-${{ matrix.os }}-${{ github.sha }}
+          path: verification/
+          if-no-files-found: warn
+          retention-days: 30
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45

@@ -9,8 +9,156 @@ fn request(target: &Path, profile: &str) -> Request {
             profile: profile.into(),
             release: "1.0.0".into(),
             components: BTreeMap::new(),
+            user_profile: None,
         },
         operation: Operation::Install,
+    }
+}
+
+fn user_request(target: &Path) -> Request {
+    let legacy = project_verification::parse_profile(include_str!(
+        "../templates/1.0.2/profiles/fullstack/profile.json"
+    ))
+    .unwrap();
+    let profile = project_verification::selection::upgrade_profile(legacy).unwrap();
+    fs::write(
+        target.join("custom-profile.json"),
+        serde_json::to_vec_pretty(&profile).unwrap(),
+    )
+    .unwrap();
+    let mut req = request(target, "");
+    req.installation.release = "1.1.0".into();
+    req.installation.user_profile = Some(policy_bootstrap::UserProfile {
+        path: "custom-profile.json".into(),
+        digest: String::new(),
+    });
+    req
+}
+
+#[test]
+fn user_profile_is_bound_but_never_owned_and_removal_survives_source_edits() {
+    for remove_source in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut req = user_request(temp.path());
+        let source = temp.path().join("custom-profile.json");
+        let original = fs::read(&source).unwrap();
+        let saved = plan(req.clone()).unwrap();
+        assert!(saved.conflicts.is_empty());
+        assert_eq!(saved.files.len(), 5);
+        assert!(!saved
+            .files
+            .iter()
+            .any(|f| f.path == "custom-profile.json" || f.path == ".policy/project-profile.json"));
+        assert_eq!(
+            saved.inputs["custom-profile.json"].as_ref().unwrap().len(),
+            64
+        );
+        apply(&saved).unwrap();
+        assert_eq!(fs::read(&source).unwrap(), original);
+        let repeat = plan(req.clone()).unwrap();
+        assert!(repeat.files.iter().all(|f| f.action == Action::Unchanged));
+        apply(&repeat).unwrap();
+        if remove_source {
+            fs::remove_file(&source).unwrap();
+        } else {
+            fs::write(&source, "user edit, even invalid JSON").unwrap();
+        }
+        req.operation = Operation::Uninstall;
+        apply(&plan(req).unwrap()).unwrap();
+        assert!(!temp.path().join(".policy/bootstrap-manifest.json").exists());
+        if !remove_source {
+            assert_eq!(
+                fs::read_to_string(source).unwrap(),
+                "user edit, even invalid JSON"
+            );
+        }
+    }
+}
+
+#[test]
+fn custom_profile_stale_source_and_unowned_identical_asset_block_apply() {
+    let temp = tempfile::tempdir().unwrap();
+    let req = user_request(temp.path());
+    let saved = plan(req.clone()).unwrap();
+    let path = temp.path().join("custom-profile.json");
+    let mut edited = fs::read(&path).unwrap();
+    edited.push(b'\n');
+    fs::write(&path, edited).unwrap();
+    assert!(apply(&saved).is_err());
+    assert!(!temp.path().join(".policy").exists());
+    let fresh = plan(req.clone()).unwrap();
+    let usage = fresh
+        .files
+        .iter()
+        .find(|f| f.path == ".policy/USAGE.md")
+        .unwrap();
+    fs::create_dir(temp.path().join(".policy")).unwrap();
+    fs::write(
+        temp.path().join(&usage.path),
+        usage.content.as_ref().unwrap(),
+    )
+    .unwrap();
+    let conflict = plan(req).unwrap();
+    assert!(conflict
+        .files
+        .iter()
+        .any(|f| f.path == usage.path && f.action == Action::Conflict));
+    assert!(apply(&conflict).is_err());
+}
+
+#[test]
+fn custom_receipts_cannot_claim_source_bytes_or_arbitrary_destinations() {
+    let temp = tempfile::tempdir().unwrap();
+    let req = user_request(temp.path());
+    apply(&plan(req.clone()).unwrap()).unwrap();
+    let receipt_path = temp.path().join(".policy/bootstrap-manifest.json");
+    let original = fs::read(&receipt_path).unwrap();
+    let receipt: serde_json::Value = serde_json::from_slice(&original).unwrap();
+    assert_eq!(receipt["schema_version"], 2);
+    for mutation in 0..4 {
+        let mut forged = receipt.clone();
+        match mutation {
+            0 => {
+                forged["files"]["custom-profile.json"] =
+                    forged["installation"]["user_profile"]["digest"].clone()
+            }
+            1 => forged["files"][".policy/USAGE.md"] = serde_json::Value::String("0".repeat(64)),
+            2 => forged["installation"]["components"]["frontend"] = "arbitrary".into(),
+            _ => forged["schema_version"] = 1.into(),
+        }
+        fs::write(&receipt_path, serde_json::to_vec(&forged).unwrap()).unwrap();
+        assert!(plan(req.clone()).is_err(), "mutation {mutation}");
+        assert!(temp.path().join("custom-profile.json").exists());
+    }
+    fs::write(receipt_path, original).unwrap();
+    assert!(plan(req).unwrap().conflicts.is_empty());
+}
+
+#[test]
+fn selected_release_upgrades_and_downgrades_all_frozen_releases() {
+    for family in ["react-typescript", "dotnet", "fullstack"] {
+        for release in ["1.0.0", "1.0.1", "1.0.2"] {
+            let temp = tempfile::tempdir().unwrap();
+            let mut req = request(temp.path(), family);
+            req.installation.release = release.into();
+            apply(&plan(req.clone()).unwrap()).unwrap();
+            let receipt_path = temp.path().join(".policy/bootstrap-manifest.json");
+            let old_receipt = fs::read(&receipt_path).unwrap();
+            req.installation.release = "1.1.0".into();
+            let upgrade = plan(req.clone()).unwrap();
+            assert!(upgrade.conflicts.is_empty(), "{:?}", upgrade.conflicts);
+            apply(&upgrade).unwrap();
+            assert!(plan(req.clone())
+                .unwrap()
+                .files
+                .iter()
+                .all(|f| f.action == Action::Unchanged));
+            req.installation.release = release.into();
+            apply(&plan(req.clone()).unwrap()).unwrap();
+            assert_eq!(fs::read(receipt_path).unwrap(), old_receipt);
+            req.operation = Operation::Uninstall;
+            apply(&plan(req).unwrap()).unwrap();
+        }
     }
 }
 
@@ -367,6 +515,29 @@ fn existing_dotnet_requires_an_unambiguous_compatible_runtime() {
     fs::write(&project, fixture).unwrap();
     apply(&plan(req).unwrap()).unwrap();
     assert_eq!(fs::read(project).unwrap(), fixture);
+}
+
+#[test]
+fn selected_release_checks_existing_projects_without_their_lockfiles() {
+    for release in ["1.0.2", "1.1.0"] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut req = request(temp.path(), "dotnet");
+        req.installation.release = release.into();
+        let project = temp.path().join("App.csproj");
+        let incompatible = b"<Project><PropertyGroup><TargetFramework>net8.0</TargetFramework></PropertyGroup></Project>";
+        fs::write(&project, incompatible).unwrap();
+        let planned = plan(req.clone()).unwrap();
+        assert!(!planned.conflicts.is_empty(), "{release}");
+        assert!(apply(&planned).is_err());
+        assert_eq!(fs::read(&project).unwrap(), incompatible);
+        assert_eq!(fs::read_dir(temp.path()).unwrap().count(), 1);
+        fs::write(
+            &project,
+            String::from_utf8_lossy(incompatible).replace("net8.0", "net9.0"),
+        )
+        .unwrap();
+        assert!(plan(req).unwrap().conflicts.is_empty(), "{release}");
+    }
 }
 
 #[test]

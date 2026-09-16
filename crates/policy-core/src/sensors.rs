@@ -302,7 +302,7 @@ fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError
     Ok(())
 }
 
-fn normalize_path(path: &str) -> Result<String, SensorResolutionError> {
+pub(crate) fn normalize_path(path: &str) -> Result<String, SensorResolutionError> {
     let normalized = path.replace('\\', "/");
     if normalized.split('/').any(|segment| segment == "..") {
         return Err(SensorResolutionError::ParentTraversal(path.to_owned()));

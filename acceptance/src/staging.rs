@@ -58,8 +58,9 @@ pub fn stage(examples: &Path, profile: &str, target: &Path) -> Result<()> {
         target: target.to_path_buf(),
         installation: Installation {
             profile: profile.into(),
-            release: "1.0.2".into(),
+            release: "1.1.0".into(),
             components: BTreeMap::new(),
+            user_profile: None,
         },
         operation: Operation::Install,
     };
@@ -79,6 +80,69 @@ pub fn stage(examples: &Path, profile: &str, target: &Path) -> Result<()> {
         "node_modules/\nbin/\nobj/\ndist/\n.policy-reports/\ntest-results/\nplaywright-report/\n",
     )?;
     Ok(())
+}
+
+/// Stage a complete consumer fixture with its existing user-owned selected profile.
+/// Scenario mutation support is separate and remains limited to built-in fixtures.
+pub fn stage_profile(source: &Path, profile_file: &str, target: &Path) -> Result<()> {
+    if profile_file.is_empty()
+        || profile_file.contains(['\\', ':', '\0'])
+        || profile_file.split('/').any(|part| {
+            part.is_empty()
+                || matches!(
+                    part,
+                    "." | ".." | ".git" | ".policy" | ".policy-bootstrap-transaction"
+                )
+        })
+    {
+        return Err("profile file must be a safe source-relative path".into());
+    }
+    outside_examples(source, target)?;
+    fs::create_dir(target)?;
+    // Validate target ancestry through the real installer before copying sources.
+    plan(Request {
+        target: target.into(),
+        installation: Installation {
+            profile: "react-typescript".into(),
+            release: "1.1.0".into(),
+            components: BTreeMap::new(),
+            user_profile: None,
+        },
+        operation: Operation::Install,
+    })?;
+    copy_tree(source, target)?;
+    let installation = plan(Request {
+        target: target.into(),
+        installation: Installation {
+            profile: String::new(),
+            release: "1.1.0".into(),
+            components: BTreeMap::new(),
+            user_profile: Some(policy_bootstrap::UserProfile {
+                path: profile_file.into(),
+                digest: String::new(),
+            }),
+        },
+        operation: Operation::Install,
+    })?;
+    if !installation.conflicts.is_empty() {
+        return Err(format!("bootstrap conflicts: {:?}", installation.conflicts).into());
+    }
+    apply(&installation)?;
+    Ok(())
+}
+
+pub(crate) fn builtin_profile(family: &str) -> Result<project_verification::ProjectProfile> {
+    let source = match family {
+        "react-typescript" => {
+            include_str!("../../bootstrap/templates/1.1.0/profiles/react-typescript/profile.json")
+        }
+        "dotnet" => include_str!("../../bootstrap/templates/1.1.0/profiles/dotnet/profile.json"),
+        "fullstack" => {
+            include_str!("../../bootstrap/templates/1.1.0/profiles/fullstack/profile.json")
+        }
+        _ => return Err("unknown consuming profile".into()),
+    };
+    Ok(project_verification::parse_profile(source)?)
 }
 
 pub(crate) fn outside_examples(examples: &Path, target: &Path) -> Result<()> {

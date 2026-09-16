@@ -14,11 +14,12 @@ path instead of the `/tmp` alias. Relative targets resolve from the current
 directory; parent traversal and the filesystem root are rejected. Components
 use portable relative paths; `.` explicitly denotes the target root.
 
-The following are future usage commands, not commands executed during Task 13:
+The following examples select the current supported template release explicitly;
+they are usage commands, not evidence that Task 13 executed them:
 
 ```console
-rtk cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.0.0 --component frontend=apps/web --component backend=apps/api
-rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.0 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
+rtk cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api
+rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
 rtk cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-plan.json
 ```
 
@@ -32,8 +33,10 @@ use `.`; fullstack defaults are `frontend`, `backend`, and shared `.`. Repeat
 `--component ID=PATH` to override roots. Unknown/duplicate components, overlapping
 application roots, reserved paths and template file/directory collisions are
 rejected. Fullstack shared may be the target root or a disjoint component.
-`--release` is required; only the embedded `1.0.0` candidate is recognized.
-No latest-release lookup, download or package restore occurs.
+`--release` is required. Embedded releases `1.0.0`, `1.0.1`, `1.0.2` and `1.1.0`
+are recognized; there is no implicit latest release. Use `1.1.0` for a new
+installation unless an explicitly reviewed compatibility requirement selects a
+historical release. No release lookup, download, or package restore occurs.
 
 Exit codes: `0` means a conflict-free plan or successful apply/recovery; `2` means
 a plan has conflicts; `64` means invalid input, unsafe filesystem access, stale
@@ -49,8 +52,8 @@ plan or transaction failure. None is a policy authorization decision.
 | Shared fullstack | `.node-version`, `.npmrc`, `vitest.contract.config.ts`, `playwright.config.ts` |
 | Receipt | `.policy/bootstrap-manifest.json` |
 
-The receipt records selection, release, project-profile schema 1, sensor-profile
-schema 2, evidence schema 1, and SHA-256 of each managed file's exact UTF-8 bytes.
+The receipt records selection, release, project-profile schema (1 for frozen old
+releases, 2 for 1.1.0), sensor-profile schema 2, evidence schema 1, and SHA-256 of each managed file's exact UTF-8 bytes.
 Its own bytes are bound by the saved plan, avoiding a circular self-digest.
 Receipt claims must match the known template inventory; editing the receipt
 cannot claim arbitrary files for replacement or uninstall.
@@ -58,9 +61,11 @@ cannot claim arbitrary files for replacement or uninstall.
 Release resources, including profiles and Task 10 action copies, live under
 `bootstrap/templates/1.0.0/`, `bootstrap/templates/1.0.1/` and
 `bootstrap/templates/1.0.2/`. Historical bytes remain unchanged for receipt
-validation and recovery. Version 1.0.2 retains the 1.0.1 pins
-Vite 7.3.6, Vitest 4.1.11 and Playwright 1.55.1, and audits fullstack's shared
-npm graph as well as its frontend graph. Select `--release 1.0.2`
+validation and recovery. Version 1.0.2 retains the 1.0.1 pins (Vite 7.3.6,
+Vitest 4.1.11, and Playwright 1.55.1) and adds the required
+`shared:dependencies` sensor, so its fullstack profile has 15 sensors and audits
+the shared npm graph as well as the frontend graph. Versions 1.0.0 and 1.0.1
+retain 14 sensors and do not perform that shared audit. Select `--release 1.1.0`
 explicitly after reviewing and updating the consumer manifests/lockfiles.
 Cross-version tests cover upgrade, downgrade, repeated installation, uninstall
 and preservation of local edits, including frozen receipts from the old runner.
@@ -72,13 +77,57 @@ are never printed, only digests. Even an identical unowned file conflicts: no
 silent ownership adoption occurs. Unchanged managed files retain timestamps.
 Missing managed files can be recreated; edited managed files conflict.
 
-Compatible application manifests are read and preserved. Conflicting frameworks
+Compatible application manifests are read and preserved. In legacy preset mode, conflicting frameworks
 or package managers, competing `.csproj` files, a nonstandard/conditional .NET
 target, mismatched installed/lockfile pins, and existing unowned configurations
 are explicit conflicts. Detection does not evaluate MSBuild imports or select a
 different framework. Keep an existing equivalent toolchain and author/review an
 adapted profile when these defaults do not fit; do not delete working settings
 merely to silence the installer. There is no automatic merge or takeover flag.
+
+## User profiles and release 1.1.0
+
+Release `1.1.0` introduces schema 2 project profiles with explicit tool selections.
+The built-in presets keep their reviewed runtime/package choices and add the
+selected dependency graph contract. Releases `1.0.0`–`1.0.2` retain their original
+profile and receipt semantics; upgrades and downgrades validate their exact assets.
+
+For an existing project, supply a reviewed schema 2 profile stored inside the
+target checkout, outside `.policy`, `.git`, and the transaction directory:
+
+```console
+rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile-file config/project-profile.json --release 1.1.0 > /absolute/bootstrap-plan.json
+rtk cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-plan.json
+```
+
+`--profile-file` replaces `--profile` and cannot be combined with `--component`.
+Component roots and selected tools come from the source profile. Planning validates
+the profile, checks its declared inputs, and records its exact SHA-256 digest in
+`request.installation.user_profile` and the input snapshot. A source change after
+planning prevents apply. Missing inputs remain prerequisites; bootstrap does not
+run tools or claim that a declared combination has passed native verification.
+
+Custom mode installs only `.policy/USAGE.md` and the three fixed CI integration
+files under `.policy/ci/`. It leaves the source, native configurations and runtime
+files user-owned. It does not copy a custom profile or sensor profile into `.policy`.
+Use the source path and its current digest when preparing and adopting a RunRequest.
+The complete managed inventory is reconstructed from frozen integration assets,
+independently of mutable profile input. Even an identical unowned integration file
+conflicts. A forged receipt cannot claim arbitrary source content or destinations.
+
+The `1.1.0` receipt uses schema 2; older releases retain receipt schema 1. Source
+changes require a new plan and fresh policy preparation, but do not prevent recovery
+or removal of unchanged integration assets. Uninstall matches the receipt's original
+profile path and selection even if the source is edited, invalid, or missing:
+
+```console
+rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile-file config/project-profile.json --release 1.1.0 --uninstall > /absolute/bootstrap-uninstall.json
+rtk cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-uninstall.json
+```
+
+The source remains user-owned through preset/custom transitions and uninstall.
+Managed file edits still block the whole operation. Profile-file inputs are read
+through the same descriptor-relative no-follow traversal as other plan inputs.
 
 ## Native checks and consumer work
 
@@ -87,15 +136,27 @@ files contain declarative tool configuration only; no application implementation
 test cases or check-running scripts are generated. YAML is limited to the existing
 Rust CI adapter and a Rust verification invocation.
 
-The release preserves Task 12's native candidate pins. Frontend defaults add
+The releases use the direct profile pins below. Frontend defaults also include
 `@typescript-eslint/parser` 8.42.0 and `jsdom` 26.1.0, binding installed package
 manifests and package-lock entries to their sensors. These versions have upstream
-release records, but the combined matrix has not been executed here:
+release records. Actual runs are recorded separately; the table is a selection inventory:
 [typescript-eslint 8.42.0](https://github.com/typescript-eslint/typescript-eslint/releases/tag/v8.42.0),
 [jsdom 26.1.0](https://github.com/jsdom/jsdom/releases/tag/26.1.0).
 The bootstrap profile selects `eslint.config.mjs` explicitly and includes these
-dependencies. Its digest differs from Task 12's base asset: prepare/adopt the
-actual installed profile instead of reusing a base digest.
+dependencies.
+
+| Tool | 1.0.0 | 1.0.1 | 1.0.2 |
+| --- | --- | --- | --- |
+| Node / npm | 22.18.0 / 10.9.3 | 22.18.0 / 10.9.3 | 22.18.0 / 10.9.3 |
+| TypeScript / ESLint | 5.9.2 / 9.34.0 | 5.9.2 / 9.34.0 | 5.9.2 / 9.34.0 |
+| Vite / Vitest | 7.1.3 / 3.2.4 | 7.3.6 / 4.1.11 | 7.3.6 / 4.1.11 |
+| Playwright | 1.55.0 | 1.55.1 | 1.55.1 |
+| typescript-eslint parser / jsdom | 8.42.0 / 26.1.0 | 8.42.0 / 26.1.0 | 8.42.0 / 26.1.0 |
+| .NET SDK / VSTest Test SDK | 9.0.304 / 17.14.1 | 9.0.304 / 17.14.1 | 9.0.304 / 17.14.1 |
+
+An installed profile's digest differs from the repository-root historical asset
+when its release or component roots differ. Prepare and adopt the actual
+`.policy/project-profile.json`; do not reuse a base-asset digest.
 
 `prerequisites` lists absent native input files not supplied by the template:
 package/application manifests, lockfiles, installed dependencies and real .NET
@@ -148,10 +209,12 @@ are outside the guarantee. Rollback restores content, not timestamps, inode
 identity, ownership or extended attributes. New files/directories use owner-only
 access.
 
-Uninstall uses the same saved-plan mechanism and requires the recorded selection:
+Uninstall uses the same saved-plan mechanism. Read the
+`.policy/bootstrap-manifest.json` receipt and pass exactly its recorded profile,
+release, and component mapping; the example matches the 1.1.0 installation above:
 
 ```console
-rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.0.0 --component frontend=apps/web --component backend=apps/api --uninstall > /absolute/bootstrap-uninstall.json
+rtk cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api --uninstall > /absolute/bootstrap-uninstall.json
 rtk cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-uninstall.json
 ```
 

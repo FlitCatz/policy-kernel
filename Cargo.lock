@@ -314,6 +314,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+ "tempfile",
  "thiserror",
 ]
 
@@ -736,9 +737,11 @@ dependencies = [
  "github-adapter",
  "policy-contracts",
  "policy-core",
+ "rustix",
  "serde",
  "serde_json",
  "serde_yaml",
+ "tempfile",
 ]
 
 [[package]]
@@ -751,6 +754,7 @@ dependencies = [
  "policy-core",
  "serde",
  "serde_json",
+ "tempfile",
 ]
 
 [[package]]

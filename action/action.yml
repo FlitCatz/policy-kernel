@@ -1,6 +1,10 @@
 name: Policy kernel
-description: Evaluate trusted CI evidence and publish an exact-head policy check using an already-built policy-ci.
+description: Evaluate trusted CI evidence and publish an exact-head policy check using an owner-installed policy-ci.
 inputs:
+  executable-path:
+    description: Absolute path to the owner-installed policy-ci, outside contributor control.
+    required: true
+    default: /opt/policy-kernel/bin/policy-ci
   mode:
     description: Evaluation command, pre-merge or post-merge.
     required: true
@@ -50,6 +54,7 @@ runs:
       shell: bash
       env:
         POLICY_COMMAND: ${{ inputs.mode }}
+        POLICY_EXECUTABLE: ${{ inputs.executable-path }}
         POLICY_PATH: ${{ inputs.policy-path }}
         POLICY_EVIDENCE: ${{ inputs.evidence-path }}
         POLICY_HEAD: ${{ inputs.expected-head }}
@@ -57,6 +62,7 @@ runs:
         POLICY_OBSERVATIONS: ${{ inputs.trusted-observation-directory }}
       run: |
         set -euo pipefail
+        [[ "$POLICY_EXECUTABLE" = /* ]] || { echo 'executable-path must be absolute' >&2; exit 2; }
         case "$POLICY_COMMAND" in
           pre-merge|post-merge) ;;
           *) echo 'mode must be pre-merge or post-merge' >&2; exit 2 ;;
@@ -68,4 +74,4 @@ runs:
         if [[ -n "$POLICY_EVIDENCE" ]]; then
           args+=(--evidence "$POLICY_EVIDENCE")
         fi
-        policy-ci "${args[@]}"
+        "$POLICY_EXECUTABLE" "${args[@]}"

@@ -6,7 +6,9 @@ mod plan;
 mod templates;
 mod transaction;
 
-pub use plan::{inspect, plan, Action, Change, Installation, Operation, Plan, Request};
+pub use plan::{
+    inspect, plan, Action, Change, Installation, Operation, Plan, Request, UserProfile,
+};
 pub use transaction::{apply, recover};
 
 #[derive(Debug, thiserror::Error)]

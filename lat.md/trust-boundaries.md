@@ -9,5 +9,7 @@ acceptance are advisory or local evidence until authenticated CI binds them to t
 actual repository, head, policy, and protected merge.
 
 The [GitHub Action contract](../action/README.md) defines the authoritative CI
-boundary. See [[status]] for what has and has not been demonstrated, and
+boundary. The [controller reference](../action/controller.md) authenticates independent
+attestations with owner-installed keys; local signing tests do not establish a
+production provider or deployment. See [[status]] for what has and has not been demonstrated, and
 [[tasks]] for the implementation map.

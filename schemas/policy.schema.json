@@ -1,10 +1,78 @@
 {
   "$defs": {
+    "KnowledgeCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "path_globs": {
+          "description": "Empty means any path; nonempty entries use the sensor glob semantics.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "risks": {
+          "description": "Empty means any risk; risk and path restrictions must both match.",
+          "items": {
+            "$ref": "#/$defs/Risk"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "risks",
+        "path_globs"
+      ],
+      "type": "object"
+    },
+    "KnowledgeKind": {
+      "enum": [
+        "lat_claim",
+        "code_graph_index"
+      ],
+      "type": "string"
+    },
+    "KnowledgeRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/KnowledgeKind"
+        },
+        "required_when": {
+          "description": "Empty means always required. Otherwise, any matching condition applies.",
+          "items": {
+            "$ref": "#/$defs/KnowledgeCondition"
+          },
+          "type": "array"
+        },
+        "source": {
+          "not": {
+            "pattern": "\u0000"
+          },
+          "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "source",
+        "required_when"
+      ],
+      "type": "object"
+    },
     "MergeMethod": {
       "enum": [
         "merge",
         "squash",
         "rebase"
+      ],
+      "type": "string"
+    },
+    "Risk": {
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
       ],
       "type": "string"
     },
@@ -19,9 +87,16 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "if": {
+    "properties": {
+      "schema_version": {
+        "const": 1
+      }
+    }
+  },
   "properties": {
     "allowed_merge_methods": {
-      "description": "Merge methods explicitly accepted by this policy snapshot.",
+      "default": [],
       "items": {
         "$ref": "#/$defs/MergeMethod"
       },
@@ -34,6 +109,7 @@
       "type": "array"
     },
     "authorized_waiver_actors": {
+      "default": [],
       "items": {
         "type": "string"
       },
@@ -49,7 +125,7 @@
       "$ref": "#/$defs/Sha256Digest"
     },
     "protected_target_branches": {
-      "description": "Branches on which a protected merge can authorize shipped state.",
+      "default": [],
       "items": {
         "type": "string"
       },
@@ -58,6 +134,13 @@
     "required_check_name": {
       "type": "string"
     },
+    "required_knowledge": {
+      "default": null,
+      "items": {
+        "$ref": "#/$defs/KnowledgeRequirement"
+      },
+      "type": "array"
+    },
     "required_sensor_ids": {
       "items": {
         "$ref": "#/$defs/SensorId"
@@ -65,7 +148,10 @@
       "type": "array"
     },
     "schema_version": {
-      "const": 1,
+      "enum": [
+        1,
+        2
+      ],
       "type": "integer"
     },
     "sensor_profile_digest": {
@@ -76,7 +162,8 @@
         {
           "type": "null"
         }
-      ]
+      ],
+      "default": null
     }
   },
   "required": [
@@ -87,6 +174,13 @@
     "authorized_actors",
     "required_sensor_ids"
   ],
+  "then": {
+    "not": {
+      "required": [
+        "required_knowledge"
+      ]
+    }
+  },
   "title": "PolicySnapshot",
   "type": "object"
 }

@@ -1,7 +1,7 @@
 #[cfg(unix)]
 mod cli {
     use clap::{Args, Parser, Subcommand};
-    use policy_bootstrap::{Installation, Operation, Plan, Request};
+    use policy_bootstrap::{Installation, Operation, Plan, Request, UserProfile};
     use std::{collections::BTreeMap, path::PathBuf};
 
     #[derive(Parser)]
@@ -36,8 +36,11 @@ mod cli {
     struct Selection {
         #[arg(long)]
         target: PathBuf,
-        #[arg(long, value_parser = ["react-typescript", "dotnet", "fullstack"])]
-        profile: String,
+        #[arg(long, value_parser = ["react-typescript", "dotnet", "fullstack"], required_unless_present = "profile_file", conflicts_with = "profile_file")]
+        profile: Option<String>,
+        /// Existing checkout-relative user-owned profile; release 1.1.0 only.
+        #[arg(long, conflicts_with = "components")]
+        profile_file: Option<String>,
         #[arg(long)]
         release: String,
         /// Repeat for frontend=apps/web, backend=apps/api, shared=tests/shared.
@@ -59,9 +62,13 @@ mod cli {
             Ok(Request {
                 target: self.target,
                 installation: Installation {
-                    profile: self.profile,
+                    profile: self.profile.unwrap_or_default(),
                     release: self.release,
                     components,
+                    user_profile: self.profile_file.map(|path| UserProfile {
+                        path,
+                        digest: String::new(),
+                    }),
                 },
                 operation: if self.uninstall {
                     Operation::Uninstall

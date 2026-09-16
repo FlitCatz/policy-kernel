@@ -1,6 +1,6 @@
 # Consuming-project acceptance
 
-Task 14 exercises the installed 1.0.2 profiles against actual example
+The current harness exercises installed 1.1.0 profiles against actual example
 applications. `policy-acceptance` is Rust; the user-approved language exception
 is limited to native app and test sources under `examples/`. The existing Rust
 release workflow and consumer native checks remain required. These examples do
@@ -8,17 +8,18 @@ not adopt policy, approve a change, or replace a consumer's business tests.
 
 ## Run
 
-Use Node **22.18.0**, npm **10.9.3**, and .NET SDK **9.0.304** as appropriate for
-the selected profile. The runner records exact runtime probes before executing
+The built-in [selection contract](tool-selection.md) provisions Node **22.18.0**,
+npm **10.9.3**, and .NET SDK **9.0.304** as appropriate for the selected profile. The runner records exact runtime probes before executing
 checks; it selects .NET using the bundled `global.json`, even on hosts with
-additional SDKs. A missing or different runtime produces `unverified`, no native
+additional SDKs. A missing, incompatible or conflicting runtime produces `unverified`, no native
 cases, and exit 2. Restore uses checked-in npm/NuGet lockfiles. It never fabricates
 lock entries or silently updates the profile pins to make a check green.
 
 The 1.0.1 release pins Vite 7.3.6, Vitest 4.1.11 and Playwright 1.55.1.
 Release 1.0.2 retains those pins and adds the required `shared:dependencies`
 audit for fullstack's separate root npm graph. Both frontend and shared graphs
-must pass; fullstack now has 15 required sensors.
+must pass; frozen fullstack 1.0.2 has 15 required sensors. Current 1.1.0 adds
+separate Unit/Integration NuGet audits and has 17.
 The previous 1.0.0 template bytes remain available for existing receipts.
 The npm lockfiles were regenerated in clean temporary directories using npm
 11.6.2 because npm 10.9.3 crashes while resolving Vitest 4 peer dependencies.
@@ -66,8 +67,11 @@ new. Profiles retain all required checks, including package audits.
 | React | Type error in a new source file | `frontend:typecheck` |
 | React | Component behavior contradicts its test | `frontend:unit` |
 | React | Zero-test native report with successful producer exit | `frontend:unit` |
+| React | Successful Vitest process without its requested report | `frontend:unit` |
 | .NET | Valid fixture credential is rejected by the API | `backend:integration` |
+| .NET | Empty TRX or missing requested TRX with successful producer exit | `backend:unit` |
 | Fullstack | Backend response no longer matches the frontend decoder | `shared:contract`, `backend:integration`, `shared:e2e` |
+| Fullstack | Empty Playwright JSON or missing requested JSON with successful producer exit | `shared:e2e` |
 
 The API additionally tests that absent/invalid credentials are rejected. The
 fullstack contract calls the real API and validates its response through the
@@ -88,6 +92,14 @@ assertion. All three named failures must be observed with the expected messages;
 any additional failed sensor rejects the verdict. Names are read from the original
 digest-checked reports because normalized test IDs are hashes. Setup/connection
 errors, process timeouts and unrelated assertion messages cannot prove a scenario.
+
+CLI scenario names are `empty-report` / `missing-report` for React,
+`empty-trx-report` / `missing-trx-report` for .NET, and `empty-e2e-report` /
+`missing-e2e-report` for fullstack. Empty cases use the native producer's test
+selection; missing cases keep the real command and request an output it does not
+emit. Unexpected producer output is retained separately for inspection and never
+substituted for the missing declared artifact. Corrections run on new heads and
+reject earlier collections.
 Ordinary nonzero executions still collect the pinned tool version within the
 collector's original deadline; incomplete executions do not gain a version probe.
 
@@ -130,13 +142,28 @@ exist, `ci_authoritative` remains **unverified** even if every native case passe
 
 ## CI and verification status
 
-The additional `task-14-consumer-acceptance.yml` matrix runs all three profiles
-on Ubuntu 24.04 with the exact runtime pins and uploads observations on failure.
+The `task-14-consumer-acceptance.yml` matrix derives runtime provisioning values
+from each selected profile and runs three presets plus the additional React/Jest
+consumer on Ubuntu 24.04, retaining observations on failure.
 It has read-only repository permissions and leaves existing workflows intact.
 The setup actions are commit-pinned to upstream releases
 [setup-node 4.4.0](https://github.com/actions/setup-node/releases/tag/v4.4.0) and
 [setup-dotnet 4.3.1](https://github.com/actions/setup-dotnet/releases/tag/v4.3.1).
 Adding the workflow is not evidence that it ran.
+
+The additional native Jest test selects Node 22.19.0, npm 10.9.4 and Jest 30.2.0
+with a user-owned profile and `web/` component. With those tools available, set
+`POLICY_JEST_OUTPUT` to a fresh absolute directory and run
+`cargo test --locked -p policy-acceptance --test native_jest -- --ignored --nocapture`.
+It exercises failure/correction, skip, retry, empty/missing reports and old-head
+rejection. The separate network reproduction uses `POLICY_NUGET_OUTPUT` and
+`--test native_nuget_audit -- --ignored --nocapture`; it deliberately introduces a
+vulnerable dependency only in a staged test fixture. Neither ignored test counts
+as passed in the ordinary offline workspace run.
+
+For read-only staging of a complete custom fixture, use
+`policy-acceptance stage --examples examples/react-jest --profile-file project-profile.json --output /private/tmp/task15-custom`.
+The preset `run` command remains scoped to the three built-in scenario suites.
 
 See the [Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
 for actual commands, results, and open native/CI acceptance requirements.

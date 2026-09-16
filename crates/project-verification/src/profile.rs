@@ -6,8 +6,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+#[schemars(transform = profile_schema)]
 pub struct ProjectProfile {
     #[schemars(schema_with = "profile_version_schema")]
     pub schema_version: u32,
@@ -16,10 +17,70 @@ pub struct ProjectProfile {
     pub components: Vec<Component>,
     pub sensors: Vec<ProjectSensor>,
     pub adequacy: TestAdequacyPolicy,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(with = "crate::selection::Selection")]
+    pub selection: Option<crate::selection::Selection>,
+}
+
+impl<'de> Deserialize<'de> for ProjectProfile {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct Wire {
+            schema_version: u32,
+            id: String,
+            version: String,
+            components: Vec<Component>,
+            sensors: Vec<ProjectSensor>,
+            adequacy: TestAdequacyPolicy,
+            #[serde(default, deserialize_with = "selection_field")]
+            selection: Option<crate::selection::Selection>,
+        }
+        fn selection_field<'de, D: serde::Deserializer<'de>>(
+            d: D,
+        ) -> Result<Option<crate::selection::Selection>, D::Error> {
+            crate::selection::Selection::deserialize(d).map(Some)
+        }
+        let wire = Wire::deserialize(deserializer)?;
+        let profile = Self {
+            schema_version: wire.schema_version,
+            id: wire.id,
+            version: wire.version,
+            components: wire.components,
+            sensors: wire.sensors,
+            adequacy: wire.adequacy,
+            selection: wire.selection,
+        };
+        profile.validate().map_err(serde::de::Error::custom)?;
+        Ok(profile)
+    }
+}
+
+fn profile_schema(schema: &mut schemars::Schema) {
+    schema.insert(
+        "if".into(),
+        serde_json::json!({"properties":{"schema_version":{"const":1}}}),
+    );
+    schema.insert("then".into(), serde_json::json!({
+        "not":{"required":["selection"]},
+        "properties":{
+            "version":{"enum":["1.0.0","1.0.1","1.0.2"]},
+            "sensors":{"items":{"properties":{
+                "version_stdout":{"type":"string","pattern":"\\S"},
+                "report":{"not":{"type":"object","required":["format"],"properties":{"format":{"const":"jest_json"}}}}
+            }}}
+        }
+    }));
+    schema.insert(
+        "else".into(),
+        serde_json::json!({"required":["selection"],"properties":{
+        "version":{"pattern":"^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"},
+        "sensors":{"items":{"properties":{"version_stdout":{"const":""}}}}}}),
+    );
 }
 
 fn profile_version_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({"type":"integer", "const":1})
+    schemars::json_schema!({"type":"integer", "enum":[1,2]})
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -133,9 +194,14 @@ fn identifier(id: &str) -> bool {
 
 impl ProjectProfile {
     pub fn validate(&self) -> Result<(), Error> {
-        if self.schema_version != 1
+        if !matches!(self.schema_version, 1 | 2)
             || !identifier(&self.id)
-            || !matches!(self.version.as_str(), "1.0.0" | "1.0.1" | "1.0.2")
+            || (self.schema_version == 1
+                && (!matches!(self.version.as_str(), "1.0.0" | "1.0.1" | "1.0.2")
+                    || self.selection.is_some()))
+            || (self.schema_version == 2
+                && (self.selection.is_none()
+                    || crate::selection::numeric_version(&self.version).is_err()))
             || self.components.is_empty()
             || self.sensors.is_empty()
         {
@@ -170,6 +236,14 @@ impl ProjectProfile {
         }
         let mut reports = BTreeSet::new();
         for sensor in &self.sensors {
+            if self.schema_version == 1
+                && sensor
+                    .report
+                    .as_ref()
+                    .is_some_and(|r| r.format == ReportFormat::JestJson)
+            {
+                return Err(invalid("Jest report contract requires profile schema2"));
+            }
             let id = sensor.definition.id.as_str();
             if !components.contains(sensor.component.as_str())
                 || !id.starts_with(&format!("{}:", sensor.component))
@@ -178,7 +252,7 @@ impl ProjectProfile {
                 || sensor.argv.is_empty()
                 || sensor.argv[0].trim().is_empty()
                 || sensor.version_args.is_empty()
-                || sensor.version_stdout.trim().is_empty()
+                || (self.schema_version == 1 && sensor.version_stdout.trim().is_empty())
                 || sensor
                     .argv
                     .iter()
@@ -262,6 +336,9 @@ impl ProjectProfile {
         }
         policy_core::resolve_required_sensors(&self.sensor_profile(), &[], Risk::Low)
             .map_err(|e| invalid(e.to_string()))?;
+        if let Some(selection) = &self.selection {
+            selection.validate(self)?;
+        }
         Ok(())
     }
 

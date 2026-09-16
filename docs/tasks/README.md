@@ -8,6 +8,8 @@ documentation, and archived evidence for that Task.
 
 - **Implemented**: the repository contains the intended implementation.
 - **Planned**: a work plan exists; its implementation and validation are not complete.
+- **In progress**: some work packages are implemented; remaining scope is tracked
+  on the Task landing page.
 - **Locally verified**: a recorded local or fixture-backed execution supports the
   stated behavior, within the record's limits.
 - **CI observed**: a dated record contains a specific CI observation; it is not a
@@ -22,7 +24,7 @@ statements are not rewritten when later work changes the current state.
 | --- | --- | --- |
 | [Task 01](task-01/README.md) | Foundation, provenance, and obligation baseline | Implemented |
 | [Task 02](task-02/README.md) | Versioned contracts and strict deserialization | Implemented |
-| [Task 03](task-03/README.md) | Canonical bundle integrity and trust validation | Core implemented; mandatory knowledge enforcement tracked in Task 15 |
+| [Task 03](task-03/README.md) | Canonical bundle integrity and trust validation | Implemented, including policy-declared required knowledge |
 | [Task 04](task-04/README.md) | Sensor applicability and test adequacy | Implemented |
 | [Task 05](task-05/README.md) | Review consensus and human waivers | Implemented |
 | [Task 06](task-06/README.md) | Pre-merge evaluation | Implemented |
@@ -34,6 +36,6 @@ statements are not rewritten when later work changes the current state.
 | [Task 12](task-12/README.md) | Project profiles and report normalization | Implemented; historical records retain their original verification state |
 | [Task 13](task-13/README.md) | Transactional bootstrap installer | Implemented; historical records retain their original verification state |
 | [Task 14](task-14/README.md) | Consuming-project acceptance | Locally verified; authoritative production evidence not demonstrated |
-| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Planned; implementation has not started |
+| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Local 15.01–15.10 complete; hosted Release/native/mutation passed; operational 15.11 evidence remains required |
 
 For the repository-wide latest status, read [Current status](../status.md).
