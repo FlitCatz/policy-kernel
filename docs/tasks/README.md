@@ -36,6 +36,6 @@ statements are not rewritten when later work changes the current state.
 | [Task 12](task-12/README.md) | Project profiles and report normalization | Implemented; historical records retain their original verification state |
 | [Task 13](task-13/README.md) | Transactional bootstrap installer | Implemented; historical records retain their original verification state |
 | [Task 14](task-14/README.md) | Consuming-project acceptance | Locally verified; authoritative production evidence not demonstrated |
-| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Local 15.01–15.09 implementation present; final checks and external 15.11 evidence tracked |
+| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Local 15.01–15.10 complete; hosted Release/native/mutation passed; operational 15.11 evidence remains required |
 
 For the repository-wide latest status, read [Current status](../status.md).

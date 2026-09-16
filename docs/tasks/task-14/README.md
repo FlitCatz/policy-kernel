@@ -6,7 +6,8 @@ Stage and run native React/TypeScript, .NET, and full-stack consumer acceptance.
 
 ## Current status
 
-Locally verified; authoritative production evidence not demonstrated.
+Locally and on hosted CI verified for Task 15 candidate `751fa76`; authoritative
+production evidence not demonstrated.
 
 ## Evidence and limits
 
@@ -15,6 +16,9 @@ The execution record documents local native acceptance and its limits. The final
 React/Jest native acceptance and the authenticated controller reference while
 preserving remediation regressions. Its current record includes the conditional
 .NET test-only audit reproduction and keeps local/hosted/operational evidence separate.
+The [Task 15 hosted record](../../archive/reviews/2026-09-16-task-15-hosted-verification.md)
+adds successful React, .NET, fullstack and alternate React/Jest execution with
+original report digests and exact harness/consumer head bindings.
 
 ## Related implementation and references
 

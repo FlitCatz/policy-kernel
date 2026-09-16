@@ -28,8 +28,18 @@ live GitHub smoke remains ignored). Native empty/missing report and nested npm
 omission regressions passed. Final mutation checks covered 461 mutants: 448 caught,
 13 unviable, zero missed or timed out. Local 15.10 checks and the 15.12 record are complete;
 see the [follow-up execution record](archive/reviews/2026-09-15-task-15-follow-up-verification.md).
-These observations were collected before committing the follow-up. Branch
-publication does not establish hosted verification or a production release.
+These local observations were collected before committing the follow-up.
+Published candidate `751fa760bb0fb85e8c7b739f1ef8f9dc782a1da0` subsequently passed
+the hosted Rust 1.85/1.95 Ubuntu/macOS matrix and the Release verification job,
+each with 340 passed / 3 ignored tests. Four hosted native jobs also passed:
+React, .NET, fullstack and alternate Node/npm/Jest. The
+[hosted execution record](archive/reviews/2026-09-16-task-15-hosted-verification.md)
+binds those observations to the candidate, run, workflow, App and artifact hashes.
+Hosted mutation run `35050598715` also passed on the same candidate: 461 mutants,
+448 caught, 13 unviable, zero missed or timed out. Its downloaded artifact matched
+the GitHub SHA-256, and local Rust validation passed separately for the core,
+controller and workflow-source inventories. These checks do not establish a
+production release.
 
 The controller verifies owner-configured observer/producer signatures and creates
 version 2 workflow-bound receipts. Its local cryptographic/CI transport tests use
@@ -38,12 +48,14 @@ ledger ingestion, isolated deployment, publishing App credentials and independen
 observed required knowledge remain the consuming owner's responsibility. Collector
 output remains LocalUntrusted; local CodeGraph/LAT files do not authenticate it.
 
-Read-only GitHub checks on 2026-09-15 succeeded for repository metadata and found
-an existing successful Release verification run on base `bb7dab9`. That run does
-not cover the Task 15 follow-up candidate. The private repository's main protection
-endpoint currently returns HTTP 403 with a GitHub Pro/public-repository requirement.
-The owner subsequently authorized committing and pushing the feature branch.
-No billing, visibility, protection or promotion settings were changed.
+The owner authorized committing and pushing the feature branch; draft PR #6 is
+open without a merge. On 2026-09-16 the connected GitHub App could observe the
+candidate's successful runs, but classic protection read returned HTTP 403
+`Resource not accessible by integration`. The separate repository/parent rulesets
+read returned HTTP 403 requiring GitHub Pro or public visibility. After user CLI
+authentication was restored, both classic protection and repository/parent rulesets
+returned the GitHub Pro/public-visibility requirement. A protection baseline remains
+unavailable. No billing, visibility, protection or promotion settings were changed.
 
 The three defects from the final codebase review were remediated in `5841d8b`,
 including the fullstack shared audit in bootstrap 1.0.2. Task 15 preserves those
@@ -52,6 +64,9 @@ historical root profile assets or earlier execution records.
 
 ## Verified evidence
 
+- The [Task 15 hosted record](archive/reviews/2026-09-16-task-15-hosted-verification.md)
+  records exact-candidate Release and native runs, artifact integrity, PR merge/head
+  distinctions, recovered CLI authentication and remaining operational conditions.
 - The [Task 15 follow-up record](archive/reviews/2026-09-15-task-15-follow-up-verification.md)
   records the new selection/audit/knowledge/controller behavior, native results,
   source and executable bindings, and current external constraints.

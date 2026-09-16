@@ -76,9 +76,12 @@ reviewed. Keep raw observations intact. Normalize the subset used by the fixture
 drill into the schema shown in `tests/fixtures/rollback/baseline.json`; preserve
 additional raw settings separately and compare them during the live drill.
 
-Current local attempt returned HTTP 401 (`Requires authentication`). No live
-baseline or protection configuration is claimed. The committed `native-ci` check
-and app ID in the fixtures are synthetic examples, not this repository's settings.
+Task 11's recorded local attempt returned HTTP 401 (`Requires authentication`).
+Later observations, including restored user authentication and the private-repository
+feature restriction, are in the [current status](status.md) and
+[Task 15 hosted record](archive/reviews/2026-09-16-task-15-hosted-verification.md).
+No live baseline or protection configuration is claimed. The committed `native-ci`
+check and app ID in the fixtures are synthetic examples, not this repository's settings.
 
 ## Rollback procedure
 

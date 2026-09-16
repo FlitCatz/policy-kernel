@@ -31,8 +31,13 @@ remaining implementation, integration, and operational conditions.
 runtime independence, dependency and knowledge evidence gaps, and authenticated
 consumer integration. Follow its landing page and the current-status document
 for completed corrections and remaining work.
-Local implementation and verification through 15.10 are complete; 15.11 still
-requires candidate-specific hosted and operational evidence.
+Local implementation and verification through 15.10 are complete. Published
+candidate `751fa76` passed hosted Release verification, the Rust 1.85/1.95
+Ubuntu/macOS matrix and four native consumer jobs; see the
+[hosted record](docs/archive/reviews/2026-09-16-task-15-hosted-verification.md).
+Hosted mutation also passed on the same candidate (448 caught, 13 unviable,
+zero missed or timed out); 15.11 still requires operational
+evidence and owner approvals.
 This does not claim a production promotion:
 the live shadow window, protected-merge evidence, and independent-provider
 reviews in the [promotion protocol](docs/promotion.md) remain separate

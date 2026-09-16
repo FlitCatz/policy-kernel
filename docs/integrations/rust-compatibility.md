@@ -4,13 +4,15 @@ The workspace separates its supported lower bound from its reproducible default:
 
 | Selection | Meaning | Current evidence boundary |
 | --- | --- | --- |
-| Rust 1.85.0 | `workspace.package.rust-version`; inherited by all ten packages and the supported minimum for native Linux/macOS builds | Exercised by a full local workspace suite on native `aarch64-apple-darwin` during Task 15 |
-| Rust 1.95.0 | `rust-toolchain.toml` development and release-verification default, including `rustfmt` and `clippy` | Exercised by a full local workspace suite during Task 15; remains the default for release checks |
+| Rust 1.85.0 | `workspace.package.rust-version`; inherited by all ten packages and the supported minimum for native Linux/macOS builds | Full local macOS ARM64 suite and hosted Ubuntu x86_64/macOS ARM64 suites on Task 15 candidate `751fa76` |
+| Rust 1.95.0 | `rust-toolchain.toml` development and release-verification default, including `rustfmt` and `clippy` | Full local and hosted suites on the same platforms/candidate; remains the default for release checks |
 
 These observations do not certify every intermediate or newer Rust release. The
-new Ubuntu/macOS CI matrix selects 1.85.0 and 1.95.0 explicitly, but its remote
-runs are not yet execution evidence. See the [Task 15 landing page](../tasks/task-15/README.md)
-for the final integrated test counts and current completion state.
+Ubuntu/macOS CI matrix selects 1.85.0 and 1.95.0 explicitly. Each hosted matrix
+job on candidate `751fa76` passed 340 tests, with three ignored tests counted
+separately. The [hosted record](../archive/reviews/2026-09-16-task-15-hosted-verification.md)
+binds the actual versions and results to their run, head, App and artifact hashes.
+See the [Task 15 landing page](../tasks/task-15/README.md) for current completion state.
 The native minimum-version run recorded `rustc 1.85.0` commit
 `4d91de4e4` on `aarch64-apple-darwin`.
 
@@ -53,8 +55,11 @@ Other workspace dependencies use Cargo's compatible default requirements; for
 
 `Cargo.lock` remains the reproducibility boundary for builds and tests. Removing
 the manifest `=` pins did not change any selected third-party version in the
-lockfile. The only lock graph additions record existing `tempfile` dev-dependency
-edges for `policy-cli` and `evidence-collector`. Run normal verification with
+lockfile. The foundation added existing `tempfile` dev-dependency edges for
+`policy-cli` and `evidence-collector`; the follow-up added `policy-ci` edges to
+the already-locked `rustix` and test-only `tempfile`. These are all four edge
+additions relative to `abd6cb0`; no third-party selected version changed.
+Run normal verification with
 `--locked`; test and review any deliberate lockfile update rather than treating a
 range match as compatibility evidence.
 

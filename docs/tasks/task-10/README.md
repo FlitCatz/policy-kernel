@@ -15,6 +15,10 @@ The implementation and smoke validation are recorded, but live required-check an
 [authenticated controller reference](../../../action/controller.md), cryptographic
 fixture tests and version 2 workflow-source binding. Actual isolated controller
 and independently observing producer services remain deployment prerequisites.
+The [Task 15 hosted record](../../archive/reviews/2026-09-16-task-15-hosted-verification.md)
+includes current GitHub Actions observations and protection capability reads.
+Its Task 10 live smoke was skipped because the existing branch gate did not apply;
+the successful Release/native workflows do not supply live policy publication evidence.
 
 ## Related implementation and references
 
