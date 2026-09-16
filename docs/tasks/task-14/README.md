@@ -11,6 +11,9 @@ Locally verified; authoritative production evidence not demonstrated.
 ## Evidence and limits
 
 The execution record documents local native acceptance and its limits. The final codebase verification records findings and remaining integration work.
+[Task 15](../task-15/README.md) tracks compatibility expansion, remaining audit
+coverage, and authenticated consumer integration while preserving the remediation
+regressions.
 
 ## Related implementation and references
 
@@ -19,4 +22,3 @@ The execution record documents local native acceptance and its limits. The final
 - [2026-09-10-task14-remediation.md](../../archive/reviews/2026-09-10-task14-remediation.md)
 - [2026-09-10-final-codebase-verification.md](../../archive/reviews/2026-09-10-final-codebase-verification.md)
 - [acceptance.md](../../integrations/acceptance.md)
-

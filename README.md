@@ -24,9 +24,13 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 ## Status and scope
 
-Tasks 1–14 are implemented in this workspace. The [current status](docs/status.md)
-and [Task index](docs/tasks/README.md) identify the supporting evidence and
-remaining operational conditions. This does not claim a production promotion:
+Tasks 1–14 provide implemented components in this workspace. The
+[current status](docs/status.md) and [Task index](docs/tasks/README.md) identify the supporting evidence and
+remaining implementation, integration, and operational conditions.
+[Task 15](docs/tasks/task-15/README.md) is planned to address compatible tool/version
+selection, runtime independence, dependency and knowledge evidence gaps, and
+authenticated consumer integration. Its implementation has not started.
+This does not claim a production promotion:
 the live shadow window, protected-merge evidence, and independent-provider
 reviews in the [promotion protocol](docs/promotion.md) remain separate
 requirements.

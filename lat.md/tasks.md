@@ -17,6 +17,7 @@ Each landing page owns a current summary and links to archived evidence.
 - [Task 12](../docs/tasks/task-12/README.md)
 - [Task 13](../docs/tasks/task-13/README.md)
 - [Task 14](../docs/tasks/task-14/README.md)
+- [Task 15 — planned follow-up](../docs/tasks/task-15/README.md)
 
 See [[status]] for the repository-wide latest state and
 [[trust-boundaries]] for authority limits.
