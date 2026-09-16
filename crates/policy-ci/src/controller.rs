@@ -134,7 +134,7 @@ fn read_file(path: &Path) -> Result<Vec<u8>> {
     }
     let mut bytes = Vec::new();
     file.take(LIMIT + 1).read_to_end(&mut bytes)?;
-    if bytes.len() as u64 > LIMIT {
+    if (bytes.len() as u64) > LIMIT {
         return Err("authentication input exceeds 8 MiB".into());
     }
     Ok(bytes)
