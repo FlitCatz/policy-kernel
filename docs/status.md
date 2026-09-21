@@ -35,11 +35,27 @@ each with 340 passed / 3 ignored tests. Four hosted native jobs also passed:
 React, .NET, fullstack and alternate Node/npm/Jest. The
 [hosted execution record](archive/reviews/2026-09-16-task-15-hosted-verification.md)
 binds those observations to the candidate, run, workflow, App and artifact hashes.
-Hosted mutation run `35050598715` also passed on the same candidate: 461 mutants,
+Hosted mutation run `35050598715` passed the former policy on the same candidate: 461 mutants,
 448 caught, 13 unviable, zero missed or timed out. Its downloaded artifact matched
 the GitHub SHA-256, and local Rust validation passed separately for the core,
-controller and workflow-source inventories. These checks do not establish a
-production release.
+controller and workflow-source inventories. Those observations do not satisfy the
+new requirement that every selected mutation must build and be caught: the new
+validator rejects the old core/controller results for nonzero unviable counts.
+
+The [strict mutation follow-up](archive/reviews/2026-09-21-task-15-strict-mutation.md)
+records the later dirty candidate based on `470dcf6`, all thirteen compiler
+diagnoses, the retained product-source parentheses, and twelve exact typed
+generator replacements. The Rust runner reconciles full generation, native
+selection and replacement execution, and CI invokes the same path. The complete
+local `full-02` rerun caught 449 native selections and all 12 replacements: 461
+executed mutants, zero unviable/missed/timeouts, five successful baselines, and
+zero missing or unmapped entries. The twelve ill-typed generator exclusions are
+recorded separately and receive no caught credit. Rust 1.85 and 1.95 workspace
+tests each passed 349 / 3 ignored. The incomplete `full-01` record is not accepted.
+The tested changes were subsequently committed as `1d48a92`. On 2026-09-21 the
+owner authorized integrating them into main and pushing. The execution record
+retains its original dirty-candidate binding; no new hosted result is claimed.
+These checks do not establish a production release or a new hosted CI result.
 
 The controller verifies owner-configured observer/producer signatures and creates
 version 2 workflow-bound receipts. Its local cryptographic/CI transport tests use
@@ -48,8 +64,10 @@ ledger ingestion, isolated deployment, publishing App credentials and independen
 observed required knowledge remain the consuming owner's responsibility. Collector
 output remains LocalUntrusted; local CodeGraph/LAT files do not authenticate it.
 
-The owner authorized committing and pushing the feature branch; draft PR #6 is
-open without a merge. On 2026-09-16 the connected GitHub App could observe the
+GitHub's PR #6 record, queried on 2026-09-21, reports `MERGED` at
+`2026-09-16T05:45:57Z`, with merge commit `e2d9f9e`; the earlier open-Draft
+observation remains in its dated record. This code integration is not evidence of
+a protected merge or production promotion. On 2026-09-16 the connected GitHub App could observe the
 candidate's successful runs, but classic protection read returned HTTP 403
 `Resource not accessible by integration`. The separate repository/parent rulesets
 read returned HTTP 403 requiring GitHub Pro or public visibility. After user CLI
@@ -70,14 +88,18 @@ compiled and caught the `>` to `<` mutation that previously failed to compile.
 Its artifacts are in the feature worktree's
 `target/task15-read-file-parentheses/mutants.out/` directory.
 
-The full mutation suite has not been rerun on this updated source. The earlier
-461-mutant hosted result remains evidence only for `751fa76`. The current gate
-still permits unviable results; stricter rejection and reviewable handling of the
-remaining invalid generated mutations are pending follow-up work. The targeted
-result does not establish a new full-suite count or production readiness.
+The later full rerun and strict gate are now recorded in the
+[strict mutation follow-up](archive/reviews/2026-09-21-task-15-strict-mutation.md):
+449 native selections and 12 typed replacements were caught, with no unviable,
+missed or timed-out result. The earlier hosted evidence remains bound only to
+`751fa76`; neither the targeted check nor the later local suite establishes
+production readiness.
 
 ## Verified evidence
 
+- The [strict mutation follow-up](archive/reviews/2026-09-21-task-15-strict-mutation.md)
+  distinguishes the former permissive result from the strengthened policy and
+  records exact generation/replacement accounting and later local observations.
 - The [Task 15 hosted record](archive/reviews/2026-09-16-task-15-hosted-verification.md)
   records exact-candidate Release and native runs, artifact integrity, PR merge/head
   distinctions, recovered CLI authentication and remaining operational conditions.

@@ -34,9 +34,12 @@ The approval packet must contain:
 - Passing formatting, locked check/build, strict Clippy, workspace tests, schema
   regeneration with no tracked or untracked schema changes, deny/audit, residue
   check and a build using a fresh empty target directory.
-- Complete pinned mutation output for canonical, provenance, reviews, pre_merge
-  and post_merge: zero missed, zero timeouts, nonempty coverage, and successful
-  baseline. Report unviable outcomes separately.
+- Complete pinned mutation output for canonical, provenance, reviews, pre_merge,
+  post_merge, controller and workflow-source: successful baselines and every
+  selected native or replacement mutant caught. Missed, timed-out, unviable,
+  unclassified, missing or duplicate outcomes prevent passage. The unfiltered
+  generated inventory must reconcile with native selection and every exact
+  typed replacement; excluded generator forms never count as caught.
 - Task 10 integration tests plus authenticated live required-check and protected
   merge observations for that exact candidate workflow/head.
 - Two semantic review reports from providers independent of each other and of
@@ -51,6 +54,55 @@ reviews or unperformed live sampling are `INCONCLUSIVE`, never a pass. Missed
 mutations and confirmed defects prevent promotion until fixed and rerun. The
 promotion workflow gathers mutation evidence; it does not independently satisfy
 all of this packet or mutate branch protection.
+
+### Mutation generation and execution contract
+
+CI and local verification use the same Rust entry points (Unix, Git, the pinned
+Rust toolchain, OpenSSL and cargo-mutants **27.1.0** required):
+
+```console
+cargo fetch --locked
+cargo run --locked --offline -p xtask -- run-mutation-suite target/promotion-mutation
+cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-mutation
+```
+
+Use a new output directory for every run; existing evidence is never overwritten.
+Both commands exit 0 only on success and 1 on invalid/incomplete evidence or
+execution failure. `run-mutation-repairs NEW_OUTPUT` probes only the replacements;
+its output is explicitly ineligible for `check-mutation-suite`.
+`check-mutation-results OUTCOMES [--scope core|controller|workflow-source]` remains
+the per-inventory component check, including zero unviable. Passing that component
+alone does not establish complete generation or authorize promotion.
+
+The [versioned contract](../verification/mutation-contract.json) identifies twelve
+individual ill-typed cargo-mutants expressions, their complete original identities,
+historical compiler logs/diffs, source SHA-256 bindings, and explicit replacement
+edits. It is executable review material, not a runtime allow-list supplied by the
+caller. The verifier embeds it at build time, rejects a changed artifact copy,
+and regenerates the unfiltered inventory with `--no-config`. Only exact identities
+are filtered from native execution using anchored escaped expressions. All other
+generated mutations must appear in both the selected inventory and native results.
+Every removed generator expression has one separately executed typed replacement,
+with a successful build, a failed test (not an infrastructure failure), and its own
+baseline. Unknown omissions, stale source bindings, unverified replacements and
+new unviable mutants fail closed. Broad function/file exclusions and blanket
+`Default` exclusions are not permitted.
+
+The runner snapshots current files into a temporary directory without modifying
+the worktree. It records HEAD, dirty state, tool/platform versions, source hashes,
+raw generated/selected inventories, the contract, native logs/diffs/outcomes and
+replacement source/build/test logs/outcomes. Rechecking compares every non-Markdown
+candidate input, including tests, fixtures, configuration and the verifier itself.
+Later prose may record the observation without changing the tested inputs.
+Build/test limits are 600/120 seconds. Baselines run for each native scope and each
+nonempty replacement scope. Original generator exclusions and caught replacement
+counts must be reported separately; no compiler failure is detection credit.
+
+Contract changes require code review of the exact source binding, compiler
+diagnostic, semantic replacement and successful full rerun. The current contract
+is a proposed repository change until its PR review is accepted; local execution
+does not grant owner approval or independent-provider review. A caller cannot
+approve additional exclusions through an output file or command-line flag.
 
 Only the human owner authorizes promotion. After reviewing the packet, the owner
 may require `policy-kernel/pre-merge` from the intended GitHub App identity in

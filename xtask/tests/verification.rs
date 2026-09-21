@@ -176,6 +176,7 @@ fn mutation_rejects_incomplete_or_bad_results() {
     for (counter, summary) in [
         ("missed", "MissedMutant"),
         ("timeout", "Timeout"),
+        ("unviable", "Unviable"),
         ("success", "Success"),
     ] {
         let mut p = valid.clone();

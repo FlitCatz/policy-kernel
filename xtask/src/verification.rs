@@ -29,7 +29,7 @@ fn count(value: &Value, name: &str) -> Result<u64> {
         .and_then(Value::as_u64)
         .ok_or_else(|| format!("{name} must be a non-negative integer"))
 }
-fn identity(value: &Value) -> Result<String> {
+pub(crate) fn identity(value: &Value) -> Result<String> {
     if value
         .get("name")
         .and_then(Value::as_str)
@@ -146,6 +146,9 @@ pub fn mutation_scope(path: &Path, scope: &str) -> Result<()> {
     }
     if declared[2] != 0 {
         return Err("timed-out mutants found".into());
+    }
+    if declared[3] != 0 {
+        return Err("unviable mutants found".into());
     }
     if declared[4] != 0 || declared[1] == 0 {
         return Err("no caught viable mutations or unclassified successes".into());
