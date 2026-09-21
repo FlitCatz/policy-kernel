@@ -30,8 +30,14 @@
 15.10까지의 로컬 구현·검증은 완료했습니다. 게시된 후보 `751fa76`은 실제 GitHub에서
 Release 검증, Rust 1.85/1.95 × Ubuntu/macOS 매트릭스와 네 가지 네이티브 소비 조합을
 통과했습니다. 근거는 [원격 실행 기록](docs/archive/reviews/2026-09-16-task-15-hosted-verification.md)에
-있습니다. 같은 후보의 원격 mutation도 통과했습니다(448개 검출, 13개 실행 불가,
-미검출·시간 초과 0개). 15.11의 운영 증거와 소유자 승인은 남아 있습니다.
+있습니다. 같은 후보의 원격 mutation은 당시 정책에서 통과했습니다(448개 검출,
+13개 실행 불가, 미검출·시간 초과 0개). 이 결과는 채택한 모든 변형의 빌드와 검출을
+요구하는 강화된 정책에서는 실패합니다. 정확한 생성·대체 계약과 이후 로컬 실행은
+[mutation 후속 기록](docs/archive/reviews/2026-09-21-task-15-strict-mutation.md)에
+구분해 기록합니다. 새 로컬 전체 실행에서는 원본 선택 449개와 대체 변형 12개를 모두
+검출했고, 실행 불가·미검출·시간 초과는 0개이며 baseline 5회가 성공했습니다.
+교체한 원래 생성식 12개 자체를 검출 성공으로 집계하지 않습니다. 이 dirty 후보의
+새 원격 검증 결과는 없습니다. 15.11의 운영 증거와 소유자 승인은 남아 있습니다.
 이것이 운영 환경 프로모션 완료를 뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에
 정의된 실제 shadow 기간, 보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
 
@@ -117,13 +123,18 @@ cargo run --locked -p xtask -- schema
 ```console
 cargo run --locked -p xtask -- check-residue
 cargo run --locked -p xtask -- check-public-api target/doc schemas
-cargo run --locked -p xtask -- check-mutation-results verification/mutants.out/outcomes.json
+cargo fetch --locked
+cargo run --locked --offline -p xtask -- run-mutation-suite target/promotion-mutation
+cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-mutation
 cargo test --locked -p xtask
 ```
 
-`check-mutation-results`의 기본 범위는 core 권한 판정 모듈 다섯 개 전체입니다.
-Task 15는 `--scope controller`, `--scope workflow-source`도 각각 검사합니다.
-추가 범위에서도 정확한 변이 인벤토리를 확인하며 기존 core 검사를 대체하지 않습니다.
+전체 실행은 core 권한 판정 모듈 다섯 개, controller, workflow-source를 포함합니다.
+실행 불가·미검출·시간 초과·불완전 결과를 거부하고, 필터 전 인벤토리를 모든 원본 및
+타입이 유효한 대체 변형의 실행과 대조합니다. 매번 새 출력 디렉터리를 사용하세요.
+개별 인벤토리용 `check-mutation-results OUTCOMES [--scope core|controller|workflow-source]`의
+기본 범위는 core이며, 이 검사만으로 전체 실행 완료를 판정할 수 없습니다.
+자세한 내용은 [mutation 계약과 명령](docs/promotion.md#mutation-generation-and-execution-contract)을 참고하세요.
 
 `xtask rollback-drill`은 호출자가 제공한 정규화 snapshot만 비교합니다. GitHub를 조회하거나
 변경하지 않습니다. 필수 인수와 실제 롤백 절차는

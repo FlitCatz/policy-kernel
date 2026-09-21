@@ -35,11 +35,25 @@ each with 340 passed / 3 ignored tests. Four hosted native jobs also passed:
 React, .NET, fullstack and alternate Node/npm/Jest. The
 [hosted execution record](archive/reviews/2026-09-16-task-15-hosted-verification.md)
 binds those observations to the candidate, run, workflow, App and artifact hashes.
-Hosted mutation run `35050598715` also passed on the same candidate: 461 mutants,
+Hosted mutation run `35050598715` passed the former policy on the same candidate: 461 mutants,
 448 caught, 13 unviable, zero missed or timed out. Its downloaded artifact matched
 the GitHub SHA-256, and local Rust validation passed separately for the core,
-controller and workflow-source inventories. These checks do not establish a
-production release.
+controller and workflow-source inventories. Those observations do not satisfy the
+new requirement that every selected mutation must build and be caught: the new
+validator rejects the old core/controller results for nonzero unviable counts.
+
+The [strict mutation follow-up](archive/reviews/2026-09-21-task-15-strict-mutation.md)
+records the later dirty candidate based on `470dcf6`, all thirteen compiler
+diagnoses, the retained product-source parentheses, and twelve exact typed
+generator replacements. The Rust runner reconciles full generation, native
+selection and replacement execution, and CI invokes the same path. The complete
+local `full-02` rerun caught 449 native selections and all 12 replacements: 461
+executed mutants, zero unviable/missed/timeouts, five successful baselines, and
+zero missing or unmapped entries. The twelve ill-typed generator exclusions are
+recorded separately and receive no caught credit. Rust 1.85 and 1.95 workspace
+tests each passed 349 / 3 ignored. The incomplete `full-01` record is not accepted.
+The changes remain dirty and unpushed; no new hosted result is claimed.
+These checks do not establish a production release or a new hosted CI result.
 
 The controller verifies owner-configured observer/producer signatures and creates
 version 2 workflow-bound receipts. Its local cryptographic/CI transport tests use
@@ -64,6 +78,9 @@ historical root profile assets or earlier execution records.
 
 ## Verified evidence
 
+- The [strict mutation follow-up](archive/reviews/2026-09-21-task-15-strict-mutation.md)
+  distinguishes the former permissive result from the strengthened policy and
+  records exact generation/replacement accounting and later local observations.
 - The [Task 15 hosted record](archive/reviews/2026-09-16-task-15-hosted-verification.md)
   records exact-candidate Release and native runs, artifact integrity, PR merge/head
   distinctions, recovered CLI authentication and remaining operational conditions.

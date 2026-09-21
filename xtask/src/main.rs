@@ -6,19 +6,23 @@ use policy_contracts::{
 use schemars::JsonSchema;
 use serde_json::{Map, Value};
 use std::{env, fs, path::Path};
+mod mutation_suite;
 mod verification;
 
 fn main() -> std::process::ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     let result = match args.as_slice() {
         [command] if command == "schema" => generate_schemas().map_err(|e| e.to_string()),
+        [command, path] if command == "run-mutation-suite" => mutation_suite::run(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap(), Path::new(path), false),
+        [command, path] if command == "run-mutation-repairs" => mutation_suite::run(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap(), Path::new(path), true),
+        [command, path] if command == "check-mutation-suite" => mutation_suite::check(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap(), Path::new(path)),
         [command, path] if command == "check-mutation-results" => verification::mutation(Path::new(path)),
         [command, path, flag, scope] if command == "check-mutation-results" && flag == "--scope" => verification::mutation_scope(Path::new(path), scope),
         [command, path] if command == "check-residue" => verification::residue(Path::new(path)),
         [command] if command == "check-residue" => verification::residue(Path::new(env!("CARGO_MANIFEST_DIR")).join("..").as_path()),
         [command, docs, schemas] if command == "check-public-api" => verification::public_api(Path::new(docs), Path::new(schemas)),
         [command, rest @ ..] if command == "rollback-drill" => verification::rollback(rest),
-        _ => Err("usage: xtask schema | check-mutation-results OUTCOMES [--scope core|controller|workflow-source] | check-residue [REPO] | check-public-api DOCS SCHEMAS | rollback-drill --baseline FILE --promoted FILE --restored FILE --evidence-before FILE --evidence-after FILE".into()),
+        _ => Err("usage: xtask schema | run-mutation-suite NEW_OUTPUT | run-mutation-repairs NEW_OUTPUT | check-mutation-suite OUTPUT | check-mutation-results OUTCOMES [--scope core|controller|workflow-source] | check-residue [REPO] | check-public-api DOCS SCHEMAS | rollback-drill --baseline FILE --promoted FILE --restored FILE --evidence-before FILE --evidence-after FILE".into()),
     };
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,

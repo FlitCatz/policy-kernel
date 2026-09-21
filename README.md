@@ -35,9 +35,16 @@ Local implementation and verification through 15.10 are complete. Published
 candidate `751fa76` passed hosted Release verification, the Rust 1.85/1.95
 Ubuntu/macOS matrix and four native consumer jobs; see the
 [hosted record](docs/archive/reviews/2026-09-16-task-15-hosted-verification.md).
-Hosted mutation also passed on the same candidate (448 caught, 13 unviable,
-zero missed or timed out); 15.11 still requires operational
-evidence and owner approvals.
+Hosted mutation passed the former policy on that candidate (448 caught, 13
+unviable, zero missed or timed out). Those results fail the strengthened policy:
+every selected mutant must build and be caught. The
+[mutation follow-up](docs/archive/reviews/2026-09-21-task-15-strict-mutation.md)
+records the exact generation/replacement contract and subsequent local execution.
+The new local rerun caught 449 native and 12 replacement mutants, with zero
+unviable/missed/timeouts and five successful baselines. The twelve replaced
+generator forms receive no caught credit. This dirty candidate has no new hosted
+verification result.
+15.11 still requires operational evidence and owner approvals.
 This does not claim a production promotion:
 the live shadow window, protected-merge evidence, and independent-provider
 reviews in the [promotion protocol](docs/promotion.md) remain separate
@@ -130,13 +137,19 @@ result with:
 ```console
 cargo run --locked -p xtask -- check-residue
 cargo run --locked -p xtask -- check-public-api target/doc schemas
-cargo run --locked -p xtask -- check-mutation-results verification/mutants.out/outcomes.json
+cargo fetch --locked
+cargo run --locked --offline -p xtask -- run-mutation-suite target/promotion-mutation
+cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-mutation
 cargo test --locked -p xtask
 ```
 
-`check-mutation-results` defaults to all five core authorization modules.
-Task 15 additionally checks `--scope controller` and `--scope workflow-source`;
-these scopes retain exact inventory checks and do not replace the core gate.
+The suite covers all five core authorization modules, controller and
+workflow-source. It rejects unviable, missed, timed-out or incomplete results and
+checks the unfiltered inventory against every native and typed replacement
+execution. Use a new output directory each time. The per-inventory
+`check-mutation-results OUTCOMES [--scope core|controller|workflow-source]` command
+defaults to core; it cannot establish full-suite completion on its own. See the
+[mutation contract and commands](docs/promotion.md#mutation-generation-and-execution-contract).
 
 `xtask rollback-drill` compares caller-supplied normalized snapshots only. It
 does not query or change GitHub. Its arguments and the live rollback procedure

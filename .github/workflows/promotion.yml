@@ -18,40 +18,17 @@ jobs:
         run: |
           rustup toolchain install 1.95.0 --profile minimal --component rustfmt --component clippy
           cargo install cargo-mutants --version 27.1.0 --locked
-          mkdir -p verification
-          { git rev-parse HEAD; rustc --version; cargo mutants --version; } > verification/versions.txt
-      - name: Exercise every selected authorization module
-        run: |
-          cargo mutants --no-config -p policy-core \
-            --file crates/policy-core/src/canonical.rs \
-            --file crates/policy-core/src/provenance.rs \
-            --file crates/policy-core/src/reviews.rs \
-            --file crates/policy-core/src/pre_merge.rs \
-            --file crates/policy-core/src/post_merge.rs \
-            --test-workspace false --jobs 2 --timeout 120 --build-timeout 600 \
-            -C --locked --output verification 2>&1 | tee verification/mutation.log
-      - name: Reject incomplete, missed or timed-out mutation evidence
+          cargo fetch --locked
+      - name: Exercise complete generated inventory and typed replacements
+        run: cargo run --locked --offline -p xtask -- run-mutation-suite target/promotion-mutation
+      - name: Reject incomplete or undetected mutation evidence
         if: always()
-        run: cargo run --locked -p xtask -- check-mutation-results verification/mutants.out/outcomes.json
-      - name: Exercise authenticated production boundary
-        run: |
-          cargo mutants --no-config -p policy-ci \
-            --file crates/policy-ci/src/controller.rs \
-            --test-workspace false --jobs 2 --timeout 120 --build-timeout 600 \
-            -C --locked --output verification/controller 2>&1 | tee verification/controller-mutation.log
-          cargo run --locked -p xtask -- check-mutation-results verification/controller/mutants.out/outcomes.json --scope controller
-      - name: Exercise versioned workflow source authentication
-        run: |
-          cargo mutants --no-config -p policy-ci \
-            --file crates/policy-ci/src/main.rs --re workflow_source_matches \
-            --test-workspace false --jobs 2 --timeout 120 --build-timeout 600 \
-            -C --locked --output verification/workflow-source 2>&1 | tee verification/workflow-source-mutation.log
-          cargo run --locked -p xtask -- check-mutation-results verification/workflow-source/mutants.out/outcomes.json --scope workflow-source
+        run: cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-mutation
       - name: Upload exact-head mutation evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: mutation-evidence-${{ github.sha }}
-          path: verification/
+          path: target/promotion-mutation/
           if-no-files-found: error
           retention-days: 30

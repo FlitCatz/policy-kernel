@@ -5,8 +5,14 @@
 Local implementation and verification for 15.01–15.10, and the 15.12 documentation
 record, are complete in the existing `feat/task-15-compatibility` worktree.
 Candidate `751fa76` also passed hosted Release, Rust compatibility and all four
-native consumer jobs. Hosted mutation run `35050598715` also passed on the
-same candidate (448 caught, 13 unviable, zero missed or timed out).
+native consumer jobs. Hosted mutation run `35050598715` passed the former policy
+on the same candidate (448 caught, 13 unviable, zero missed or timed out).
+The strengthened mutation policy rejects that incomplete evidence. The
+[strict mutation follow-up](../../archive/reviews/2026-09-21-task-15-strict-mutation.md)
+records the thirteen diagnoses, twelve exact typed generator replacements, and
+the complete local rerun on dirty HEAD `470dcf6`: 449 native + 12 replacement
+mutants caught, zero unviable/missed/timeouts, five successful baselines, and exact
+inventory reconciliation. This is not a new hosted CI result.
 Task 15 as a whole remains incomplete: 15.11 requires external
 services, approvals and live operational evidence.
 
@@ -33,7 +39,7 @@ remain historical; this page tracks subsequent implementation.
 | 15.07 | Every selected dependency graph | Separate app/Unit/Integration/shared audits; renamed sensor checks; conditional test-only NuGet bypass reproduced and rejected |
 | 15.08 | Explicit required knowledge | Policy schema 2 enforcement, policy digest, provenance and old-reader/schema regressions |
 | 15.09 | Authenticated production reference | Observer/producer signatures, complete inventory and exact run/workflow/App bindings; local cryptographic CI tests |
-| 15.10 | Compatibility and regression verification | Local checks complete; hosted Release/matrix, four native jobs and mutation run 35050598715 passed; hosted mutations 448 caught / 13 unviable, zero missed or timed out |
+| 15.10 | Compatibility and regression verification | Strict local rerun: 449 native + 12 replacements caught, zero unviable/missed/timeouts; Rust 1.85/1.95 each 349 passed / 3 ignored. Earlier hosted mutation 448 caught / 13 unviable fails the new policy; updated hosted run remains outstanding |
 | 15.11 | Live candidate and promotion evidence | Exact-candidate GitHub Actions observations recorded; adopted policy, independent reviews, deployment and operational evidence still required |
 | 15.12 | Documentation and execution record | Separate local and hosted records preserve candidate/source/artifact bindings and remaining conditions |
 

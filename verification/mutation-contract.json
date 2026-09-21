@@ -1,0 +1,586 @@
+{
+  "generator": "cargo-mutants 27.1.0",
+  "historical_artifact_sha256": "98c272182a3c999b259926e1bdf9b3a20740c5c20477ec1b780c15b01e9e5b9e",
+  "historical_candidate": "751fa760bb0fb85e8c7b739f1ef8f9dc782a1da0",
+  "repairs": [
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__canonical.rs_line_16_col_5.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__canonical.rs_line_16_col_5.log",
+      "original": {
+        "file": "crates/policy-core/src/canonical.rs",
+        "function": {
+          "function_name": "canonical_sha256",
+          "return_type": "-> Result<Sha256Digest, CanonicalError>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 20
+            },
+            "start": {
+              "column": 1,
+              "line": 15
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/canonical.rs:16:5: replace canonical_sha256 -> Result<Sha256Digest, CanonicalError> with Ok(Default::default())",
+        "package": "policy-core",
+        "replacement": "Ok(Default::default())",
+        "span": {
+          "end": {
+            "column": 85,
+            "line": 19
+          },
+          "start": {
+            "column": 5,
+            "line": 16
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "Ok(policy_contracts::Sha256Digest::parse(\"0\".repeat(64)).unwrap())",
+      "span": {
+        "end": {
+          "column": 85,
+          "line": 19
+        },
+        "start": {
+          "column": 5,
+          "line": 16
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__post_merge.rs_line_8_col_5.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__post_merge.rs_line_8_col_5.log",
+      "original": {
+        "file": "crates/policy-core/src/post_merge.rs",
+        "function": {
+          "function_name": "evaluate_post_merge",
+          "return_type": "-> PostMergeDecision",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 37
+            },
+            "start": {
+              "column": 1,
+              "line": 6
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/post_merge.rs:8:5: replace evaluate_post_merge -> PostMergeDecision with Default::default()",
+        "package": "policy-core",
+        "replacement": "Default::default()",
+        "span": {
+          "end": {
+            "column": 13,
+            "line": 36
+          },
+          "start": {
+            "column": 5,
+            "line": 8
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "let mut gates = Gates::default();\n    validate_policy_and_versions(input, &mut gates);\n    validate_authorization_chain(input, &mut gates);\n    validate_merge_policy(input, &mut gates);\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n\n    let pre_merge = input.pre_merge.as_decision();\n    let mut decision = PostMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        status: PostMergeStatus::Shipped,\n        binding: DecisionBinding {\n            repository: pre_merge.binding.repository.clone(),\n            pull_request_number: pre_merge.binding.pull_request_number,\n            head_sha: pre_merge.binding.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: pre_merge.binding.evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        merge_commit_sha: Some(input.merge.merge_commit_sha.clone()),\n        reasons: gates.reasons,\n        // The field is excluded from its own preimage.\n        decision_digest: pre_merge.decision_digest.clone(),\n    };\n    decision.decision_digest = post_merge_decision_digest(input, &decision);\n    decision",
+      "span": {
+        "end": {
+          "column": 13,
+          "line": 36
+        },
+        "start": {
+          "column": 5,
+          "line": 8
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__post_merge.rs_line_304_col_5.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__post_merge.rs_line_304_col_5.log",
+      "original": {
+        "file": "crates/policy-core/src/post_merge.rs",
+        "function": {
+          "function_name": "post_merge_decision_digest",
+          "return_type": "-> Sha256Digest",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 316
+            },
+            "start": {
+              "column": 1,
+              "line": 300
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/post_merge.rs:304:5: replace post_merge_decision_digest -> Sha256Digest with Default::default()",
+        "package": "policy-core",
+        "replacement": "Default::default()",
+        "span": {
+          "end": {
+            "column": 74,
+            "line": 315
+          },
+          "start": {
+            "column": 5,
+            "line": 304
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "policy_contracts::Sha256Digest::parse(\"0\".repeat(64)).unwrap()",
+      "span": {
+        "end": {
+          "column": 74,
+          "line": 315
+        },
+        "start": {
+          "column": 5,
+          "line": 304
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__pre_merge.rs_line_11_col_5.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__pre_merge.rs_line_11_col_5.log",
+      "original": {
+        "file": "crates/policy-core/src/pre_merge.rs",
+        "function": {
+          "function_name": "evaluate_pre_merge",
+          "return_type": "-> PreMergeDecision",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 75
+            },
+            "start": {
+              "column": 1,
+              "line": 9
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/pre_merge.rs:11:5: replace evaluate_pre_merge -> PreMergeDecision with Default::default()",
+        "package": "policy-core",
+        "replacement": "Default::default()",
+        "span": {
+          "end": {
+            "column": 13,
+            "line": 74
+          },
+          "start": {
+            "column": 5,
+            "line": 11
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "let mut gates = Gates::default();\n    validate_policy_and_bindings(input, &mut gates);\n    validate_observations(input, &mut gates);\n\n    let provenance = validate_provenance(\n        input.mode,\n        &input.evidence,\n        &input.evaluation_time,\n        input.policy.max_evidence_age_seconds,\n    );\n    gates.extend(PreMergeStatus::Inconclusive, provenance.reasons().to_vec());\n    let knowledge = crate::provenance::validate_required_knowledge(input);\n    gates.extend(PreMergeStatus::Inconclusive, knowledge.reasons().to_vec());\n    validate_execution(input, &mut gates);\n    validate_sensors(input, &mut gates);\n\n    // All fields in these typed contracts serialize to integral JSON data.\n    let evidence_digest = pre_merge_evidence_digest(&input.evidence)\n        .expect(\"typed evidence has a canonical JSON representation\");\n    let reviews = evaluate_reviews(ReviewEvaluationInput {\n        mode: input.mode,\n        policy: input.policy.clone(),\n        repository: input.pull_request.repository.clone(),\n        head_sha: input.pull_request.head_sha.clone(),\n        evidence_digest: evidence_digest.clone(),\n        evaluation_time: input.evaluation_time.clone(),\n        modifications: input.evidence.modifications.clone(),\n        reviews: input.evidence.reviews.clone(),\n        findings: input.evidence.findings.clone(),\n        waivers: input.evidence.waivers.clone(),\n    });\n    gates.extend(\n        match reviews.status {\n            ReviewStatus::Approved => PreMergeStatus::ReadyToMerge,\n            ReviewStatus::Blocked => PreMergeStatus::Blocked,\n            ReviewStatus::Inconclusive => PreMergeStatus::Inconclusive,\n        },\n        reviews.reasons,\n    );\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n    let mut decision = PreMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        mode: input.mode,\n        advisory: input.mode == EvaluationMode::Advisory,\n        status: PreMergeStatus::ReadyToMerge,\n        binding: DecisionBinding {\n            repository: input.pull_request.repository.clone(),\n            pull_request_number: input.pull_request.pull_request_number,\n            head_sha: input.pull_request.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        reasons: gates.reasons,\n        // Excluded from the hash preimage; initialized with a valid typed digest.\n        decision_digest: evidence_digest,\n    };\n    decision.decision_digest = decision_digest(input, &decision)\n        .expect(\"typed pre-merge input has a canonical JSON representation\");\n    decision",
+      "span": {
+        "end": {
+          "column": 13,
+          "line": 74
+        },
+        "start": {
+          "column": 5,
+          "line": 11
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__provenance.rs_line_159_col_9_001.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__provenance.rs_line_159_col_9_001.log",
+      "original": {
+        "file": "crates/policy-core/src/provenance.rs",
+        "function": {
+          "function_name": "ValidationResult::reasons",
+          "return_type": "-> &[Reason]",
+          "span": {
+            "end": {
+              "column": 6,
+              "line": 160
+            },
+            "start": {
+              "column": 5,
+              "line": 158
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/provenance.rs:159:9: replace ValidationResult::reasons -> &[Reason] with Vec::leak(vec![Default::default()])",
+        "package": "policy-core",
+        "replacement": "Vec::leak(vec![Default::default()])",
+        "span": {
+          "end": {
+            "column": 22,
+            "line": 159
+          },
+          "start": {
+            "column": 9,
+            "line": 159
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "Vec::leak(vec![Reason { code: \"PK-MUTATED\".to_owned(), message: \"invented reason\".to_owned() }])",
+      "span": {
+        "end": {
+          "column": 22,
+          "line": 159
+        },
+        "start": {
+          "column": 9,
+          "line": 159
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__provenance.rs_line_232_col_5_001.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__provenance.rs_line_232_col_5_001.log",
+      "original": {
+        "file": "crates/policy-core/src/provenance.rs",
+        "function": {
+          "function_name": "child_digest",
+          "return_type": "-> Option<policy_contracts::Sha256Digest>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 243
+            },
+            "start": {
+              "column": 1,
+              "line": 231
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/provenance.rs:232:5: replace child_digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
+        "package": "policy-core",
+        "replacement": "Some(Default::default())",
+        "span": {
+          "end": {
+            "column": 6,
+            "line": 242
+          },
+          "start": {
+            "column": 5,
+            "line": 232
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "Some(policy_contracts::Sha256Digest::parse(\"0\".repeat(64)).unwrap())",
+      "span": {
+        "end": {
+          "column": 6,
+          "line": 242
+        },
+        "start": {
+          "column": 5,
+          "line": 232
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__provenance.rs_line_246_col_5_001.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__provenance.rs_line_246_col_5_001.log",
+      "original": {
+        "file": "crates/policy-core/src/provenance.rs",
+        "function": {
+          "function_name": "digest",
+          "return_type": "-> Option<policy_contracts::Sha256Digest>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 247
+            },
+            "start": {
+              "column": 1,
+              "line": 245
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/provenance.rs:246:5: replace digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
+        "package": "policy-core",
+        "replacement": "Some(Default::default())",
+        "span": {
+          "end": {
+            "column": 33,
+            "line": 246
+          },
+          "start": {
+            "column": 5,
+            "line": 246
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "Some(policy_contracts::Sha256Digest::parse(\"0\".repeat(64)).unwrap())",
+      "span": {
+        "end": {
+          "column": 33,
+          "line": 246
+        },
+        "start": {
+          "column": 5,
+          "line": 246
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__provenance.rs_line_355_col_5_001.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__provenance.rs_line_355_col_5_001.log",
+      "original": {
+        "file": "crates/policy-core/src/provenance.rs",
+        "function": {
+          "function_name": "timestamps",
+          "return_type": "-> impl Iterator<Item =&UtcTimestamp>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 366
+            },
+            "start": {
+              "column": 1,
+              "line": 354
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/provenance.rs:355:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
+        "package": "policy-core",
+        "replacement": "::std::iter::once(Box::leak(Box::new(Default::default())))",
+        "span": {
+          "end": {
+            "column": 68,
+            "line": 365
+          },
+          "start": {
+            "column": 5,
+            "line": 355
+          }
+        }
+      },
+      "reason": "E0271: generated iterator yields a mutable reference; instead omit child timestamps using an immutable manifest-only iterator",
+      "replacement": "std::iter::once(&bundle.manifest.created_at)",
+      "span": {
+        "end": {
+          "column": 68,
+          "line": 365
+        },
+        "start": {
+          "column": 5,
+          "line": 355
+        }
+      }
+    },
+    {
+      "historical_diff": "mutants.out/diff/crates__policy-core__src__reviews.rs_line_37_col_5.diff",
+      "historical_log": "mutants.out/log/crates__policy-core__src__reviews.rs_line_37_col_5.log",
+      "original": {
+        "file": "crates/policy-core/src/reviews.rs",
+        "function": {
+          "function_name": "evaluate_reviews",
+          "return_type": "-> ReviewEvaluation",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 232
+            },
+            "start": {
+              "column": 1,
+              "line": 36
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/reviews.rs:37:5: replace evaluate_reviews -> ReviewEvaluation with Default::default()",
+        "package": "policy-core",
+        "replacement": "Default::default()",
+        "span": {
+          "end": {
+            "column": 41,
+            "line": 231
+          },
+          "start": {
+            "column": 5,
+            "line": 37
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "ReviewEvaluation { status: ReviewStatus::Approved, reasons: Vec::new() }",
+      "span": {
+        "end": {
+          "column": 41,
+          "line": 231
+        },
+        "start": {
+          "column": 5,
+          "line": 37
+        }
+      }
+    },
+    {
+      "historical_diff": "controller/mutants.out/diff/crates__policy-ci__src__controller.rs_line_121_col_5.diff",
+      "historical_log": "controller/mutants.out/log/crates__policy-ci__src__controller.rs_line_121_col_5.log",
+      "original": {
+        "file": "crates/policy-ci/src/controller.rs",
+        "function": {
+          "function_name": "read_json",
+          "return_type": "-> Result<T>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 122
+            },
+            "start": {
+              "column": 1,
+              "line": 120
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-ci/src/controller.rs:121:5: replace read_json -> Result<T> with Ok(Default::default())",
+        "package": "policy-ci",
+        "replacement": "Ok(Default::default())",
+        "span": {
+          "end": {
+            "column": 51,
+            "line": 121
+          },
+          "start": {
+            "column": 5,
+            "line": 121
+          }
+        }
+      },
+      "reason": "E0277: generic T has no Default bound; instead reject all valid JSON without adding a product bound",
+      "replacement": "Err(\"mutated JSON reader rejects valid input\".into())",
+      "span": {
+        "end": {
+          "column": 51,
+          "line": 121
+        },
+        "start": {
+          "column": 5,
+          "line": 121
+        }
+      }
+    },
+    {
+      "historical_diff": "controller/mutants.out/diff/crates__policy-ci__src__controller.rs_line_145_col_5.diff",
+      "historical_log": "controller/mutants.out/log/crates__policy-ci__src__controller.rs_line_145_col_5.log",
+      "original": {
+        "file": "crates/policy-ci/src/controller.rs",
+        "function": {
+          "function_name": "open_input",
+          "return_type": "-> Result<fs::File>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 156
+            },
+            "start": {
+              "column": 1,
+              "line": 143
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-ci/src/controller.rs:145:5: replace open_input -> Result<fs::File> with Ok(Default::default())",
+        "package": "policy-ci",
+        "replacement": "Ok(Default::default())",
+        "span": {
+          "end": {
+            "column": 13,
+            "line": 155
+          },
+          "start": {
+            "column": 5,
+            "line": 145
+          }
+        }
+      },
+      "reason": "E0277: File has no Default; instead bypass nonblocking/nofollow open safeguards",
+      "replacement": "Ok(fs::File::open(path)?)",
+      "span": {
+        "end": {
+          "column": 13,
+          "line": 155
+        },
+        "start": {
+          "column": 5,
+          "line": 145
+        }
+      }
+    },
+    {
+      "historical_diff": "controller/mutants.out/diff/crates__policy-ci__src__controller.rs_line_222_col_35_001.diff",
+      "historical_log": "controller/mutants.out/log/crates__policy-ci__src__controller.rs_line_222_col_35_001.log",
+      "original": {
+        "file": "crates/policy-ci/src/controller.rs",
+        "function": {
+          "function_name": "bounded_crypto",
+          "return_type": "-> Result<()>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 238
+            },
+            "start": {
+              "column": 1,
+              "line": 215
+            }
+          }
+        },
+        "genre": "BinaryOperator",
+        "name": "crates/policy-ci/src/controller.rs:222:35: replace + with * in bounded_crypto",
+        "package": "policy-ci",
+        "replacement": "*",
+        "span": {
+          "end": {
+            "column": 36,
+            "line": 222
+          },
+          "start": {
+            "column": 35,
+            "line": 222
+          }
+        }
+      },
+      "reason": "E0369: Instant has no Mul<Duration>; instead remove the allowed crypto execution window",
+      "replacement": "Instant::now() + Duration::ZERO",
+      "span": {
+        "end": {
+          "column": 60,
+          "line": 222
+        },
+        "start": {
+          "column": 20,
+          "line": 222
+        }
+      }
+    }
+  ],
+  "schema_version": 1,
+  "sources": {
+    "crates/policy-contracts/src/decision.rs": "513a58a2f4458d63cdea95802bdac2c140c2073de67a7b5bbd98a7f45bb0bcbd",
+    "crates/policy-contracts/src/identity.rs": "c72a1f4062a92250c0cb14cf18f47c1904149b1375b5329f2de56b42fa43a851",
+    "crates/policy-contracts/src/evidence.rs": "2db64ae7566e00cd0624c4d27d4caab1a0960daca9d49d7935443d48d060a304",
+    "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
+    "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
+    "crates/policy-contracts/src/policy.rs": "ada1e048c23941d05af058e3ff5b8238fa9d58bbe39e60090e836c6c72005c5e",
+    "crates/policy-ci/src/controller.rs": "15a4f7d935a56eb487088cc3d26a7100f98e17b772ba941d9fb283cee64b17ed",
+    "crates/policy-core/src/canonical.rs": "7b03518f48b656807264e8fecd4327a2038e736cbdac63bd7a31000d2a740315",
+    "crates/policy-core/src/post_merge.rs": "f0f97a1279c1f8b75b0271b651ad44139ecc0951cdce5318b6022e38c3462ada",
+    "crates/policy-core/src/pre_merge.rs": "7f7cd087459dda05ce449f66356df665c111038cc6a70530759fb6ef981a2f9f",
+    "crates/policy-core/src/provenance.rs": "4e9246e32c4a14ff769e234c64b4761d75263b13f0f0a98c6d8c9e8d88d4c4a2",
+    "crates/policy-core/src/reviews.rs": "264062cc5eaa78143809e2f1f50baa4e7404cc0c9470ad35c79b43ec76c104eb"
+  }
+}
