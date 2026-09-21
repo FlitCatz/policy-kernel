@@ -43,7 +43,8 @@ records the exact generation/replacement contract and subsequent local execution
 The new local rerun caught 449 native and 12 replacement mutants, with zero
 unviable/missed/timeouts and five successful baselines. The twelve replaced
 generator forms receive no caught credit. The measurements used a dirty candidate,
-subsequently committed as `1d48a92`; no new hosted verification result is recorded.
+subsequently committed as `1d48a92` and integrated into remote main in `c79571e`.
+No new hosted verification result is recorded here.
 15.11 still requires operational evidence and owner approvals.
 This does not claim a production promotion:
 the live shadow window, protected-merge evidence, and independent-provider
@@ -231,7 +232,8 @@ as `codegraph explore "How does pre-merge evaluation flow?"` and
 ## CI integration
 
 The checked-in composite [GitHub Action](action/README.md) invokes an
-already-built, trusted `policy-ci` binary on `PATH`. It verifies exact GitHub
+already-built, owner-installed `policy-ci` binary through the absolute
+`executable-path` input (default `/opt/policy-kernel/bin/policy-ci`). It verifies exact GitHub
 workflow and head identity in a runner-controlled environment, then publishes
 the `policy-kernel/pre-merge` check. Do not run it from a contributor-controlled
 checkout or treat local `policy-cli` output as a required check.

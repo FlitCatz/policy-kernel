@@ -35,7 +35,7 @@ statements are not rewritten when later work changes the current state.
 | [Task 11](task-11/README.md) | Release gates and rollback drill | Implemented; production promotion not demonstrated |
 | [Task 12](task-12/README.md) | Project profiles and report normalization | Implemented; historical records retain their original verification state |
 | [Task 13](task-13/README.md) | Transactional bootstrap installer | Implemented; historical records retain their original verification state |
-| [Task 14](task-14/README.md) | Consuming-project acceptance | Locally verified; authoritative production evidence not demonstrated |
-| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Local 15.01–15.10 complete; hosted Release/native/mutation passed; operational 15.11 evidence remains required |
+| [Task 14](task-14/README.md) | Consuming-project acceptance | Locally and hosted verified for candidate 751fa76; authoritative production evidence not demonstrated |
+| [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Strict local mutation: 449 native + 12 replacements caught, zero unviable/missed/timeouts; integrated into main in c79571e. Earlier hosted mutation passed only the former policy; new hosted mutation and operational 15.11 evidence remain outstanding |
 
 For the repository-wide latest status, read [Current status](../status.md).

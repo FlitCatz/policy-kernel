@@ -37,7 +37,8 @@ Release 검증, Rust 1.85/1.95 × Ubuntu/macOS 매트릭스와 네 가지 네이
 구분해 기록합니다. 새 로컬 전체 실행에서는 원본 선택 449개와 대체 변형 12개를 모두
 검출했고, 실행 불가·미검출·시간 초과는 0개이며 baseline 5회가 성공했습니다.
 교체한 원래 생성식 12개 자체를 검출 성공으로 집계하지 않습니다. 측정 당시 dirty였던
-변경은 이후 `1d48a92`로 커밋됐으며 새 원격 검증 결과는 기록하지 않았습니다.
+변경은 이후 `1d48a92`로 커밋됐고 `c79571e`에서 원격 main에 반영됐습니다.
+새 원격 검증 결과는 여기에 기록하지 않았습니다.
 15.11의 운영 증거와 소유자 승인은 남아 있습니다.
 이것이 운영 환경 프로모션 완료를 뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에
 정의된 실제 shadow 기간, 보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
@@ -210,8 +211,9 @@ MCP 설치 뒤에는 Codex를 재시작하세요. 인덱스를 사용할 수 있
 
 ## CI 통합
 
-체크인된 복합 [GitHub Action](action/README.md)은 `PATH`에 이미 구축되어 신뢰할 수 있는
-`policy-ci` 바이너리를 실행합니다. runner가 제어하는 환경에서 정확한 GitHub workflow와
+체크인된 복합 [GitHub Action](action/README.md)은 소유자가 미리 빌드·설치한 `policy-ci`를
+절대 경로인 `executable-path` 입력으로 실행합니다(기본값 `/opt/policy-kernel/bin/policy-ci`).
+runner가 제어하는 환경에서 정확한 GitHub workflow와
 HEAD 신원을 검증하고 `policy-kernel/pre-merge` 검사를 게시합니다. 기여자가 제어하는
 checkout에서 실행하거나 로컬 `policy-cli` 출력을 필수 검사로 취급해서는 안 됩니다.
 

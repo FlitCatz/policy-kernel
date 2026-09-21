@@ -28,7 +28,8 @@ remain historical; this page tracks subsequent implementation.
 
 The subsequent `read_file` parentheses fix (`470dcf6`) passed its targeted check
 and the later full mutation rerun. Strict mutation handling is committed as
-`1d48a92`; see the [current follow-up status](../../status.md#mutation-follow-up-after-candidate-751fa76).
+`1d48a92` and was integrated into remote main in `c79571e` on 2026-09-21;
+see the [current follow-up status](../../status.md#mutation-follow-up-after-candidate-751fa76).
 
 ## Work packages
 
@@ -49,12 +50,14 @@ and the later full mutation rerun. Strict mutation handling is committed as
 
 ## External conditions
 
-Local verification used worktree changes based on
+The earlier follow-up verification used worktree changes based on
 `bb7dab9cc329f4b7445fa4acbfc37ed44106d7ce`. The owner subsequently authorized
-committing and pushing `feat/task-15-compatibility`, now published at
+committing and pushing `feat/task-15-compatibility`, which published candidate
 `751fa760bb0fb85e8c7b739f1ef8f9dc782a1da0`. Draft PR #6 started native verification;
-the archived local record preserves its pre-publication observations. No new
-worktree, merge or production promotion was performed.
+the archived local record preserves its pre-publication observations, before
+integration into main. GitHub now reports PR #6 merged on 2026-09-16. The later
+strict mutation changes were merged and pushed to main in `c79571e` on 2026-09-21.
+These code integrations do not establish a protected merge or production promotion.
 
 On 2026-09-16 Release run `34966889607` and native run `35021204028` passed on
 the published candidate. PR Release run `35021203828` also passed, with its

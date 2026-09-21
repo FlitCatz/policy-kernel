@@ -52,9 +52,12 @@ executed mutants, zero unviable/missed/timeouts, five successful baselines, and
 zero missing or unmapped entries. The twelve ill-typed generator exclusions are
 recorded separately and receive no caught credit. Rust 1.85 and 1.95 workspace
 tests each passed 349 / 3 ignored. The incomplete `full-01` record is not accepted.
-The tested changes were subsequently committed as `1d48a92`. On 2026-09-21 the
-owner authorized integrating them into main and pushing. The execution record
-retains its original dirty-candidate binding; no new hosted result is claimed.
+The tested changes were subsequently committed as `1d48a92`, merged into main
+as `c79571e`, and pushed on 2026-09-21 with owner authorization. A remote ref
+query confirmed main at `c79571e0ff4d05a3e1deca4f827d54a07e70467b` immediately
+after that push. The merged workspace passed 349 tests / 3 ignored. The mutation
+execution record retains its original dirty-candidate binding; no new hosted
+result or mutation rerun of the merge commit is claimed.
 These checks do not establish a production release or a new hosted CI result.
 
 The controller verifies owner-configured observer/producer signatures and creates

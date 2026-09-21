@@ -15,5 +15,4 @@ Strict wire contracts and generated schemas are part of the current workspace. P
 ## Related implementation and references
 
 - [2026-09-04-policy-kernel-implementation.md](../../archive/plans/2026-09-04-policy-kernel-implementation.md)
-- [](../../../schemas/)
-
+- [Generated contract schemas](../../../schemas/)
