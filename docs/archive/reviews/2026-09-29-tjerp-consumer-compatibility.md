@@ -56,5 +56,43 @@ These report-byte tampering checks are transport/normalizer checks; the three
 failing producer cases are actual native process executions. Neither is represented
 as a full mutation run or a hosted observation. Each result remains LocalUntrusted.
 
-Final candidate verification and artifact identities are recorded below after the
-last code changes are tested.
+## Final native candidate
+
+`native-03` passed in 69.70 seconds on clean commit
+`59d82edbc407576dd5814ceff26a34c6143b102e`. It repeats the ten passing sensors,
+five actual suites, 26 negative checks and corrected-head success after the
+MSBuild and VSTest contract fixes. Raw artifacts were written to
+`/private/tmp/policy-tjerp-native-03` and retained alongside the development
+worktree at `.worktrees/tjerp-consumer-evidence/native-03` in the owning repository.
+
+| Artifact/binding | SHA-256 |
+| --- | --- |
+| Harness source inventory | `d55aa6797e16fc026665393dc32ca3ea94134b554b6ffb5d176ea16661f62318` |
+| Harness executable | `7463dcef5d84986aefaf20ef654f170287dc53bbe6e2921bd7b7bb3d83191309` |
+| Project profile | `cc047802d9632062318adea17be83244badd328f353be6a07611506fd5eb59f6` |
+| Baseline result file | `5e71380dc85c8785c285a3f38efe89757699b7c17362b250147471bf7c7d94eb` |
+| Corrected result file | `198e12e301a1e9f8ceb1c62934eb2d02bdd5659699ec2c65c3c2c987cac9fd54` |
+| Negative checks file | `0ec15c1c1e0bb5186a59e0601566491b33b472739c6d90bdcff22ae30d02f2f8` |
+
+## Regression follow-up
+
+The full workspace run on the native candidate exposed an existing intermittent
+failure in `forged_json_local_artifacts_and_producer_signature_tampering_are_rejected`:
+replacing a randomly generated signature's first byte with `00` can leave it
+unchanged. The test now changes a hex digit to a different value and asserts the
+signature changed before checking rejection. The targeted cryptographic test
+passed. This follow-up changes test logic only; native producer implementation
+and fixture bytes remain those of the clean candidate above.
+
+The subsequent complete `cargo test --locked --offline --workspace` run passed
+362 tests with zero failures and four ignored tests. The new native test is one
+of the ignored defaults and was explicitly exercised separately as recorded above;
+the other opt-in native/live checks were not rerun for this change.
+`cargo clippy --locked --offline --workspace --all-targets -- -D warnings`,
+`cargo fmt --all -- --check`, `xtask check-residue`, `git diff --check`, 155 local
+Markdown link target checks and `lat check` passed. The existing lat init-version
+warning remains; no hook installation was performed. Frozen template directories
+1.0.0, 1.0.1, 1.0.2 and 1.1.0 have no diff against the baseline.
+
+No new full mutation campaign or hosted verification is claimed. Workspace and
+Clippy logs are retained in `.worktrees/tjerp-consumer-evidence/`.

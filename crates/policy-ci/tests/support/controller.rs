@@ -162,7 +162,11 @@ mod authenticated_controller {
         fixture.signed.observer_signature.clear();
         fixture.reject("signature encoding");
         fixture.signed = original.clone();
-        fixture.signed.producers[0].signature.replace_range(..2, "00");
+        // Replacing a random leading byte with 00 can leave a valid signature
+        // unchanged. Flip one hex digit so this always exercises tampering.
+        let replacement = if fixture.signed.producers[0].signature.starts_with('0') { "1" } else { "0" };
+        fixture.signed.producers[0].signature.replace_range(..1, replacement);
+        assert_ne!(fixture.signed.producers[0].signature, original.producers[0].signature);
         fixture.reject("signature authentication failed");
         fixture.signed = original;
         fixture.signed.producers.pop();

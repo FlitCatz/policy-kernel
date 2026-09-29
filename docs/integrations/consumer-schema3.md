@@ -21,7 +21,8 @@ Another RC, patch, GA, malformed or multiline probe is rejected. Ordinary numeri
 selection and the legacy adapter intervals remain available without a new producer
 contract. An RC producer requires `consumer.development_only: true`; it does not
 grant production approval. VSTest's test project declaration and lock resolution
-must both select 17.14.1 for RC/TRX suites.
+must both select 17.14.1 for RC/TRX suites. The lock must also resolve TestHost and
+ObjectModel to 17.14.1 so a direct dependency cannot silently replace the producer.
 
 `consumer.runtime_policies` maps `component:path` to `roll_forward` (`disable` or
 `latestPatch`) and `allow_prerelease`. Only the explicitly selected development

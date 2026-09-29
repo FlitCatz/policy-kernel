@@ -40,3 +40,12 @@
 - 2026-09-28: Existing project-verification/bootstrap baseline passed. Producer tests observed RED (unsupported schema/field), then GREEN (3 tests). Combined graph tests observed RED (missing Integration graph), implementation written; result not recovered.
 - 2026-09-29: Temporary worktree disappeared between turns. Restored branch and reconstructed uncommitted edits from tool history; rerun verification before relying on results. Keep recovery checkpoints in local git.
 - Execution is inline under the user's explicit approval to change the code. No additional permission round for ordinary implementation.
+- Tasks 1–4 complete: producer/composition/schema tests and full bootstrap regressions pass; old template directories have no changes.
+- Task 5 native verification complete: clean 59d82ed, ten sensors, five suites and 26 rejection checks passed. Full verification is recorded in the Task 16 execution record.
+- Ruling: Use Node 26.10.0 for the synthetic fixture because it is the available runtime; numeric Node selection already supports explicit versions. This certifies that fixture combination, not every Node version or TJERP installation.
+- Ruling: npm 12.1.0 generated the lock after npm 10 Arborist failed fresh peer resolution. Selected npm 10.9.3 still runs locked ci and complete audit. Lock generation and execution are recorded separately.
+- Ruling: Inherited frameworks use an explicit scalar-property subset and reject ambient targets/packages above the component. More elaborate MSBuild projects require a separately reviewed extension, preventing unbound imports from widening this change.
+- Review: fresh Astra review reproduced four important MSBuild gaps and identified the VSTest binding gap; fixes have regression/native evidence. Reviewer credits expired before a final verdict, recorded as a review limitation.
+- Ruling: Fixed an existing signature-tampering test's possible no-op after it failed the full-suite gate. No controller execution logic changed.
+- Deferred minor findings: none reported before the reviewer stopped.
+- All five tasks implemented and locally verified: final workspace 362 passed/0 failed/4 ignored; native-03 explicitly passed; clippy/fmt/residue/links/lat passed. Final independent reviewer verdict is unavailable due to credit exhaustion, not represented as approval. Branch integration remains the owner's decision.
