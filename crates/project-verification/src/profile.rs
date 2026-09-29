@@ -57,6 +57,16 @@ impl<'de> Deserialize<'de> for ProjectProfile {
 }
 
 fn profile_schema(schema: &mut schemars::Schema) {
+    schema.insert("allOf".into(), serde_json::json!([
+        {"if":{"properties":{"schema_version":{"const":2}}},"then":{"properties":{"selection":{
+            "properties":{"schema_version":{"const":1}},
+            "not":{"required":["consumer"]},
+            "allOf":[{"properties":{"tools":{"additionalProperties":{"not":{"required":["producer_contract"]}}}}}]
+        }}}},
+        {"if":{"properties":{"schema_version":{"const":3}}},"then":{"properties":{"selection":{
+            "properties":{"schema_version":{"const":2}},"required":["consumer"]
+        }}}}
+    ]));
     schema.insert(
         "if".into(),
         serde_json::json!({"properties":{"schema_version":{"const":1}}}),
@@ -80,7 +90,7 @@ fn profile_schema(schema: &mut schemars::Schema) {
 }
 
 fn profile_version_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({"type":"integer", "enum":[1,2]})
+    schemars::json_schema!({"type":"integer", "enum":[1,2,3]})
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -194,12 +204,12 @@ fn identifier(id: &str) -> bool {
 
 impl ProjectProfile {
     pub fn validate(&self) -> Result<(), Error> {
-        if !matches!(self.schema_version, 1 | 2)
+        if !matches!(self.schema_version, 1 | 2 | 3)
             || !identifier(&self.id)
             || (self.schema_version == 1
                 && (!matches!(self.version.as_str(), "1.0.0" | "1.0.1" | "1.0.2")
                     || self.selection.is_some()))
-            || (self.schema_version == 2
+            || (self.schema_version >= 2
                 && (self.selection.is_none()
                     || crate::selection::numeric_version(&self.version).is_err()))
             || self.components.is_empty()
@@ -306,6 +316,7 @@ impl ProjectProfile {
         let mandatory: &[&str] = match self.id.as_str() {
             "react-typescript" => &["frontend"],
             "dotnet" => &["backend"],
+            "fullstack" if self.schema_version == 3 => &["frontend", "backend"],
             "fullstack" => &["frontend", "backend", "shared"],
             _ => return Err(invalid("unsupported project family")),
         };
@@ -323,7 +334,8 @@ impl ProjectProfile {
                 ));
             }
         }
-        if self.id == "fullstack"
+        if self.schema_version != 3
+            && self.id == "fullstack"
             && ["shared:contract", "shared:e2e"].iter().any(|id| {
                 !self.sensors.iter().any(|s| {
                     s.definition.id.as_str() == *id && s.definition.required && s.report.is_some()

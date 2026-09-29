@@ -124,6 +124,9 @@ fn configuration(
         .find(|c| c.id == sensor.component)
         .ok_or_else(|| invalid("missing component"))?;
     let cwd = paths::directory(&request.root, &component.root)?;
+    if let Some(selection) = &request.profile.selection {
+        crate::consumer::validate_component_layout(selection, &component.id, &cwd)?;
+    }
     let mut inputs = Vec::new();
     let mut selected_inputs: BTreeSet<_> = sensor.inputs.iter().cloned().collect();
     if let Some(selection) = &request.profile.selection {
@@ -309,6 +312,24 @@ pub fn run(request: RunRequest) -> Result<RunResult, Error> {
         {
             return Err(invalid("configuration changed during collection"));
         }
+    }
+    if let Some(consumer) = request
+        .profile
+        .selection
+        .as_ref()
+        .and_then(|s| s.consumer.as_ref())
+    {
+        consumer.validate_suite_reports(
+            &sensors
+                .iter()
+                .filter_map(|s| {
+                    s.result
+                        .parsed
+                        .as_ref()
+                        .map(|p| (s.evidence.sensor_id.to_string(), p.clone()))
+                })
+                .collect(),
+        )?;
     }
     let mut adequacy = TestAdequacyEvidence {
         acceptance_criteria: request.mappings.acceptance_criteria,

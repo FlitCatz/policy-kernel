@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+pub mod consumer;
 mod paths;
 pub mod profile;
 pub mod reports;

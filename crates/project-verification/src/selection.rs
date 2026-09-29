@@ -18,6 +18,8 @@ pub struct Selection {
     pub packages: Vec<PackageSelection>,
     pub graphs: Vec<DependencyGraph>,
     pub runtime_files: Vec<RuntimeFile>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub consumer: Option<crate::consumer::ConsumerContract>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -27,6 +29,8 @@ pub struct ToolSelection {
     pub version_args: Vec<String>,
     pub version: VersionRule,
     pub capabilities: BTreeSet<Capability>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub producer_contract: Option<crate::consumer::ProducerContract>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -207,6 +211,15 @@ impl ToolSelection {
     }
 
     pub fn observe(&self, stdout: &[u8]) -> Result<String, Error> {
+        if let Some(producer) = self.producer_contract {
+            producer.validate(self)?;
+            if std::str::from_utf8(stdout).ok().map(str::trim) != Some(producer.version()) {
+                return Err(invalid(
+                    "observed version differs from exact producer contract",
+                ));
+            }
+            return Ok(producer.version().into());
+        }
         let version = self.version.observe(stdout)?;
         self.validate_capabilities(&version)?;
         Ok(version)
@@ -238,7 +251,13 @@ impl Selection {
     }
 
     pub fn validate(&self, profile: &ProjectProfile) -> Result<(), Error> {
-        if self.schema_version != 1
+        if !matches!(
+            (profile.schema_version, self.schema_version),
+            (2, 1) | (3, 2)
+        ) || (self.schema_version == 1
+            && (self.consumer.is_some()
+                || self.tools.values().any(|t| t.producer_contract.is_some())))
+            || (self.schema_version == 2 && self.consumer.is_none())
             || self.tools.is_empty()
             || self.graphs.is_empty()
             || self.bindings.len() != profile.sensors.len()
@@ -263,8 +282,19 @@ impl Selection {
             {
                 return Err(invalid("invalid or unused selected tool"));
             }
-            tool.version.validate()?;
-            tool.validate_capabilities(&tool.version.provision)?;
+            if let Some(producer) = tool.producer_contract {
+                producer.validate(tool)?;
+                if producer == crate::consumer::ProducerContract::Dotnet11Rc1
+                    && !self.consumer.as_ref().is_some_and(|c| c.development_only)
+                {
+                    return Err(invalid(
+                        "RC SDK requires an explicit development-only consumer",
+                    ));
+                }
+            } else {
+                tool.version.validate()?;
+                tool.validate_capabilities(&tool.version.provision)?;
+            }
         }
         for sensor in &profile.sensors {
             let tool = self.tool_for(sensor)?;
@@ -382,8 +412,15 @@ impl Selection {
                 )));
             }
         }
-        // Every application/test graph declared by the composition is mandatory.
-        for c in &profile.components {
+        if let Some(consumer) = &self.consumer {
+            consumer.validate(self, profile)?;
+        }
+        // Frozen profiles retain their preset composition obligations.
+        for c in profile
+            .components
+            .iter()
+            .filter(|_| self.schema_version == 1)
+        {
             let roles: &[GraphRole] = match c.id.as_str() {
                 "frontend" => &[GraphRole::Application],
                 "backend" => &[
@@ -473,6 +510,17 @@ impl Selection {
                     .filter(|r| r.component == component)
                     .map(|r| r.path.clone()),
             )
+            .chain(
+                self.consumer
+                    .iter()
+                    .flat_map(|c| c.framework_props.iter())
+                    .filter(|(id, _)| {
+                        self.graphs
+                            .iter()
+                            .any(|g| &g.id == *id && g.component == component)
+                    })
+                    .map(|(_, path)| path.clone()),
+            )
             .collect()
     }
 
@@ -489,7 +537,22 @@ impl Selection {
             RuntimeFileFormat::NodeVersion => text.trim().to_owned(),
             RuntimeFileFormat::DotnetGlobal => {
                 let value: serde_json::Value = serde_json::from_str(text)?;
-                if value.pointer("/sdk/rollForward").and_then(|v| v.as_str()) != Some("disable")
+                if let Some(policy) = self.consumer.as_ref().and_then(|c| {
+                    c.runtime_policies
+                        .get(&format!("{}:{}", file.component, file.path))
+                }) {
+                    if !matches!(policy.roll_forward.as_str(), "disable" | "latestPatch")
+                        || value.pointer("/sdk/rollForward").and_then(|v| v.as_str())
+                            != Some(policy.roll_forward.as_str())
+                        || value
+                            .pointer("/sdk/allowPrerelease")
+                            .and_then(|v| v.as_bool())
+                            != Some(policy.allow_prerelease)
+                    {
+                        return Err(invalid("global.json differs from declared runtime policy"));
+                    }
+                } else if value.pointer("/sdk/rollForward").and_then(|v| v.as_str())
+                    != Some("disable")
                     || value
                         .pointer("/sdk/allowPrerelease")
                         .and_then(|v| v.as_bool())
@@ -590,6 +653,7 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
         packages: vec![],
         graphs: vec![],
         runtime_files: vec![],
+        consumer: None,
     };
     let mut extra_sensors = Vec::new();
     for component in &profile.components {
@@ -710,6 +774,7 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
         selection.tools.insert(
             id.clone(),
             ToolSelection {
+                producer_contract: None,
                 executable: sensor.argv[0].clone(),
                 version_args: sensor.version_args.clone(),
                 version: VersionRule {
@@ -922,7 +987,20 @@ fn validate_files(
                             n.has_tag_name("TargetFramework") || n.has_tag_name("TargetFrameworks")
                         })
                         .collect();
-                    if targets.len() != 1
+                    let inherited = selection
+                        .consumer
+                        .as_ref()
+                        .and_then(|c| c.framework_props.get(&graph.id));
+                    if let Some(path) = inherited {
+                        if let Some(props) = optional_read(path)? {
+                            crate::consumer::validate_framework_xml(
+                                text,
+                                std::str::from_utf8(props)
+                                    .map_err(|_| invalid("props XML is not UTF-8"))?,
+                                framework,
+                            )?;
+                        }
+                    } else if targets.len() != 1
                         || !targets[0].has_tag_name("TargetFramework")
                         || targets[0].text().map(str::trim) != Some(framework)
                         || targets[0]
