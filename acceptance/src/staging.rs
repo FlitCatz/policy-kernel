@@ -111,11 +111,18 @@ pub fn stage_profile(source: &Path, profile_file: &str, target: &Path) -> Result
         operation: Operation::Install,
     })?;
     copy_tree(source, target)?;
+    let selected =
+        project_verification::parse_profile(&fs::read_to_string(target.join(profile_file))?)?;
     let installation = plan(Request {
         target: target.into(),
         installation: Installation {
             profile: String::new(),
-            release: "1.1.0".into(),
+            release: if selected.schema_version == 3 {
+                "1.2.0"
+            } else {
+                "1.1.0"
+            }
+            .into(),
             components: BTreeMap::new(),
             user_profile: Some(policy_bootstrap::UserProfile {
                 path: profile_file.into(),

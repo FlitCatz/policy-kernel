@@ -99,13 +99,17 @@ pub(crate) struct Manifest {
 
 pub(crate) fn manifest(installation: &Installation, files: &BTreeMap<String, String>) -> Manifest {
     Manifest {
-        schema_version: if installation.release == "1.1.0" {
+        schema_version: if installation.release == "1.2.0" {
+            3
+        } else if installation.release == "1.1.0" {
             2
         } else {
             1
         },
         installation: installation.clone(),
-        project_profile_schema: if installation.release == "1.1.0" {
+        project_profile_schema: if installation.release == "1.2.0" {
+            3
+        } else if installation.release == "1.1.0" {
             2
         } else {
             1
@@ -296,6 +300,13 @@ fn detect_selected(
         .ok_or_else(|| invalid("missing selection contract"))?;
     for component in &profile.components {
         directory(root, plan, &component.root)?;
+        if let Err(error) = project_verification::consumer::validate_component_layout(
+            selection,
+            &component.id,
+            &root.path.join(&component.root),
+        ) {
+            plan.conflicts.push(format!("{}: {error}", component.root));
+        }
         let mut files = BTreeMap::new();
         for input in selection.inputs(&component.id) {
             let path = join(&component.root, &input);
@@ -378,9 +389,15 @@ pub fn plan(mut request: Request) -> Result<Plan> {
                 std::str::from_utf8(&bytes).map_err(|_| invalid("user profile must be UTF-8"))?,
             )
             .map_err(|e| invalid(e.to_string()))?;
-            if profile.schema_version != 2 {
+            if !matches!(
+                (
+                    request.installation.release.as_str(),
+                    profile.schema_version
+                ),
+                ("1.1.0", 2) | ("1.2.0", 3)
+            ) {
                 return Err(invalid(
-                    "user profile installation requires project schema 2",
+                    "user profile requires release 1.1.0/schema 2 or release 1.2.0/schema 3",
                 ));
             }
             if !request.installation.profile.is_empty()

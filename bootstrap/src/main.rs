@@ -38,7 +38,7 @@ mod cli {
         target: PathBuf,
         #[arg(long, value_parser = ["react-typescript", "dotnet", "fullstack"], required_unless_present = "profile_file", conflicts_with = "profile_file")]
         profile: Option<String>,
-        /// Existing checkout-relative user-owned profile; release 1.1.0 only.
+        /// Existing checkout-relative user-owned profile; 1.1.0/schema2 or 1.2.0/schema3.
         #[arg(long, conflicts_with = "components")]
         profile_file: Option<String>,
         #[arg(long)]

@@ -1,0 +1,8 @@
+{
+  "name": "policy-tjerp-compatible-fixture",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {"react": "19.0.0", "react-dom": "19.0.0"},
+  "devDependencies": {"@playwright/test": "1.63.0", "vitest": "4.1.11", "vite": "6.4.3"}
+}
