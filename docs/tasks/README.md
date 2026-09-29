@@ -39,3 +39,6 @@ statements are not rewritten when later work changes the current state.
 | [Task 15](task-15/README.md) | Compatibility, runtime independence, and verification completion | Strict local mutation: 449 native + 12 replacements caught, zero unviable/missed/timeouts; integrated into main in c79571e. Earlier hosted mutation passed only the former policy; new hosted mutation and operational 15.11 evidence remain outstanding |
 
 For the repository-wide latest status, read [Current status](../status.md).
+
+[Task 16](task-16/README.md) tracks the explicit TJERP-shaped consumer extension,
+its local native verification and remaining consumer/hosted adoption work.

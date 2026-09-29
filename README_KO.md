@@ -49,6 +49,12 @@ bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript
 
 ## 요구 사항
 
+명시적 [schema 3 소비 프로필](docs/integrations/consumer-schema3.md)은 선택된
+.NET 11 RC1/VSTest 17.14.1 및 Playwright 1.63.0 조합, 프레임워크 설정 상속,
+통합 테스트 프로젝트를 지원합니다. Schema 3에는 사용자 프로필 전용 bootstrap
+1.2.0을 사용하며 기존 1.1.0 프리셋은 유지합니다. 로컬 검증 근거와 남은 적용 조건은
+[Task 16](docs/tasks/task-16/README.md)에 기록합니다.
+
 - 소스 빌드에는 Rust **1.85.0** 이상을 요구합니다.
   [rust-toolchain.toml](rust-toolchain.toml)은 재현 가능한 개발 및 릴리스 검증의
   기본값으로 `rustfmt`, `clippy`를 포함한 **1.95.0**을 유지합니다. 자세한 내용은

@@ -1,5 +1,13 @@
 # Current status
 
+## Task 16 consumer extension
+
+[Task 16](tasks/task-16/README.md) adds opt-in project schema 3/selection schema 2
+and custom bootstrap 1.2.0 for the TJERP-shaped consumer. Its exact toolchain and
+composition are covered by [local verification](archive/reviews/2026-09-29-tjerp-consumer-compatibility.md).
+This does not establish TJERP installation, new hosted CI evidence or production
+promotion. Existing Task 15 external conditions below remain applicable.
+
 This page is the canonical summary of the repository's current documentation
 state. It links to dated records for evidence and does not replace their
 contemporaneous statements.

@@ -966,6 +966,13 @@ fn validate_files(
                     .target_framework
                     .as_deref()
                     .ok_or_else(|| invalid("missing NuGet target framework"))?;
+                if selection
+                    .consumer
+                    .as_ref()
+                    .is_some_and(|c| c.requires_vstest17(selection, graph))
+                {
+                    crate::consumer::validate_vstest17(manifest, lock, framework)?;
+                }
                 if let Some(lock) = lock {
                     let lock: serde_json::Value = serde_json::from_slice(lock)?;
                     if !lock

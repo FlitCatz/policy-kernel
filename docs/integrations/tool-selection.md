@@ -1,5 +1,9 @@
 # Consumer tool selection
 
+[Schema 3 / selection 2](consumer-schema3.md) adds explicit producer contracts,
+suite bindings and bounded framework inheritance. The schema-2 numeric contract
+and adapter intervals below remain unchanged for existing profiles.
+
 Profile schema 2 separates an asset's stable numeric `version` from the reader
 contract. Bootstrap release 1.1.0 supplies three reviewed presets; a user profile
 may use a different release identifier without extending a parser allowlist.

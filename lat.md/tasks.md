@@ -21,3 +21,5 @@ Each landing page owns a current summary and links to archived evidence.
 
 See [[status]] for the repository-wide latest state and
 [[trust-boundaries]] for authority limits.
+
+- [Task 16 — explicit TJERP-shaped consumer](../docs/tasks/task-16/README.md)

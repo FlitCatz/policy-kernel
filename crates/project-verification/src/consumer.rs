@@ -75,6 +75,19 @@ pub struct RuntimePolicy {
 }
 
 impl ConsumerContract {
+    pub fn requires_vstest17(&self, selection: &Selection, graph: &DependencyGraph) -> bool {
+        self.suites.iter().filter(|s| s.graph == graph.id).any(|s| {
+            selection
+                .bindings
+                .get(&s.sensor)
+                .and_then(|id| selection.tools.get(id))
+                .is_some_and(|t| {
+                    t.producer_contract == Some(ProducerContract::Dotnet11Rc1)
+                        && t.capabilities.contains(&Capability::Trx)
+                })
+        })
+    }
+
     pub fn validate_suite_reports(
         &self,
         reports: &BTreeMap<String, crate::reports::ParsedReport>,
@@ -207,13 +220,112 @@ impl ConsumerContract {
     }
 }
 
+/// The RC/TRX adapter is certified only with the selected VSTest producer.
+pub fn validate_vstest17(
+    project: Option<&[u8]>,
+    lock: Option<&[u8]>,
+    framework: &str,
+) -> Result<(), Error> {
+    if let Some(bytes) = project {
+        let text = std::str::from_utf8(bytes).map_err(|_| invalid("test project is not UTF-8"))?;
+        let doc = roxmltree::Document::parse(text).map_err(|e| invalid(e.to_string()))?;
+        let references: Vec<_> = doc
+            .descendants()
+            .filter(|n| {
+                n.has_tag_name("PackageReference")
+                    && n.attribute("Include")
+                        .is_some_and(|p| p.eq_ignore_ascii_case("Microsoft.NET.Test.Sdk"))
+            })
+            .collect();
+        if references.len() != 1
+            || references[0].attribute("Version") != Some("17.14.1")
+            || references[0].ancestors().any(|n| {
+                n.attributes()
+                    .any(|a| a.name().eq_ignore_ascii_case("Condition"))
+            })
+            || references[0]
+                .children()
+                .any(|n| n.is_element() && n.tag_name().name().eq_ignore_ascii_case("Version"))
+        {
+            return Err(invalid(
+                "RC TRX contract requires unconditional Microsoft.NET.Test.Sdk 17.14.1",
+            ));
+        }
+    }
+    if let Some(bytes) = lock {
+        let value: serde_json::Value = serde_json::from_slice(bytes)?;
+        let packages = value
+            .get("dependencies")
+            .and_then(|v| v.get(framework))
+            .and_then(|v| v.as_object())
+            .ok_or_else(|| invalid("test lock lacks selected framework"))?;
+        let sdk: Vec<_> = packages
+            .iter()
+            .filter(|(k, _)| k.eq_ignore_ascii_case("Microsoft.NET.Test.Sdk"))
+            .collect();
+        if sdk.len() != 1
+            || sdk[0].1.get("resolved").and_then(|v| v.as_str()) != Some("17.14.1")
+            || sdk[0].1.get("type").and_then(|v| v.as_str()) != Some("Direct")
+        {
+            return Err(invalid(
+                "RC TRX lock must resolve Microsoft.NET.Test.Sdk exactly to 17.14.1",
+            ));
+        }
+        for name in [
+            "Microsoft.TestPlatform.TestHost",
+            "Microsoft.TestPlatform.ObjectModel",
+        ] {
+            let resolved: Vec<_> = packages
+                .iter()
+                .filter(|(k, _)| k.eq_ignore_ascii_case(name))
+                .collect();
+            if resolved.len() != 1
+                || resolved[0].1.get("resolved").and_then(|v| v.as_str()) != Some("17.14.1")
+            {
+                return Err(invalid(
+                    "RC TRX test host and object model must resolve exactly to 17.14.1",
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 /// Validate only the explicitly supported MSBuild subset, without executing imports.
 pub fn validate_framework_xml(project: &str, props: &str, expected: &str) -> Result<(), Error> {
     fn document(text: &str) -> Result<roxmltree::Document<'_>, Error> {
         let doc = roxmltree::Document::parse(text).map_err(|e| invalid(e.to_string()))?;
+        // MSBuild property names are case-insensitive. Keep the supported subset
+        // explicit: import hook properties can otherwise load unchecked XML.
+        const SAFE_PROPERTIES: &[&str] = &[
+            "TargetFramework",
+            "Nullable",
+            "ImplicitUsings",
+            "TreatWarningsAsErrors",
+            "RestorePackagesWithLockFile",
+            "IsTestProject",
+            "IsPackable",
+            "OutputType",
+            "LangVersion",
+            "GenerateProgramFile",
+        ];
         if !doc.root_element().has_tag_name("Project")
+            || doc
+                .root_element()
+                .attribute("Sdk")
+                .is_some_and(|s| !matches!(s, "Microsoft.NET.Sdk" | "Microsoft.NET.Sdk.Web"))
+            || doc
+                .root_element()
+                .children()
+                .filter(|n| n.is_element())
+                .any(|n| !matches!(n.tag_name().name(), "PropertyGroup" | "ItemGroup"))
             || doc.descendants().any(|n| {
-                n.has_tag_name("Import")
+                (n.is_element()
+                    && n.parent().is_some_and(|p| p.has_tag_name("PropertyGroup"))
+                    && !SAFE_PROPERTIES
+                        .iter()
+                        .any(|p| p.eq_ignore_ascii_case(n.tag_name().name())))
+                    || n.has_tag_name("Import")
                     || n.has_tag_name("ImportGroup")
                     || n.has_tag_name("Target")
                     || n.has_tag_name("TargetFrameworks")
@@ -221,7 +333,8 @@ pub fn validate_framework_xml(project: &str, props: &str, expected: &str) -> Res
                     || n.has_tag_name("ImportDirectoryBuildProps")
                     || n.has_tag_name("DirectoryBuildTargetsPath")
                     || n.has_tag_name("ImportDirectoryBuildTargets")
-                    || n.attribute("TreatAsLocalProperty").is_some()
+                    || n.attributes()
+                        .any(|a| a.name().eq_ignore_ascii_case("TreatAsLocalProperty"))
             })
         {
             return Err(invalid("unsupported MSBuild framework override/import"));
@@ -231,22 +344,28 @@ pub fn validate_framework_xml(project: &str, props: &str, expected: &str) -> Res
     let project = document(project)?;
     if project
         .descendants()
-        .any(|n| n.has_tag_name("TargetFramework"))
+        .any(|n| n.is_element() && n.tag_name().name().eq_ignore_ascii_case("TargetFramework"))
     {
         return Err(invalid(
             "inherited framework conflicts with project framework",
         ));
     }
     let props = document(props)?;
+    if props.descendants().any(|n| n.has_tag_name("ItemGroup")) {
+        return Err(invalid(
+            "framework props may contain only declared scalar properties",
+        ));
+    }
     let targets: Vec<_> = props
         .descendants()
-        .filter(|n| n.has_tag_name("TargetFramework"))
+        .filter(|n| n.is_element() && n.tag_name().name().eq_ignore_ascii_case("TargetFramework"))
         .collect();
     if targets.len() != 1
         || targets[0].text().map(str::trim) != Some(expected)
-        || targets[0]
-            .ancestors()
-            .any(|n| n.attribute("Condition").is_some())
+        || targets[0].ancestors().any(|n| {
+            n.attributes()
+                .any(|a| a.name().eq_ignore_ascii_case("Condition"))
+        })
     {
         return Err(invalid(
             "inherited framework must be single, unconditional and match the graph",
@@ -264,6 +383,26 @@ pub fn validate_component_layout(
     let Some(consumer) = &selection.consumer else {
         return Ok(());
     };
+    if selection
+        .graphs
+        .iter()
+        .any(|g| g.component == component && consumer.framework_props.contains_key(&g.id))
+    {
+        for ancestor in root.ancestors().skip(1) {
+            for name in ["Directory.Build.targets", "Directory.Packages.props"] {
+                match std::fs::symlink_metadata(ancestor.join(name)) {
+                    Ok(_) => {
+                        return Err(invalid(format!(
+                            "unbound ancestor MSBuild configuration: {}",
+                            ancestor.join(name).display()
+                        )))
+                    }
+                    Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(e) => return Err(e.into()),
+                }
+            }
+        }
+    }
     for graph in selection
         .graphs
         .iter()

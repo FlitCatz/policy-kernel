@@ -191,6 +191,104 @@ fn native_tjerp_reports_audits_and_rejection_paths() {
         .is_err());
         checks.push(format!("{}:stale-head", sensor.evidence.sensor_id));
     }
+    // Real failing producer processes, followed by a corrected fresh-head run.
+    for (name, file, before, after) in [
+        (
+            "vitest-failure",
+            "frontend/src/Greeting.test.ts",
+            "<h1>Hello policy</h1>",
+            "<h1>Wrong expectation</h1>",
+        ),
+        (
+            "trx-failure",
+            "backend/tests/Tests/ConsumerTests.cs",
+            "Greeting_is_stable() => Assert.Equal(\"Hello policy\"",
+            "Greeting_is_stable() => Assert.Equal(\"Wrong expectation\"",
+        ),
+        (
+            "playwright-failure",
+            "frontend/e2e/greeting.spec.ts",
+            "toHaveText('Hello policy')",
+            "toHaveText('Wrong expectation')",
+        ),
+    ] {
+        for s in &result.sensors {
+            if let Some(r) = &s.configuration.sensor.report {
+                let p = s.configuration.component_root.join(&r.path);
+                if p.exists() {
+                    fs::remove_file(p).unwrap();
+                }
+            }
+        }
+        let path = root.join(file);
+        let original = fs::read_to_string(&path).unwrap();
+        assert!(original.contains(before));
+        fs::write(&path, original.replace(before, after)).unwrap();
+        command(&root, &["git", "add", "."]);
+        command(&root, &["git", "commit", "--quiet", "-m", name]);
+        let failed_request = request(&root);
+        let error = project_verification::run(failed_request.clone())
+            .expect_err("failing producer must not yield successful composed evidence");
+        assert!(
+            error.to_string().contains("required suite"),
+            "{name}: {error}"
+        );
+        let phase = output.join(name);
+        fs::create_dir(&phase).unwrap();
+        fs::write(
+            phase.join("request.json"),
+            serde_json::to_vec_pretty(&failed_request).unwrap(),
+        )
+        .unwrap();
+        fs::write(phase.join("error.txt"), error.to_string()).unwrap();
+        for s in &result.sensors {
+            if let Some(r) = &s.configuration.sensor.report {
+                let p = s.configuration.component_root.join(&r.path);
+                if p.exists() {
+                    fs::copy(
+                        p,
+                        phase.join(s.evidence.sensor_id.as_str().replace(':', "-")),
+                    )
+                    .unwrap();
+                }
+            }
+        }
+        checks.push(name.into());
+        fs::write(path, original).unwrap();
+    }
+    command(&root, &["git", "add", "."]);
+    command(
+        &root,
+        &["git", "commit", "--quiet", "-m", "corrected consumer"],
+    );
+    for s in &result.sensors {
+        if let Some(r) = &s.configuration.sensor.report {
+            let p = s.configuration.component_root.join(&r.path);
+            if p.exists() {
+                fs::remove_file(p).unwrap();
+            }
+        }
+    }
+    let corrected_request = request(&root);
+    let corrected = project_verification::run(corrected_request.clone()).unwrap();
+    assert!(corrected
+        .sensors
+        .iter()
+        .all(|s| s.evidence.status == SensorStatus::Passed));
+    assert_ne!(corrected_request.head_sha, req.head_sha);
+    fs::write(
+        output.join("corrected-result.json"),
+        serde_json::to_vec_pretty(&corrected).unwrap(),
+    )
+    .unwrap();
+    let old = &result.sensors[0];
+    assert!(project_verification::run::normalize_collection(
+        &corrected_request,
+        old.configuration.clone(),
+        old.collection.clone()
+    )
+    .is_err());
+    checks.push("actual-prior-head".into());
     let mut stale = req.clone();
     stale.profile.version = "1.2.1".into();
     assert!(project_verification::run::prepare(&stale).is_err());

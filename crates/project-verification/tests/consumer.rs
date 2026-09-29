@@ -244,3 +244,97 @@ fn schema_rejects_old_contract_extension_fields_and_wrong_pairings() {
     value["schema_version"] = json!(2);
     assert!(!validator.is_valid(&value));
 }
+
+#[test]
+fn msbuild_case_and_custom_import_properties_cannot_override_bound_framework() {
+    use project_verification::consumer::validate_framework_xml;
+    let props="<Project><PropertyGroup><TargetFramework>net11.0</TargetFramework></PropertyGroup></Project>";
+    for project in [
+        "<Project><PropertyGroup><targetframework>net9.0</targetframework></PropertyGroup></Project>",
+        "<Project><PropertyGroup><CustomAfterMicrosoftCommonTargets>extra.targets</CustomAfterMicrosoftCommonTargets></PropertyGroup></Project>",
+        "<Project><PropertyGroup><MSBuildExtensionsPath>elsewhere</MSBuildExtensionsPath></PropertyGroup></Project>",
+        "<Project Sdk=\"Custom.Sdk\"/>",
+    ] { assert!(validate_framework_xml(project,props,"net11.0").is_err(),"{project}"); }
+    let referenced = props.replace(
+        "</Project>",
+        "<ItemGroup><ProjectReference Include=\"hidden.csproj\"/></ItemGroup></Project>",
+    );
+    assert!(validate_framework_xml("<Project/>", &referenced, "net11.0").is_err());
+}
+
+#[test]
+fn ancestor_targets_outside_component_cannot_change_the_framework() {
+    let temp = tempfile::tempdir().unwrap();
+    let backend = temp.path().join("backend");
+    std::fs::create_dir_all(backend.join("Tests/Unit")).unwrap();
+    let mut value = combined();
+    value["selection"]["consumer"]["framework_props"] =
+        json!({"backend-unit-dependencies":"Directory.Build.props"});
+    let selection = parse_profile(&value.to_string())
+        .unwrap()
+        .selection
+        .unwrap();
+    std::fs::write(temp.path().join("Directory.Build.targets"), "<Project/>").unwrap();
+    assert!(project_verification::consumer::validate_component_layout(
+        &selection, "backend", &backend
+    )
+    .is_err());
+}
+
+#[test]
+fn rc_trx_contract_binds_the_real_vstest_package_and_lock() {
+    use project_verification::selection::validate_available_component_files;
+    use std::collections::BTreeMap;
+    let selection = parse_profile(&combined().to_string())
+        .unwrap()
+        .selection
+        .unwrap();
+    let xml="<Project><PropertyGroup><TargetFramework>net9.0</TargetFramework></PropertyGroup><ItemGroup><PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"17.14.1\"/></ItemGroup></Project>";
+    let lock = json!({"dependencies":{"net9.0":{
+        "Microsoft.NET.Test.Sdk":{"type":"Direct","resolved":"17.14.1"},
+        "Microsoft.TestPlatform.TestHost":{"type":"Transitive","resolved":"17.14.1"},
+        "Microsoft.TestPlatform.ObjectModel":{"type":"Transitive","resolved":"17.14.1"}
+    }}});
+    let mut files = BTreeMap::from([
+        (
+            "Tests/Unit/Unit.Tests.csproj".into(),
+            xml.as_bytes().to_vec(),
+        ),
+        (
+            "Tests/Unit/packages.lock.json".into(),
+            serde_json::to_vec(&lock).unwrap(),
+        ),
+    ]);
+    validate_available_component_files(&selection, "backend", &files).unwrap();
+    files.insert(
+        "Tests/Unit/Unit.Tests.csproj".into(),
+        xml.replace("17.14.1", "18.0.0").into_bytes(),
+    );
+    assert!(validate_available_component_files(&selection, "backend", &files).is_err());
+    files.insert(
+        "Tests/Unit/Unit.Tests.csproj".into(),
+        xml.as_bytes().to_vec(),
+    );
+    let mut changed = lock.clone();
+    changed["dependencies"]["net9.0"]["Microsoft.NET.Test.Sdk"]["resolved"] = json!("18.0.0");
+    files.insert(
+        "Tests/Unit/packages.lock.json".into(),
+        serde_json::to_vec(&changed).unwrap(),
+    );
+    assert!(validate_available_component_files(&selection, "backend", &files).is_err());
+    for package in [
+        "Microsoft.TestPlatform.TestHost",
+        "Microsoft.TestPlatform.ObjectModel",
+    ] {
+        let mut changed = lock.clone();
+        changed["dependencies"]["net9.0"][package]["resolved"] = json!("18.0.0");
+        files.insert(
+            "Tests/Unit/packages.lock.json".into(),
+            serde_json::to_vec(&changed).unwrap(),
+        );
+        assert!(
+            validate_available_component_files(&selection, "backend", &files).is_err(),
+            "{package}"
+        );
+    }
+}

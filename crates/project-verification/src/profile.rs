@@ -204,7 +204,7 @@ fn identifier(id: &str) -> bool {
 
 impl ProjectProfile {
     pub fn validate(&self) -> Result<(), Error> {
-        if !matches!(self.schema_version, 1 | 2 | 3)
+        if !matches!(self.schema_version, 1..=3)
             || !identifier(&self.id)
             || (self.schema_version == 1
                 && (!matches!(self.version.as_str(), "1.0.0" | "1.0.1" | "1.0.2")

@@ -1,5 +1,9 @@
 # Bootstrap installer
 
+For schema-3 user profiles, use custom-only release 1.2.0 as documented in
+[explicit consumer composition](consumer-schema3.md). The preset and schema-2
+instructions below continue to use 1.1.0 and retain their historical semantics.
+
 Task 13 adds the separate Rust `policy-bootstrap` workspace package under
 `bootstrap/`. Task 14 has compiled and run the Rust regressions and exercises this
 installer through consumer staging. Native and CI acceptance are tracked in the

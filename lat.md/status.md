@@ -1,5 +1,9 @@
 # Current status
 
+The [Task 16 consumer extension](../docs/tasks/task-16/README.md) adds opt-in
+schema-3 compatibility. Its local native record does not establish consumer
+installation, hosted authority or production promotion. See [[tasks]].
+
 The current-state authority is [docs/status.md](../docs/status.md). It identifies
 the implemented scope, dated verification evidence, and conditions not
 demonstrated in production.

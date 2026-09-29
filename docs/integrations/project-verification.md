@@ -1,5 +1,9 @@
 # Project verification
 
+[Schema-3 consumers](consumer-schema3.md) can explicitly select the new exact
+producer contracts and declare suite roles independently of preset directory
+layout. Existing protocol/authority boundaries and legacy schemas remain intact.
+
 Task 12 implementation includes the Rust `project-verification` crate, three
 versioned profile assets and report adapters. Task 14 has run the Rust regression
 suites; native producer and consuming-project certification is tracked separately

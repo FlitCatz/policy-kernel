@@ -58,6 +58,12 @@ declarative tool configuration under `examples/`.
 
 ## Requirements
 
+Explicit [schema-3 consumer profiles](docs/integrations/consumer-schema3.md) now
+support the selected .NET 11 RC1/VSTest 17.14.1 and Playwright 1.63.0 combination,
+inherited framework configuration and combined test projects. Use custom bootstrap
+release 1.2.0 for schema 3; existing 1.1.0 presets remain unchanged. See
+[Task 16](docs/tasks/task-16/README.md) for local evidence and remaining adoption gates.
+
 - For source builds, Rust **1.85.0** is the declared native workspace minimum. The checked-in
   [rust-toolchain.toml](rust-toolchain.toml) keeps **1.95.0** with `rustfmt` and
   `clippy` as the reproducible development and release-verification default.
