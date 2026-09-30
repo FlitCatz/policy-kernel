@@ -135,6 +135,36 @@ fn custom_receipts_cannot_claim_source_bytes_or_arbitrary_destinations() {
 }
 
 #[test]
+fn installed_files_follow_umask_and_replacements_keep_their_mode() {
+    use std::os::unix::fs::PermissionsExt;
+    let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o7777;
+    let temp = tempfile::tempdir().unwrap();
+    // Ordinary files created by this process reveal the effective umask.
+    let reference = tempfile::tempdir().unwrap();
+    fs::write(reference.path().join("file"), b"").unwrap();
+    fs::create_dir(reference.path().join("dir")).unwrap();
+    let file_mode = mode(&reference.path().join("file"));
+    let dir_mode = mode(&reference.path().join("dir"));
+
+    let mut req = request(temp.path(), "react-typescript");
+    apply(&plan(req.clone()).unwrap()).unwrap();
+    let usage = temp.path().join(".policy/USAGE.md");
+    assert_eq!(mode(&temp.path().join(".policy")), dir_mode);
+    assert_eq!(mode(&usage), file_mode);
+    assert_eq!(
+        mode(&temp.path().join(".policy/bootstrap-manifest.json")),
+        file_mode
+    );
+
+    fs::set_permissions(&usage, fs::Permissions::from_mode(0o640)).unwrap();
+    let before = fs::read(&usage).unwrap();
+    req.installation.release = "1.1.0".into();
+    apply(&plan(req).unwrap()).unwrap();
+    assert_ne!(fs::read(&usage).unwrap(), before);
+    assert_eq!(mode(&usage), 0o640);
+}
+
+#[test]
 fn selected_release_upgrades_and_downgrades_all_frozen_releases() {
     for family in ["react-typescript", "dotnet", "fullstack"] {
         for release in ["1.0.0", "1.0.1", "1.0.2"] {

@@ -31,12 +31,13 @@ fn failure(output: &Output) {
     assert!(output.stdout.is_empty());
     assert!(!output.stderr.is_empty());
 }
-const FILES: [&str; 5] = [
+const FILES: [&str; 6] = [
     "canonical",
     "provenance",
     "reviews",
     "pre_merge",
     "post_merge",
+    "sensors",
 ];
 fn results() -> Value {
     let mut outcomes = vec![json!({"scenario":"Baseline","summary":"Success"})];
@@ -48,7 +49,7 @@ fn results() -> Value {
         }},"summary":"CaughtMutant"}));
     }
     json!({"cargo_mutants_version":"27.1.0","end_time":"2026-09-08T00:00:00Z",
-        "total_mutants":5,"caught":5,"missed":0,"timeout":0,"unviable":0,"success":0,"outcomes":outcomes})
+        "total_mutants":FILES.len(),"caught":FILES.len(),"missed":0,"timeout":0,"unviable":0,"success":0,"outcomes":outcomes})
 }
 fn mutation(payload: &Value, inventory: Option<Value>) -> Output {
     let temp = TempDir::new().unwrap();
@@ -76,7 +77,8 @@ fn mutation_accepts_complete_inventory() {
     let p = results();
     let out = mutation(&p, Some(inventory(&p)));
     success(&out);
-    assert!(String::from_utf8_lossy(&out.stdout).contains("5 mutants across 5"));
+    assert!(String::from_utf8_lossy(&out.stdout)
+        .contains(&format!("{0} mutants across {0}", FILES.len())));
 }
 
 #[test]
@@ -158,7 +160,7 @@ fn mutation_rejects_incomplete_or_bad_results() {
         ("/cargo_mutants_version", json!("27.0.0")),
         ("/end_time", json!(null)),
         ("/total_mutants", json!(0)),
-        ("/total_mutants", json!(6)),
+        ("/total_mutants", json!(FILES.len() + 1)),
         ("/caught", json!(true)),
         ("/caught", json!(-1)),
         ("/outcomes/0/summary", json!("Failure")),
@@ -181,14 +183,14 @@ fn mutation_rejects_incomplete_or_bad_results() {
     ] {
         let mut p = valid.clone();
         p[counter] = json!(1);
-        p["caught"] = json!(4);
+        p["caught"] = json!(FILES.len() - 1);
         p["outcomes"][1]["summary"] = json!(summary);
         failure(&mutation(&p, Some(inventory(&p))));
     }
     let mut missing = valid.clone();
     missing["outcomes"].as_array_mut().unwrap().pop();
-    missing["total_mutants"] = json!(4);
-    missing["caught"] = json!(4);
+    missing["total_mutants"] = json!(FILES.len() - 1);
+    missing["caught"] = json!(FILES.len() - 1);
     failure(&mutation(&missing, Some(inventory(&missing))));
 }
 #[test]

@@ -16,12 +16,13 @@ fn load<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
     serde_json::from_slice(&read(path)?)
         .map_err(|e| format!("invalid JSON at {}: {e}", path.display()))
 }
-const FILES: [&str; 5] = [
+const FILES: [&str; 6] = [
     "crates/policy-core/src/canonical.rs",
     "crates/policy-core/src/provenance.rs",
     "crates/policy-core/src/reviews.rs",
     "crates/policy-core/src/pre_merge.rs",
     "crates/policy-core/src/post_merge.rs",
+    "crates/policy-core/src/sensors.rs",
 ];
 fn count(value: &Value, name: &str) -> Result<u64> {
     value

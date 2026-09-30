@@ -170,11 +170,11 @@ fn evaluate_sensor_evidence_inner(
                         "sensor result does not match its policy-bound configuration, parser, and command",
                     );
                 }
+                // Partial counts are rejected by `validate_typed_result`; here the
+                // profile additionally forbids the all-absent form.
                 if definition.unwrap().result_requirement
                     == Some(SensorResultRequirement::TestCounts)
-                    && (item.discovered.is_none()
-                        || item.executed.is_none()
-                        || item.passed.is_none())
+                    && item.discovered.is_none()
                 {
                     insert_reason(
                         &mut reasons,

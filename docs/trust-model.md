@@ -56,7 +56,7 @@ The obligation matrix and frozen legacy expectation fixtures preserve specified
 behavior; they do not execute the historical application or prove shadow parity
 against a deployed service. Property tests vary real inputs and exercise real
 validators. Mutation testing covers the five authorization modules specified in
-Task 11. A completed nonempty run must contain zero missed mutations and zero
+Task 11 plus sensor evaluation (`sensors.rs`), added on 2026-09-30. A completed nonempty run must contain zero missed mutations and zero
 timeouts; unviable mutants remain separately counted, never counted as killed.
 Tool failure, missing files, incomplete outcomes and skipped coverage cannot pass.
 

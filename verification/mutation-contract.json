@@ -427,6 +427,190 @@
       }
     },
     {
+      "original": {
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace resolve_required_sensors -> Result<Vec<SensorId>, SensorResolutionError> with Ok(vec![Default::default()])\n@@ -38,37 +38,17 @@\n     InvalidGlob(String),\n }\n \n pub fn resolve_required_sensors(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n ) -> Result<Vec<SensorId>, SensorResolutionError> {\n-    validate_profile(profile)?;\n-    let paths = changed_paths\n-        .iter()\n-        .map(|path| normalize_path(path))\n-        .collect::<Result<Vec<_>, _>>()?;\n-    let mut required = Vec::new();\n-    let mut seen = BTreeSet::new();\n-\n-    for sensor in &profile.sensors {\n-        if (sensor.required\n-            || sensor\n-                .required_when\n-                .iter()\n-                .any(|condition| condition_matches(condition, &paths, risk)))\n-            && seen.insert(sensor.id.clone())\n-        {\n-            required.push(sensor.id.clone());\n-        }\n-    }\n-\n-    Ok(required)\n+    Ok(vec![Default::default()]) /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn evaluate_sensor_evidence(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> SensorEvaluation {\n",
+        "file": "crates/policy-core/src/sensors.rs",
+        "function": {
+          "function_name": "resolve_required_sensors",
+          "return_type": "-> Result<Vec<SensorId>, SensorResolutionError>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 67
+            },
+            "start": {
+              "column": 1,
+              "line": 41
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/sensors.rs:46:5: replace resolve_required_sensors -> Result<Vec<SensorId>, SensorResolutionError> with Ok(vec![Default::default()])",
+        "package": "policy-core",
+        "replacement": "Ok(vec![Default::default()])",
+        "span": {
+          "end": {
+            "column": 17,
+            "line": 66
+          },
+          "start": {
+            "column": 5,
+            "line": 46
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "Ok(vec![SensorId::parse(\"mutated-sensor\").unwrap()])",
+      "span": {
+        "end": {
+          "column": 17,
+          "line": 66
+        },
+        "start": {
+          "column": 5,
+          "line": 46
+        }
+      }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence -> SensorEvaluation with Default::default()\n@@ -67,17 +67,17 @@\n }\n \n pub fn evaluate_sensor_evidence(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> SensorEvaluation {\n-    evaluate_sensor_evidence_inner(profile, required_sensor_ids, evidence, adequacy, None)\n+    Default::default() /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn evaluate_sensor_evidence_for_change(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n",
+        "file": "crates/policy-core/src/sensors.rs",
+        "function": {
+          "function_name": "evaluate_sensor_evidence",
+          "return_type": "-> SensorEvaluation",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 76
+            },
+            "start": {
+              "column": 1,
+              "line": 69
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/sensors.rs:75:5: replace evaluate_sensor_evidence -> SensorEvaluation with Default::default()",
+        "package": "policy-core",
+        "replacement": "Default::default()",
+        "span": {
+          "end": {
+            "column": 91,
+            "line": 75
+          },
+          "start": {
+            "column": 5,
+            "line": 75
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "SensorEvaluation { status: SensorEvaluationStatus::Passed, reasons: Vec::new() }",
+      "span": {
+        "end": {
+          "column": 91,
+          "line": 75
+        },
+        "start": {
+          "column": 5,
+          "line": 75
+        }
+      }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence_for_change -> Result<SensorEvaluation, SensorResolutionError> with Ok(Default::default())\n@@ -77,28 +77,17 @@\n \n pub fn evaluate_sensor_evidence_for_change(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> Result<SensorEvaluation, SensorResolutionError> {\n-    let required = resolve_required_sensors(profile, changed_paths, risk)?;\n-    let paths = changed_paths\n-        .iter()\n-        .map(|path| normalize_path(path))\n-        .collect::<Result<Vec<_>, _>>()?;\n-    Ok(evaluate_sensor_evidence_inner(\n-        profile,\n-        &required,\n-        evidence,\n-        adequacy,\n-        Some((&paths, risk)),\n-    ))\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn evaluate_sensor_evidence_inner(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n     context: Option<(&[String], Risk)>,\n",
+        "file": "crates/policy-core/src/sensors.rs",
+        "function": {
+          "function_name": "evaluate_sensor_evidence_for_change",
+          "return_type": "-> Result<SensorEvaluation, SensorResolutionError>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 97
+            },
+            "start": {
+              "column": 1,
+              "line": 78
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/sensors.rs:85:5: replace evaluate_sensor_evidence_for_change -> Result<SensorEvaluation, SensorResolutionError> with Ok(Default::default())",
+        "package": "policy-core",
+        "replacement": "Ok(Default::default())",
+        "span": {
+          "end": {
+            "column": 7,
+            "line": 96
+          },
+          "start": {
+            "column": 5,
+            "line": 85
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "Ok(SensorEvaluation { status: SensorEvaluationStatus::Passed, reasons: Vec::new() })",
+      "span": {
+        "end": {
+          "column": 7,
+          "line": 96
+        },
+        "start": {
+          "column": 5,
+          "line": 85
+        }
+      }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence_inner -> SensorEvaluation with Default::default()\n@@ -98,182 +98,17 @@\n \n fn evaluate_sensor_evidence_inner(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n     context: Option<(&[String], Risk)>,\n ) -> SensorEvaluation {\n-    if let Err(error) = validate_profile(profile) {\n-        return SensorEvaluation {\n-            status: SensorEvaluationStatus::Inconclusive,\n-            reasons: vec![Reason {\n-                code: \"PK-SENSOR-PROFILE-INVALID\".to_owned(),\n-                message: error.to_string(),\n-            }],\n-        };\n-    }\n-    let definitions = profile\n-        .sensors\n-        .iter()\n-        .map(|sensor| (&sensor.id, sensor))\n-        .collect::<BTreeMap<_, _>>();\n-    let mut by_id: BTreeMap<&SensorId, Vec<&SensorEvidence>> = BTreeMap::new();\n-    for item in evidence {\n-        by_id.entry(&item.sensor_id).or_default().push(item);\n-    }\n-\n-    let mut reasons = Vec::new();\n-    for sensor_id in required_sensor_ids {\n-        let Some(items) = by_id.get(sensor_id) else {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-MISSING\",\n-                \"required sensor evidence is missing\",\n-            );\n-            continue;\n-        };\n-        if items.len() != 1 {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-DUPLICATE\",\n-                \"required sensor evidence must occur exactly once\",\n-            );\n-            continue;\n-        }\n-\n-        let item = items[0];\n-        let definition = definitions.get(sensor_id).copied();\n-        if definition.is_none() {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-UNKNOWN\",\n-                \"required sensor is absent from the sensor profile\",\n-            );\n-            continue;\n-        }\n-        match item.status {\n-            SensorStatus::Passed => {\n-                if definition\n-                    .unwrap()\n-                    .result_binding\n-                    .as_ref()\n-                    .is_some_and(|binding| {\n-                        item.configuration_digest.as_ref() != Some(&binding.configuration_digest)\n-                            || item.parser_version.as_deref()\n-                                != Some(binding.parser_version.as_str())\n-                            || item.resolved_command != binding.resolved_command\n-                    })\n-                {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-RESULT-BINDING\",\n-                        \"sensor result does not match its policy-bound configuration, parser, and command\",\n-                    );\n-                }\n-                // Partial counts are rejected by `validate_typed_result`; here the\n-                // profile additionally forbids the all-absent form.\n-                if definition.unwrap().result_requirement\n-                    == Some(SensorResultRequirement::TestCounts)\n-                    && item.discovered.is_none()\n-                {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-RESULT-INCOMPLETE\",\n-                        \"sensor profile requires discovered, executed, and passed test counts\",\n-                    );\n-                }\n-                validate_typed_result(item, &mut reasons);\n-                if let Some(exit_code) = item.exit_code {\n-                    if !definition.unwrap().accepted_exit_codes.contains(&exit_code) {\n-                        insert_reason(\n-                            &mut reasons,\n-                            \"PK-SENSOR-EXIT-CODE\",\n-                            \"sensor exit code is not accepted by the profile\",\n-                        );\n-                    }\n-                }\n-            }\n-            SensorStatus::Failed => {\n-                validate_typed_result(item, &mut reasons);\n-                insert_reason(\n-                    &mut reasons,\n-                    \"PK-SENSOR-FAILED\",\n-                    \"a required sensor reported an executed failure\",\n-                );\n-            }\n-            SensorStatus::TimedOut => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-TIMEOUT\",\n-                \"a required sensor timed out\",\n-            ),\n-            SensorStatus::Skipped => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-SKIPPED\",\n-                \"a required sensor was skipped\",\n-            ),\n-            SensorStatus::Unparsable => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-UNPARSABLE\",\n-                \"a required sensor result could not be parsed\",\n-            ),\n-            SensorStatus::NotApplicable => {\n-                let condition_matches_context = context\n-                    .zip(item.not_applicable_condition_id.as_deref())\n-                    .is_some_and(|((paths, risk), condition_id)| {\n-                        definition\n-                            .unwrap()\n-                            .not_applicable_when\n-                            .iter()\n-                            .any(|condition| {\n-                                condition.id == condition_id\n-                                    && condition_covers(condition, paths, risk)\n-                            })\n-                    });\n-                let reason_recorded = item\n-                    .not_applicable_reason\n-                    .as_deref()\n-                    .is_some_and(|reason| !reason.trim().is_empty());\n-                if !condition_matches_context || !reason_recorded {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-NOT-APPLICABLE-INVALID\",\n-                        \"not-applicable evidence needs a declared condition and reason\",\n-                    );\n-                }\n-            }\n-        }\n-    }\n-\n-    evaluate_adequacy(&profile.adequacy, adequacy, &mut reasons);\n-\n-    let status = if reasons.iter().any(|reason| {\n-        matches!(\n-            reason.code.as_str(),\n-            \"PK-SENSOR-FAILED\"\n-                | \"PK-SENSOR-EXIT-CODE\"\n-                | \"PK-SENSOR-RESULT-COUNT-MISMATCH\"\n-                | \"PK-ADEQ-NO-TESTS\"\n-                | \"PK-ADEQ-COUNT-MISMATCH\"\n-                | \"PK-ADEQ-CRITERION-UNMAPPED\"\n-                | \"PK-ADEQ-BEHAVIOR-UNMAPPED\"\n-                | \"PK-ADEQ-NEGATIVE-CASE-MISSING\"\n-                | \"PK-ADEQ-UNEXECUTED-MAPPING\"\n-                | \"PK-ADEQ-DUPLICATE-TEST\"\n-        )\n-    }) {\n-        SensorEvaluationStatus::Blocked\n-    } else if reasons.is_empty() {\n-        SensorEvaluationStatus::Passed\n-    } else {\n-        SensorEvaluationStatus::Inconclusive\n-    };\n-\n-    SensorEvaluation { status, reasons }\n+    Default::default() /* ~ changed by cargo-mutants ~ */\n }\n \n fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError> {\n     profile\n         .validate_version()\n         .map_err(SensorResolutionError::InvalidVersion)?;\n     let mut sensors = BTreeSet::new();\n     for sensor in &profile.sensors {\n",
+        "file": "crates/policy-core/src/sensors.rs",
+        "function": {
+          "function_name": "evaluate_sensor_evidence_inner",
+          "return_type": "-> SensorEvaluation",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 272
+            },
+            "start": {
+              "column": 1,
+              "line": 99
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/sensors.rs:106:5: replace evaluate_sensor_evidence_inner -> SensorEvaluation with Default::default()",
+        "package": "policy-core",
+        "replacement": "Default::default()",
+        "span": {
+          "end": {
+            "column": 41,
+            "line": 271
+          },
+          "start": {
+            "column": 5,
+            "line": 106
+          }
+        }
+      },
+      "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
+      "replacement": "SensorEvaluation { status: SensorEvaluationStatus::Passed, reasons: Vec::new() }",
+      "span": {
+        "end": {
+          "column": 41,
+          "line": 271
+        },
+        "start": {
+          "column": 5,
+          "line": 106
+        }
+      }
+    },
+    {
       "historical_diff": "controller/mutants.out/diff/crates__policy-ci__src__controller.rs_line_121_col_5.diff",
       "historical_log": "controller/mutants.out/log/crates__policy-ci__src__controller.rs_line_121_col_5.log",
       "original": {
@@ -581,6 +765,7 @@
     "crates/policy-core/src/post_merge.rs": "f0f97a1279c1f8b75b0271b651ad44139ecc0951cdce5318b6022e38c3462ada",
     "crates/policy-core/src/pre_merge.rs": "445ccbc8892e5a7e1c0fdcaa472692a0b8c23440f20c9ef98a4bf4f07d2a9b60",
     "crates/policy-core/src/provenance.rs": "4e9246e32c4a14ff769e234c64b4761d75263b13f0f0a98c6d8c9e8d88d4c4a2",
-    "crates/policy-core/src/reviews.rs": "8b5c591432f9d0acb01b6586e46b6c89deaf7f842e368f64acca2a82fb287806"
+    "crates/policy-core/src/reviews.rs": "8b5c591432f9d0acb01b6586e46b6c89deaf7f842e368f64acca2a82fb287806",
+    "crates/policy-core/src/sensors.rs": "e6cbe8ecf650402a1f1d38a37905e23b1a2212994396608b9514e56dcf141b4a"
   }
 }
