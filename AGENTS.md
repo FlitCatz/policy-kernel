@@ -4,6 +4,11 @@ Implement this repository's execution logic, CLIs, verification tools, report
 converters, bootstrap installer, and tests in Rust. Do not add Python scripts.
 Limit shell and YAML to the minimum needed to invoke Rust tools and configure CI.
 
+Exception: CI may install and run the exact-version-pinned `lat.md` CLI with
+`--ignore-scripts` solely to validate the documentation graph (`lat check`). It
+must not execute repository logic, evaluate policy, or produce evidence. Change
+its pinned version deliberately and verify `lat check` locally with that version.
+
 # Documentation maintenance
 
 - Update `README.md` and `README_KO.md` together when CLI behavior, profiles,
@@ -40,7 +45,8 @@ index. Neither is policy evidence nor a current-status authority.
 - Every `lat.md/` section needs a leading paragraph of at most 250 characters.
   Add each new `lat.md/` file to `lat.md/lat.md`.
 - Run `lat check` after every change and before committing; it must report
-  `All checks passed`. The generic lat checklist between the `lat:begin` and
+  `All checks passed`. The Release verification workflow enforces the same check
+  with the pinned CLI version. The generic lat checklist between the `lat:begin` and
   `lat:end` markers below is maintained by `lat init`; do not edit it by hand.
   `lat init` also installs local agent hooks under the git-ignored `.claude/` and
   `.codex/` directories and keeps its search index in the git-ignored
