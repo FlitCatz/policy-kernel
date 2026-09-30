@@ -20,3 +20,29 @@ Limit shell and YAML to the minimum needed to invoke Rust tools and configure CI
   specifications, and reviews in `docs/archive/`.
 - Check documented commands, arguments, and exit codes against the implementation.
   After documentation changes, verify Markdown relative links and `git diff --check`.
+
+# Knowledge graph and code index maintenance
+
+`lat.md/` is a [lat.md](https://github.com/vercel-labs/lat.md) navigation and code
+anchoring layer; `.codegraph/` is a local [CodeGraph](https://github.com/colbymchenry/codegraph)
+index. Neither is policy evidence nor a current-status authority.
+
+- In the same change that alters behavior, architecture, contracts, tests, Task
+  status, or current status, update the affected `lat.md/` sections. Keep
+  `lat.md/status.md` a summary of `docs/status.md` that claims nothing more, and
+  list new Task landing pages in `lat.md/tasks.md`.
+- `lat.md/kernel.md` anchors authorization rules to Rust symbols with
+  `[[path/to/file.rs#symbol]]` (use `[[file.rs#Type#method]]` for impl methods).
+  When adding, renaming, moving, or removing an anchored symbol or rule, update
+  its section. Prefer these forward references to `// @lat:` comments in source
+  files covered by `verification/mutation-contract.json`, whose hashes and spans
+  are pinned.
+- Every `lat.md/` section needs a leading paragraph of at most 250 characters.
+  Add each new `lat.md/` file to `lat.md/lat.md`.
+- Run `lat check` after every change and before committing; it must report
+  `All checks passed`. The "No init version recorded" warning is expected until a
+  maintainer runs `lat init` interactively.
+- After changing source files, run `codegraph sync`. The index auto-syncs only
+  while its MCP daemon runs, and `codegraph status` can report "up to date" for a
+  stale index, so confirm a new or renamed symbol with `codegraph query <symbol>`
+  before relying on the index. Never commit `.codegraph/`.

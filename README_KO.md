@@ -229,6 +229,30 @@ MCP 설치 뒤에는 Codex를 재시작하세요. 인덱스를 사용할 수 있
 `codegraph explore "How does pre-merge evaluation flow?"` 또는
 `codegraph impact PolicySnapshot` 같은 명령을 사용할 수 있습니다.
 
+인덱스는 CodeGraph MCP daemon이 실행 중일 때만 자동 동기화되며, `codegraph status`는
+뒤처진 인덱스도 "up to date"로 표시할 수 있습니다. 소스를 수정한 뒤에는
+`codegraph sync`를 실행하거나, 선택적으로 로컬 hook을 설치합니다.
+
+```console
+printf '#!/bin/sh\ncommand -v codegraph >/dev/null && codegraph sync -q || true\n' > .git/hooks/post-commit
+chmod +x .git/hooks/post-commit
+```
+
+## 지식 그래프
+
+[`lat.md/`](lat.md/lat.md)는 [lat.md](https://github.com/vercel-labs/lat.md) 그래프로,
+문서를 서로 연결하고 [`lat.md/kernel.md`](lat.md/kernel.md)에서 권한 판정 규칙을 Rust
+심볼에 고정합니다. CodeGraph와 마찬가지로 탐색 보조 수단이며 정책 증거나 현재 상태의
+근거가 아닙니다. CLI를 설치하고 변경할 때마다 링크와 코드 참조를 검증합니다.
+
+```console
+npm install -g lat.md
+lat check
+```
+
+고정된 심볼의 이름이 바뀌거나 삭제되면 `lat check`가 실패합니다. 유지 규칙은
+[AGENTS.md](AGENTS.md)에 있습니다.
+
 ## CI 통합
 
 체크인된 복합 [GitHub Action](action/README.md)은 소유자가 미리 빌드·설치한 `policy-ci`를

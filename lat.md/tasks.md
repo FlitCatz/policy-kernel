@@ -1,7 +1,6 @@
 # Tasks
 
-[docs/tasks/README.md](../docs/tasks/README.md) is the canonical Task index.
-Each landing page owns a current summary and links to archived evidence.
+[docs/tasks/README.md](../docs/tasks/README.md) is the canonical Task index; each landing page owns its current summary and links to archived evidence.
 
 - [Task 01](../docs/tasks/task-01/README.md)
 - [Task 02](../docs/tasks/task-02/README.md)
@@ -18,8 +17,8 @@ Each landing page owns a current summary and links to archived evidence.
 - [Task 13](../docs/tasks/task-13/README.md)
 - [Task 14](../docs/tasks/task-14/README.md)
 - [Task 15 — strict mutation locally verified; operational follow-up pending](../docs/tasks/task-15/README.md)
-
-See [[status]] for the repository-wide latest state and
-[[trust-boundaries]] for authority limits.
-
 - [Task 16 — explicit TJERP-shaped consumer](../docs/tasks/task-16/README.md)
+- [Task 17 — project-owned frontend tool versions](../docs/tasks/task-17/README.md)
+
+See [[status]] for the repository-wide latest state, [[trust-boundaries]] for
+authority limits, and [[kernel]] for where each rule is enforced in code.
