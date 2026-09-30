@@ -66,10 +66,11 @@ pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
         .reviews
         .iter()
         .any(|review| review.status == ReviewStatus::Approved);
-    let has_blocked = input
-        .reviews
-        .iter()
-        .any(|review| review.status == ReviewStatus::Blocked);
+    // A blocked report whose actionable findings are all validly waived no longer
+    // contradicts an approval; otherwise adding an approval could weaken the result.
+    let has_blocked = input.reviews.iter().any(|review| {
+        review.status == ReviewStatus::Blocked && !blocked_report_is_waived(&input, review)
+    });
     if has_approved && has_blocked {
         insert_reason(
             &mut reasons,
@@ -383,6 +384,21 @@ fn waiver_state(
         );
     }
     (true, None)
+}
+
+fn blocked_report_is_waived(input: &ReviewEvaluationInput, review: &ReviewEvidence) -> bool {
+    let mut actionable = input
+        .findings
+        .iter()
+        .filter(|finding| {
+            finding.reviewer_execution_id == review.execution_id
+                && matches!(
+                    finding.severity,
+                    FindingSeverity::Medium | FindingSeverity::High | FindingSeverity::Critical
+                )
+        })
+        .peekable();
+    actionable.peek().is_some() && actionable.all(|finding| waiver_state(input, &finding.id).0)
 }
 
 fn insert_reason(reasons: &mut Vec<Reason>, code: &str, message: &str) {

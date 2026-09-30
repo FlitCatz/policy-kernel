@@ -51,6 +51,13 @@ the live shadow window, protected-merge evidence, and independent-provider
 reviews in the [promotion protocol](docs/promotion.md) remain separate
 requirements.
 
+A 2026-09-30 [codebase review remediation](docs/archive/reviews/2026-09-30-codebase-review-remediation.md)
+tightens kernel semantics: a sensor not-applicable exemption must cover every
+changed path, a fully waived blocked review no longer conflicts with an approval,
+and a gate without a reason cannot leave readiness intact. Signed controller bytes
+now come from explicit canonical JSON. That record contains local verification
+only; no hosted result or promotion is claimed for it.
+
 The project is Rust-first. Repository execution logic, CLIs, verification tools,
 report conversion, bootstrap installation, and tests are Rust. JavaScript,
 TypeScript, and C# occur only in the approved native consumer fixtures and

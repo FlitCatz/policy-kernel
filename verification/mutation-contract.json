@@ -179,7 +179,7 @@
         }
       },
       "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
-      "replacement": "let mut gates = Gates::default();\n    validate_policy_and_bindings(input, &mut gates);\n    validate_observations(input, &mut gates);\n\n    let provenance = validate_provenance(\n        input.mode,\n        &input.evidence,\n        &input.evaluation_time,\n        input.policy.max_evidence_age_seconds,\n    );\n    gates.extend(PreMergeStatus::Inconclusive, provenance.reasons().to_vec());\n    let knowledge = crate::provenance::validate_required_knowledge(input);\n    gates.extend(PreMergeStatus::Inconclusive, knowledge.reasons().to_vec());\n    validate_execution(input, &mut gates);\n    validate_sensors(input, &mut gates);\n\n    // All fields in these typed contracts serialize to integral JSON data.\n    let evidence_digest = pre_merge_evidence_digest(&input.evidence)\n        .expect(\"typed evidence has a canonical JSON representation\");\n    let reviews = evaluate_reviews(ReviewEvaluationInput {\n        mode: input.mode,\n        policy: input.policy.clone(),\n        repository: input.pull_request.repository.clone(),\n        head_sha: input.pull_request.head_sha.clone(),\n        evidence_digest: evidence_digest.clone(),\n        evaluation_time: input.evaluation_time.clone(),\n        modifications: input.evidence.modifications.clone(),\n        reviews: input.evidence.reviews.clone(),\n        findings: input.evidence.findings.clone(),\n        waivers: input.evidence.waivers.clone(),\n    });\n    gates.extend(\n        match reviews.status {\n            ReviewStatus::Approved => PreMergeStatus::ReadyToMerge,\n            ReviewStatus::Blocked => PreMergeStatus::Blocked,\n            ReviewStatus::Inconclusive => PreMergeStatus::Inconclusive,\n        },\n        reviews.reasons,\n    );\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n    let mut decision = PreMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        mode: input.mode,\n        advisory: input.mode == EvaluationMode::Advisory,\n        status: PreMergeStatus::ReadyToMerge,\n        binding: DecisionBinding {\n            repository: input.pull_request.repository.clone(),\n            pull_request_number: input.pull_request.pull_request_number,\n            head_sha: input.pull_request.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        reasons: gates.reasons,\n        // Excluded from the hash preimage; initialized with a valid typed digest.\n        decision_digest: evidence_digest,\n    };\n    decision.decision_digest = decision_digest(input, &decision)\n        .expect(\"typed pre-merge input has a canonical JSON representation\");\n    decision",
+      "replacement": "let mut gates = Gates::default();\n    validate_policy_and_bindings(input, &mut gates);\n    validate_observations(input, &mut gates);\n\n    let provenance = validate_provenance(\n        input.mode,\n        &input.evidence,\n        &input.evaluation_time,\n        input.policy.max_evidence_age_seconds,\n    );\n    gates.validation(provenance.reasons());\n    let knowledge = crate::provenance::validate_required_knowledge(input);\n    gates.validation(knowledge.reasons());\n    validate_execution(input, &mut gates);\n    validate_sensors(input, &mut gates);\n\n    // All fields in these typed contracts serialize to integral JSON data.\n    let evidence_digest = pre_merge_evidence_digest(&input.evidence)\n        .expect(\"typed evidence has a canonical JSON representation\");\n    let reviews = evaluate_reviews(ReviewEvaluationInput {\n        mode: input.mode,\n        policy: input.policy.clone(),\n        repository: input.pull_request.repository.clone(),\n        head_sha: input.pull_request.head_sha.clone(),\n        evidence_digest: evidence_digest.clone(),\n        evaluation_time: input.evaluation_time.clone(),\n        modifications: input.evidence.modifications.clone(),\n        reviews: input.evidence.reviews.clone(),\n        findings: input.evidence.findings.clone(),\n        waivers: input.evidence.waivers.clone(),\n    });\n    gates.extend(\n        match reviews.status {\n            ReviewStatus::Approved => PreMergeStatus::ReadyToMerge,\n            ReviewStatus::Blocked => PreMergeStatus::Blocked,\n            ReviewStatus::Inconclusive => PreMergeStatus::Inconclusive,\n        },\n        reviews.reasons,\n    );\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n    let mut decision = PreMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        mode: input.mode,\n        advisory: input.mode == EvaluationMode::Advisory,\n        status: PreMergeStatus::ReadyToMerge,\n        binding: DecisionBinding {\n            repository: input.pull_request.repository.clone(),\n            pull_request_number: input.pull_request.pull_request_number,\n            head_sha: input.pull_request.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        reasons: gates.reasons,\n        // Excluded from the hash preimage; initialized with a valid typed digest.\n        decision_digest: evidence_digest,\n    };\n    decision.decision_digest = decision_digest(input, &decision)\n        .expect(\"typed pre-merge input has a canonical JSON representation\");\n    decision",
       "span": {
         "end": {
           "column": 13,
@@ -390,7 +390,7 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 232
+              "line": 233
             },
             "start": {
               "column": 1,
@@ -405,7 +405,7 @@
         "span": {
           "end": {
             "column": 41,
-            "line": 231
+            "line": 232
           },
           "start": {
             "column": 5,
@@ -418,7 +418,7 @@
       "span": {
         "end": {
           "column": 41,
-          "line": 231
+          "line": 232
         },
         "start": {
           "column": 5,
@@ -576,11 +576,11 @@
     "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
     "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
     "crates/policy-contracts/src/policy.rs": "ada1e048c23941d05af058e3ff5b8238fa9d58bbe39e60090e836c6c72005c5e",
-    "crates/policy-ci/src/controller.rs": "15a4f7d935a56eb487088cc3d26a7100f98e17b772ba941d9fb283cee64b17ed",
-    "crates/policy-core/src/canonical.rs": "7b03518f48b656807264e8fecd4327a2038e736cbdac63bd7a31000d2a740315",
+    "crates/policy-ci/src/controller.rs": "ddc342aa2aaa4e83ef1abe8a018b3cedb3c6dde24d9aa0d58d9c136e7d1ba318",
+    "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
     "crates/policy-core/src/post_merge.rs": "f0f97a1279c1f8b75b0271b651ad44139ecc0951cdce5318b6022e38c3462ada",
-    "crates/policy-core/src/pre_merge.rs": "7f7cd087459dda05ce449f66356df665c111038cc6a70530759fb6ef981a2f9f",
+    "crates/policy-core/src/pre_merge.rs": "445ccbc8892e5a7e1c0fdcaa472692a0b8c23440f20c9ef98a4bf4f07d2a9b60",
     "crates/policy-core/src/provenance.rs": "4e9246e32c4a14ff769e234c64b4761d75263b13f0f0a98c6d8c9e8d88d4c4a2",
-    "crates/policy-core/src/reviews.rs": "264062cc5eaa78143809e2f1f50baa4e7404cc0c9470ad35c79b43ec76c104eb"
+    "crates/policy-core/src/reviews.rs": "8b5c591432f9d0acb01b6586e46b6c89deaf7f842e368f64acca2a82fb287806"
   }
 }

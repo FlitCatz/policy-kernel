@@ -20,6 +20,18 @@ feature head `f75796a6a2bf26ca781df949aac7be03788e3567`. No authoritative
 required-check decision, protected-branch merge or production promotion is
 recorded here.
 
+## 2026-09-30 codebase review remediation
+
+The [remediation record](archive/reviews/2026-09-30-codebase-review-remediation.md)
+covers a local change set on top of `91ee415`. It closes a not-applicable
+exemption that matched any changed path, a review conflict that an extra approval
+could trigger, and a pre-merge gate that ignored reasonless non-ready results.
+Controller signatures now use explicit canonical JSON, and `policy-ci` JSON
+inputs use the controller's bounded reader. The mutation contract was reconciled
+with the edited sources. It records local checks only. Hosted results, a new
+full mutation run and production promotion are not claimed. The Task 17 hosted
+observations above remain bound to `f75796a`.
+
 ## Task 16 consumer extension
 
 [Task 16](tasks/task-16/README.md) adds opt-in project schema 3/selection schema 2

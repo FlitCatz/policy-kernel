@@ -78,6 +78,9 @@ bound to its versioned digest and are checked by the evaluation core.
 
 The observer signs `policy_ci::controller::canonical(observation)`: typed JSON
 with recursively sorted object keys, compact encoding and no trailing newline.
+These bytes come from `policy_core::canonical_json`, which sorts keys explicitly
+instead of relying on serde_json feature selection and rejects floating-point
+numbers; `canonical_sha256` hashes the same bytes.
 Each producer signs the bytes returned by `producer_payload(observation,
 execution_id)`, a canonical object with `domain` equal to
 `policy-kernel/controller-producer/v1`, full `binding`, `evidence_digest` equal

@@ -19,6 +19,13 @@ pub fn canonical_sha256<T: Serialize>(value: &T) -> Result<Sha256Digest, Canonic
     Ok(Sha256Digest::parse(digest).expect("SHA-256 always produces a valid digest"))
 }
 
+/// Canonical JSON bytes: sorted object keys and integral numbers only. Signed
+/// payloads use this instead of relying on serde_json's map ordering features.
+pub fn canonical_json<T: Serialize>(value: &T) -> Result<Vec<u8>, CanonicalError> {
+    let value = normalize(serde_json::to_value(value)?)?;
+    Ok(serde_json::to_vec(&value)?)
+}
+
 fn normalize(value: Value) -> Result<Value, CanonicalError> {
     match value {
         Value::Number(number) if !number.is_i64() && !number.is_u64() => {

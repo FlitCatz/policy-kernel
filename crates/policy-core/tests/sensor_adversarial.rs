@@ -144,6 +144,56 @@ fn not_applicable_must_match_an_explicit_na_condition_for_this_change() {
 }
 
 #[test]
+fn not_applicable_condition_must_cover_every_changed_path() {
+    let mut item = evidence(SensorStatus::NotApplicable, None);
+    item.not_applicable_condition_id = Some("docs-only".into());
+    item.not_applicable_reason = Some("documentation-only change".into());
+
+    for paths in [
+        &["docs/readme.md", "src/lib.rs"][..],
+        &["src/lib.rs", "docs/readme.md"][..],
+        &[][..],
+    ] {
+        let mixed = evaluate_sensor_evidence_for_change(
+            &profile(),
+            paths,
+            Risk::Low,
+            &[item.clone()],
+            None,
+        )
+        .unwrap();
+        assert_eq!(
+            mixed.status,
+            SensorEvaluationStatus::Inconclusive,
+            "{paths:?}"
+        );
+        assert!(mixed.has_reason("PK-SENSOR-NOT-APPLICABLE-INVALID"));
+    }
+
+    let mut multi = profile();
+    multi.sensors[0].not_applicable_when = vec![SensorCondition {
+        id: "docs-only".into(),
+        risks: vec![],
+        path_globs: vec!["docs/**".into(), "*.md".into()],
+    }];
+    let covered = evaluate_sensor_evidence_for_change(
+        &multi,
+        &["docs/guide.md", "README.md"],
+        Risk::Low,
+        &[item.clone()],
+        None,
+    )
+    .unwrap();
+    assert_eq!(covered.status, SensorEvaluationStatus::Passed);
+
+    multi.sensors[0].not_applicable_when[0].risks = vec![Risk::Low];
+    let wrong_risk =
+        evaluate_sensor_evidence_for_change(&multi, &["docs/guide.md"], Risk::High, &[item], None)
+            .unwrap();
+    assert_eq!(wrong_risk.status, SensorEvaluationStatus::Inconclusive);
+}
+
+#[test]
 fn malformed_glob_and_duplicate_sensor_ids_fail_closed() {
     let mut malformed = profile();
     malformed.sensors[0].not_applicable_when = vec![condition("bad", "[")];

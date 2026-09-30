@@ -43,6 +43,13 @@ Release 검증, Rust 1.85/1.95 × Ubuntu/macOS 매트릭스와 네 가지 네이
 이것이 운영 환경 프로모션 완료를 뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에
 정의된 실제 shadow 기간, 보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
 
+2026-09-30 [코드베이스 리뷰 보완](docs/archive/reviews/2026-09-30-codebase-review-remediation.md)은
+커널 판정을 강화합니다. 센서 not-applicable 예외는 변경된 모든 경로를 덮어야 하고,
+모든 조치 대상 finding이 유효하게 waiver된 blocked 리뷰는 승인 리뷰와 충돌로 보지 않으며,
+사유 없이 준비 상태를 보류한 gate가 준비 상태를 유지할 수 없습니다. controller 서명 바이트는
+명시적 canonical JSON에서 만듭니다. 이 기록은 로컬 검증만 담고 있으며 원격 결과나 프로모션을
+주장하지 않습니다.
+
 프로젝트는 Rust 우선 정책을 따릅니다. 저장소의 실행 로직, CLI, 검증 도구, 보고서 변환,
 bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript와 C#은 `examples/`
 아래에서 승인된 네이티브 소비 프로젝트 fixture 및 선언형 도구 설정에만 사용합니다.

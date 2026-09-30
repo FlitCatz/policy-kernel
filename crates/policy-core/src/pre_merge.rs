@@ -18,9 +18,9 @@ pub fn evaluate_pre_merge(input: &PreMergeEvaluationInput) -> PreMergeDecision {
         &input.evaluation_time,
         input.policy.max_evidence_age_seconds,
     );
-    gates.extend(PreMergeStatus::Inconclusive, provenance.reasons().to_vec());
+    gates.validation(provenance.reasons());
     let knowledge = crate::provenance::validate_required_knowledge(input);
-    gates.extend(PreMergeStatus::Inconclusive, knowledge.reasons().to_vec());
+    gates.validation(knowledge.reasons());
     validate_execution(input, &mut gates);
     validate_sensors(input, &mut gates);
 
@@ -365,15 +365,29 @@ impl Default for Gates {
 }
 
 impl Gates {
-    fn extend(&mut self, status: PreMergeStatus, reasons: Vec<Reason>) {
+    /// A non-ready gate always lowers the status. One without an explanation is
+    /// itself a defect, recorded instead of being silently treated as ready.
+    fn extend(&mut self, status: PreMergeStatus, mut reasons: Vec<Reason>) {
+        if status != PreMergeStatus::ReadyToMerge && reasons.is_empty() {
+            reasons.push(Reason {
+                code: "PK-PRE-GATE-UNEXPLAINED".into(),
+                message: "a gate withheld readiness without a reason".into(),
+            });
+        }
         if status == PreMergeStatus::Blocked
             || (status == PreMergeStatus::Inconclusive
-                && self.status == PreMergeStatus::ReadyToMerge
-                && !reasons.is_empty())
+                && self.status == PreMergeStatus::ReadyToMerge)
         {
             self.status = status;
         }
         self.reasons.extend(reasons);
+    }
+
+    /// Validation results are valid exactly when they carry no reasons.
+    fn validation(&mut self, reasons: &[Reason]) {
+        if !reasons.is_empty() {
+            self.extend(PreMergeStatus::Inconclusive, reasons.to_vec());
+        }
     }
 
     fn unknown(&mut self, code: &str, message: &str) {
@@ -394,5 +408,31 @@ impl Gates {
                 message: message.into(),
             }],
         );
+    }
+}
+
+#[cfg(test)]
+mod gate_tests {
+    use super::*;
+
+    #[test]
+    fn unexplained_non_ready_gates_fail_closed_with_a_reason() {
+        for status in [PreMergeStatus::Inconclusive, PreMergeStatus::Blocked] {
+            let mut gates = Gates::default();
+            gates.extend(status, vec![]);
+            assert_eq!(gates.status, status);
+            assert_eq!(gates.reasons[0].code, "PK-PRE-GATE-UNEXPLAINED");
+        }
+        let mut blocked = Gates::default();
+        blocked.block("PK-TEST-BLOCK", "blocked first");
+        blocked.unknown("PK-TEST-UNKNOWN", "inconclusive later");
+        blocked.extend(PreMergeStatus::ReadyToMerge, vec![]);
+        assert_eq!(blocked.status, PreMergeStatus::Blocked);
+
+        let mut ready = Gates::default();
+        ready.extend(PreMergeStatus::ReadyToMerge, vec![]);
+        ready.validation(&[]);
+        assert_eq!(ready.status, PreMergeStatus::ReadyToMerge);
+        assert!(ready.reasons.is_empty());
     }
 }

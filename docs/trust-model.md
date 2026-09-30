@@ -27,6 +27,15 @@ missing evidence, stale timestamps, malformed digests, process failure, timeout,
 truncation and authentication errors cannot become success. Clock readings and
 GitHub access stay outside the core.
 
+Sensor `required_when` conditions apply when any changed path matches. A
+`not_applicable_when` exemption is valid only when its risks match and every
+changed path matches one of its `path_globs`; an empty known change cannot be
+exempted by a path condition. A mixed documentation and source change therefore
+cannot use a documentation-only exemption. A blocked review whose Medium, High
+and Critical findings are all validly waived does not conflict with an approving
+review; any unwaived, expired or low-only blocked report still does. A gate that
+withholds readiness without a reason fails closed with `PK-PRE-GATE-UNEXPLAINED`.
+
 ## Pre-merge and post-merge
 
 Local evaluation always sets advisory mode before computing the decision digest.

@@ -114,7 +114,7 @@ pub fn producer_payload(observation: &Observation, execution_id: &ExecutionId) -
 }
 
 pub fn canonical<T: Serialize>(value: &T) -> Result<Vec<u8>> {
-    Ok(serde_json::to_vec(&serde_json::to_value(value)?)?)
+    Ok(policy_core::canonical_json(value)?)
 }
 
 pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {
@@ -368,7 +368,7 @@ pub fn produce(config: &ControllerConfig, signed: &SignedObservation, output: &P
     let knowledge: Vec<_> = bundle
         .knowledge
         .iter()
-        .map(|item| format!("{:?}:{}", item.kind, item.source))
+        .map(|item| format!("{}:{}", knowledge_kind(item.kind), item.source))
         .collect();
     if !inv.complete
         || inv.contributors.is_empty()
@@ -544,9 +544,27 @@ pub fn produce(config: &ControllerConfig, signed: &SignedObservation, output: &P
     Ok(())
 }
 
+/// Stable inventory spelling, independent of the `Debug` representation that
+/// originally produced these keys.
+fn knowledge_kind(kind: KnowledgeKind) -> &'static str {
+    match kind {
+        KnowledgeKind::LatClaim => "LatClaim",
+        KnowledgeKind::CodeGraphIndex => "CodeGraphIndex",
+    }
+}
+
 #[cfg(test)]
 mod boundary_tests {
     use super::*;
+
+    #[test]
+    fn knowledge_inventory_keys_keep_their_signed_spelling() {
+        assert_eq!(knowledge_kind(KnowledgeKind::LatClaim), "LatClaim");
+        assert_eq!(
+            knowledge_kind(KnowledgeKind::CodeGraphIndex),
+            "CodeGraphIndex"
+        );
+    }
 
     #[cfg(unix)]
     #[test]
