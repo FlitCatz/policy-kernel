@@ -14,8 +14,11 @@ Node 26.10.0, npm 10.9.3/12.1.0, Vitest 4.1.11, Playwright 1.63.0 and Jest
 30.2.0. It includes actual report, retry, advisory and service-error negative
 cases. A [2026-09-30 follow-up](archive/reviews/2026-09-30-project-owned-tool-versions-follow-up.md)
 records a repeat matrix with retained raw reports and a successful supplied
-candidate fixture run. The hosted candidate job is configured but no Task 17 hosted result,
-protected-branch or production promotion is recorded here.
+candidate fixture run. [Hosted PR #7 observations](archive/reviews/2026-09-30-project-owned-tool-versions-hosted.md)
+record successful Task 17 native acceptance and release verification for exact
+feature head `f75796a6a2bf26ca781df949aac7be03788e3567`. No authoritative
+required-check decision, protected-branch merge or production promotion is
+recorded here.
 
 ## Task 16 consumer extension
 
