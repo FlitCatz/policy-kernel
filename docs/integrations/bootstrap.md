@@ -206,6 +206,10 @@ original contents and directories to create. The receipt is published last.
 Each publication is atomic; the complete set is not one atomic filesystem
 operation. A fully written commit marker is published atomically before cleanup.
 Publication failure attempts rollback; rollback failure preserves the journal.
+New files and directories are created with modes 0666 and 0777 filtered by the
+process umask, like ordinary tool output. The transaction directory is 0700
+because its journal holds prior file bytes. An update or rollback keeps the
+permissions of the file it replaces.
 
 ```console
 rtk cargo run --locked -p policy-bootstrap -- recover --target /absolute/project

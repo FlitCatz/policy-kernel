@@ -91,6 +91,7 @@ fn args(scope: &str) -> Result<Vec<String>> {
                 "reviews",
                 "pre_merge",
                 "post_merge",
+                "sensors",
             ],
             None,
         ),

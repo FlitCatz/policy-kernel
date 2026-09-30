@@ -232,7 +232,7 @@ fn rollback(root: &Root, journal: &Journal) -> Result<()> {
 
 fn transact(root: &Root, journal: &Journal) -> Result<()> {
     validate(root, journal)?;
-    root.mkdir(TRANSACTION)?; // Exclusive lock for all installer transactions.
+    root.mkdir_private(TRANSACTION)?; // Exclusive lock for all installer transactions.
     let staged = (|| -> Result<()> {
         for (index, entry) in journal.entries.iter().enumerate() {
             if let Some(bytes) = &entry.after {

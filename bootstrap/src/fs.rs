@@ -153,9 +153,19 @@ impl Root {
         }
     }
 
+    /// Published directories follow the process umask like ordinary tool output.
     pub fn mkdir(&self, path: &str) -> Result<()> {
+        self.mkdir_with(path, Mode::from_bits_truncate(0o777))
+    }
+
+    /// Transaction state holds prior file bytes; only the installing user may enter.
+    pub fn mkdir_private(&self, path: &str) -> Result<()> {
+        self.mkdir_with(path, Mode::RWXU)
+    }
+
+    fn mkdir_with(&self, path: &str, mode: Mode) -> Result<()> {
         let (parent, name) = self.parent(path)?;
-        mkdirat(&parent, name.as_str(), Mode::RWXU).map_err(std::io::Error::from)?;
+        mkdirat(&parent, name.as_str(), mode).map_err(std::io::Error::from)?;
         parent.sync_all()?;
         Ok(())
     }
@@ -166,7 +176,8 @@ impl Root {
             &parent,
             name.as_str(),
             OFlags::WRONLY | OFlags::CREATE | OFlags::EXCL | OFlags::NOFOLLOW | OFlags::CLOEXEC,
-            Mode::RUSR | Mode::WUSR,
+            // The umask decides readability; staging stays private inside its 0700 directory.
+            Mode::from_bits_truncate(0o666),
         )
         .map_err(std::io::Error::from)?
         .into();
@@ -196,6 +207,16 @@ impl Root {
         let (source_parent, source_name) = self.parent(source)?;
         let (dest_parent, dest_name) = self.parent(destination)?;
         if replace {
+            // Keep the replaced file's permissions; only its bytes are managed.
+            let current = statat(&dest_parent, dest_name.as_str(), AtFlags::SYMLINK_NOFOLLOW)
+                .map_err(std::io::Error::from)?;
+            rustix::fs::chmodat(
+                &source_parent,
+                source_name.as_str(),
+                Mode::from_raw_mode(current.st_mode) & Mode::from_bits_truncate(0o7777),
+                AtFlags::empty(),
+            )
+            .map_err(std::io::Error::from)?;
             rustix::fs::renameat(
                 &source_parent,
                 source_name.as_str(),
@@ -218,5 +239,23 @@ impl Root {
         dest_parent.sync_all()?;
         source_parent.sync_all()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    fn transaction_directories_stay_private() {
+        let temp = tempfile::tempdir().unwrap();
+        let root = Root::open(&temp.path().canonicalize().unwrap()).unwrap();
+        root.mkdir_private("private").unwrap();
+        let mode = std::fs::metadata(temp.path().join("private"))
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o700);
     }
 }

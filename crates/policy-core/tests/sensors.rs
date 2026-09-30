@@ -461,3 +461,100 @@ fn policy_bound_result_provenance_cannot_be_substituted() {
         assert!(result.has_reason("PK-SENSOR-PROFILE-INVALID"));
     }
 }
+
+fn evaluate_compile(
+    profile: &SensorProfile,
+    item: SensorEvidence,
+    adequacy: Option<&TestAdequacyEvidence>,
+) -> policy_core::SensorEvaluation {
+    evaluate_sensor_evidence(profile, &[id("compile")], &[item], adequacy)
+}
+
+#[test]
+fn every_typed_result_provenance_field_is_required_independently() {
+    let passing = evaluate_compile(
+        &profile(),
+        sensor("compile", SensorStatus::Passed),
+        Some(&adequate()),
+    );
+    assert_eq!(passing.status, SensorEvaluationStatus::Passed);
+
+    let damages: [fn(&mut SensorEvidence); 6] = [
+        |item| item.resolved_command.clear(),
+        |item| item.source_digest = None,
+        |item| item.configuration_digest = None,
+        |item| item.parser_version = None,
+        |item| item.parser_version = Some(" ".into()),
+        |item| item.exit_code = None,
+    ];
+    for (index, damage) in damages.into_iter().enumerate() {
+        let mut item = sensor("compile", SensorStatus::Passed);
+        damage(&mut item);
+        let actual = evaluate_compile(&profile(), item, Some(&adequate()));
+        assert_eq!(
+            actual.status,
+            SensorEvaluationStatus::Inconclusive,
+            "{index}"
+        );
+        assert!(actual.has_reason("PK-SENSOR-RESULT-INCOMPLETE"), "{index}");
+    }
+}
+
+#[test]
+fn each_adequacy_obligation_alone_requires_adequacy_evidence() {
+    let obligation = |acceptance: &[&str], behavior: &[&str], negative: &[&str]| {
+        let mut profile = profile();
+        profile.adequacy = TestAdequacyPolicy {
+            acceptance_criterion_ids: acceptance.iter().map(|s| (*s).into()).collect(),
+            changed_behavior_ids: behavior.iter().map(|s| (*s).into()).collect(),
+            negative_case_ids: negative.iter().map(|s| (*s).into()).collect(),
+        };
+        evaluate_compile(&profile, sensor("compile", SensorStatus::Passed), None)
+    };
+    for actual in [
+        obligation(&["AC-1"], &[], &[]),
+        obligation(&[], &["BEHAVIOR-1"], &[]),
+        obligation(&[], &[], &["NEG-1"]),
+    ] {
+        assert_eq!(actual.status, SensorEvaluationStatus::Inconclusive);
+        assert!(actual.has_reason("PK-ADEQ-MISSING"));
+    }
+    assert_eq!(
+        obligation(&[], &[], &[]).status,
+        SensorEvaluationStatus::Passed
+    );
+}
+
+#[test]
+fn a_mapping_without_tests_does_not_satisfy_its_requirement() {
+    let mut empty = adequate();
+    empty.acceptance_criteria[0].test_ids.clear();
+    let actual = evaluate_compile(
+        &profile(),
+        sensor("compile", SensorStatus::Passed),
+        Some(&empty),
+    );
+    assert_eq!(actual.status, SensorEvaluationStatus::Blocked);
+    assert!(actual.has_reason("PK-ADEQ-CRITERION-UNMAPPED"));
+
+    let mut other = adequate();
+    other.acceptance_criteria[0].requirement_id = "AC-OTHER".into();
+    let actual = evaluate_compile(
+        &profile(),
+        sensor("compile", SensorStatus::Passed),
+        Some(&other),
+    );
+    assert!(actual.has_reason("PK-ADEQ-CRITERION-UNMAPPED"));
+}
+
+#[test]
+fn blank_and_duplicate_condition_ids_are_each_rejected() {
+    let mut blank = profile();
+    blank.sensors[1].required_when[0].id = "  ".into();
+    assert!(resolve_required_sensors(&blank, &["src/api.rs"], Risk::High).is_err());
+
+    let mut duplicate = profile();
+    let condition = duplicate.sensors[1].required_when[0].clone();
+    duplicate.sensors[1].not_applicable_when.push(condition);
+    assert!(resolve_required_sensors(&duplicate, &["src/api.rs"], Risk::High).is_err());
+}

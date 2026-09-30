@@ -32,6 +32,12 @@ with the edited sources. It records local checks only. Hosted results, a new
 full mutation run and production promotion are not claimed. The Task 17 hosted
 observations above remain bound to `f75796a`.
 
+Hosted Release verification and Task 4 sensors later succeeded for the merge
+commit `0510f41`. The subsequent [remaining area review](archive/reviews/2026-09-30-remaining-area-review.md)
+makes bootstrap-installed files follow the umask and adds `sensors.rs` to the
+strict mutation gate (557 of 557 local mutants caught). It likewise records local
+checks only.
+
 ## Task 16 consumer extension
 
 [Task 16](tasks/task-16/README.md) adds opt-in project schema 3/selection schema 2

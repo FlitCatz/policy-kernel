@@ -56,7 +56,10 @@ tightens kernel semantics: a sensor not-applicable exemption must cover every
 changed path, a fully waived blocked review no longer conflicts with an approval,
 and a gate without a reason cannot leave readiness intact. Signed controller bytes
 now come from explicit canonical JSON. That record contains local verification
-only; no hosted result or promotion is claimed for it.
+only; no hosted result or promotion is claimed for it. A follow-up
+[remaining area review](docs/archive/reviews/2026-09-30-remaining-area-review.md)
+makes bootstrap-installed files follow the umask and extends the strict mutation
+gate to sensor evaluation, also with local verification only.
 
 The project is Rust-first. Repository execution logic, CLIs, verification tools,
 report conversion, bootstrap installation, and tests are Rust. JavaScript,
