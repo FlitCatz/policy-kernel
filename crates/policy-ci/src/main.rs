@@ -384,6 +384,11 @@ fn evaluate(options: Options, runtime: Runtime, post_merge: bool) -> Result<bool
             &receipt.repository,
             receipt.pull_request_number,
         )?;
+        let target = merge
+            .target_branch
+            .as_deref()
+            .ok_or("merge receipt lacks its target branch")?;
+        github_adapter::validate_merge_protection(&merge, &api.branch(owner, repo, target)?)?;
         let input = PostMergeEvaluationInput {
             schema_version: SCHEMA_VERSION,
             evaluation_time: runtime.now.clone(),

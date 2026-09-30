@@ -50,7 +50,10 @@ Release 검증, Rust 1.85/1.95 × Ubuntu/macOS 매트릭스와 네 가지 네이
 명시적 canonical JSON에서 만듭니다. 이 기록은 로컬 검증만 담고 있으며 원격 결과나 프로모션을
 주장하지 않습니다. 후속 [미검토 영역 리뷰](docs/archive/reviews/2026-09-30-remaining-area-review.md)는
 bootstrap이 설치하는 파일이 umask를 따르도록 하고 엄격 mutation 검사 범위를 센서 판정까지 넓혔으며,
-이 역시 로컬 검증만 기록합니다.
+이 역시 로컬 검증만 기록합니다. [설계 결정 변경](docs/archive/reviews/2026-09-30-design-decisions.md)은
+configuration 바인딩이 checkout 위치에 좌우되지 않게 하고, authoritative 판정에서 execution·adequacy
+증거의 head 바인딩을 요구하며, merge 보호 여부를 GitHub 브랜치 관측과 대조하고, 경로 glob의 `*`가
+한 경로 단계 안에서만 매칭되게 합니다(디렉터리를 넘으려면 `**`를 씁니다).
 
 프로젝트는 Rust 우선 정책을 따릅니다. 저장소의 실행 로직, CLI, 검증 도구, 보고서 변환,
 bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript와 C#은 `examples/`

@@ -420,6 +420,19 @@ mod integration {
         assert_eq!(decision["binding"]["head_sha"], fixture.head);
         assert_eq!(decision["merge_commit_sha"], merge_sha);
 
+        // A receipt cannot claim protection that GitHub does not observe.
+        fs::write(
+            fixture.root.join("branch.json"),
+            json!({"name":"main","protected":false}).to_string(),
+        )
+        .unwrap();
+        fixture.artifacts = fixture.root.join("unprotected-post-artifacts");
+        let output = fixture.command_for("post-merge").output().unwrap();
+        assert!(!output.status.success());
+        assert!(String::from_utf8_lossy(&output.stderr).contains("protection"));
+        assert!(!fixture.artifacts.join("decision.json").exists());
+        fs::remove_file(fixture.root.join("branch.json")).unwrap();
+
         let mut published: Value =
             serde_json::from_slice(&fs::read(fixture.root.join("published.json")).unwrap())
                 .unwrap();

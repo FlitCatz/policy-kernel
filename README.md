@@ -59,7 +59,12 @@ now come from explicit canonical JSON. That record contains local verification
 only; no hosted result or promotion is claimed for it. A follow-up
 [remaining area review](docs/archive/reviews/2026-09-30-remaining-area-review.md)
 makes bootstrap-installed files follow the umask and extends the strict mutation
-gate to sensor evaluation, also with local verification only.
+gate to sensor evaluation, also with local verification only. The
+[design decision changes](docs/archive/reviews/2026-09-30-design-decisions.md)
+make configuration bindings location-independent, require head-bound execution
+and adequacy evidence for authoritative evaluation, cross-check merge protection
+against GitHub, and keep `*` in path globs within one segment (use `**` to cross
+directories).
 
 The project is Rust-first. Repository execution logic, CLIs, verification tools,
 report conversion, bootstrap installation, and tests are Rust. JavaScript,

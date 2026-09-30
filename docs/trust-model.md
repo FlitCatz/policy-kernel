@@ -31,10 +31,14 @@ Sensor `required_when` conditions apply when any changed path matches. A
 `not_applicable_when` exemption is valid only when its risks match and every
 changed path matches one of its `path_globs`; an empty known change cannot be
 exempted by a path condition. A mixed documentation and source change therefore
-cannot use a documentation-only exemption. A blocked review whose Medium, High
+cannot use a documentation-only exemption. Sensor and knowledge path globs follow
+GitHub Actions `paths` semantics: `*` and `?` stay within one path segment and
+`**` crosses directories, so `src/*.rs` no longer matches `src/nested/lib.rs`.
+Profiles that relied on the earlier cross-segment `*` must use `**`. A blocked review whose Medium, High
 and Critical findings are all validly waived does not conflict with an approving
 review; any unwaived, expired or low-only blocked report still does. A gate that
 withholds readiness without a reason fails closed with `PK-PRE-GATE-UNEXPLAINED`.
+Authoritative execution and test adequacy evidence must name the manifest head.
 
 ## Pre-merge and post-merge
 
@@ -45,6 +49,7 @@ authenticate a decision without its original evaluation input and trusted source
 `ReadyToMerge` is not `Shipped`. Shipping requires an authoritative ready decision,
 the trusted required check that published its exact decision/policy binding, and
 a protected merge of the same PR head. Check completion must precede the merge.
+The receipt's protection claim must match GitHub's current branch observation.
 The merge commit is distinct from the PR head, so squash is allowed. Direct,
 unprotected and unsupported merge-queue observations cannot authorize shipping.
 Raw API authentication and check provenance must be established by Task 10;
@@ -65,7 +70,8 @@ declare `required_knowledge` entries with `kind` (`lat_claim` or `code_graph_ind
 an exact `source` identity, and `required_when` conditions. An empty condition list
 means always required. Otherwise any condition applies when both its `risks` and
 `path_globs` match the current change; an empty dimension matches everything.
-Globs use sensor path normalization, including rejection of parent traversal.
+Globs use sensor path normalization and segment semantics, including rejection of
+parent traversal.
 Duplicate kind/source declarations and malformed conditions fail closed.
 
 Each applicable requirement needs exactly one matching observation. Missing

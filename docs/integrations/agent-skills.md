@@ -109,6 +109,14 @@ exit codes, timestamps, version output, artifact digests and capture errors.
 Store the record alongside its evidence; discarding it loses the data needed to
 audit these bindings.
 
+`ExecutionEvidence.head_sha` and `TestAdequacyEvidence.head_sha` carry the
+evaluated head. The collector and project verification fill them. They are
+optional and omitted when absent, so legacy evidence keeps its exact serialized
+form and digests. When present, each must equal the manifest head
+(`PK-PROV-BINDING-MISMATCH`). Authoritative evaluation requires both on every
+execution and on test adequacy (`PK-PROV-BINDING-MISSING`); advisory evaluation
+accepts their absence.
+
 All direct library and CLI results are `local_untrusted`. Provider/model names,
 repository/head and input digests are supplied claims; the collector does not
 infer them from prose or authenticate the checkout. The task 10 trusted adapter

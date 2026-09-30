@@ -73,7 +73,9 @@ authentication can produce new evidence. The required inventory fields are:
 Inventory entries must match evidence exactly, with no duplicates. An empty
 contributor ledger or missing required reviews/sensors is rejected. Context and
 work item are signed together with evidence, and the sensor profile digest must
-match the adopted policy. The policy's required-knowledge declarations remain
+match the adopted policy. Execution and test adequacy records must carry the
+evaluated `head_sha`; the collector fills it, and authoritative evaluation
+rejects records without it. The policy's required-knowledge declarations remain
 bound to its versioned digest and are checked by the evaluation core.
 
 The observer signs `policy_ci::controller::canonical(observation)`: typed JSON

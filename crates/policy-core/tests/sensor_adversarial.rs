@@ -73,6 +73,7 @@ fn empty_adequacy() -> TestAdequacyEvidence {
         discovered: 0,
         executed: 0,
         passed: 0,
+        head_sha: None,
     }
 }
 
@@ -221,4 +222,44 @@ fn duplicate_executed_test_ids_fail_adequacy() {
     .unwrap();
     assert_eq!(result.status, SensorEvaluationStatus::Blocked);
     assert!(result.has_reason("PK-ADEQ-DUPLICATE-TEST"));
+}
+
+#[test]
+fn single_star_stays_within_one_path_segment() {
+    let mut profile = profile();
+    profile.sensors[0].required = false;
+    profile.sensors[0].required_when = vec![condition("rust-root", "src/*.rs")];
+    profile.sensors[0].not_applicable_when = vec![condition("docs-top", "docs/*")];
+    let required = |paths: &[&str]| {
+        resolve_required_sensors(&profile, paths, Risk::Low)
+            .unwrap()
+            .contains(&id("compile"))
+    };
+    assert!(required(&["src/lib.rs"]));
+    assert!(!required(&["src/nested/lib.rs"]));
+
+    let mut recursive = profile.clone();
+    recursive.sensors[0].required_when = vec![condition("rust-tree", "src/**")];
+    assert!(
+        resolve_required_sensors(&recursive, &["src/nested/lib.rs"], Risk::Low)
+            .unwrap()
+            .contains(&id("compile"))
+    );
+
+    // An exemption written for top-level docs cannot cover nested documentation.
+    let mut item = evidence(SensorStatus::NotApplicable, None);
+    item.not_applicable_condition_id = Some("docs-top".into());
+    item.not_applicable_reason = Some("documentation-only change".into());
+    let mut exempt = profile.clone();
+    exempt.sensors[0].required = true;
+    let covered = |paths: &[&str]| {
+        evaluate_sensor_evidence_for_change(&exempt, paths, Risk::Low, &[item.clone()], None)
+            .unwrap()
+            .status
+    };
+    assert_eq!(covered(&["docs/readme.md"]), SensorEvaluationStatus::Passed);
+    assert_eq!(
+        covered(&["docs/guides/readme.md"]),
+        SensorEvaluationStatus::Inconclusive
+    );
 }

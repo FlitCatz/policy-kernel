@@ -157,9 +157,12 @@ inventory is sorted by path before hashing. Every named file is read and compare
 with its expected digest before and after execution. The adapter does not infer
 inventory completeness or authenticate Git HEAD; trusted CI must establish both.
 
-Each `ConfigurationBinding` hashes schema version, project-profile digest, the
-complete ProjectSensor, absolute component cwd, and sorted actual input file
-digests. The execution input hashes schema version, configuration digest,
+Each schema-2 `ConfigurationBinding` records the declared checkout-relative
+`component_path` and the absolute runtime `component_root`. Its policy-bound
+`configuration_digest` hashes schema version, project-profile digest, the complete
+ProjectSensor, `component_path` and sorted actual input file digests; the absolute
+`component_root` is excluded, so identical projects bind identically on every
+runner or checkout location. The execution input hashes schema version, configuration digest,
 repository, head and source-set digest. The collector's command/record digests
 retain actual argv, cwd, process status, version probe and original artifact hashes.
 The normalized result digest hashes the collection digest, original report
@@ -169,9 +172,10 @@ metadata is not canonicalized into kernel evidence.
 Prepared v2 definitions bind configuration_digest, parser_version and
 resolved_command. The core compares passed evidence with those policy-bound
 values (`PK-SENSOR-RESULT-BINDING` on mismatch). The prepared profile is a candidate
-for explicit policy adoption; it does not update policy or approvals. Absolute cwd
-and changed input bytes affect its digest, so moving a checkout or updating inputs
-requires new bindings. Never reuse an old policy/evidence digest after doing so.
+for explicit policy adoption; it does not update policy or approvals. Moving a
+checkout keeps its bindings, but changed input bytes, a different component path
+or any sensor change require new bindings. Schema-1 bindings hashed the absolute
+cwd, so profiles adopted before this change need one re-adoption. Never reuse an old policy/evidence digest after doing so.
 
 ## Failure handling and trust
 

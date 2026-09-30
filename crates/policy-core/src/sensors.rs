@@ -1,4 +1,4 @@
-use globset::Glob;
+use globset::{GlobBuilder, GlobMatcher};
 use policy_contracts::{
     Reason, Risk, SensorCondition, SensorEvidence, SensorId, SensorProfile,
     SensorResultRequirement, SensorStatus, TestAdequacyEvidence, TestAdequacyPolicy,
@@ -294,7 +294,7 @@ fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError
                 ));
             }
             for pattern in &condition.path_globs {
-                Glob::new(pattern)
+                path_glob(pattern)
                     .map_err(|_| SensorResolutionError::InvalidGlob(pattern.clone()))?;
             }
         }
@@ -318,9 +318,8 @@ fn condition_matches(condition: &SensorCondition, paths: &[String], risk: Risk) 
     let risk_matches = condition.risks.is_empty() || condition.risks.contains(&risk);
     let path_matches = condition.path_globs.is_empty()
         || condition.path_globs.iter().any(|pattern| {
-            Glob::new(pattern)
+            path_glob(pattern)
                 .ok()
-                .map(|glob| glob.compile_matcher())
                 .is_some_and(|matcher| paths.iter().any(|path| matcher.is_match(path)))
         });
     risk_matches && path_matches
@@ -333,7 +332,7 @@ fn condition_covers(condition: &SensorCondition, paths: &[String], risk: Risk) -
     let matchers = condition
         .path_globs
         .iter()
-        .map(|pattern| Glob::new(pattern).map(|glob| glob.compile_matcher()))
+        .map(|pattern| path_glob(pattern))
         .collect::<Result<Vec<_>, _>>();
     let path_matches = condition.path_globs.is_empty()
         || matchers.is_ok_and(|matchers| {
@@ -507,4 +506,13 @@ fn insert_reason(reasons: &mut Vec<Reason>, code: &str, message: &str) {
         });
         reasons.sort_by(|left, right| left.code.cmp(&right.code));
     }
+}
+
+/// Changed-path globs follow GitHub Actions `paths` semantics: `*` and `?` stay
+/// within one path segment, while `**` crosses directories.
+pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, globset::Error> {
+    GlobBuilder::new(pattern)
+        .literal_separator(true)
+        .build()
+        .map(|glob| glob.compile_matcher())
 }

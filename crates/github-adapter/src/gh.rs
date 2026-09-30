@@ -26,6 +26,8 @@ pub trait GitHubApi {
         repository: &str,
         branch: &str,
     ) -> Result<Vec<u8>, AdapterError>;
+    /// Branch summary including its `protected` flag; requires only read access.
+    fn branch(&self, owner: &str, repository: &str, branch: &str) -> Result<Vec<u8>, AdapterError>;
     fn check_run(
         &self,
         owner: &str,
@@ -139,6 +141,12 @@ impl GitHubApi for GhCliApi {
         self.get(format!(
             "/repos/{owner}/{repository}/branches/{branch}/protection"
         ))
+    }
+
+    fn branch(&self, owner: &str, repository: &str, branch: &str) -> Result<Vec<u8>, AdapterError> {
+        let (owner, repository) = validated_repository(owner, repository)?;
+        let branch = encode_route_segment(branch)?;
+        self.get(format!("/repos/{owner}/{repository}/branches/{branch}"))
     }
 
     fn check_run(

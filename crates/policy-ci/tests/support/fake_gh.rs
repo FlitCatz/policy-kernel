@@ -40,6 +40,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         response
     } else if route.ends_with("/check-runs/6001") {
         fs::read_to_string(root.join("published.json"))?
+    } else if let Some(branch) = route.split("/branches/").nth(1) {
+        // A protected branch unless a test supplies its own observation.
+        fs::read_to_string(root.join("branch.json"))
+            .unwrap_or_else(|_| json!({"name":branch,"protected":true}).to_string())
     } else {
         return Err(format!("unexpected route: {args:?}").into());
     };

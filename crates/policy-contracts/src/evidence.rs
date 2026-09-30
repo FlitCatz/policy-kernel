@@ -90,6 +90,9 @@ pub struct ExecutionEvidence {
     pub started_at: UtcTimestamp,
     pub completed_at: UtcTimestamp,
     pub trust: TrustClass,
+    /// Evaluated head; required for authoritative evaluation, omitted by legacy producers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub head_sha: Option<CommitSha>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -177,6 +180,9 @@ pub struct TestAdequacyEvidence {
     pub discovered: u64,
     pub executed: u64,
     pub passed: u64,
+    /// Evaluated head; required for authoritative evaluation, omitted by legacy producers.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub head_sha: Option<CommitSha>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
