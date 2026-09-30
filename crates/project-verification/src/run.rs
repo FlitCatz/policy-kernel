@@ -46,8 +46,22 @@ pub struct ConfigurationBinding {
     pub schema_version: u32,
     pub project_profile_digest: Sha256Digest,
     pub sensor: ProjectSensor,
+    /// Declared checkout-relative component root; part of the policy binding.
+    pub component_path: String,
+    /// Absolute runtime location of `component_path`; excluded from the policy binding.
     pub component_root: PathBuf,
     pub inputs: Vec<ArtifactDigest>,
+}
+
+/// Policy-bound configuration identity. The absolute checkout location is excluded,
+/// so the same profile, inputs and sensor bind identically on every runner.
+pub fn configuration_digest(configuration: &ConfigurationBinding) -> Result<Sha256Digest, Error> {
+    let mut value = serde_json::to_value(configuration)?;
+    value
+        .as_object_mut()
+        .expect("configuration is an object")
+        .remove("component_root");
+    Ok(canonical_sha256(&value)?)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -171,9 +185,10 @@ fn configuration(
     }
     inputs.sort_by(|a, b| a.path.cmp(&b.path));
     Ok(ConfigurationBinding {
-        schema_version: 1,
+        schema_version: 2,
         project_profile_digest: request.expected_profile_digest.clone(),
         sensor: sensor.clone(),
+        component_path: component.root.clone(),
         component_root: cwd,
         inputs,
     })
@@ -287,7 +302,7 @@ pub fn prepare(request: &RunRequest) -> Result<PreparedRun, Error> {
             .find(|s| s.id == sensor.definition.id)
             .unwrap();
         definition.result_binding = Some(SensorResultBinding {
-            configuration_digest: canonical_sha256(&config)?,
+            configuration_digest: configuration_digest(&config)?,
             parser_version: parser_version(sensor).to_owned(),
             resolved_command: sensor.argv.clone(),
         });
@@ -450,7 +465,7 @@ fn collection_request_value(
     if let Some(report) = &sensor.report {
         paths::require_absent(&configuration.component_root, &report.path)?;
     }
-    let configuration_digest = canonical_sha256(configuration)?;
+    let configuration_digest = configuration_digest(configuration)?;
     let input_digest = canonical_sha256(&serde_json::json!({
         "schema_version":1, "configuration_digest": configuration_digest,
         "repository":request.repository, "head_sha":request.head_sha,
@@ -554,7 +569,7 @@ pub fn normalize_collection(
         ));
     }
     let sensor = &configuration.sensor;
-    let configuration_digest = canonical_sha256(&configuration)?;
+    let configuration_digest = configuration_digest(&configuration)?;
     let record = &collection.record;
     let expected_input = canonical_sha256(&serde_json::json!({
         "schema_version":1, "configuration_digest":configuration_digest,

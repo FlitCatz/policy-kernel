@@ -43,7 +43,7 @@ pub fn collection(
     report: &[u8],
 ) -> CollectedExecution {
     let input = canonical_sha256(&json!({"schema_version":1,
-        "configuration_digest":canonical_sha256(config).unwrap(),"repository":request.repository,
+        "configuration_digest":project_verification::run::configuration_digest(config).unwrap(),"repository":request.repository,
         "head_sha":request.head_sha,"source_set_digest":request.expected_source_digest}))
     .unwrap();
     let process = json!({"status":"passed","started_at":"2025-09-01T00:00:00Z",
