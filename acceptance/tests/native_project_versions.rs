@@ -1,5 +1,5 @@
 //! Opt-in native conformance for a project-owned frontend selection.
-use policy_contracts::{ArtifactDigest, SensorStatus, TrustClass};
+use policy_contracts::{ArtifactDigest, Risk, SensorStatus, TrustClass};
 use policy_core::canonical_sha256;
 use project_verification::{bytes_digest, parse_profile, RunRequest};
 use serde_json::{json, Value};
@@ -266,6 +266,19 @@ fn run_candidate(workspace: &Path, output: &Path, source: &Path) {
     checked(&root, "git", &["init", "--quiet"]);
     commit(&root, "candidate baseline");
     let request = request(&root);
+    let mut known_impact = request.clone();
+    known_impact.impact = project_verification::profile::Impact::Known {
+        paths: vec![],
+        risk: Risk::Low,
+    };
+    let prepared = project_verification::run::prepare(&known_impact).unwrap();
+    let selection = request.profile.selection.as_ref().unwrap();
+    for runtime in &selection.runtime_files {
+        assert!(prepared
+            .selected_sensor_ids
+            .iter()
+            .any(|id| selection.bindings.get(id.as_str()) == Some(&runtime.tool)));
+    }
     let result = project_verification::run(request.clone()).unwrap();
     retain_reports(output, "candidate", &result);
     fs::write(
