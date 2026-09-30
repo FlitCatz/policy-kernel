@@ -246,11 +246,12 @@ chmod +x .git/hooks/post-commit
 근거가 아닙니다. CLI를 설치하고 변경할 때마다 링크와 코드 참조를 검증합니다.
 
 ```console
-npm install -g lat.md
+npm install -g --ignore-scripts lat.md@0.12.2
 lat check
 ```
 
-고정된 심볼의 이름이 바뀌거나 삭제되면 `lat check`가 실패합니다. 유지 규칙은
+Release verification workflow의 `lat.md knowledge graph` job이 같은 버전으로 `lat check`를
+실행하므로, 고정된 심볼의 이름이 바뀌거나 삭제되면 CI가 실패합니다. 유지 규칙은
 [AGENTS.md](AGENTS.md)에 있습니다.
 
 ## CI 통합

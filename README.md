@@ -270,12 +270,13 @@ navigation aid, not policy evidence or a status authority. Install the CLI and
 validate links and code references after every change:
 
 ```console
-npm install -g lat.md
+npm install -g --ignore-scripts lat.md@0.12.2
 lat check
 ```
 
-`lat check` fails when an anchored symbol is renamed or removed. Maintenance
-rules are in [AGENTS.md](AGENTS.md).
+The Release verification workflow runs the same pinned `lat check` in its
+`lat.md knowledge graph` job, so a renamed or removed anchored symbol fails CI.
+Maintenance rules are in [AGENTS.md](AGENTS.md).
 
 ## CI integration
 
