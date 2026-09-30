@@ -117,10 +117,10 @@ pub fn stage_profile(source: &Path, profile_file: &str, target: &Path) -> Result
         target: target.into(),
         installation: Installation {
             profile: String::new(),
-            release: if selected.schema_version == 3 {
-                "1.2.0"
-            } else {
-                "1.1.0"
+            release: match selected.schema_version {
+                4 => "1.3.0",
+                3 => "1.2.0",
+                _ => "1.1.0",
             }
             .into(),
             components: BTreeMap::new(),

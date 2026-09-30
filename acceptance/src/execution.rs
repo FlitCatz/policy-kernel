@@ -183,11 +183,8 @@ fn runtimes(
         observations.insert(
             id.clone(),
             format!(
-                "executable {}; argv {:?}; requested {}; provision {}; observed {observed}",
-                tool.executable,
-                tool.version_args,
-                tool.version.requirement,
-                tool.version.provision
+                "executable {}; argv {:?}; version rule {:?}; observed {observed}",
+                tool.executable, tool.version_args, tool.version
             ),
         );
     }

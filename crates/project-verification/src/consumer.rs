@@ -21,9 +21,10 @@ impl ProducerContract {
         }
     }
     pub fn validate(self, tool: &ToolSelection) -> Result<(), Error> {
-        if tool.version.provision != self.version()
-            || tool.version.requirement != format!("={}", self.version())
-            || tool.version.normalization != VersionNormalization::Plain
+        let version = tool.version.legacy()?;
+        if version.provision != self.version()
+            || version.requirement != format!("={}", self.version())
+            || version.normalization != VersionNormalization::Plain
             || tool.capabilities.iter().any(|c| !match self {
                 Self::Dotnet11Rc1 => matches!(
                     c,
@@ -211,7 +212,9 @@ impl ConsumerContract {
                     && (!self.development_only
                         || tool.producer_contract != Some(ProducerContract::Dotnet11Rc1)))
                 || (policy.roll_forward != "disable"
-                    && tool.version.requirement != format!("={}", tool.version.provision))
+                    && !tool.version.legacy().is_ok_and(|version| {
+                        version.requirement == format!("={}", version.provision)
+                    }))
             {
                 return Err(invalid("runtime policy requires an exact SDK; prereleases require the development contract"));
             }

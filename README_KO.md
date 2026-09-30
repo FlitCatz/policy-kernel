@@ -49,6 +49,8 @@ bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript
 
 ## 요구 사항
 
+프런트엔드 프로젝트는 [프로젝트 소유 도구 버전](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4) 경로를 선택할 수 있습니다. 프로필 schema 4 / selection schema 3은 버전 수용 규칙과 Vitest·Jest·Playwright·process·npm 감사 계약을 분리합니다. 설치 버전 선택은 선택 사항이지만 실제 도구 관측과 선언한 runtime·lock 검사는 필수입니다. `migrate-profile FILE --target-schema 4`는 원본을 바꾸지 않고 후보를 출력합니다. 사용자 프로필 전용 bootstrap 1.3.0은 네이티브 파일을 사용자 소유로 둡니다. [native 적합성 안내](docs/integrations/acceptance.md#project-owned-frontend-conformance)에는 소비자 후보 입력과 원본 보고서 보존 절차가 있습니다. 검증 범위와 남은 hosted 근거는 [Task 17](docs/tasks/task-17/README.md)에 기록합니다.
+
 명시적 [schema 3 소비 프로필](docs/integrations/consumer-schema3.md)은 선택된
 .NET 11 RC1/VSTest 17.14.1 및 Playwright 1.63.0 조합, 프레임워크 설정 상속,
 통합 테스트 프로젝트를 지원합니다. Schema 3에는 사용자 프로필 전용 bootstrap

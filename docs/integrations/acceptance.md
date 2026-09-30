@@ -1,5 +1,37 @@
 # Consuming-project acceptance
 
+## Project-owned frontend conformance
+
+The ignored `native_project_versions` Rust test exercises the same kernel build
+with frontend schema 4, two actual npm executables, Vitest/Playwright and Jest
+fixtures. It requires Node 26.10.0,
+npm 12.1.0, npm 10.9.3 (supplied through `POLICY_PROJECT_VERSIONS_NPM10` or
+installed by the harness), a Playwright browser and npm advisory network access.
+Set `POLICY_PROJECT_VERSIONS_OUTPUT` to a fresh directory whose parent exists:
+
+```console
+POLICY_PROJECT_VERSIONS_OUTPUT=/private/tmp/project-versions-01 POLICY_PROJECT_VERSIONS_NPM10=/absolute/npm10 cargo test --locked -p policy-acceptance --test native_project_versions -- --ignored --nocapture
+```
+
+The test retains head-bound requests, normalized results, install logs, version
+observations, raw report bytes per phase, and a harness binding in that directory. It exercises actual unit
+failure, browser retry, vulnerable advisory and controlled audit-service failure,
+plus empty/missing reports, stale head and omitted dependency-class flags. For a
+consumer version-change PR, point the same frozen harness at a clean frontend
+fixture directory containing its schema 4 `project-profile.json`, package lock,
+source and tests:
+
+```console
+POLICY_PROJECT_VERSIONS_OUTPUT=/private/tmp/project-candidate-01 POLICY_PROJECT_VERSIONS_CANDIDATE=/absolute/consumer/frontend cargo test --locked -p policy-acceptance --test native_project_versions -- --ignored --nocapture
+```
+
+Candidate mode uses the installed Node and npm, runs `npm ci`, verifies all
+selected sensors and rejects an empty report. Its summary records candidate
+profile/source digests and actual tool versions. The fixed matrix above retains
+the broader negative cases. Keep the exact profile, lockfile and reports. These
+LocalUntrusted observations do not replace
+authenticated hosted checks, independent review or production promotion.
+
 The current harness exercises installed 1.1.0 profiles against actual example
 applications. `policy-acceptance` is Rust; the user-approved language exception
 is limited to native app and test sources under `examples/`. The existing Rust

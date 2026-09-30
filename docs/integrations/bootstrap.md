@@ -1,5 +1,16 @@
 # Bootstrap installer
 
+For a frontend schema-4/selection-3 user profile, use custom-only release
+`1.3.0` with `--profile-file PATH --release 1.3.0`. It installs fixed inactive
+integration examples and a schema-4 receipt; the source profile, package files,
+runtime files and CI remain user-owned. No package manager runs during install.
+The profile may omit provisioning and `.node-version`; if it declares a runtime
+file, project verification checks its exact value against the observed tool.
+Uninstall uses the same profile path and release even if the source was edited or
+removed. The [project-owned selection contract](tool-selection.md#project-owned-frontend-versions-schema-4)
+describes migration and verification. The historical release instructions below
+continue to apply to their respective schemas.
+
 For schema-3 user profiles, use custom-only release 1.2.0 as documented in
 [explicit consumer composition](consumer-schema3.md). The preset and schema-2
 instructions below continue to use 1.1.0 and retain their historical semantics.

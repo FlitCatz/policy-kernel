@@ -58,6 +58,8 @@ declarative tool configuration under `examples/`.
 
 ## Requirements
 
+Frontend projects can opt into [project-owned tool versions](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4): profile schema 4 / selection schema 3 separates version acceptance from the Vitest, Jest, Playwright, process, and npm audit contracts. Provisioning is optional; tool observation and declared runtime/lock checks remain mandatory. `migrate-profile FILE --target-schema 4` prints a candidate without changing the source. Custom bootstrap 1.3.0 accepts this frontend profile and leaves native files user-owned. The [native conformance guide](docs/integrations/acceptance.md#project-owned-frontend-conformance) covers supplied consumer candidates and raw report retention. See [Task 17](docs/tasks/task-17/README.md) for validation scope and pending hosted evidence.
+
 Explicit [schema-3 consumer profiles](docs/integrations/consumer-schema3.md) now
 support the selected .NET 11 RC1/VSTest 17.14.1 and Playwright 1.63.0 combination,
 inherited framework configuration and combined test projects. Use custom bootstrap

@@ -1,5 +1,22 @@
 # Current status
 
+## Task 17 project-owned frontend tool versions
+
+[Task 17](tasks/task-17/README.md) adds profile schema 4 / selection schema 3
+for frontend npm consumers, optional provisioning, explicit adapter contract IDs,
+schema-4 migration and custom bootstrap 1.3.0. The schema 2/3 .NET/fullstack
+paths and their version bounds remain separate. Local Rust regressions exercise
+reader/schema boundaries, legacy preservation, report contract selection,
+runtime/provisioning agreement, migration and receipt ownership. The ignored
+native matrix passed locally for the dirty candidate recorded in the
+[Task 17 local execution](archive/reviews/2026-09-29-project-owned-tool-versions-local.md):
+Node 26.10.0, npm 10.9.3/12.1.0, Vitest 4.1.11, Playwright 1.63.0 and Jest
+30.2.0. It includes actual report, retry, advisory and service-error negative
+cases. A [2026-09-30 follow-up](archive/reviews/2026-09-30-project-owned-tool-versions-follow-up.md)
+records a repeat matrix with retained raw reports and a successful supplied
+candidate fixture run. The hosted candidate job is configured but no Task 17 hosted result,
+protected-branch or production promotion is recorded here.
+
 ## Task 16 consumer extension
 
 [Task 16](tasks/task-16/README.md) adds opt-in project schema 3/selection schema 2

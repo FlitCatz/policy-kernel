@@ -1,5 +1,14 @@
 # Project report adapters
 
+Schema-4 frontend profiles select `vitest-json/v1`, `jest-json/v1`, or
+`playwright-json/v1` independently of the producer version and bind npm graph
+audits to `npm-ci-audit/v1`. These names map to the parser versions below. The
+same required counters, execution times, identities, errors, retries and process
+statuses are checked. Additional irrelevant metadata is accepted; a semantic
+change that still emits success-shaped JSON is outside parser-only detection.
+Actual producer upgrades need the frozen [native acceptance](acceptance.md)
+cases before adoption.
+
 These adapters normalize advisory local reports. Parsing does not authenticate a
 runner, establish complete discovery, or replace its recorded exit status. A
 successful report also requires successful command execution and profile count

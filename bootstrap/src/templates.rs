@@ -118,11 +118,12 @@ pub(crate) fn profile(installation: &Installation) -> Result<ProjectProfile> {
 pub(crate) fn normalized(installation: &Installation) -> Result<Installation> {
     if let Some(source) = &installation.user_profile {
         validate_user_path(&source.path)?;
-        if !matches!(installation.release.as_str(), "1.1.0" | "1.2.0")
+        if !matches!(installation.release.as_str(), "1.1.0" | "1.2.0" | "1.3.0")
             || !matches!(
                 installation.profile.as_str(),
                 "react-typescript" | "dotnet" | "fullstack"
             )
+            || (installation.release == "1.3.0" && installation.profile != "react-typescript")
             || !installation.components.is_empty()
             || source.digest.len() != 64
             || !source
@@ -131,7 +132,7 @@ pub(crate) fn normalized(installation: &Installation) -> Result<Installation> {
                 .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
         {
             return Err(invalid(
-                "invalid user profile selection; use release 1.1.0 or 1.2.0 without component overrides",
+                "invalid user profile selection; use the matching custom release without component overrides",
             ));
         }
         return Ok(installation.clone());
@@ -152,6 +153,26 @@ pub(crate) fn normalized(installation: &Installation) -> Result<Installation> {
 pub(crate) fn render(installation: &Installation) -> Result<BTreeMap<String, String>> {
     if installation.user_profile.is_some() {
         normalized(installation)?;
+        if installation.release == "1.3.0" {
+            return Ok(BTreeMap::from([
+                (
+                    ".policy/USAGE.md".into(),
+                    include_str!("../templates/1.3.0/USER-PROFILE.md").into(),
+                ),
+                (
+                    ".policy/ci/verification.yml".into(),
+                    include_str!("../templates/1.3.0/verification.yml").into(),
+                ),
+                (
+                    ".policy/ci/policy-action.yml".into(),
+                    include_str!("../templates/1.3.0/action/action.yml").into(),
+                ),
+                (
+                    ".policy/ci/policy-action-README.md".into(),
+                    include_str!("../templates/1.3.0/action/README.md").into(),
+                ),
+            ]));
+        }
         if installation.release == "1.2.0" {
             return Ok(BTreeMap::from([
                 (
