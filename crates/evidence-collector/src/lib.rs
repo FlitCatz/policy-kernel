@@ -339,6 +339,7 @@ pub fn collect(request: CollectionRequest) -> Result<CollectedExecution, Collect
         started_at,
         completed_at: now(),
         trust: TrustClass::LocalUntrusted,
+        head_sha: Some(record.command.head_sha.clone()),
     };
     Ok(CollectedExecution { evidence, record })
 }

@@ -217,7 +217,18 @@ pub fn validate_bundle(bundle: &EvidenceBundle) -> ValidationResult {
         && bundle.waivers.iter().all(|evidence| {
             evidence.repository == bundle.manifest.repository
                 && evidence.head_sha == bundle.manifest.head_sha
-        });
+        })
+        && bundle
+            .executions
+            .iter()
+            .filter_map(|evidence| evidence.head_sha.as_ref())
+            .chain(
+                bundle
+                    .test_adequacy
+                    .iter()
+                    .filter_map(|a| a.head_sha.as_ref()),
+            )
+            .all(|head| head == &bundle.manifest.head_sha);
     if !head_matches {
         result.insert(
             "PK-PROV-BINDING-MISMATCH",
@@ -258,6 +269,18 @@ pub fn validate_provenance(
         result.insert(
             "PK-PROV-UNTRUSTED",
             "authoritative evaluation requires CI-observed or trusted-runner evidence",
+        );
+    }
+    if mode == EvaluationMode::Authoritative
+        && (bundle.executions.iter().any(|e| e.head_sha.is_none())
+            || bundle
+                .test_adequacy
+                .as_ref()
+                .is_some_and(|a| a.head_sha.is_none()))
+    {
+        result.insert(
+            "PK-PROV-BINDING-MISSING",
+            "authoritative execution and adequacy evidence must name the evaluated head",
         );
     }
 

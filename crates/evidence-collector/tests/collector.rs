@@ -80,6 +80,10 @@ fn success_preserves_execution_identity_bytes_and_bindings() {
     assert_eq!(result.evidence.provider.as_str(), "runner-provider");
     assert_eq!(result.evidence.model.as_str(), "runner-model");
     assert_eq!(result.evidence.execution_id.as_str(), "run-1");
+    assert_eq!(
+        result.evidence.head_sha.as_ref().map(|head| head.as_str()),
+        value["head_sha"].as_str()
+    );
     assert_eq!(result.record.execution.stdout, b"ok\n");
     assert_eq!(result.record.execution.stderr, b"note\n");
     assert_eq!(result.record.execution.exit_code, Some(0));

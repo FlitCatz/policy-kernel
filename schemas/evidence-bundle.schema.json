@@ -84,6 +84,17 @@
         "execution_id": {
           "$ref": "#/$defs/ExecutionId"
         },
+        "head_sha": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitSha"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Evaluated head; required for authoritative evaluation, omitted by legacy producers."
+        },
         "input_digest": {
           "$ref": "#/$defs/Sha256Digest"
         },
@@ -486,6 +497,17 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "head_sha": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CommitSha"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Evaluated head; required for authoritative evaluation, omitted by legacy producers."
         },
         "negative_case_ids": {
           "items": {

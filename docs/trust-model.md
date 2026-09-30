@@ -35,6 +35,7 @@ cannot use a documentation-only exemption. A blocked review whose Medium, High
 and Critical findings are all validly waived does not conflict with an approving
 review; any unwaived, expired or low-only blocked report still does. A gate that
 withholds readiness without a reason fails closed with `PK-PRE-GATE-UNEXPLAINED`.
+Authoritative execution and test adequacy evidence must name the manifest head.
 
 ## Pre-merge and post-merge
 

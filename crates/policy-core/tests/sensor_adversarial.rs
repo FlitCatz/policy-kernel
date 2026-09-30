@@ -73,6 +73,7 @@ fn empty_adequacy() -> TestAdequacyEvidence {
         discovered: 0,
         executed: 0,
         passed: 0,
+        head_sha: None,
     }
 }
 

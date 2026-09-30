@@ -102,6 +102,7 @@ fn adequate() -> TestAdequacyEvidence {
         discovered: 1,
         executed: 1,
         passed: 1,
+        head_sha: None,
     }
 }
 

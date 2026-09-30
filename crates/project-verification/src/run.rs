@@ -374,6 +374,7 @@ pub fn run(request: RunRequest) -> Result<RunResult, Error> {
         discovered: 0,
         executed: 0,
         passed: 0,
+        head_sha: Some(request.head_sha.clone()),
     };
     for parsed in sensors.iter().filter_map(|s| s.result.parsed.as_ref()) {
         adequacy.discovered = adequacy

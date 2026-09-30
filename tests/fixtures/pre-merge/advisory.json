@@ -51,7 +51,7 @@
       "child_digests": [
         {
           "path": "executions",
-          "digest": "e87181e40c3b58847c0ca4385276760f32f4362d4ab0db7dabfc2783d38c7296"
+          "digest": "ea2c84a801abb268ce2e9aef69b813c99004040319b2da037233a3b4d2aecfbc"
         },
         {
           "path": "findings",
@@ -75,7 +75,7 @@
         },
         {
           "path": "test_adequacy",
-          "digest": "9f433ff6cca39e910d7beebd06a817087d3747eeb2f74d424ba524f811eeb3d0"
+          "digest": "77ad23db5a1ed4616a645e310cdf7aece0679286f076f5b4c67cf1ae0f3cf724"
         },
         {
           "path": "waivers",
@@ -104,7 +104,8 @@
         "output_digest": "2222222222222222222222222222222222222222222222222222222222222222",
         "started_at": "2026-09-07T08:57:00Z",
         "completed_at": "2026-09-07T08:58:00Z",
-        "trust": "ci_observed"
+        "trust": "ci_observed",
+        "head_sha": "cccccccccccccccccccccccccccccccccccccccc"
       }
     ],
     "reviews": [
@@ -202,7 +203,8 @@
       ],
       "discovered": 1,
       "executed": 1,
-      "passed": 1
+      "passed": 1,
+      "head_sha": "cccccccccccccccccccccccccccccccccccccccc"
     },
     "knowledge": []
   },

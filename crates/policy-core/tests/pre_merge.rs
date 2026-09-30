@@ -592,16 +592,17 @@ fn freshness_accepts_exact_boundary_but_rejects_one_nanosecond_beyond() {
 
 #[test]
 fn digest_protocol_matches_independently_computed_sha256_vectors() {
-    // Calculated independently with Node crypto over the documented canonical
-    // domain envelopes, not with the production projection or hashing helpers.
+    // Calculated independently over the documented canonical domain envelopes, not
+    // with the production projection or hashing helpers (originally Node crypto;
+    // recomputed with jq canonicalization and shasum after heads were bound).
     let decision = evaluate_pre_merge(&input(raw("ready")));
     assert_eq!(
         decision.binding.evidence_digest.as_str(),
-        "04d6090f0015e390509a2d6e8f13a93e6ecdbc63ef866b2a836c5e4602a2e545"
+        "efd6c523fbb8fe3228eb00eb63a86b022a0558d6e48856bf2436508e009f7cb4"
     );
     assert_eq!(
         decision.decision_digest.as_str(),
-        "e79c762fca2f2293678791aab60758615525b169464925f67028e5bd9054315d"
+        "64929621381819ce6303bea26c7bd27337a3ab82e1a7077dc9b82e315bef0b4c"
     );
 }
 

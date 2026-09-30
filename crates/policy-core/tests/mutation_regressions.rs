@@ -371,3 +371,45 @@ fn knowledge_head_and_source_set_must_each_match_the_manifest() {
         );
     }
 }
+
+#[test]
+fn execution_and_adequacy_heads_bind_to_the_manifest() {
+    let valid = pre().evidence;
+    let codes = |bundle: &EvidenceBundle, mode| {
+        validate_provenance(mode, bundle, &ts("2026-09-07T09:00:00Z"), 3_600)
+            .reason_codes()
+            .into_iter()
+            .map(str::to_owned)
+            .collect::<Vec<_>>()
+    };
+    assert!(validate_bundle(&valid).is_valid());
+    assert!(codes(&valid, EvaluationMode::Authoritative).is_empty());
+
+    let other = CommitSha::parse("d".repeat(40)).unwrap();
+    let mut execution = valid.clone();
+    execution.executions[0].head_sha = Some(other.clone());
+    let mut adequacy = valid.clone();
+    adequacy.test_adequacy.as_mut().unwrap().head_sha = Some(other);
+    for bundle in [&execution, &adequacy] {
+        assert!(validate_bundle(bundle)
+            .reason_codes()
+            .contains(&"PK-PROV-BINDING-MISMATCH"));
+    }
+
+    let mut unbound_execution = valid.clone();
+    unbound_execution.executions[0].head_sha = None;
+    let mut unbound_adequacy = valid.clone();
+    unbound_adequacy.test_adequacy.as_mut().unwrap().head_sha = None;
+    for bundle in [&unbound_execution, &unbound_adequacy] {
+        // Legacy evidence stays structurally valid and advisory-compatible.
+        assert!(validate_bundle(bundle)
+            .reason_codes()
+            .iter()
+            .all(|code| *code == "PK-PROV-DIGEST-MISMATCH"));
+        assert!(
+            !codes(bundle, EvaluationMode::Advisory).contains(&"PK-PROV-BINDING-MISSING".into())
+        );
+        assert!(codes(bundle, EvaluationMode::Authoritative)
+            .contains(&"PK-PROV-BINDING-MISSING".into()));
+    }
+}
