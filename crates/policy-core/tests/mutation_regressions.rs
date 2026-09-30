@@ -26,6 +26,19 @@ fn canonical_json_accepts_both_signed_and_unsigned_integer_domains() {
 }
 
 #[test]
+fn canonical_json_bytes_sort_nested_keys_and_match_the_digest_preimage() {
+    let value = json!({"b": {"d": 1, "c": [true, null]}, "a": "x"});
+    let bytes = canonical_json(&value).unwrap();
+    assert_eq!(bytes, br#"{"a":"x","b":{"c":[true,null],"d":1}}"#);
+    let digest = <sha2::Sha256 as sha2::Digest>::digest(&bytes);
+    assert_eq!(
+        canonical_sha256(&value).unwrap().as_str(),
+        hex::encode(digest)
+    );
+    assert!(canonical_json(&json!({"a": [0.5]})).is_err());
+}
+
+#[test]
 fn provenance_freshness_preserves_nanosecond_boundaries() {
     let now = ts("2026-09-04T09:00:00Z");
     for (observed, stale) in [

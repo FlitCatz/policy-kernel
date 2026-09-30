@@ -43,11 +43,20 @@ Release 검증, Rust 1.85/1.95 × Ubuntu/macOS 매트릭스와 네 가지 네이
 이것이 운영 환경 프로모션 완료를 뜻하지는 않습니다. [프로모션 프로토콜](docs/promotion.md)에
 정의된 실제 shadow 기간, 보호 브랜치 병합 증거, 독립 제공자 검토는 별도로 충족해야 합니다.
 
+2026-09-30 [코드베이스 리뷰 보완](docs/archive/reviews/2026-09-30-codebase-review-remediation.md)은
+커널 판정을 강화합니다. 센서 not-applicable 예외는 변경된 모든 경로를 덮어야 하고,
+모든 조치 대상 finding이 유효하게 waiver된 blocked 리뷰는 승인 리뷰와 충돌로 보지 않으며,
+사유 없이 준비 상태를 보류한 gate가 준비 상태를 유지할 수 없습니다. controller 서명 바이트는
+명시적 canonical JSON에서 만듭니다. 이 기록은 로컬 검증만 담고 있으며 원격 결과나 프로모션을
+주장하지 않습니다.
+
 프로젝트는 Rust 우선 정책을 따릅니다. 저장소의 실행 로직, CLI, 검증 도구, 보고서 변환,
 bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript와 C#은 `examples/`
 아래에서 승인된 네이티브 소비 프로젝트 fixture 및 선언형 도구 설정에만 사용합니다.
 
 ## 요구 사항
+
+프런트엔드 프로젝트는 [프로젝트 소유 도구 버전](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4) 경로를 선택할 수 있습니다. 프로필 schema 4 / selection schema 3은 버전 수용 규칙과 Vitest·Jest·Playwright·process·npm 감사 계약을 분리합니다. 설치 버전 선택은 선택 사항이지만 실제 도구 관측과 선언한 runtime·lock 검사는 필수입니다. `migrate-profile FILE --target-schema 4`는 원본을 바꾸지 않고 후보를 출력합니다. 사용자 프로필 전용 bootstrap 1.3.0은 네이티브 파일을 사용자 소유로 둡니다. [native 적합성 안내](docs/integrations/acceptance.md#project-owned-frontend-conformance)에는 소비자 후보 입력과 원본 보고서 보존 절차가 있습니다. 검증 범위와 특정 커밋의 hosted 실행 결과는 [Task 17](docs/tasks/task-17/README.md)에 기록하며, 운영 승격은 별도입니다.
 
 명시적 [schema 3 소비 프로필](docs/integrations/consumer-schema3.md)은 선택된
 .NET 11 RC1/VSTest 17.14.1 및 Playwright 1.63.0 조합, 프레임워크 설정 상속,

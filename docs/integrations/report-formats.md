@@ -1,5 +1,14 @@
 # Project report adapters
 
+Schema-4 frontend profiles select `vitest-json/v1`, `jest-json/v1`, or
+`playwright-json/v1` independently of the producer version and bind npm graph
+audits to `npm-ci-audit/v1`. These names map to the parser versions below. The
+same required counters, execution times, identities, errors, retries and process
+statuses are checked. Additional irrelevant metadata is accepted; a semantic
+change that still emits success-shaped JSON is outside parser-only detection.
+Actual producer upgrades need the frozen [native acceptance](acceptance.md)
+cases before adoption.
+
 These adapters normalize advisory local reports. Parsing does not authenticate a
 runner, establish complete discovery, or replace its recorded exit status. A
 successful report also requires successful command execution and profile count
@@ -8,7 +17,7 @@ requirements in the collector. Empty or skipped-only reports never succeed.
 | Format | Supported producer | Parser version |
 | --- | --- | --- |
 | `vitest_json` | Vitest 3.2.4 / 4.1.11 JSON reporter | `vitest-json-3.2.4/v1` |
-| `playwright_json` | Playwright 1.55.0 / 1.55.1 JSON reporter | `playwright-json-1.55.0/v1` |
+| `playwright_json` | Playwright 1.55.0 / 1.55.1 JSON reporter; 1.63.0 exercised through schema 4 | `playwright-json-1.55.0/v1` |
 | `trx` | VSTest 17.14.1 TRX logger, flat unit results | `vstest-trx-17.14.1/v1` |
 | `jest_json` | Jest 30.2.0 JSON output | `jest-json/v1` |
 
@@ -19,7 +28,11 @@ observations; see the [selection contract](tool-selection.md). Earlier fixtures 
 was captured from the native Jest fixture, with path and timestamp normalized for
 deterministic parsing tests; raw native runs retain the original reports.
 Parser identifiers retain their original names because the normalized field
-contract is unchanged. Actual producer versions remain separately bound by the
+contract is unchanged. A `parser_version` names the reporter format baseline the
+parser was written against, not the producer that emitted a report; for example,
+a schema-4 Playwright 1.63.0 report is still recorded as `playwright-json-1.55.0/v1`.
+The [Task 17 local execution](../archive/reviews/2026-09-29-project-owned-tool-versions-local.md)
+records the schema-4 producer versions that were exercised. Actual producer versions remain separately bound by the
 installed profile and checked version probes. Task 14 retains native execution
 reports for the 1.0.1 producers; see the acceptance execution record.
 Unrelated reporter metadata is ignored. Required summary counters, run timestamps,

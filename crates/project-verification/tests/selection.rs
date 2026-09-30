@@ -389,6 +389,8 @@ fn ci_inputs_preserve_exact_provisions_and_reject_conflicting_job_selections() {
         .get_mut("shared:dependencies")
         .unwrap()
         .version
+        .legacy_mut()
+        .unwrap()
         .provision = "10.9.4".into();
     assert!(project_verification::selection::ci_inputs(&fullstack).is_err());
 }

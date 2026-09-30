@@ -1,11 +1,13 @@
 #![forbid(unsafe_code)]
 
+pub mod adapter_contracts;
 pub mod consumer;
 mod paths;
 pub mod profile;
 pub mod reports;
 pub mod run;
 pub mod selection;
+pub mod tool_versions;
 
 pub use profile::{parse_profile, ProjectProfile};
 pub use run::{run, RunRequest, RunResult};

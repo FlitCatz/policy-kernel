@@ -255,7 +255,27 @@ fn validate_request(request: &RunRequest) -> Result<(), Error> {
 pub fn prepare(request: &RunRequest) -> Result<PreparedRun, Error> {
     validate_request(request)?;
     let selected = request.profile.selected(&request.impact)?;
-    let selected_ids: BTreeSet<_> = selected.iter().map(|s| s.definition.id.clone()).collect();
+    let mut selected_ids: BTreeSet<_> = selected.iter().map(|s| s.definition.id.clone()).collect();
+    if let Some(selection) = request
+        .profile
+        .selection
+        .as_ref()
+        .filter(|s| s.schema_version == 3)
+    {
+        for runtime in &selection.runtime_files {
+            let sensor = request
+                .profile
+                .sensors
+                .iter()
+                .find(|sensor| {
+                    sensor.definition.required
+                        && selection.bindings.get(sensor.definition.id.as_str())
+                            == Some(&runtime.tool)
+                })
+                .ok_or_else(|| invalid("project runtime tool needs a required sensor binding"))?;
+            selected_ids.insert(sensor.definition.id.clone());
+        }
+    }
     let mut bound = request.profile.sensor_profile();
     let mut configurations = Vec::new();
     // Preflight all components and files before the first command can run.
@@ -475,8 +495,12 @@ fn run_sensor(
                 configuration.sensor.definition.id
             )));
         }
-        let actual = tool.observe(&probe.record.execution.stdout)?;
-        if tool.observe(&probe.record.version_probe.stdout)? != actual {
+        let tool_id = selection
+            .bindings
+            .get(configuration.sensor.definition.id.as_str())
+            .ok_or_else(|| invalid("missing selected binding"))?;
+        let actual = selection.observe_tool(tool_id, &probe.record.execution.stdout)?;
+        if selection.observe_tool(tool_id, &probe.record.version_probe.stdout)? != actual {
             return Err(invalid("version changed during preflight"));
         }
         source_files(request)?;
@@ -601,10 +625,34 @@ pub fn normalize_collection(
         result.errors.push("execution record did not pass".into());
     }
     let version_result = if let Some(selection) = &request.profile.selection {
+        let tool_id = selection
+            .bindings
+            .get(sensor.definition.id.as_str())
+            .ok_or_else(|| invalid("missing selected binding"))?;
         selection
-            .tool_for(sensor)?
-            .observe(&collection.record.version_probe.stdout)
-            .map(Some)
+            .observe_tool(tool_id, &collection.record.version_probe.stdout)
+            .and_then(|actual| {
+                let mut files = BTreeMap::new();
+                for file in selection
+                    .runtime_files
+                    .iter()
+                    .filter(|file| &file.tool == tool_id)
+                {
+                    let component = request
+                        .profile
+                        .components
+                        .iter()
+                        .find(|c| c.id == file.component)
+                        .ok_or_else(|| invalid("runtime component absent"))?;
+                    let root = paths::directory(&request.root, &component.root)?;
+                    files.insert(
+                        (file.component.clone(), file.path.clone()),
+                        paths::read(&root, &file.path)?,
+                    );
+                }
+                selection.validate_observed_runtime(tool_id, &actual, &files)?;
+                Ok(Some(actual))
+            })
     } else if std::str::from_utf8(&collection.record.version_probe.stdout)
         .ok()
         .map(str::trim)

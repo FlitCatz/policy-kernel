@@ -8,7 +8,7 @@ use std::{
     env,
     error::Error,
     fs,
-    io::{Read, Write},
+    io::Write,
     path::{Path, PathBuf},
     process::Command,
     time::{Duration, SystemTime},
@@ -200,17 +200,10 @@ fn required_env(name: &str) -> Result<String> {
     }
     Ok(value)
 }
+/// Shares the controller's bounded reader: no symlink, FIFO or oversized input can
+/// hang or widen the authoritative job.
 fn read_json<T: DeserializeOwned>(path: &Path) -> Result<T> {
-    let file = fs::File::open(path)?;
-    if !file.metadata()?.is_file() {
-        return Err("JSON input must be a regular file".into());
-    }
-    let mut bytes = Vec::new();
-    file.take(8 * 1024 * 1024 + 1).read_to_end(&mut bytes)?;
-    if bytes.len() > 8 * 1024 * 1024 {
-        return Err("JSON input exceeds 8 MiB".into());
-    }
-    Ok(serde_json::from_slice(&bytes)?)
+    policy_ci::controller::read_json(path)
 }
 fn read_trusted<T: DeserializeOwned>(directory: &Path, name: &str) -> Result<T> {
     let file = directory.join(name);
@@ -224,8 +217,7 @@ fn read_trusted<T: DeserializeOwned>(directory: &Path, name: &str) -> Result<T> 
     read_json(&file)
 }
 fn canonical<T: Serialize>(value: &T) -> Result<Vec<u8>> {
-    // serde_json's default map representation orders keys lexicographically.
-    Ok(serde_json::to_vec(&serde_json::to_value(value)?)?)
+    Ok(policy_core::canonical_json(value)?)
 }
 fn write_artifact<T: Serialize>(directory: &Path, name: &str, value: &T) -> Result<()> {
     let path = directory.join(name);

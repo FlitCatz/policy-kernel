@@ -182,6 +182,57 @@ fn every_waiver_field_is_validated_and_orphan_waivers_fail_closed() {
 }
 
 #[test]
+fn adding_an_approval_never_weakens_a_waived_blocked_report() {
+    let mut waived = load("waiver-expired.json");
+    waived.waivers[0].expires_at = UtcTimestamp::parse("2026-09-04T10:00:00Z").unwrap();
+    assert_eq!(
+        evaluate_reviews(waived.clone()).status,
+        ReviewStatus::Approved
+    );
+
+    let mut approval = waived.reviews[0].clone();
+    approval.provider = policy_contracts::ProviderId::parse("reviewer-c").unwrap();
+    approval.execution_id = policy_contracts::ExecutionId::parse("review-c").unwrap();
+    approval.status = ReviewStatus::Approved;
+    let mut with_approval = waived.clone();
+    with_approval.reviews.push(approval.clone());
+    let actual = evaluate_reviews(with_approval.clone());
+    assert_eq!(actual.status, ReviewStatus::Approved);
+    assert!(!actual.has_reason("PK-REVIEW-CONFLICT"));
+
+    // An unwaived, expired or partially waived blocked report still conflicts.
+    let mut expired = with_approval.clone();
+    expired.waivers[0].expires_at = expired.evaluation_time.clone();
+    let actual = evaluate_reviews(expired);
+    assert_eq!(actual.status, ReviewStatus::Blocked);
+    assert!(actual.has_reason("PK-REVIEW-CONFLICT"));
+
+    let mut partial = with_approval;
+    partial.findings.push(policy_contracts::Finding {
+        id: "F-STABLE-2".into(),
+        severity: FindingSeverity::Medium,
+        summary: "unwaived medium issue".into(),
+        reviewer_execution_id: policy_contracts::ExecutionId::parse("review-b").unwrap(),
+    });
+    let actual = evaluate_reviews(partial);
+    assert_eq!(actual.status, ReviewStatus::Inconclusive);
+    assert!(actual.has_reason("PK-REVIEW-CONFLICT"));
+
+    // Without any approval there is nothing to contradict.
+    let lone_blocked = evaluate_reviews(load("critical.json"));
+    assert_eq!(lone_blocked.status, ReviewStatus::Blocked);
+    assert!(!lone_blocked.has_reason("PK-REVIEW-CONFLICT"));
+
+    // Waived low-severity findings do not make a blocked report actionable.
+    let mut low_only = waived;
+    low_only.findings[0].severity = FindingSeverity::Low;
+    low_only.reviews.push(approval);
+    let actual = evaluate_reviews(low_only);
+    assert!(actual.has_reason("PK-REVIEW-CONFLICT"));
+    assert!(actual.has_reason("PK-REVIEW-BLOCKED-UNRESOLVED"));
+}
+
+#[test]
 fn contradictory_review_reports_are_inconclusive_without_findings() {
     let mut input = load("approved.json");
     let mut conflicting = input.reviews[0].clone();

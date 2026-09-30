@@ -20,6 +20,10 @@ pub struct Selection {
     pub runtime_files: Vec<RuntimeFile>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub consumer: Option<crate::consumer::ConsumerContract>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub provisioning: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub contracts: BTreeMap<String, BTreeSet<crate::adapter_contracts::AdapterContract>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -27,7 +31,7 @@ pub struct Selection {
 pub struct ToolSelection {
     pub executable: String,
     pub version_args: Vec<String>,
-    pub version: VersionRule,
+    pub version: ToolVersionRule,
     pub capabilities: BTreeSet<Capability>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub producer_contract: Option<crate::consumer::ProducerContract>,
@@ -41,6 +45,40 @@ pub struct VersionRule {
     pub normalization: VersionNormalization,
     /// Exact provisioning choice, distinct from a runtime observation.
     pub provision: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ToolVersionRule {
+    Legacy(VersionRule),
+    Project(crate::tool_versions::ProjectVersionRule),
+}
+
+impl ToolVersionRule {
+    pub fn legacy(&self) -> Result<&VersionRule, Error> {
+        match self {
+            Self::Legacy(value) => Ok(value),
+            Self::Project(_) => Err(invalid("legacy version rule required")),
+        }
+    }
+    pub fn legacy_mut(&mut self) -> Result<&mut VersionRule, Error> {
+        match self {
+            Self::Legacy(value) => Ok(value),
+            Self::Project(_) => Err(invalid("legacy version rule required")),
+        }
+    }
+    pub fn project(&self) -> Result<&crate::tool_versions::ProjectVersionRule, Error> {
+        match self {
+            Self::Project(value) => Ok(value),
+            Self::Legacy(_) => Err(invalid("project version rule required")),
+        }
+    }
+    pub fn observe(&self, stdout: &[u8]) -> Result<String, Error> {
+        match self {
+            Self::Legacy(value) => value.observe(stdout),
+            Self::Project(value) => value.observe(stdout),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -71,7 +109,10 @@ pub struct PackageSelection {
     pub installed_manifest: String,
     pub lockfile: String,
     pub lock_pointer: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
     pub requirement: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub acceptance: Option<crate::tool_versions::VersionAcceptance>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -221,7 +262,9 @@ impl ToolSelection {
             return Ok(producer.version().into());
         }
         let version = self.version.observe(stdout)?;
-        self.validate_capabilities(&version)?;
+        if matches!(self.version, ToolVersionRule::Legacy(_)) {
+            self.validate_capabilities(&version)?;
+        }
         Ok(version)
     }
 }
@@ -238,6 +281,47 @@ fn capability(sensor: &ProjectSensor) -> Capability {
 }
 
 impl Selection {
+    pub fn observe_tool(&self, tool_id: &str, stdout: &[u8]) -> Result<String, Error> {
+        let tool = self
+            .tools
+            .get(tool_id)
+            .ok_or_else(|| invalid("missing selected tool"))?;
+        let actual = tool.observe(stdout)?;
+        if let Some(expected) = self.provisioning.get(tool_id) {
+            if &actual != expected {
+                return Err(invalid("observed version differs from provisioning"));
+            }
+        }
+        Ok(actual)
+    }
+
+    pub fn validate_observed_runtime(
+        &self,
+        tool_id: &str,
+        actual: &str,
+        files: &BTreeMap<(String, String), Vec<u8>>,
+    ) -> Result<(), Error> {
+        for file in self
+            .runtime_files
+            .iter()
+            .filter(|file| file.tool == tool_id)
+        {
+            let bytes = files
+                .get(&(file.component.clone(), file.path.clone()))
+                .ok_or_else(|| invalid("declared runtime file is missing"))?;
+            self.validate_runtime_file(file, bytes)?;
+            if file.format == RuntimeFileFormat::NodeVersion {
+                let declared = std::str::from_utf8(bytes)
+                    .map_err(|_| invalid("runtime configuration is not UTF-8"))?
+                    .trim();
+                if declared != actual {
+                    return Err(invalid("observed runtime differs from declared file"));
+                }
+            }
+        }
+        Ok(())
+    }
+
     pub fn tool_for(&self, sensor: &ProjectSensor) -> Result<&ToolSelection, Error> {
         self.bindings
             .get(sensor.definition.id.as_str())
@@ -253,11 +337,16 @@ impl Selection {
     pub fn validate(&self, profile: &ProjectProfile) -> Result<(), Error> {
         if !matches!(
             (profile.schema_version, self.schema_version),
-            (2, 1) | (3, 2)
+            (2, 1) | (3, 2) | (4, 3)
         ) || (self.schema_version == 1
             && (self.consumer.is_some()
                 || self.tools.values().any(|t| t.producer_contract.is_some())))
             || (self.schema_version == 2 && self.consumer.is_none())
+            || (self.schema_version == 3
+                && (profile.id != "react-typescript"
+                    || profile.components.iter().any(|c| c.id != "frontend")))
+            || (self.schema_version != 3
+                && (!self.provisioning.is_empty() || !self.contracts.is_empty()))
             || self.tools.is_empty()
             || self.graphs.is_empty()
             || self.bindings.len() != profile.sensors.len()
@@ -282,6 +371,20 @@ impl Selection {
             {
                 return Err(invalid("invalid or unused selected tool"));
             }
+            if self.schema_version == 3 {
+                let rule = tool.version.project()?;
+                rule.validate()?;
+                if tool.producer_contract.is_some() {
+                    return Err(invalid("project selection cannot use producer_contract"));
+                }
+                if let Some(version) = self.provisioning.get(id) {
+                    if !rule.acceptance.accepts(version)? {
+                        return Err(invalid("provisioning is outside project acceptance"));
+                    }
+                }
+            } else {
+                tool.version.legacy()?;
+            }
             if let Some(producer) = tool.producer_contract {
                 producer.validate(tool)?;
                 if producer == crate::consumer::ProducerContract::Dotnet11Rc1
@@ -292,9 +395,21 @@ impl Selection {
                     ));
                 }
             } else {
-                tool.version.validate()?;
-                tool.validate_capabilities(&tool.version.provision)?;
+                if let ToolVersionRule::Legacy(version) = &tool.version {
+                    version.validate()?;
+                    tool.validate_capabilities(&version.provision)?;
+                }
             }
+        }
+        if self.schema_version == 3 {
+            if self
+                .provisioning
+                .keys()
+                .any(|id| !self.tools.contains_key(id))
+            {
+                return Err(invalid("provisioning references unknown tool"));
+            }
+            crate::adapter_contracts::validate_adapter_contracts(self, profile)?;
         }
         for sensor in &profile.sensors {
             let tool = self.tool_for(sensor)?;
@@ -477,14 +592,45 @@ impl Selection {
                 return Err(invalid("invalid package selection or missing graph"));
             }
             // Parse every comparison without assuming that a particular installed version matches.
-            version_matches(&package.requirement, "0.0.0")?;
+            if self.schema_version == 3 {
+                if !package.requirement.is_empty() {
+                    return Err(invalid("legacy package requirement in project selection"));
+                }
+                package
+                    .acceptance
+                    .as_ref()
+                    .ok_or_else(|| invalid("missing package acceptance"))?
+                    .validate()?;
+            } else {
+                if package.acceptance.is_some() {
+                    return Err(invalid("project package acceptance in legacy selection"));
+                }
+                version_matches(&package.requirement, "0.0.0")?;
+            }
         }
         let mut runtime_files = BTreeSet::new();
         for file in &self.runtime_files {
+            let tool = self
+                .tools
+                .get(&file.tool)
+                .ok_or_else(|| invalid("runtime tool is absent"))?;
+            if self.schema_version == 3
+                && !profile.sensors.iter().any(|sensor| {
+                    sensor.definition.required
+                        && self.bindings.get(sensor.definition.id.as_str()) == Some(&file.tool)
+                })
+            {
+                return Err(invalid(
+                    "project runtime tool needs a required sensor binding",
+                ));
+            }
             if !component(&file.component)
                 || !relative(&file.path, false)
-                || !self.tools.contains_key(&file.tool)
                 || !runtime_files.insert((&file.component, &file.path))
+                || (self.schema_version == 3
+                    && (file.format != RuntimeFileFormat::NodeVersion
+                        || file.path != ".node-version"
+                        || tool.version.project()?.normalization != VersionNormalization::Node))
             {
                 return Err(invalid("invalid or duplicate runtime file"));
             }
@@ -525,12 +671,10 @@ impl Selection {
     }
 
     pub fn validate_runtime_file(&self, file: &RuntimeFile, bytes: &[u8]) -> Result<(), Error> {
-        let expected = &self
+        let tool = self
             .tools
             .get(&file.tool)
-            .ok_or_else(|| invalid("runtime tool absent"))?
-            .version
-            .provision;
+            .ok_or_else(|| invalid("runtime tool absent"))?;
         let text = std::str::from_utf8(bytes)
             .map_err(|_| invalid("runtime configuration is not UTF-8"))?;
         let actual = match file.format {
@@ -569,7 +713,22 @@ impl Selection {
                     .into()
             }
         };
-        if &actual != expected {
+        if self.schema_version == 3 {
+            if file.format != RuntimeFileFormat::NodeVersion {
+                return Err(invalid("project runtime only supports .node-version"));
+            }
+            crate::tool_versions::version_token(&actual)?;
+            if !tool.version.project()?.acceptance.accepts(&actual)? {
+                return Err(invalid("runtime file is outside project acceptance"));
+            }
+            if self
+                .provisioning
+                .get(&file.tool)
+                .is_some_and(|version| version != &actual)
+            {
+                return Err(invalid("runtime file differs from provisioning"));
+            }
+        } else if actual != tool.version.legacy()?.provision {
             return Err(invalid(format!(
                 "conflicting runtime selection in {}",
                 file.path
@@ -654,6 +813,8 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
         graphs: vec![],
         runtime_files: vec![],
         consumer: None,
+        provisioning: BTreeMap::new(),
+        contracts: BTreeMap::new(),
     };
     let mut extra_sensors = Vec::new();
     for component in &profile.components {
@@ -777,11 +938,11 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
                 producer_contract: None,
                 executable: sensor.argv[0].clone(),
                 version_args: sensor.version_args.clone(),
-                version: VersionRule {
+                version: ToolVersionRule::Legacy(VersionRule {
                     requirement,
                     normalization,
                     provision: version,
-                },
+                }),
                 capabilities,
             },
         );
@@ -805,6 +966,7 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
                         installed.replace('~', "~0").replace('/', "~1")
                     ),
                     requirement: format!("={}", pin.expected),
+                    acceptance: None,
                 });
             }
         }
@@ -825,6 +987,76 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
     profile.schema_version = 2;
     profile.version = "1.1.0".into();
     profile.selection = Some(selection);
+    profile.validate()?;
+    Ok(profile)
+}
+
+/// Produce a schema 4 candidate without modifying the source profile or installed tools.
+pub fn upgrade_frontend_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Error> {
+    profile.validate()?;
+    if !matches!(profile.schema_version, 2 | 3)
+        || profile.id != "react-typescript"
+        || profile
+            .components
+            .iter()
+            .any(|component| component.id != "frontend")
+    {
+        return Err(invalid("schema 4 migration requires a frontend profile"));
+    }
+    let selection = profile
+        .selection
+        .as_mut()
+        .ok_or_else(|| invalid("missing selection"))?;
+    if selection
+        .graphs
+        .iter()
+        .any(|graph| graph.adapter != DependencyAdapter::Npm)
+    {
+        return Err(invalid("schema 4 migration requires npm graphs"));
+    }
+    use crate::adapter_contracts::AdapterContract as Contract;
+    use crate::tool_versions::{ProjectVersionRule, VersionAcceptance};
+    for (id, tool) in &mut selection.tools {
+        let old = tool.version.legacy()?.clone();
+        let acceptance = if let Some(producer) = tool.producer_contract {
+            VersionAcceptance::Exact {
+                value: producer.version().into(),
+            }
+        } else {
+            VersionAcceptance::NumericRange {
+                requirement: old.requirement,
+            }
+        };
+        tool.version = ToolVersionRule::Project(ProjectVersionRule {
+            normalization: old.normalization,
+            acceptance,
+        });
+        tool.producer_contract = None;
+        selection.provisioning.insert(id.clone(), old.provision);
+        selection.contracts.insert(
+            id.clone(),
+            tool.capabilities
+                .iter()
+                .map(|capability| match capability {
+                    Capability::Process => Ok(Contract::ProcessV1),
+                    Capability::VitestJson => Ok(Contract::VitestJsonV1),
+                    Capability::JestJson => Ok(Contract::JestJsonV1),
+                    Capability::PlaywrightJson => Ok(Contract::PlaywrightJsonV1),
+                    Capability::NpmAudit => Ok(Contract::NpmCiAuditV1),
+                    Capability::Trx | Capability::NugetAudit => {
+                        Err(invalid("schema 4 migration cannot include .NET adapters"))
+                    }
+                })
+                .collect::<Result<BTreeSet<_>, _>>()?,
+        );
+    }
+    for package in &mut selection.packages {
+        package.acceptance = Some(VersionAcceptance::NumericRange {
+            requirement: std::mem::take(&mut package.requirement),
+        });
+    }
+    selection.schema_version = 3;
+    profile.schema_version = 4;
     profile.validate()?;
     Ok(profile)
 }
@@ -907,7 +1139,16 @@ fn validate_files(
             })
             .transpose()?;
         for version in [installed_version, locked_version].into_iter().flatten() {
-            if !version_matches(&package.requirement, version)? {
+            let matched = if selection.schema_version == 3 {
+                package
+                    .acceptance
+                    .as_ref()
+                    .ok_or_else(|| invalid("missing package acceptance"))?
+                    .accepts(version)?
+            } else {
+                version_matches(&package.requirement, version)?
+            };
+            if !matched {
                 return Err(invalid(format!(
                     "package range mismatch: {}",
                     package.installed_manifest
@@ -943,14 +1184,26 @@ fn validate_files(
                         .pointer("/packages/")
                         .filter(|value| value.is_object())
                         .ok_or_else(|| invalid("npm lockfile v2/v3 package inventory required"))?;
-                    if !matches!(
-                        lock.get("lockfileVersion").and_then(|v| v.as_u64()),
-                        Some(2 | 3)
-                    ) {
+                    let lock_version = lock.get("lockfileVersion").and_then(|v| v.as_u64());
+                    if if selection.schema_version == 3 {
+                        lock_version != Some(3)
+                    } else {
+                        !matches!(lock_version, Some(2 | 3))
+                    } {
                         return Err(invalid("unsupported npm lockfile format"));
                     }
                     if let Some(manifest) = manifest {
-                        for field in ["dependencies", "devDependencies", "optionalDependencies"] {
+                        let declarations: &[&str] = if selection.schema_version == 3 {
+                            &[
+                                "dependencies",
+                                "devDependencies",
+                                "optionalDependencies",
+                                "peerDependencies",
+                            ]
+                        } else {
+                            &["dependencies", "devDependencies", "optionalDependencies"]
+                        };
+                        for field in declarations {
                             if manifest.get(field) != locked_root.get(field) {
                                 return Err(invalid(format!(
                                     "manifest/lock declarations disagree: {} {field}",
@@ -1068,13 +1321,21 @@ pub fn ci_inputs(profile: &ProjectProfile) -> Result<BTreeMap<String, String>, E
         policy_core::canonical_sha256(profile)?.to_string(),
     )]);
     let mut insert = |kind: &str, tool: &str| -> Result<(), Error> {
-        let version = selection
-            .tools
-            .get(tool)
-            .ok_or_else(|| invalid("missing CI tool"))?
-            .version
-            .provision
-            .clone();
+        let version = if selection.schema_version == 3 {
+            match selection.provisioning.get(tool) {
+                Some(version) => version.clone(),
+                None => return Ok(()),
+            }
+        } else {
+            selection
+                .tools
+                .get(tool)
+                .ok_or_else(|| invalid("missing CI tool"))?
+                .version
+                .legacy()?
+                .provision
+                .clone()
+        };
         if result
             .insert(kind.into(), version.clone())
             .is_some_and(|old| old != version)
@@ -1097,6 +1358,15 @@ pub fn ci_inputs(profile: &ProjectProfile) -> Result<BTreeMap<String, String>, E
     for graph in &selection.graphs {
         if graph.adapter == DependencyAdapter::Npm {
             insert("npm_version", &graph.tool)?;
+        }
+    }
+    if selection.schema_version == 3 {
+        for (id, tool) in &selection.tools {
+            if tool.version.project()?.normalization == VersionNormalization::Node
+                && selection.provisioning.contains_key(id)
+            {
+                insert("node_version", id)?;
+            }
         }
     }
     Ok(result)

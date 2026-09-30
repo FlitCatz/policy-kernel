@@ -39,7 +39,17 @@ impl<'de> Deserialize<'de> for ProjectProfile {
         fn selection_field<'de, D: serde::Deserializer<'de>>(
             d: D,
         ) -> Result<Option<crate::selection::Selection>, D::Error> {
-            crate::selection::Selection::deserialize(d).map(Some)
+            let value = serde_json::Value::deserialize(d)?;
+            if value.get("schema_version").and_then(|v| v.as_u64()) != Some(3)
+                && (value.get("provisioning").is_some() || value.get("contracts").is_some())
+            {
+                return Err(serde::de::Error::custom(
+                    "legacy selection cannot contain project-owned fields",
+                ));
+            }
+            serde_json::from_value(value)
+                .map(Some)
+                .map_err(serde::de::Error::custom)
         }
         let wire = Wire::deserialize(deserializer)?;
         let profile = Self {
@@ -61,10 +71,32 @@ fn profile_schema(schema: &mut schemars::Schema) {
         {"if":{"properties":{"schema_version":{"const":2}}},"then":{"properties":{"selection":{
             "properties":{"schema_version":{"const":1}},
             "not":{"required":["consumer"]},
-            "allOf":[{"properties":{"tools":{"additionalProperties":{"not":{"required":["producer_contract"]}}}}}]
+            "allOf":[{"properties":{"tools":{"additionalProperties":{
+                "not":{"required":["producer_contract"]},
+                "properties":{"version":{"required":["requirement","normalization","provision"]}}
+            }}}},
+                {"properties":{"packages":{"items":{"required":["requirement"],"not":{"required":["acceptance"]}}}}},
+                {"not":{"anyOf":[{"required":["provisioning"]},{"required":["contracts"]}]}}]
         }}}},
         {"if":{"properties":{"schema_version":{"const":3}}},"then":{"properties":{"selection":{
-            "properties":{"schema_version":{"const":2}},"required":["consumer"]
+            "properties":{"schema_version":{"const":2},
+                "tools":{"additionalProperties":{"properties":{"version":{"required":["requirement","normalization","provision"]}}}},
+                "packages":{"items":{"required":["requirement"],"not":{"required":["acceptance"]}}}},"required":["consumer"],
+            "not":{"anyOf":[{"required":["provisioning"]},{"required":["contracts"]}]}
+        }}}},
+        {"if":{"properties":{"schema_version":{"const":4}}},"then":{"properties":{"selection":{
+            "properties":{
+                "schema_version":{"const":3},
+                "tools":{"additionalProperties":{
+                    "properties":{"version":{"required":["acceptance"]}},
+                    "not":{"required":["producer_contract"]}
+                }},
+                "packages":{"items":{
+                    "required":["acceptance"],
+                    "not":{"required":["requirement"]}
+                }}
+            },
+            "required":["contracts"]
         }}}}
     ]));
     schema.insert(
@@ -90,7 +122,7 @@ fn profile_schema(schema: &mut schemars::Schema) {
 }
 
 fn profile_version_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({"type":"integer", "enum":[1,2,3]})
+    schemars::json_schema!({"type":"integer", "enum":[1,2,3,4]})
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -204,7 +236,7 @@ fn identifier(id: &str) -> bool {
 
 impl ProjectProfile {
     pub fn validate(&self) -> Result<(), Error> {
-        if !matches!(self.schema_version, 1..=3)
+        if !matches!(self.schema_version, 1..=4)
             || !identifier(&self.id)
             || (self.schema_version == 1
                 && (!matches!(self.version.as_str(), "1.0.0" | "1.0.1" | "1.0.2")

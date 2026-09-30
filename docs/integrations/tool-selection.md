@@ -1,5 +1,46 @@
 # Consumer tool selection
 
+## Project-owned frontend versions (schema 4)
+
+Profile schema 4 pairs with selection schema 3 for frontend/npm consumers only.
+Each tool's `version` has a `normalization` (`plain` or `node`) and a required
+`acceptance`: `{"kind":"record"}`, `{"kind":"exact","value":"26.10.0"}` or
+`{"kind":"numeric_range","requirement":">=26.0.0, <27.0.0"}`. A successful
+bounded probe must produce one UTF-8 token of 1–128 ASCII characters from
+`[A-Za-z0-9.+_-]`, starting with a digit after optional Node `v` removal.
+Record imposes no project version limit; it still rejects failed, empty,
+multiline and malformed probes. Numeric ranges use the existing three-integer
+comparison grammar and do not accept prereleases. Exact compares tokens, including
+prerelease suffixes, as strings.
+
+`selection.provisioning` is an optional map of tool ID to exact install version.
+When present, the version must satisfy acceptance and match observation. Without
+it, CI supplies the tool externally. `ci-inputs FILE` prints the profile digest
+and only explicit provisioning values; `provision-npm FILE --prefix DIR` exits 64
+before installation if no npm provisioning is declared. A declared `.node-version`
+is digested and must be an exact token matching observation and any provisioning;
+an undeclared runtime file is not certified. Package acceptance uses the same
+three forms, while installed and lockfile versions must still agree. Npm graph
+checks require lockfile v3, complete selected manifests, explicit dev/optional/peer
+audit argv and a successful audit process.
+
+`selection.contracts` maps every tool ID to its verified behavior IDs:
+`process/v1`, `vitest-json/v1`, `jest-json/v1`, `playwright-json/v1`, and
+`npm-ci-audit/v1`. Capabilities, sensors, reports and graph audits must match.
+Unknown IDs and `producer_contract` are rejected. These IDs select the existing
+report parsers; they do not certify every future producer version or infer new
+npm command semantics. Successful JSON shaped like an old report cannot prove
+that a producer preserved all semantics. See [report formats](report-formats.md).
+
+`migrate-profile FILE --target-schema 4` accepts a schema-2/3 frontend/npm
+profile and writes a candidate to stdout. It retains requested numeric ranges,
+exact producer choices and provisioning, and does not modify the source. Review
+and adopt the new profile digest and collect fresh evidence. Existing
+`migrate-profile FILE` keeps its legacy meaning. Invalid profile or CLI input
+returns 64; a completed `run` with failing sensors returns 2. Local results remain
+LocalUntrusted. Schema-2/3 .NET/fullstack behavior and old bootstrap releases
+remain on their established version contracts.
+
 [Schema 3 / selection 2](consumer-schema3.md) adds explicit producer contracts,
 suite bindings and bounded framework inheritance. The schema-2 numeric contract
 and adapter intervals below remain unchanged for existing profiles.

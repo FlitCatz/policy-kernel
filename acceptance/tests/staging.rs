@@ -138,3 +138,27 @@ fn rejects_destination_inside_fixture_tree_before_creating_it() {
     assert!(stage(&examples, "dotnet", &target).is_err());
     assert!(!target.exists());
 }
+
+#[test]
+fn stages_schema_four_with_custom_bootstrap_release() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path().canonicalize().unwrap();
+    let source = root.join("source");
+    fs::create_dir_all(source.join("web")).unwrap();
+    let old = project_verification::parse_profile(include_str!(
+        "../../examples/react-jest/project-profile.json"
+    ))
+    .unwrap();
+    let new = project_verification::selection::upgrade_frontend_profile(old).unwrap();
+    fs::write(
+        source.join("profile.json"),
+        serde_json::to_vec(&new).unwrap(),
+    )
+    .unwrap();
+    let target = root.join("consumer");
+    policy_acceptance::stage_profile(&source, "profile.json", &target).unwrap();
+    let receipt: serde_json::Value =
+        serde_json::from_slice(&fs::read(target.join(".policy/bootstrap-manifest.json")).unwrap())
+            .unwrap();
+    assert_eq!(receipt["schema_version"], 4);
+}

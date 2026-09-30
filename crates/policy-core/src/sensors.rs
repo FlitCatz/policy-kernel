@@ -226,7 +226,7 @@ fn evaluate_sensor_evidence_inner(
                             .iter()
                             .any(|condition| {
                                 condition.id == condition_id
-                                    && condition_matches(condition, paths, risk)
+                                    && condition_covers(condition, paths, risk)
                             })
                     });
                 let reason_recorded = item
@@ -322,6 +322,25 @@ fn condition_matches(condition: &SensorCondition, paths: &[String], risk: Risk) 
                 .ok()
                 .map(|glob| glob.compile_matcher())
                 .is_some_and(|matcher| paths.iter().any(|path| matcher.is_match(path)))
+        });
+    risk_matches && path_matches
+}
+
+/// An exemption must cover the entire known change. Matching one changed path,
+/// as `required_when` does, would let a docs-only condition exempt a code change.
+fn condition_covers(condition: &SensorCondition, paths: &[String], risk: Risk) -> bool {
+    let risk_matches = condition.risks.is_empty() || condition.risks.contains(&risk);
+    let matchers = condition
+        .path_globs
+        .iter()
+        .map(|pattern| Glob::new(pattern).map(|glob| glob.compile_matcher()))
+        .collect::<Result<Vec<_>, _>>();
+    let path_matches = condition.path_globs.is_empty()
+        || matchers.is_ok_and(|matchers| {
+            !paths.is_empty()
+                && paths
+                    .iter()
+                    .all(|path| matchers.iter().any(|matcher| matcher.is_match(path)))
         });
     risk_matches && path_matches
 }

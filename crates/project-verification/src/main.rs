@@ -26,6 +26,13 @@ fn execute() -> Result<bool, Box<dyn std::error::Error>> {
             println!("{}", serde_json::to_string_pretty(&project_verification::selection::upgrade_profile(profile)?)?);
             Ok(true)
         }
+        [command, file, flag, schema] if command == "migrate-profile" && flag == "--target-schema" && schema == "4" => {
+            let profile = parse_profile(&fs::read_to_string(file)?)?;
+            let candidate = project_verification::selection::upgrade_frontend_profile(profile)?;
+            eprintln!("schema 4 changes the profile digest and stops applying legacy producer version intervals; adopt and verify this candidate explicitly");
+            println!("{}", serde_json::to_string_pretty(&candidate)?);
+            Ok(true)
+        }
         [command, file] if command == "ci-inputs" => {
             let profile = parse_profile(&fs::read_to_string(file)?)?;
             println!("{}", serde_json::to_string_pretty(&project_verification::selection::ci_inputs(&profile)?)?);
@@ -77,7 +84,7 @@ fn execute() -> Result<bool, Box<dyn std::error::Error>> {
             Ok(true)
         }
         _ => Err(
-            "usage: project-verification validate-profile FILE | migrate-profile FILE | ci-inputs FILE [--github-output FILE] | provision-npm FILE --prefix DIR | schema | prepare --input FILE | run --input FILE".into(),
+            "usage: project-verification validate-profile FILE | migrate-profile FILE [--target-schema 4] | ci-inputs FILE [--github-output FILE] | provision-npm FILE --prefix DIR | schema | prepare --input FILE | run --input FILE".into(),
         ),
     }
 }

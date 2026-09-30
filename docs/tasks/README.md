@@ -1,6 +1,6 @@
 # Task index
 
-This directory is the canonical starting point for Tasks 1–15. Each landing page
+This directory is the canonical starting point for Tasks 1–17. Each landing page
 summarizes the latest known state and points to the implementation, reference
 documentation, and archived evidence for that Task.
 
@@ -42,3 +42,6 @@ For the repository-wide latest status, read [Current status](../status.md).
 
 [Task 16](task-16/README.md) tracks the explicit TJERP-shaped consumer extension,
 its local native verification and remaining consumer/hosted adoption work.
+
+[Task 17](task-17/README.md) tracks project-owned frontend tool versions, native
+conformance and remaining hosted/operational adoption work.

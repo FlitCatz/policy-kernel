@@ -99,7 +99,9 @@ pub(crate) struct Manifest {
 
 pub(crate) fn manifest(installation: &Installation, files: &BTreeMap<String, String>) -> Manifest {
     Manifest {
-        schema_version: if installation.release == "1.2.0" {
+        schema_version: if installation.release == "1.3.0" {
+            4
+        } else if installation.release == "1.2.0" {
             3
         } else if installation.release == "1.1.0" {
             2
@@ -107,7 +109,9 @@ pub(crate) fn manifest(installation: &Installation, files: &BTreeMap<String, Str
             1
         },
         installation: installation.clone(),
-        project_profile_schema: if installation.release == "1.2.0" {
+        project_profile_schema: if installation.release == "1.3.0" {
+            4
+        } else if installation.release == "1.2.0" {
             3
         } else if installation.release == "1.1.0" {
             2
@@ -177,7 +181,8 @@ fn detect(root: &Root, plan: &mut Plan, installation: &Installation) -> Result<(
                         .and_then(|v| v.get(name))
                         .or_else(|| package.get("dependencies").and_then(|v| v.get(name)))
                 };
-                if component.id == "frontend"
+                if installation.release != "1.3.0"
+                    && component.id == "frontend"
                     && (dependency("vite").is_none()
                         || ["next", "react-scripts", "@angular/core", "jest"]
                             .iter()
@@ -215,9 +220,11 @@ fn detect(root: &Root, plan: &mut Plan, installation: &Installation) -> Result<(
                     ("@typescript-eslint/parser", "8.42.0"),
                     ("jsdom", "26.1.0"),
                 ] {
-                    if let Some(actual) = dependency(tool) {
-                        if actual.as_str() != Some(pin) {
-                            plan.conflicts.push(format!("{package_path}: {tool} must explicitly match template pin {pin}; adapt existing tooling separately"));
+                    if installation.release != "1.3.0" {
+                        if let Some(actual) = dependency(tool) {
+                            if actual.as_str() != Some(pin) {
+                                plan.conflicts.push(format!("{package_path}: {tool} must explicitly match template pin {pin}; adapt existing tooling separately"));
+                            }
                         }
                     }
                 }
@@ -394,10 +401,10 @@ pub fn plan(mut request: Request) -> Result<Plan> {
                     request.installation.release.as_str(),
                     profile.schema_version
                 ),
-                ("1.1.0", 2) | ("1.2.0", 3)
+                ("1.1.0", 2) | ("1.2.0", 3) | ("1.3.0", 4)
             ) {
                 return Err(invalid(
-                    "user profile requires release 1.1.0/schema 2 or release 1.2.0/schema 3",
+                    "user profile requires release 1.1.0/schema 2, 1.2.0/schema 3 or 1.3.0/schema 4",
                 ));
             }
             if !request.installation.profile.is_empty()
