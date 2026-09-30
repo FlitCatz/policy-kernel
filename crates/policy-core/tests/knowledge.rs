@@ -176,6 +176,27 @@ fn required_knowledge_failures_have_distinct_reasons() {
 }
 
 #[test]
+fn knowledge_path_single_star_stays_within_one_segment() {
+    for (paths, applies) in [
+        (json!(["src/main.rs"]), true),
+        (json!(["src/nested/main.rs"]), false),
+    ] {
+        let mut value = required();
+        value["policy"]["required_knowledge"][0]["required_when"] =
+            json!([{"risks": [], "path_globs": ["src/*.rs"]}]);
+        value["context"]["changed_paths"] = paths;
+        value["evidence"]["knowledge"] = json!([]);
+        seal_policy(&mut value);
+        seal_evidence(&mut value);
+        if applies {
+            assert_reason(value, "PK-KNOWLEDGE-MISSING");
+        } else {
+            assert_ready(value);
+        }
+    }
+}
+
+#[test]
 fn knowledge_conditions_use_current_paths_and_risk() {
     for (paths, risk, applies) in [
         (json!(["src/main.rs"]), "high", true),
