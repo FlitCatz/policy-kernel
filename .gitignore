@@ -5,3 +5,7 @@ __pycache__/
 *.py[cod]
 /mutants.out*/
 /verification/mutants.out/
+.claude
+.mcp.json
+.codex
+/lat.md/.cache/
