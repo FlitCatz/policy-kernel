@@ -252,6 +252,31 @@ Restart Codex after the MCP installation. With the index available, use the
 as `codegraph explore "How does pre-merge evaluation flow?"` and
 `codegraph impact PolicySnapshot`.
 
+The index auto-syncs only while the CodeGraph MCP daemon runs, and
+`codegraph status` can report "up to date" for a stale index. Run
+`codegraph sync` after editing sources, or install an optional local hook:
+
+```console
+printf '#!/bin/sh\ncommand -v codegraph >/dev/null && codegraph sync -q || true\n' > .git/hooks/post-commit
+chmod +x .git/hooks/post-commit
+```
+
+## Knowledge graph
+
+[`lat.md/`](lat.md/lat.md) is a [lat.md](https://github.com/vercel-labs/lat.md)
+graph that links the documentation and anchors authorization rules to Rust
+symbols in [`lat.md/kernel.md`](lat.md/kernel.md). Like CodeGraph, it is a
+navigation aid, not policy evidence or a status authority. Install the CLI and
+validate links and code references after every change:
+
+```console
+npm install -g lat.md
+lat check
+```
+
+`lat check` fails when an anchored symbol is renamed or removed. Maintenance
+rules are in [AGENTS.md](AGENTS.md).
+
 ## CI integration
 
 The checked-in composite [GitHub Action](action/README.md) invokes an
