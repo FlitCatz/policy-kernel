@@ -7,9 +7,9 @@ mod process;
 pub use gh::{GhCliApi, GitHubApi};
 pub use parse::{
     parse_agent_ready, parse_merge, parse_pull_request, parse_trusted_check, parse_work_item,
-    publish_pre_merge_check, serialize_check_binding, validate_workflow, AgentReadyExpectation,
-    CheckBinding, CheckExpectation, LabelReceipt, PublicationReceipt, PublishedCheck, TrustedCheck,
-    WorkItemExpectation, WorkflowExpectation, WorkflowIdentity,
+    publish_pre_merge_check, serialize_check_binding, validate_merge_protection, validate_workflow,
+    AgentReadyExpectation, CheckBinding, CheckExpectation, LabelReceipt, PublicationReceipt,
+    PublishedCheck, TrustedCheck, WorkItemExpectation, WorkflowExpectation, WorkflowIdentity,
 };
 
 use policy_contracts::IdentityError;

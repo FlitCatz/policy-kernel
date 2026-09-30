@@ -46,6 +46,7 @@ authenticate a decision without its original evaluation input and trusted source
 `ReadyToMerge` is not `Shipped`. Shipping requires an authoritative ready decision,
 the trusted required check that published its exact decision/policy binding, and
 a protected merge of the same PR head. Check completion must precede the merge.
+The receipt's protection claim must match GitHub's current branch observation.
 The merge commit is distinct from the PR head, so squash is allowed. Direct,
 unprotected and unsupported merge-queue observations cannot authorize shipping.
 Raw API authentication and check provenance must be established by Task 10;

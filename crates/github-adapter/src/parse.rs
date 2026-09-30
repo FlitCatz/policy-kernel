@@ -220,6 +220,28 @@ pub fn parse_merge(
     Ok(receipt)
 }
 
+/// Cross-checks the trusted receipt's protection claim against GitHub's branch
+/// observation (`GET /repos/{owner}/{repo}/branches/{branch}`, readable without
+/// admin rights). The observation is taken at evaluation time, not at merge time.
+pub fn validate_merge_protection(
+    merge: &GitHubMergeObservation,
+    branch_raw: &[u8],
+) -> Result<(), AdapterError> {
+    let branch: RawBranch = serde_json::from_slice(branch_raw)?;
+    let target = merge
+        .target_branch
+        .as_deref()
+        .ok_or_else(|| binding_error("merge receipt lacks its target branch"))?;
+    ensure(
+        branch.name == target,
+        "branch observation does not match the merge target",
+    )?;
+    ensure(
+        branch.protected == merge.protected,
+        "merge receipt protection disagreed with GitHub branch observation",
+    )
+}
+
 pub fn validate_workflow(
     raw: &[u8],
     expected: &WorkflowExpectation,
@@ -676,6 +698,12 @@ struct RawPullRequest {
     base: RawPullRef,
     head: RawPullRef,
     merged_by: Option<RawActor>,
+}
+
+#[derive(Debug, Deserialize)]
+struct RawBranch {
+    name: String,
+    protected: bool,
 }
 
 #[derive(Debug, Deserialize)]

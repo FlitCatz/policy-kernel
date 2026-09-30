@@ -144,7 +144,12 @@ from the authenticated pre-merge publication:
 The CLI re-fetches the PR, dedicated Check Run, and publication's workflow run.
 The merge receipt is compared with API-observable facts; missing supplemental
 facts fail closed. The current REST PR response does not establish historical
-protection or an unambiguous actual merge method. A Check Run's JSON and
+protection or an unambiguous actual merge method. Post-merge also reads the
+target branch (`GET /repos/{owner}/{repo}/branches/{branch}`, which needs only
+read access) and fails unless its `protected` flag equals the receipt's claim.
+That observation is taken at evaluation time; it detects a receipt that claims
+protection GitHub does not report, but cannot prove protection at the historical
+merge instant or which rules applied. A Check Run's JSON and
 `external_id` are caller-controlled, so they must agree with the independent
 publication receipt. The custom check suite and workflow suite may differ.
 A later workflow rerun invalidates the older attempt under the current strict

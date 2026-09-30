@@ -1,6 +1,7 @@
 use github_adapter::{
-    parse_merge, parse_pull_request, parse_trusted_check, serialize_check_binding, AdapterError,
-    CheckBinding, CheckExpectation, GhCliApi, GitHubApi, PublicationReceipt,
+    parse_merge, parse_pull_request, parse_trusted_check, serialize_check_binding,
+    validate_merge_protection, AdapterError, CheckBinding, CheckExpectation, GhCliApi, GitHubApi,
+    PublicationReceipt,
 };
 use policy_contracts::{
     CommitSha, MergeMethod, PullRequestNumber, RepositoryId, Sha256Digest, WorkflowRunId,
@@ -423,4 +424,28 @@ fn maximum_github_identity_binding_fits_four_kibibytes() {
         serde_json::to_vec(&value).unwrap(),
         "binding must be canonical JSON"
     );
+}
+
+#[test]
+fn merge_protection_claim_must_match_the_branch_observation() {
+    let receipt: policy_contracts::GitHubMergeObservation = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/github/merge-receipt.json"
+    ))
+    .unwrap();
+    let branch = |name: &str, protected: bool| {
+        serde_json::to_vec(&serde_json::json!({"name": name, "protected": protected})).unwrap()
+    };
+    validate_merge_protection(&receipt, &branch("main", true)).unwrap();
+    // A receipt cannot claim protection GitHub does not observe, or the reverse.
+    assert!(validate_merge_protection(&receipt, &branch("main", false)).is_err());
+    let mut unprotected = receipt.clone();
+    unprotected.protected = false;
+    validate_merge_protection(&unprotected, &branch("main", false)).unwrap();
+    assert!(validate_merge_protection(&unprotected, &branch("main", true)).is_err());
+    // The observation must describe the merge target.
+    assert!(validate_merge_protection(&receipt, &branch("release", true)).is_err());
+    let mut untargeted = receipt;
+    untargeted.target_branch = None;
+    assert!(validate_merge_protection(&untargeted, &branch("main", true)).is_err());
+    assert!(validate_merge_protection(&unprotected, b"{\"name\":\"main\"}").is_err());
 }
