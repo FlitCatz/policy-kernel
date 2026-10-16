@@ -11,6 +11,21 @@ Compatible lockfile updates fix `brace-expansion` and `source-map-js`, including
 the project-owned frontend fixture. Bootstrap assets are unchanged.
 These fixture changes do not establish hosted CI success or production promotion.
 
+## P1 npm workspace shared lock
+
+The optional [P1 workspace extension](integrations/npm-workspaces.md) adds
+explicit npm members under one root graph in profile schema 4 / selection 3.
+Root declarations, actual manifests, lock members and installed workspace links
+must agree; each graph has one audit. Standalone npm and NuGet lock rules remain.
+
+The [2026-10-16 local execution](archive/reviews/2026-10-16-npm-workspace-local.md)
+records native conformance with the captain's revised Node 26.12.0 pin and
+npm 11.20.0: TS6/TS5 resolution, root/member-only vulnerability detection and
+clean recovery. Approved registry installations, cache and logs stayed inside
+temporary fixtures. Local evidence is labelled **local scope satisfied** and
+remains LocalUntrusted. This is PK fixture coverage, not TJERP adoption,
+an authoritative CI decision, protected-branch merge or production promotion.
+
 ## Task 17 project-owned frontend tool versions
 
 [Task 17](tasks/task-17/README.md) adds profile schema 4 / selection schema 3

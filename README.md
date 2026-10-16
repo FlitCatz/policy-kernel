@@ -151,6 +151,12 @@ supplied decision.
 
 ## Schemas and repository checks
 
+The [npm workspace shared-lock extension](docs/integrations/npm-workspaces.md)
+adds explicit members to one root graph in schema 4 / selection 3. One root
+audit covers the root and members; no per-member locks are needed. Native
+Node 26.12.0/npm 11.20.0 fixture results are **local scope satisfied** only,
+not TJERP adoption or Trusted evidence. See [current status](docs/status.md).
+
 Generate the five checked-in contract schemas in [`schemas/`](schemas/):
 
 ```console

@@ -143,6 +143,8 @@ pub struct DependencyGraph {
     pub tool: String,
     pub audit_sensor: String,
     pub target_framework: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub workspace: Option<crate::npm_workspace::NpmWorkspace>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -428,6 +430,7 @@ impl Selection {
         let mut manifests = BTreeSet::new();
         let mut audits = BTreeSet::new();
         for graph in &self.graphs {
+            crate::npm_workspace::validate_contract(self, profile, graph)?;
             if graph.id.is_empty()
                 || !graph_ids.insert(&graph.id)
                 || !component(&graph.component)
@@ -565,10 +568,22 @@ impl Selection {
                 if (input.ends_with(".csproj")
                     || input == "package.json"
                     || input.ends_with("/package.json") && !input.starts_with("node_modules/"))
-                    && !self
-                        .graphs
-                        .iter()
-                        .any(|g| g.component == sensor.component && g.manifest == *input)
+                    && !self.graphs.iter().any(|g| {
+                        g.component == sensor.component
+                            && (g.manifest == *input
+                                || g.workspace
+                                    .as_ref()
+                                    .is_some_and(|w| w.member_manifests.contains(input)))
+                    })
+                    && !self.packages.iter().any(|p| {
+                        p.component == sensor.component
+                            && p.installed_manifest == *input
+                            && self.graphs.iter().any(|g| {
+                                g.component == p.component
+                                    && g.lockfile == p.lockfile
+                                    && g.workspace.is_some()
+                            })
+                    })
                 {
                     return Err(invalid(format!(
                         "unaudited manifest: {}:{input}",
@@ -644,6 +659,13 @@ impl Selection {
             .iter()
             .filter(|g| g.component == component)
             .flat_map(|g| [g.manifest.clone(), g.lockfile.clone()])
+            .chain(
+                self.graphs
+                    .iter()
+                    .filter(|g| g.component == component)
+                    .filter_map(|g| g.workspace.as_ref())
+                    .flat_map(|w| w.member_manifests.iter().cloned()),
+            )
             .chain(
                 self.packages
                     .iter()
@@ -765,6 +787,7 @@ impl DependencyGraph {
         self.command_prefix(tool)
             .into_iter()
             .chain(args.into_iter().map(str::to_owned))
+            .chain(self.workspace_args())
             .collect()
     }
     pub fn audit_argv(&self, tool: &ToolSelection) -> Vec<String> {
@@ -795,7 +818,24 @@ impl DependencyGraph {
         self.command_prefix(tool)
             .into_iter()
             .chain(args.into_iter().map(str::to_owned))
+            .chain(self.workspace_args())
             .collect()
+    }
+
+    fn workspace_args(&self) -> Vec<String> {
+        if self.workspace.is_some() {
+            [
+                "--workspaces",
+                "--include-workspace-root",
+                "--userconfig=.policy-npm-userconfig",
+                "--globalconfig=.policy-npm-globalconfig",
+            ]
+            .into_iter()
+            .map(str::to_owned)
+            .collect()
+        } else {
+            vec![]
+        }
     }
 }
 
@@ -856,6 +896,7 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
                     tool: id.clone(),
                     audit_sensor: id.clone(),
                     target_framework: Some("net9.0".into()),
+                    workspace: None,
                 };
                 if role != GraphRole::Application {
                     let mut sensor = audit.clone();
@@ -888,6 +929,7 @@ pub fn upgrade_profile(mut profile: ProjectProfile) -> Result<ProjectProfile, Er
                 tool: audit_id.clone(),
                 audit_sensor: audit_id,
                 target_framework: None,
+                workspace: None,
             });
             let tool = profile
                 .sensors
@@ -1166,6 +1208,7 @@ fn validate_files(
         }
     }
     for graph in selection.graphs.iter().filter(|g| g.component == component) {
+        crate::npm_workspace::validate_files(graph, files, allow_missing)?;
         let manifest = optional_read(&graph.manifest)?;
         let lock = optional_read(&graph.lockfile)?;
         match graph.adapter {
@@ -1178,6 +1221,18 @@ fn validate_files(
                     .transpose()?;
                 if manifest.as_ref().is_some_and(|value| !value.is_object()) {
                     return Err(invalid("npm manifest must be an object"));
+                }
+                if graph.workspace.is_none()
+                    && (manifest
+                        .as_ref()
+                        .is_some_and(|v| v.get("workspaces").is_some())
+                        || lock
+                            .as_ref()
+                            .is_some_and(|v| v.pointer("/packages//workspaces").is_some()))
+                {
+                    return Err(invalid(
+                        "npm workspaces require an explicit workspace graph",
+                    ));
                 }
                 if let Some(lock) = lock {
                     let locked_root = lock

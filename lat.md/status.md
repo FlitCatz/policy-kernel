@@ -6,6 +6,11 @@ Native fixture dependencies use Jest 30.5.2 with scoped `js-yaml` 4 and
 parser 8.42.0 with scoped `typescript-estree` 8.48.0 overrides. Frozen bootstrap
 pins remain unchanged; this refresh alone makes no hosted or promotion claim.
 
+P1 adds explicit npm members under one root graph and audit. Native
+Node 26.12.0/npm 11.20.0 fixtures satisfy the local scope; evidence remains
+LocalUntrusted and does not establish TJERP adoption or promotion.
+See [[kernel#Npm workspace graph]] and the current-status authority.
+
 It identifies the implemented scope, dated verification evidence, and conditions
 not demonstrated in production. [[overview]] explains the repository's role,
 [[tasks]] maps evidence to Tasks 1–17, and [[trust-boundaries]] explains why
