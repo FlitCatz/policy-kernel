@@ -24,6 +24,10 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 ## Status and scope
 
+The native fixtures use Jest 30.5.2 with a scoped `js-yaml` 4 override.
+React/TypeScript keeps parser 8.42.0 and the frozen bootstrap pins, with a
+scoped `typescript-estree` 8.48.0 override; see [current status](docs/status.md).
+
 Tasks 1–14 provide implemented components in this workspace. The
 [current status](docs/status.md) and [Task index](docs/tasks/README.md) identify the supporting evidence and
 remaining implementation, integration, and operational conditions.

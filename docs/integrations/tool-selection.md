@@ -106,7 +106,7 @@ range does not prove who ran a tool, and all direct collection stays LocalUntrus
 | Install / lock / audit | npm / `npm_audit` | >=10.9.3, <11.0.0 | npm 10.9.3 and 10.9.4, lockfile v3 |
 | Build / static analysis | Explicit process argv | Adopted request | TypeScript 5.9.2, ESLint 9.34.0, Vite 7.3.6; Node syntax check in the alternate consumer |
 | Unit / contract | `vitest_json` | >=3.2.4, <5.0.0 | Vitest 4.1.11; historical 3.2.4 report contract retained |
-| Unit | `jest_json` | >=30.2.0, <31.0.0 | React SSR with Jest 30.2.0 under `web/` |
+| Unit | `jest_json` | >=30.2.0, <31.0.0 | React SSR with Jest 30.5.2 under `web/` |
 | E2E | `playwright_json` | >=1.55.0, <1.56.0 | Playwright 1.55.1 with Chromium |
 | SDK / restore / audit | NuGet / `nuget_audit` | SDK >=9.0.100, <10.0.0 | SDK 9.0.304, explicit net9.0 graphs |
 | Unit / integration report | `trx` | SDK >=9.0.100, <10.0.0 | VSTest 17.14.1 flat TRX on SDK 9.0.304 |

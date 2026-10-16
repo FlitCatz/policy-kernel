@@ -22,6 +22,11 @@
 
 ## 현재 상태와 범위
 
+네이티브 fixture는 Jest 30.5.2와 범위를 제한한 `js-yaml` 4 override를 사용합니다.
+React/TypeScript는 parser 8.42.0 및 동결된 bootstrap 버전 고정을 유지하며,
+`typescript-estree` 8.48.0에만 scoped override를 적용합니다.
+자세한 내용은 [현재 상태](docs/status.md)를 참고하세요.
+
 이 워크스페이스에는 Task 1–14의 구성요소가 구현되어 있습니다. 근거와 남은 구현·통합·운영 조건은
 [현재 상태](docs/status.md)와 [Task 색인](docs/tasks/README.md)에서 확인할 수 있습니다.
 [Task 15](docs/tasks/task-15/README.md)는 호환 도구·버전 선택, 실행 독립성,

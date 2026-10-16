@@ -6,6 +6,9 @@ use policy_core::{
     evaluate_post_merge, evaluate_pre_merge, evaluate_reviews, evaluate_sensor_evidence,
     validate_bundle, ReviewEvaluationInput, SensorEvaluationStatus,
 };
+#[path = "../../../tests/support/yaml_json.rs"]
+mod yaml_json;
+
 use serde::Deserialize;
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
@@ -86,7 +89,11 @@ fn read(relative: &str) -> Vec<u8> {
 }
 
 fn load_matrix() -> Matrix {
-    serde_yaml::from_slice(&read("docs/obligation-matrix.yaml"))
+    let source = String::from_utf8(read("docs/obligation-matrix.yaml"))
+        .expect("obligation matrix must be UTF-8");
+    let value =
+        yaml_json::yaml_to_json(&source).expect("obligation matrix must be one YAML document");
+    serde_json::from_value(value)
         .expect("obligation matrix must satisfy the versioned expectation schema")
 }
 

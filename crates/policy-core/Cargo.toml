@@ -21,4 +21,4 @@ globset.workspace = true
 [dev-dependencies]
 chrono.workspace = true
 proptest.workspace = true
-serde_yaml.workspace = true
+yaml-rust2.workspace = true

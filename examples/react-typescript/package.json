@@ -26,5 +26,10 @@
     "typescript": "5.9.2",
     "vite": "7.3.6",
     "vitest": "4.1.11"
+  },
+  "overrides": {
+    "@typescript-eslint/parser": {
+      "@typescript-eslint/typescript-estree": "8.48.0"
+    }
   }
 }
