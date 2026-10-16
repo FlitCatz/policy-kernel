@@ -7,17 +7,13 @@ use std::{
 };
 fn main() {
     if env::args().nth(1).as_deref() == Some("--child-sleep") {
-        fs::write(
-            env::current_exe().unwrap().with_extension("started"),
-            b"started",
-        )
-        .unwrap();
-        thread::sleep(Duration::from_millis(400));
-        fs::write(
-            env::current_exe().unwrap().with_extension("survived"),
-            b"survived",
-        )
-        .unwrap();
+        // Publish the pid atomically, then outlive every adapter deadline so
+        // the test can observe group cleanup instead of racing a timer.
+        let executable = env::current_exe().unwrap();
+        let pending = executable.with_extension("started-pending");
+        fs::write(&pending, std::process::id().to_string()).unwrap();
+        fs::rename(pending, executable.with_extension("started")).unwrap();
+        thread::sleep(Duration::from_secs(60));
         return;
     }
     let executable = env::current_exe().unwrap();
@@ -55,7 +51,8 @@ fn main() {
             match mode.as_str() {
                 "failure-descendant" => std::process::exit(7),
                 "overflow-descendant" => print!("0123456789"),
-                "blocked-input" => thread::sleep(Duration::from_secs(2)),
+                // Outlive the adapter deadline; group cleanup kills this sleep.
+                "blocked-input" => thread::sleep(Duration::from_secs(60)),
                 _ => print!("{{}}"),
             }
         }
