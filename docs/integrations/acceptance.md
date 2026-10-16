@@ -183,7 +183,7 @@ The setup actions are commit-pinned to upstream releases
 [setup-dotnet 4.3.1](https://github.com/actions/setup-dotnet/releases/tag/v4.3.1).
 Adding the workflow is not evidence that it ran.
 
-The additional native Jest test selects Node 22.19.0, npm 10.9.4 and Jest 30.2.0
+The additional native Jest test selects Node 22.19.0, npm 10.9.4 and Jest 30.5.2
 with a user-owned profile and `web/` component. With those tools available, set
 `POLICY_JEST_OUTPUT` to a fresh absolute directory and run
 `cargo test --locked -p policy-acceptance --test native_jest -- --ignored --nocapture`.

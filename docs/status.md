@@ -1,5 +1,16 @@
 # Current status
 
+## Native fixture dependency refresh
+
+The Jest fixture uses 30.5.2 and overrides `js-yaml` beneath
+`@istanbuljs/load-nyc-config` to 4.x, removing the vulnerable `argparse` 1 /
+`sprintf-js` chain. React/TypeScript retains parser 8.42.0 and every frozen
+bootstrap 1.1.0 pin; its parser-scoped `typescript-estree` 8.48.0 override
+removes the vulnerable `fast-glob` / `micromatch` / `braces` chain.
+Compatible lockfile updates fix `brace-expansion` and `source-map-js`, including
+the project-owned frontend fixture. Bootstrap assets are unchanged.
+These fixture changes do not establish hosted CI success or production promotion.
+
 ## Task 17 project-owned frontend tool versions
 
 [Task 17](tasks/task-17/README.md) adds profile schema 4 / selection schema 3

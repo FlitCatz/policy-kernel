@@ -2,6 +2,10 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+Native fixture dependencies use Jest 30.5.2 with scoped `js-yaml` 4 and
+parser 8.42.0 with scoped `typescript-estree` 8.48.0 overrides. Frozen bootstrap
+pins remain unchanged; this refresh alone makes no hosted or promotion claim.
+
 It identifies the implemented scope, dated verification evidence, and conditions
 not demonstrated in production. [[overview]] explains the repository's role,
 [[tasks]] maps evidence to Tasks 1–17, and [[trust-boundaries]] explains why
