@@ -31,6 +31,24 @@ fn process_fixture(path: &std::path::Path, mode: &str) {
     fs::write(path.with_extension("mode"), mode).unwrap();
 }
 
+// The fixture descendant sleeps far past any deadline, so it is gone only if
+// group cleanup killed it; wait for that event rather than a fixed delay.
+fn assert_descendant_killed(path: &std::path::Path, context: &str) {
+    let pid = fs::read_to_string(path.with_extension("started"))
+        .unwrap()
+        .parse()
+        .unwrap();
+    let pid = rustix::process::Pid::from_raw(pid).unwrap();
+    let deadline = std::time::Instant::now() + Duration::from_secs(10);
+    while rustix::process::test_kill_process(pid).is_ok() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "descendant survived {context}"
+        );
+        std::thread::sleep(Duration::from_millis(10));
+    }
+}
+
 const HEAD: &str = "cccccccccccccccccccccccccccccccccccccccc";
 const MERGE: &str = "dddddddddddddddddddddddddddddddddddddddd";
 const DECISION: &str = "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
@@ -239,11 +257,7 @@ fn inherited_output_pipe_does_not_extend_gh_timeout() {
     ));
     assert!(started.elapsed() < Duration::from_secs(1));
     assert!(script.with_extension("started").exists());
-    std::thread::sleep(Duration::from_millis(500));
-    assert!(
-        !script.with_extension("survived").exists(),
-        "descendant survived API timeout"
-    );
+    assert_descendant_killed(&script, "API timeout");
     fs::remove_dir_all(temp).unwrap();
 }
 
@@ -283,7 +297,14 @@ fn gh_cleans_descendants_on_every_process_exit_path() {
         fs::create_dir_all(&temp).unwrap();
         let executable = temp.join("gh");
         process_fixture(&executable, mode);
-        let api = GhCliApi::new(&executable, Duration::from_millis(200), 4);
+        // The deadline also covers fixture startup, so only blocked-input may
+        // reach it; the other modes finish when the fixture exits.
+        let timeout = if mode == "blocked-input" {
+            Duration::from_secs(2)
+        } else {
+            Duration::from_secs(30)
+        };
+        let api = GhCliApi::new(&executable, timeout, 4);
         let result = if mode == "blocked-input" {
             api.create_check_run("owner", "repo", &vec![b'x'; 16 * 1024])
         } else {
@@ -291,26 +312,28 @@ fn gh_cleans_descendants_on_every_process_exit_path() {
         };
         match mode {
             "success-descendant" => assert_eq!(result.unwrap(), b"{}"),
-            "failure-descendant" => assert!(matches!(
-                result,
-                Err(AdapterError::ProcessFailure {
-                    status: Some(7),
-                    ..
-                })
-            )),
-            "overflow-descendant" => assert!(matches!(
-                result,
-                Err(AdapterError::OutputTooLarge { limit: 4 })
-            )),
-            "blocked-input" => assert!(matches!(result, Err(AdapterError::Timeout(_)))),
+            "failure-descendant" => assert!(
+                matches!(
+                    result,
+                    Err(AdapterError::ProcessFailure {
+                        status: Some(7),
+                        ..
+                    })
+                ),
+                "{result:?}"
+            ),
+            "overflow-descendant" => assert!(
+                matches!(result, Err(AdapterError::OutputTooLarge { limit: 4 })),
+                "{result:?}"
+            ),
+            "blocked-input" => assert!(
+                matches!(result, Err(AdapterError::Timeout(_))),
+                "{result:?}"
+            ),
             _ => unreachable!(),
         }
         assert!(executable.with_extension("started").exists());
-        std::thread::sleep(Duration::from_millis(500));
-        assert!(
-            !executable.with_extension("survived").exists(),
-            "descendant survived {mode}"
-        );
+        assert_descendant_killed(&executable, mode);
         fs::remove_dir_all(temp).unwrap();
     }
 }
