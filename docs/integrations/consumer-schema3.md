@@ -72,7 +72,74 @@ Ancestor targets/packages files above the component are also rejected. These
 checks supplement digest binding and reject unsupported layouts; they do not
 turn contributor MSBuild execution into a sandbox.
 
+## Compiler-generated files (P2)
+
+Optional `consumer.generated_files_graphs: ["modules"]` binds the extension to
+reviewed NuGet graph IDs and their existing manifest paths. An omitted or empty
+list preserves the previous XML contract. Every graph in an opted-in component
+must bind reviewed `framework_props`, including projects reached by references.
+
+The opted-in project must declare exactly this pair, once, in the same direct,
+unconditional `PropertyGroup`:
+
+```xml
+<PropertyGroup>
+  <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  <CompilerGeneratedFilesOutputPath>obj/generated</CompilerGeneratedFilesOutputPath>
+</PropertyGroup>
+```
+
+Names and values above are exact; neither property joins the generic safe-property
+list. `false`, absolute paths, traversal, drive/UNC/backslash paths, expressions,
+environment expansion, duplicate declarations (including case variants), property
+or ancestor conditions, inherited declarations, `TreatAsLocalProperty`, imports
+and targets fail closed. Project-reference property metadata is also rejected.
+NuGet advisory suppression, alternate lock paths and audit-warning suppression
+remain rejected. Nested `Directory.Build.*` and implicit MSBuild response files
+cannot supply external overrides.
+
+The whole component's actual command and environment allowlist are checked:
+selected tools must be `dotnet` (or an explicit path ending in `dotnet`) with a
+`--version` probe. Audit commands must exactly match the fixed NuGet adapter.
+Other commands are `dotnet build PROJECT --no-restore` or
+`dotnet test PROJECT --no-restore`, with only optional `--no-build`, `--filter`,
+`--logger` and `--results-directory` test options, each at most once. CLI property
+overrides, response files and other arguments are rejected. Environment keys are
+limited to `PATH`, `HOME`, `DOTNET_ROOT`, `DOTNET_CLI_HOME`, `NUGET_PACKAGES`; the
+collector clears ambient environment before forwarding allowed keys.
+
+Output is relative to the reviewed project, not the component root. Preflight and
+collection configuration checks reject symlinks in the project path, `obj`,
+`obj/generated`, and existing output descendants. Missing output directories are
+allowed before a build; an empty directory is not proof of generation. These
+checks do not sandbox contributor code or protect against concurrent filesystem
+mutation. Use an isolated checkout and trusted selected tool installation.
+
+The offline native proof stages the synthetic backend, uses cached Mapperly 4.3.1
+and the pinned RC1 SDK/VSTest 17.14.1, builds actual generated source, and runs a
+C# ArchitectureTests-style test that reads and asserts its content. Replacing that
+output with an empty directory must fail the same compiled test. The harness is
+Rust; the C# source is fixture data. All NuGet feeds are cleared for this proof;
+its locked cache-only restore disables audit and is **not** an audit result.
+
+```console
+POLICY_GENERATED_DOTNET=/absolute/installed/dotnet POLICY_GENERATED_PACKAGES=/absolute/existing/nuget/packages cargo test --locked --offline -p policy-acceptance --test native_generated_files -- --ignored --nocapture
+```
+
+Set `POLICY_GENERATED_OUTPUT` to a fresh absolute output directory to retain the
+staged backend, command argv/status/stdout/stderr and baseline TRX. Commands time
+out after 120 seconds. A restricted process/socket sandbox may prevent VSTest from
+starting; the local proof needs permission to launch its native test processes.
+
+Do not install or fetch missing SDKs/packages as part of this command. Missing
+cached dependencies require a separate decision. A successful proof is labelled
+**local scope satisfied**, remains LocalUntrusted, and proves neither actual
+TJERP adoption nor authoritative CI or production promotion.
+
 ## Bootstrap
+
+The compiler-generated-file extension above requires a reader containing
+P2. Older readers reject its new field; frozen bootstrap assets are not rewritten.
 
 Release 1.2.0 is **custom-profile only** and requires schema 3. Release 1.1.0 keeps
 schema 2 user profiles and its existing presets. Receipt schema 3 identifies the

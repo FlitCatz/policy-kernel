@@ -2,6 +2,7 @@
 
 pub mod adapter_contracts;
 pub mod consumer;
+mod generated_files;
 pub mod npm_workspace;
 mod paths;
 pub mod profile;

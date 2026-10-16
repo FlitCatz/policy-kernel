@@ -2,6 +2,12 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+P2 adds explicit graph opt-in for bounded compiler-generated output, with XML,
+command/environment and filesystem checks. The offline Mapperly fixture does not
+establish TJERP adoption, authoritative CI or trust. See [[kernel#Compiler-generated output]].
+The current-status authority records local scope satisfied for the cached-package
+native proof, including the empty-output rejection.
+
 Native fixture dependencies use Jest 30.5.2 with scoped `js-yaml` 4 and
 parser 8.42.0 with scoped `typescript-estree` 8.48.0 overrides. Frozen bootstrap
 pins remain unchanged; this refresh alone makes no hosted or promotion claim.

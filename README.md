@@ -77,6 +77,12 @@ declarative tool configuration under `examples/`.
 
 ## Requirements
 
+Schema-3 consumers can opt reviewed NuGet projects into the
+[P2 generated-file contract](docs/integrations/consumer-schema3.md#compiler-generated-files-p2):
+only `EmitCompilerGeneratedFiles=true` with project-relative `obj/generated` is
+accepted, with command, inheritance and symlink checks. Local verification remains
+advisory and does not promote evidence to Trusted.
+
 Frontend projects can opt into [project-owned tool versions](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4): profile schema 4 / selection schema 3 separates version acceptance from the Vitest, Jest, Playwright, process, and npm audit contracts. Provisioning is optional; tool observation and declared runtime/lock checks remain mandatory. `migrate-profile FILE --target-schema 4` prints a candidate without changing the source. Custom bootstrap 1.3.0 accepts this frontend profile and leaves native files user-owned. The [native conformance guide](docs/integrations/acceptance.md#project-owned-frontend-conformance) covers supplied consumer candidates and raw report retention. See [Task 17](docs/tasks/task-17/README.md) for validation scope and the exact-head hosted observation; production promotion remains separate.
 
 Explicit [schema-3 consumer profiles](docs/integrations/consumer-schema3.md) now

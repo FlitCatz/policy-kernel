@@ -72,6 +72,12 @@ bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript
 
 ## 요구 사항
 
+Schema 3 소비자는 검토한 NuGet 프로젝트에
+[P2 생성 파일 계약](docs/integrations/consumer-schema3.md#compiler-generated-files-p2)을
+명시적으로 적용할 수 있습니다. `EmitCompilerGeneratedFiles=true`와 프로젝트 기준
+`obj/generated` 조합만 허용하며 명령, 상속 및 symlink를 검사합니다. 로컬 검증은
+advisory이며 증거를 Trusted로 승격하지 않습니다.
+
 프런트엔드 프로젝트는 [프로젝트 소유 도구 버전](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4) 경로를 선택할 수 있습니다. 프로필 schema 4 / selection schema 3은 버전 수용 규칙과 Vitest·Jest·Playwright·process·npm 감사 계약을 분리합니다. 설치 버전 선택은 선택 사항이지만 실제 도구 관측과 선언한 runtime·lock 검사는 필수입니다. `migrate-profile FILE --target-schema 4`는 원본을 바꾸지 않고 후보를 출력합니다. 사용자 프로필 전용 bootstrap 1.3.0은 네이티브 파일을 사용자 소유로 둡니다. [native 적합성 안내](docs/integrations/acceptance.md#project-owned-frontend-conformance)에는 소비자 후보 입력과 원본 보고서 보존 절차가 있습니다. 검증 범위와 특정 커밋의 hosted 실행 결과는 [Task 17](docs/tasks/task-17/README.md)에 기록하며, 운영 승격은 별도입니다.
 
 명시적 [schema 3 소비 프로필](docs/integrations/consumer-schema3.md)은 선택된
