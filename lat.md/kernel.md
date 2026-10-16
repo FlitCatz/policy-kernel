@@ -58,6 +58,18 @@ Bootstrap publishes managed files transactionally with a private journal; new fi
 
 Planning [[bootstrap/src/plan.rs#plan]]; application [[bootstrap/src/transaction.rs#apply]] and [[bootstrap/src/transaction.rs#recover]]; publication [[bootstrap/src/fs.rs#Root#publish]].
 
+## Npm workspace graph
+
+P1 binds explicit npm members to one root lock and audit. Manifest inventory, lock links and dependency presence must agree; local native verification does not establish adoption or trust.
+
+Contract [[crates/project-verification/src/npm_workspace.rs#validate_contract]];
+lock declarations [[crates/project-verification/src/npm_workspace.rs#validate_files]];
+filesystem inventory [[crates/project-verification/src/npm_workspace.rs#validate_layout]].
+Dependency inventory [[crates/project-verification/src/npm_workspace.rs#validate_dependency_inventory]].
+The local regressions are in
+[[crates/project-verification/tests/npm_workspace.rs#root_workspace_binds_members_and_uses_one_audit]].
+See [integration limits](../docs/integrations/npm-workspaces.md) and [[status]].
+
 ## Mutation gate
 
 Authorization modules, including sensor evaluation, must have every selected mutant built and caught; typed replacements stand in for uncompilable generator forms.

@@ -1,5 +1,11 @@
 # policy-kernel
 
+[npm workspace 공유 lock 확장](docs/integrations/npm-workspaces.md)은 schema 4 /
+selection 3의 단일 root graph에 명시적 member를 추가합니다. Root audit 한 번으로
+root와 member를 감사하며 member별 lock은 만들지 않습니다. Node 26.12.0/npm 11.20.0
+네이티브 fixture 결과는 **로컬 범위 충족(local scope satisfied)** 이며 TJERP 도입 완료나
+Trusted 증거가 아닙니다. [현재 상태](docs/status.md)를 참고하세요.
+
 증거(evidence)를 릴리스 정책과 대조해 결정하는 결정론적 Rust 구성 요소 모음입니다.
 이 커널은 에이전트 실행 환경이나 모델 제공자에 의존하지 않습니다. 타입이 정해진 입력을
 평가해 타입이 정해진 결정을 만들고, 인증과 릴리스 권한은 명시적인 통합 경계에서만

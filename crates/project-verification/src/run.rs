@@ -140,6 +140,7 @@ fn configuration(
     let cwd = paths::directory(&request.root, &component.root)?;
     if let Some(selection) = &request.profile.selection {
         crate::consumer::validate_component_layout(selection, &component.id, &cwd)?;
+        crate::npm_workspace::validate_layout(selection, &component.id, &cwd)?;
     }
     let mut inputs = Vec::new();
     let mut selected_inputs: BTreeSet<_> = sensor.inputs.iter().cloned().collect();
