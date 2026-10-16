@@ -86,7 +86,7 @@ fn read(relative: &str) -> Vec<u8> {
 }
 
 fn load_matrix() -> Matrix {
-    serde_yaml::from_slice(&read("docs/obligation-matrix.yaml"))
+    serde_saphyr::from_slice(&read("docs/obligation-matrix.yaml"))
         .expect("obligation matrix must satisfy the versioned expectation schema")
 }
 

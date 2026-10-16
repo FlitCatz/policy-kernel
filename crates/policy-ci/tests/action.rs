@@ -3,8 +3,8 @@ use std::{fs, os::unix::fs::PermissionsExt, process::Command};
 
 #[test]
 fn action_preserves_literal_arguments_and_rejects_unknown_modes() {
-    let action: serde_yaml::Value =
-        serde_yaml::from_str(include_str!("../../../action/action.yml")).unwrap();
+    let action: serde_json::Value =
+        serde_saphyr::from_str(include_str!("../../../action/action.yml")).unwrap();
     let script = action["runs"]["steps"][0]["run"].as_str().unwrap();
     let root = std::env::temp_dir().join(format!("policy-action-test-{}", std::process::id()));
     fs::create_dir_all(&root).unwrap();
