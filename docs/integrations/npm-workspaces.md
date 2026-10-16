@@ -18,12 +18,14 @@ For a component whose `root` is `frontend`, the graph uses `manifest:
 ```json
 {
   "member_manifests": ["tools/openapi/package.json"],
-  "minimum_pk_revision": "<reviewed 40-character implementation commit>"
+  "minimum_pk_revision": "8ce6963ff0a2cdd5eb7239269f6e473372de7011"
 }
 ```
 
-Replace the placeholder with the actual reviewed revision; it is deliberately
-not a valid runnable profile. The audit sensor's explicit `inputs` must include
+`8ce6963ff0a2cdd5eb7239269f6e473372de7011` is the implementation revision rebased
+onto the fixture refresh;
+adopters should select a reviewed revision containing it. This object is a graph
+fragment, not a complete profile. The audit sensor's explicit `inputs` must include
 the root manifest, lock and every member manifest. No member lock is created.
 
 Only profile schema 4 / selection schema 3 can opt in. One npm graph owns the
