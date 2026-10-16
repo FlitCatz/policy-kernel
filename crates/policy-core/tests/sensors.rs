@@ -51,7 +51,7 @@ fn profile() -> SensorProfile {
         ],
         adequacy: TestAdequacyPolicy {
             acceptance_criterion_ids: vec!["AC-1".into()],
-            changed_behavior_ids: vec!["BEHAVIOR-1".into()],
+            changed_behavior_ids: vec!["BEHAVIOR-1".into(), "NEG-1".into()],
             negative_case_ids: vec!["NEG-1".into()],
         },
     }
@@ -93,10 +93,16 @@ fn adequate() -> TestAdequacyEvidence {
             requirement_id: "AC-1".into(),
             test_ids: vec!["test-api".into()],
         }],
-        changed_behaviors: vec![TestMapping {
-            requirement_id: "BEHAVIOR-1".into(),
-            test_ids: vec!["test-api".into()],
-        }],
+        changed_behaviors: vec![
+            TestMapping {
+                requirement_id: "BEHAVIOR-1".into(),
+                test_ids: vec!["test-api".into()],
+            },
+            TestMapping {
+                requirement_id: "NEG-1".into(),
+                test_ids: vec!["test-api".into()],
+            },
+        ],
         negative_case_ids: vec!["NEG-1".into()],
         executed_test_ids: vec!["test-api".into()],
         discovered: 1,
@@ -519,10 +525,11 @@ fn each_adequacy_obligation_alone_requires_adequacy_evidence() {
     ] {
         assert_eq!(actual.status, SensorEvaluationStatus::Inconclusive);
         assert!(actual.has_reason("PK-ADEQ-MISSING"));
+        assert!(!actual.has_reason("PK-ADEQ-POLICY-EMPTY"));
     }
     assert_eq!(
         obligation(&[], &[], &[]).status,
-        SensorEvaluationStatus::Passed
+        SensorEvaluationStatus::Inconclusive
     );
 }
 
@@ -558,4 +565,149 @@ fn blank_and_duplicate_condition_ids_are_each_rejected() {
     let condition = duplicate.sensors[1].required_when[0].clone();
     duplicate.sensors[1].not_applicable_when.push(condition);
     assert!(resolve_required_sensors(&duplicate, &["src/api.rs"], Risk::High).is_err());
+}
+
+#[test]
+fn empty_policy_is_explained_non_pass_even_with_positive_counts() {
+    let mut profile = profile();
+    profile.adequacy = TestAdequacyPolicy {
+        acceptance_criterion_ids: vec![],
+        changed_behavior_ids: vec![],
+        negative_case_ids: vec![],
+    };
+    for evidence in [None, Some(adequate())] {
+        let result = evaluate_compile(
+            &profile,
+            sensor("compile", SensorStatus::Passed),
+            evidence.as_ref(),
+        );
+        assert_ne!(result.status, SensorEvaluationStatus::Passed);
+        assert!(result.has_reason("PK-ADEQ-POLICY-EMPTY"));
+    }
+}
+
+#[test]
+fn negative_names_require_policy_and_executed_behavior_mapping() {
+    let mut profile = profile();
+    let mut evidence = adequate();
+    profile.adequacy.changed_behavior_ids.pop();
+    evidence.changed_behaviors.pop();
+    let evaluate = |profile: &SensorProfile, evidence: &TestAdequacyEvidence| {
+        evaluate_compile(
+            profile,
+            sensor("compile", SensorStatus::Passed),
+            Some(evidence),
+        )
+    };
+    assert_ne!(
+        evaluate(&profile, &evidence).status,
+        SensorEvaluationStatus::Passed
+    );
+    assert!(evaluate(&profile, &evidence).has_reason("PK-ADEQ-POLICY-INVALID"));
+    profile.adequacy.changed_behavior_ids.push("NEG-1".into());
+    assert!(evaluate(&profile, &evidence).has_reason("PK-ADEQ-BEHAVIOR-UNMAPPED"));
+    evidence.changed_behaviors.push(TestMapping {
+        requirement_id: "NEG-1".into(),
+        test_ids: vec!["test-api".into()],
+    });
+    assert_eq!(
+        evaluate(&profile, &evidence).status,
+        SensorEvaluationStatus::Passed
+    );
+    evidence.changed_behaviors.last_mut().unwrap().test_ids = vec!["unexecuted".into()];
+    assert!(evaluate(&profile, &evidence).has_reason("PK-ADEQ-UNEXECUTED-MAPPING"));
+}
+
+#[test]
+fn missing_or_malformed_adequacy_ids_never_pass_direct_core_calls() {
+    let evaluate = |profile: &SensorProfile, evidence: &TestAdequacyEvidence| {
+        evaluate_compile(
+            profile,
+            sensor("compile", SensorStatus::Passed),
+            Some(evidence),
+        )
+    };
+    assert_eq!(
+        evaluate(&profile(), &adequate()).status,
+        SensorEvaluationStatus::Passed
+    );
+    let damages: &[fn(&mut TestAdequacyEvidence)] = &[
+        |e| {
+            e.acceptance_criteria.remove(0);
+        },
+        |e| {
+            e.changed_behaviors.remove(0);
+        },
+        |e| {
+            e.changed_behaviors.remove(1);
+        },
+        |e| e.negative_case_ids.clear(),
+        |e| e.acceptance_criteria[0].requirement_id.clear(),
+        |e| e.changed_behaviors[0].requirement_id = " ".into(),
+        |e| e.acceptance_criteria.push(e.acceptance_criteria[0].clone()),
+        |e| e.changed_behaviors.push(e.changed_behaviors[0].clone()),
+        |e| e.acceptance_criteria[0].test_ids.push("test-api".into()),
+        |e| e.changed_behaviors[0].test_ids.clear(),
+        |e| e.changed_behaviors[0].test_ids.push(" ".into()),
+        |e| e.negative_case_ids.push("NEG-1".into()),
+        |e| e.negative_case_ids.push(" ".into()),
+        |e| e.executed_test_ids[0].clear(),
+    ];
+    for (index, damage) in damages.iter().enumerate() {
+        let mut evidence = adequate();
+        damage(&mut evidence);
+        let result = evaluate(&profile(), &evidence);
+        assert_ne!(
+            result.status,
+            SensorEvaluationStatus::Passed,
+            "damage {index}"
+        );
+        assert!(!result.reasons.is_empty());
+    }
+    for field in 0..3 {
+        for duplicate in [false, true] {
+            let mut profile = profile();
+            let ids = match field {
+                0 => &mut profile.adequacy.acceptance_criterion_ids,
+                1 => &mut profile.adequacy.changed_behavior_ids,
+                _ => &mut profile.adequacy.negative_case_ids,
+            };
+            ids.push(if duplicate {
+                ids[0].clone()
+            } else {
+                " ".into()
+            });
+            assert!(evaluate(&profile, &adequate()).has_reason("PK-ADEQ-POLICY-INVALID"));
+        }
+    }
+}
+
+#[test]
+fn surplus_mappings_and_negative_claims_are_validated_independently() {
+    let evaluate = |evidence: &TestAdequacyEvidence| {
+        evaluate_compile(
+            &profile(),
+            sensor("compile", SensorStatus::Passed),
+            Some(evidence),
+        )
+    };
+    for requirement in ["", " ", "EXTRA"] {
+        let mut evidence = adequate();
+        evidence.acceptance_criteria.push(TestMapping {
+            requirement_id: requirement.into(),
+            test_ids: if requirement == "EXTRA" {
+                vec![]
+            } else {
+                vec!["test-api".into()]
+            },
+        });
+        assert!(evaluate(&evidence).has_reason("PK-ADEQ-CRITERION-UNMAPPED"));
+    }
+    let mut evidence = adequate();
+    evidence.negative_case_ids.push("EXTRA".into());
+    evidence.changed_behaviors.push(TestMapping {
+        requirement_id: "EXTRA".into(),
+        test_ids: vec!["test-api".into()],
+    });
+    assert!(evaluate(&evidence).has_reason("PK-ADEQ-BEHAVIOR-UNMAPPED"));
 }

@@ -262,8 +262,18 @@ fn every_frozen_obligation_executes_its_referenced_typed_fixture() {
         }
 
         let (status, reasons) = observe(obligation);
+        // Preserve the frozen fixture and its historical expectation. P3 now
+        // also rejects its negative names without executed behavior mappings.
+        let expected = if obligation.id == "PK-SENSOR-001" {
+            assert!(reasons
+                .iter()
+                .any(|reason| reason == "PK-ADEQ-BEHAVIOR-UNMAPPED"));
+            ExpectedStatus::Blocked
+        } else {
+            obligation.expected
+        };
         assert_eq!(
-            status, obligation.expected,
+            status, expected,
             "{} status; reasons={reasons:?}",
             obligation.id
         );

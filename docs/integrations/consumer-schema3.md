@@ -46,6 +46,11 @@ is rejected. Missing, failed, empty and overlapping suite evidence rejects the
 composed run (CLI exit 64); other failed process sensors retain exit 2 semantics.
 The collector does not infer business-rule adequacy from suite labels.
 
+Schema 3 and schema 4 consumer profiles must declare at least one adequacy
+requirement. Every negative ID must also occur in `changed_behavior_ids`, with
+an ID-to-executed-test mapping. See [adequacy](adequacy.md) for validation,
+legacy readiness changes and the stricter TJERP pilot catalog boundary.
+
 Fullstack schema 3 needs frontend/backend components and their real application
 graphs. It does not require an artificial shared npm project. Contract and E2E
 may live in their actual backend/frontend components. Every referenced library

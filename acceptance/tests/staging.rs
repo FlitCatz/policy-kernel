@@ -9,11 +9,20 @@ fn each_dependency_graph_failure_or_missing_audit_blocks_fullstack_acceptance() 
     let target = tmp.path().canonicalize().unwrap().join("consumer");
     let examples = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../examples");
     stage(&examples, "fullstack", &target).unwrap();
-    let profile = project_verification::parse_profile(
+    let mut profile = project_verification::parse_profile(
         &fs::read_to_string(target.join(".policy/project-profile.json")).unwrap(),
     )
     .unwrap()
     .sensor_profile();
+    // This test supplies its own synthetic adequacy contract; the frozen
+    // bootstrap template remains parseable but is not adequate by itself.
+    profile.adequacy.acceptance_criterion_ids = vec!["frontend:greeting".into()];
+    let adequacy = serde_json::from_value(serde_json::json!({
+        "acceptance_criteria":[{"requirement_id":"frontend:greeting","test_ids":["frontend:test"]}],
+        "changed_behaviors":[],"negative_case_ids":[],"executed_test_ids":["frontend:test"],
+        "discovered":1,"executed":1,"passed":1
+    }))
+    .unwrap();
     let evidence: Vec<SensorEvidence> = profile
         .sensors
         .iter()
@@ -35,7 +44,7 @@ fn each_dependency_graph_failure_or_missing_audit_blocks_fullstack_acceptance() 
             &["package-lock.json"],
             Risk::Low,
             items,
-            None,
+            Some(&adequacy),
         )
         .unwrap()
     };

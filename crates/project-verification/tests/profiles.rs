@@ -5,6 +5,84 @@ use serde_json::{json, Value};
 const FULL: &str = include_str!("../../../profiles/fullstack/profile.json");
 
 #[test]
+fn consumer_profiles_reject_empty_adequacy_without_changing_legacy_parsing() {
+    let legacy = parse_profile(include_str!(
+        "../../../examples/react-jest/project-profile.json"
+    ))
+    .unwrap();
+    for mut profile in [
+        parse_profile(include_str!(
+            "../../../examples/tjerp-compatible/project-profile.json"
+        ))
+        .unwrap(),
+        project_verification::selection::upgrade_frontend_profile(legacy).unwrap(),
+    ] {
+        profile.adequacy.acceptance_criterion_ids.clear();
+        profile.adequacy.changed_behavior_ids.clear();
+        profile.adequacy.negative_case_ids.clear();
+        assert!(profile.validate().is_err());
+        assert!(parse_profile(&serde_json::to_string(&profile).unwrap()).is_err());
+    }
+    for raw in [
+        FULL,
+        include_str!("../../../bootstrap/templates/1.1.0/profiles/dotnet/profile.json"),
+    ] {
+        let profile = parse_profile(raw).unwrap();
+        let evaluated =
+            policy_core::evaluate_sensor_evidence(&profile.sensor_profile(), &[], &[], None);
+        assert_ne!(
+            evaluated.status,
+            policy_core::SensorEvaluationStatus::Passed
+        );
+        assert!(evaluated.has_reason("PK-ADEQ-POLICY-EMPTY"));
+    }
+}
+
+#[test]
+fn consumer_negative_ids_must_be_required_behaviors_and_map_to_report_tests() {
+    use policy_contracts::{TestAdequacyEvidence, TestMapping};
+    use project_verification::reports::{parse_report, ReportFormat};
+    let mut profile = parse_profile(include_str!(
+        "../../../examples/tjerp-compatible/project-profile.json"
+    ))
+    .unwrap();
+    profile.adequacy.negative_case_ids = vec!["frontend:reject-empty".into()];
+    assert!(profile.validate().is_err());
+    profile.adequacy.changed_behavior_ids = profile.adequacy.negative_case_ids.clone();
+    profile.validate().unwrap();
+    // Normalize a reporter fixture; use the adapter's IDs, never invented hashes.
+    let report = parse_report(
+        ReportFormat::JestJson,
+        "frontend:unit",
+        include_bytes!("../../../tests/fixtures/project-reports/jest.json"),
+    )
+    .unwrap();
+    let ids: Vec<_> = report.tests.iter().map(|t| t.id.clone()).collect();
+    let mapping = |id: &str| TestMapping {
+        requirement_id: id.into(),
+        test_ids: ids.clone(),
+    };
+    let evidence = TestAdequacyEvidence {
+        acceptance_criteria: vec![mapping("frontend:greeting")],
+        changed_behaviors: vec![mapping("frontend:reject-empty")],
+        negative_case_ids: vec!["frontend:reject-empty".into()],
+        executed_test_ids: ids.clone(),
+        discovered: report.discovered,
+        executed: report.executed,
+        passed: report.passed,
+        head_sha: None,
+    };
+    let result =
+        policy_core::evaluate_sensor_evidence(&profile.sensor_profile(), &[], &[], Some(&evidence));
+    assert_eq!(
+        result.status,
+        policy_core::SensorEvaluationStatus::Passed,
+        "{:?}",
+        result.reasons
+    );
+}
+
+#[test]
 fn shipped_profile_instances_match_schema_and_have_unique_fullstack_suites() {
     for raw in [
         include_str!("../../../profiles/react-typescript/profile.json"),

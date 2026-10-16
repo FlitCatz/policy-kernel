@@ -8,6 +8,7 @@ fn profile() -> Value {
     ))
     .unwrap();
     value["schema_version"] = json!(3);
+    value["adequacy"]["acceptance_criterion_ids"] = json!(["backend:unit-contract"]);
     value["selection"]["schema_version"] = json!(2);
     value["selection"]["consumer"] = json!({"development_only":true,
         "suites":[{"role":"unit","sensor":"backend:unit","graph":"backend-unit-dependencies"},

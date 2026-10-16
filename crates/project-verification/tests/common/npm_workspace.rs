@@ -45,7 +45,7 @@ pub fn fixture(root: &Path) -> RunRequest {
     std::os::unix::fs::symlink("../tools/openapi", root.join("node_modules/generator")).unwrap();
     let mut profile = json!({"schema_version":4,"id":"react-typescript","version":"1.3.0",
         "components":[{"id":"frontend","root":"."}],
-        "adequacy":{"acceptance_criterion_ids":[],"changed_behavior_ids":[],"negative_case_ids":[]},
+        "adequacy":{"acceptance_criterion_ids":["frontend:workspace-unit"],"changed_behavior_ids":[],"negative_case_ids":[]},
         "sensors":[{"definition":{"id":"frontend:audit","required":true,"required_when":[],"not_applicable_when":[],"accepted_exit_codes":[0],"result_requirement":"process"},
             "component":"frontend","argv":["npm","audit","--audit-level=low","--include=dev","--include=optional","--include=peer","--workspaces","--include-workspace-root","--userconfig=.policy-npm-userconfig","--globalconfig=.policy-npm-globalconfig"],"version_args":["--version"],"version_stdout":"",
             "inputs":["package.json","package-lock.json","tools/openapi/package.json"],"timeout_ms":1000}],

@@ -352,10 +352,38 @@ fn evaluate_adequacy(
     let required = !policy.acceptance_criterion_ids.is_empty()
         || !policy.changed_behavior_ids.is_empty()
         || !policy.negative_case_ids.is_empty();
-    let Some(evidence) = evidence else {
-        if !required {
-            return;
+    if !required {
+        insert_reason(
+            reasons,
+            "PK-ADEQ-POLICY-EMPTY",
+            "test adequacy policy has no requirements",
+        );
+    }
+    for ids in [
+        &policy.acceptance_criterion_ids,
+        &policy.changed_behavior_ids,
+        &policy.negative_case_ids,
+    ] {
+        if !unique_nonempty_ids(ids) {
+            insert_reason(
+                reasons,
+                "PK-ADEQ-POLICY-INVALID",
+                "adequacy requirement IDs must be unique and nonempty",
+            );
         }
+    }
+    if policy
+        .negative_case_ids
+        .iter()
+        .any(|id| !policy.changed_behavior_ids.contains(id))
+    {
+        insert_reason(
+            reasons,
+            "PK-ADEQ-POLICY-INVALID",
+            "negative cases must also be required changed behaviors",
+        );
+    }
+    let Some(evidence) = evidence else {
         insert_reason(
             reasons,
             "PK-ADEQ-MISSING",
@@ -395,6 +423,32 @@ fn evaluate_adequacy(
         .iter()
         .map(String::as_str)
         .collect::<BTreeSet<_>>();
+    if !unique_nonempty_ids(&evidence.negative_case_ids) {
+        insert_reason(
+            reasons,
+            "PK-ADEQ-NEGATIVE-CASE-MISSING",
+            "negative case IDs must be unique and nonempty",
+        );
+    }
+    // A name is not coverage: every claimed negative needs a required behavior
+    // and a mapping to tests whose execution is checked below.
+    if evidence
+        .negative_case_ids
+        .iter()
+        .any(|id| !policy.changed_behavior_ids.contains(id))
+    {
+        insert_reason(
+            reasons,
+            "PK-ADEQ-BEHAVIOR-UNMAPPED",
+            "negative cases must be required changed behaviors",
+        );
+    }
+    validate_mappings(
+        &evidence.negative_case_ids,
+        &evidence.changed_behaviors,
+        "PK-ADEQ-BEHAVIOR-UNMAPPED",
+        reasons,
+    );
     if policy
         .negative_case_ids
         .iter()
@@ -489,6 +543,19 @@ fn validate_mappings(
     reason_code: &str,
     reasons: &mut Vec<Reason>,
 ) {
+    let mut seen = BTreeSet::new();
+    if mappings.iter().any(|mapping| {
+        mapping.requirement_id.trim().is_empty()
+            || !seen.insert(&mapping.requirement_id)
+            || mapping.test_ids.is_empty()
+            || !unique_nonempty_ids(&mapping.test_ids)
+    }) {
+        insert_reason(
+            reasons,
+            reason_code,
+            "mapping IDs and test IDs must be unique and nonempty",
+        );
+    }
     if required_ids.iter().any(|required_id| {
         !mappings
             .iter()
@@ -496,6 +563,12 @@ fn validate_mappings(
     }) {
         insert_reason(reasons, reason_code, "a required test mapping is missing");
     }
+}
+
+fn unique_nonempty_ids(ids: &[String]) -> bool {
+    let mut seen = BTreeSet::new();
+    ids.iter()
+        .all(|id| !id.trim().is_empty() && seen.insert(id))
 }
 
 fn insert_reason(reasons: &mut Vec<Reason>, code: &str, message: &str) {

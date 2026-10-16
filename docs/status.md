@@ -14,6 +14,16 @@ The [2026-10-16 execution record](archive/reviews/2026-10-16-msbuild-generated-o
 records **local scope satisfied** using the installed RC1 SDK and cached packages,
 with a successful generated-source read and the required empty-output rejection.
 
+## P3 explicit adequacy requirements
+
+The [adequacy contract](integrations/adequacy.md) makes empty core policies an
+explained non-pass and rejects all-empty consumer policies in schemas 3/4.
+Negative names require changed-behavior policy IDs and executed-test mappings.
+Legacy parsing and frozen bootstrap bytes remain unchanged; readiness now
+requires adopting real requirements and collecting matching evidence.
+This change is local advisory work, not TJERP adoption or promotion to Trusted.
+No production promotion or authoritative CI decision is established by local tests.
+
 ## Native fixture dependency refresh
 
 The Jest fixture uses 30.5.2 and overrides `js-yaml` beneath

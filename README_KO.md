@@ -1,5 +1,11 @@
 # policy-kernel
 
+Core 평가를 통과하려면 adequacy 정책이 필요하다. 빈 정책은
+`PK-ADEQ-POLICY-EMPTY` 사유를 내며, 소비자 profile schema 3/4는 실행 전에
+거부한다. Negative ID는 `changed_behavior_ids`에도 포함하고 실행된 test ID에
+매핑해야 한다. Frozen profile의 파싱은 유지하지만 빈 placeholder로 준비 완료를
+입증할 수 없다. [Adequacy 계약과 호환성 변경](docs/integrations/adequacy.md)을 참조한다.
+
 [npm workspace 공유 lock 확장](docs/integrations/npm-workspaces.md)은 schema 4 /
 selection 3의 단일 root graph에 명시적 member를 추가합니다. Root audit 한 번으로
 root와 member를 감사하며 member별 lock은 만들지 않습니다. Node 26.12.0/npm 11.20.0
