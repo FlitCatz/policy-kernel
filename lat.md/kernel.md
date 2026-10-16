@@ -70,6 +70,18 @@ The local regressions are in
 [[crates/project-verification/tests/npm_workspace.rs#root_workspace_binds_members_and_uses_one_audit]].
 See [integration limits](../docs/integrations/npm-workspaces.md) and [[status]].
 
+## Compiler-generated output
+
+P2 binds the exact compiler-output property pair to reviewed NuGet projects and rejects inheritance, command overrides and output symlinks. Native success requires readable Mapperly source, not an empty directory.
+
+Opt-in and argv [[crates/project-verification/src/generated_files.rs#validate_contract]];
+exact XML [[crates/project-verification/src/generated_files.rs#validate_xml]];
+reference overrides [[crates/project-verification/src/generated_files.rs#validate_reference_overrides]];
+filesystem [[crates/project-verification/src/generated_files.rs#validate_layout]].
+Negative fixtures [[crates/project-verification/tests/generated_files.rs#rejects_paths_expansions_duplicates_conditions_and_inheritance]];
+native proof [[acceptance/tests/native_generated_files.rs#mapperly_files_are_generated_and_read_by_architecture_test]].
+See [contract and limits](../docs/integrations/consumer-schema3.md#compiler-generated-files-p2) and [[status]].
+
 ## Mutation gate
 
 Authorization modules, including sensor evaluation, must have every selected mutant built and caught; typed replacements stand in for uncompilable generator forms.

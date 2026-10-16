@@ -1,5 +1,19 @@
 # Current status
 
+## P2 bounded MSBuild generated output
+
+The [P2 contract](integrations/consumer-schema3.md#compiler-generated-files-p2)
+adds explicit reviewed NuGet graph opt-in for the exact `true` / `obj/generated`
+property pair. XML inheritance, actual command/environment and real output-path
+checks reject unsupported overrides. Rust negative fixtures preserve audit and
+lock protections. The offline native fixture requires actual Mapperly output
+read by an ArchitectureTests-style test, including an empty-output failure case.
+This is local advisory fixture coverage, not TJERP adoption, authoritative CI,
+Trusted evidence or production promotion. Frozen bootstrap assets are unchanged.
+The [2026-10-16 execution record](archive/reviews/2026-10-16-msbuild-generated-output-local.md)
+records **local scope satisfied** using the installed RC1 SDK and cached packages,
+with a successful generated-source read and the required empty-output rejection.
+
 ## Native fixture dependency refresh
 
 The Jest fixture uses 30.5.2 and overrides `js-yaml` beneath

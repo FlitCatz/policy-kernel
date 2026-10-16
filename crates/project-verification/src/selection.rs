@@ -1296,6 +1296,13 @@ fn validate_files(
                         .map_err(|_| invalid("project XML is not UTF-8"))?;
                     let document =
                         roxmltree::Document::parse(text).map_err(|e| invalid(e.to_string()))?;
+                    if selection.consumer.as_ref().is_some_and(|c| {
+                        selection.graphs.iter().any(|g| {
+                            g.component == component && c.generated_files_graphs.contains(&g.id)
+                        })
+                    }) {
+                        crate::generated_files::validate_reference_overrides(&document)?;
+                    }
                     let targets: Vec<_> = document
                         .descendants()
                         .filter(|n| {
@@ -1308,11 +1315,15 @@ fn validate_files(
                         .and_then(|c| c.framework_props.get(&graph.id));
                     if let Some(path) = inherited {
                         if let Some(props) = optional_read(path)? {
-                            crate::consumer::validate_framework_xml(
+                            crate::consumer::validate_framework_xml_with_generated_files(
                                 text,
                                 std::str::from_utf8(props)
                                     .map_err(|_| invalid("props XML is not UTF-8"))?,
                                 framework,
+                                selection
+                                    .consumer
+                                    .as_ref()
+                                    .is_some_and(|c| c.generated_files_graphs.contains(&graph.id)),
                             )?;
                         }
                     } else if targets.len() != 1

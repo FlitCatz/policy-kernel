@@ -49,6 +49,8 @@ pub struct ConsumerContract {
     pub development_only: bool,
     pub suites: Vec<SuiteBinding>,
     pub framework_props: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeSet::is_empty")]
+    pub generated_files_graphs: BTreeSet<String>,
     pub runtime_policies: BTreeMap<String, RuntimePolicy>,
 }
 #[derive(
@@ -122,6 +124,7 @@ impl ConsumerContract {
         selection: &Selection,
         profile: &crate::ProjectProfile,
     ) -> Result<(), Error> {
+        crate::generated_files::validate_contract(self, selection, profile)?;
         let mut sensors = BTreeSet::new();
         let mut roles = BTreeSet::new();
         for suite in &self.suites {
@@ -296,8 +299,18 @@ pub fn validate_vstest17(
 
 /// Validate only the explicitly supported MSBuild subset, without executing imports.
 pub fn validate_framework_xml(project: &str, props: &str, expected: &str) -> Result<(), Error> {
-    fn document(text: &str) -> Result<roxmltree::Document<'_>, Error> {
+    validate_framework_xml_with_generated_files(project, props, expected, false)
+}
+
+pub(crate) fn validate_framework_xml_with_generated_files(
+    project: &str,
+    props: &str,
+    expected: &str,
+    generated_files: bool,
+) -> Result<(), Error> {
+    fn document(text: &str, generated_files: bool) -> Result<roxmltree::Document<'_>, Error> {
         let doc = roxmltree::Document::parse(text).map_err(|e| invalid(e.to_string()))?;
+        crate::generated_files::validate_xml(&doc, generated_files)?;
         // MSBuild property names are case-insensitive. Keep the supported subset
         // explicit: import hook properties can otherwise load unchecked XML.
         const SAFE_PROPERTIES: &[&str] = &[
@@ -327,7 +340,9 @@ pub fn validate_framework_xml(project: &str, props: &str, expected: &str) -> Res
                     && n.parent().is_some_and(|p| p.has_tag_name("PropertyGroup"))
                     && !SAFE_PROPERTIES
                         .iter()
-                        .any(|p| p.eq_ignore_ascii_case(n.tag_name().name())))
+                        .any(|p| p.eq_ignore_ascii_case(n.tag_name().name()))
+                    && !(generated_files
+                        && crate::generated_files::is_property(n.tag_name().name())))
                     || n.has_tag_name("Import")
                     || n.has_tag_name("ImportGroup")
                     || n.has_tag_name("Target")
@@ -344,7 +359,7 @@ pub fn validate_framework_xml(project: &str, props: &str, expected: &str) -> Res
         }
         Ok(doc)
     }
-    let project = document(project)?;
+    let project = document(project, generated_files)?;
     if project
         .descendants()
         .any(|n| n.is_element() && n.tag_name().name().eq_ignore_ascii_case("TargetFramework"))
@@ -353,7 +368,7 @@ pub fn validate_framework_xml(project: &str, props: &str, expected: &str) -> Res
             "inherited framework conflicts with project framework",
         ));
     }
-    let props = document(props)?;
+    let props = document(props, false)?;
     if props.descendants().any(|n| n.has_tag_name("ItemGroup")) {
         return Err(invalid(
             "framework props may contain only declared scalar properties",
@@ -386,6 +401,7 @@ pub fn validate_component_layout(
     let Some(consumer) = &selection.consumer else {
         return Ok(());
     };
+    crate::generated_files::validate_layout(consumer, selection, component, root)?;
     if selection
         .graphs
         .iter()
