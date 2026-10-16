@@ -33,7 +33,7 @@ for deterministic resolution as the crates begin using them.
 |---|---:|
 | serde | 1.0.228 |
 | serde_json | 1.0.145 |
-| serde-saphyr | 1.0.1 (development only; default features disabled, `deserialize` only) |
+| yaml-rust2 | 0.13.0 (development only; default features disabled) |
 | chrono | 0.4.42 |
 | sha2 | 0.10.9 |
 | hex | 0.4.3 |

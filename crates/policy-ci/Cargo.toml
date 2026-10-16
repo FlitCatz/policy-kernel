@@ -22,5 +22,5 @@ rustix = { workspace = true, features = ["fs"] }
 
 [dev-dependencies]
 assert_cmd.workspace = true
-serde-saphyr.workspace = true
+yaml-rust2.workspace = true
 tempfile.workspace = true

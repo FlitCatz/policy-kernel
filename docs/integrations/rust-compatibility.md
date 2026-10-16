@@ -17,8 +17,9 @@ The native minimum-version run recorded `rustc 1.85.0` commit
 `4d91de4e4` on `aarch64-apple-darwin`.
 
 The supported native paths are Linux and macOS. In the locked native graph,
-`jsonschema`, `indexmap`, and `hashbrown` declare Rust 1.85 or lower, and the
-workspace source also uses `Option::is_none_or`, available since Rust 1.82.
+`jsonschema`, `hashbrown`, and the test-only `yaml-rust2` declare Rust 1.85 or
+lower, and the workspace source also uses `Option::is_none_or`, available since
+Rust 1.82.
 The lockfile also contains target-specific `wasip2`,
 whose Rust 1.87 requirement is outside the supported native target selection; it
 is not compiled for the supported Linux/macOS paths. This does not claim support
