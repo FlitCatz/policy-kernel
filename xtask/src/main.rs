@@ -5,7 +5,7 @@ use policy_contracts::{
 };
 use schemars::JsonSchema;
 use serde_json::{Map, Value};
-use std::{env, fs, path::Path};
+use std::{env, fs, io::Write, path::Path};
 mod mutation_suite;
 mod verification;
 
@@ -55,7 +55,19 @@ fn write_schema<T: JsonSchema>(output_dir: &Path, name: &str) -> Result<(), std:
     sort_json_keys(&mut value);
     let mut bytes = serde_json::to_vec_pretty(&value).expect("JSON Schema value must serialize");
     bytes.push(b'\n');
-    fs::write(output_dir.join(name), bytes)
+    write_atomically(&output_dir.join(name), &bytes)
+}
+
+/// Replaces `path` by renaming a fully written sibling file over it, so a concurrent
+/// reader (such as a parallel schema test) sees the old or new schema, never a truncated one.
+fn write_atomically(path: &Path, bytes: &[u8]) -> Result<(), std::io::Error> {
+    let mut file = tempfile::NamedTempFile::new_in(path.parent().unwrap_or(Path::new(".")))?;
+    file.write_all(bytes)?;
+    if let Ok(metadata) = fs::metadata(path) {
+        file.as_file().set_permissions(metadata.permissions())?;
+    }
+    file.persist(path).map_err(|error| error.error)?;
+    Ok(())
 }
 
 fn add_standard_integer_bounds(value: &mut Value) {
@@ -93,5 +105,37 @@ fn sort_json_keys(value: &mut Value) {
         }
         Value::Array(items) => items.iter_mut().for_each(sort_json_keys),
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        sync::atomic::{AtomicBool, Ordering},
+        thread,
+    };
+
+    #[test]
+    fn concurrent_readers_never_observe_a_truncated_schema() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("policy.schema.json");
+        let bytes = vec![b'x'; 64 * 1024];
+        write_atomically(&path, &bytes).unwrap();
+        let done = AtomicBool::new(false);
+        thread::scope(|scope| {
+            let reader = scope.spawn(|| {
+                let mut reads = 0_u64;
+                while !done.load(Ordering::Relaxed) || reads == 0 {
+                    assert_eq!(fs::read(&path).unwrap().len(), bytes.len());
+                    reads += 1;
+                }
+            });
+            for _ in 0..500 {
+                write_atomically(&path, &bytes).unwrap();
+            }
+            done.store(true, Ordering::Relaxed);
+            reader.join().unwrap();
+        });
     }
 }
