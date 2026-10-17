@@ -94,3 +94,13 @@ See [contract and limits](../docs/integrations/consumer-schema3.md#compiler-gene
 Authorization modules, including sensor evaluation, must have every selected mutant built and caught; typed replacements stand in for uncompilable generator forms.
 
 Scope and result validation [[xtask/src/verification.rs#mutation_scope]]; the contract is [verification/mutation-contract.json](../verification/mutation-contract.json).
+
+## TJERP local composition
+
+The P7 harness preserves LocalUntrusted, checks exact catalog lists and raw executed selectors, and requires both profiles to bind one Git archive. It delegates decisions to existing core APIs and cannot authorize promotion.
+
+[[acceptance/src/tjerp/catalog.rs#check_catalog]] enforces pilot completeness;
+[[acceptance/src/tjerp/source.rs#git_inventory]] checks local source consistency;
+[[acceptance/src/tjerp/mod.rs#evaluate_pair]] binds both results and invokes the
+sensor, bundle and advisory provenance checks. See [[tjerp]] for the synthetic
+matrix and P8/P9 boundary.

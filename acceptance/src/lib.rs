@@ -5,6 +5,7 @@ mod failure;
 pub mod harness;
 mod process;
 mod staging;
+pub mod tjerp;
 pub use staging::{stage, stage_profile};
 
 pub fn negative_verified(

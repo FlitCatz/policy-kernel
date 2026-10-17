@@ -9,6 +9,7 @@ short paths between the concepts an agent or maintainer needs to understand.
 - [[tasks]] — Task landing pages and their evidence
 - [[trust-boundaries]] — why local evidence cannot authorize a release
 - [[kernel]] — authorization rules anchored to the Rust symbols that enforce them
+- [[tjerp]] — P7 split-profile local acceptance and synthetic fault matrix
 
 Start with [Current status](../docs/status.md) and the
 [Task index](../docs/tasks/README.md).

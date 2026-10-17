@@ -24,6 +24,12 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 ## Status and scope
 
+The [P7 TJERP acceptance harness](docs/integrations/tjerp-adoption.md) binds two
+local profiles, approved catalogs and raw test identities through existing Rust
+APIs. Its FI-00–FI-09 tests are synthetic; P8 profiles and the P9 real dry-run
+remain separate work. Results stay LocalUntrusted and use **local scope satisfied**.
+Run `cargo test --locked --offline -p policy-acceptance --test tjerp_adoption`.
+
 The native fixtures use Jest 30.5.2 with a scoped `js-yaml` 4 override.
 React/TypeScript keeps parser 8.42.0 and the frozen bootstrap pins, with a
 scoped `typescript-estree` 8.48.0 override; see [current status](docs/status.md).

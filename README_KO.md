@@ -34,6 +34,12 @@ Trusted 증거가 아닙니다. [현재 상태](docs/status.md)를 참고하세�
 
 ## 현재 상태와 범위
 
+[P7 TJERP 인수 harness](docs/integrations/tjerp-adoption.md)는 기존 Rust API로
+두 로컬 profile, 승인 catalog와 원본 test identity를 결합합니다. FI-00–FI-09는
+합성 시험이며 P8 profile 작성과 P9 실제 dry-run은 별도 작업입니다. 결과는
+LocalUntrusted를 유지하고 **local scope satisfied**로 표기합니다.
+`cargo test --locked --offline -p policy-acceptance --test tjerp_adoption`으로 검증합니다.
+
 네이티브 fixture는 Jest 30.5.2와 범위를 제한한 `js-yaml` 4 override를 사용합니다.
 React/TypeScript는 parser 8.42.0 및 동결된 bootstrap 버전 고정을 유지하며,
 `typescript-estree` 8.48.0에만 scoped override를 적용합니다.
