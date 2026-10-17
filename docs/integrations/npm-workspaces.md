@@ -35,7 +35,7 @@ member manifest is added to every sensor's configuration binding. The graph,
 root `workspaces` array, filesystem manifest inventory, lock member records,
 lock links and installed workspace links must agree. Globs and unsafe paths,
 undeclared packages, symlink members, external/file dependencies, nested locks,
-bundles and project `.npmrc` files fail closed. Registry lock URLs
+root/member bundles and project `.npmrc` files fail closed. Registry lock URLs
 are limited to `https://registry.npmjs.org/` in this initial contract.
 
 Workspace audit arguments extend the existing root audit with `--workspaces`,
@@ -61,7 +61,7 @@ member addition/removal or manifest/lock mutation cannot reuse the prepared
 configuration. Source inventory completeness and actual Git identity retain
 the caller responsibilities described in [project verification](project-verification.md).
 
-`crates/project-verification/tests/npm_workspace.rs` covers eighteen
+`crates/project-verification/tests/npm_workspace.rs` covers twenty
 local regression groups. The opt-in native test is:
 
 ```console
@@ -158,3 +158,63 @@ audit. Set `POLICY_NPM_OVERRIDES_OUTPUT` to a fresh **absolute** output director
 to retain manifests, locks, audit JSON and summary. Audit results depend on
 the live advisory service; a network/service failure is not a passing audit.
 See the [override execution record](../archive/reviews/2026-10-17-npm-overrides-local.md).
+
+## Third-party bundled dependencies
+
+Only third-party lock entries may declare `bundleDependencies`, as a unique
+array of lowercase registry package names. Root and workspace-member manifests
+still reject both `bundleDependencies` and `bundledDependencies`, even empty
+arrays. The lock alias `bundledDependencies` and boolean bundle declarations
+are unsupported. Consumers must raise `minimum_pk_revision` to a reviewed
+revision containing this extension before relying on it.
+
+The parent must have a nonempty version, a canonical single sha512 SRI value
+(64 bytes encoded in padded base64), and a `resolved` HTTPS npm registry tarball
+under `https://registry.npmjs.org/<parent-name>/-/<filename>.tgz`. The filename
+contains only ASCII letters, digits, dots, underscores and hyphens. Other
+registries, git/file sources, query strings, fragments, workspace links and
+parents themselves marked `inBundle` fail closed. This binds the inventory to
+the lock's tarball identity; it does not independently download or hash it.
+
+Every accepted name must appear in that parent's `bundleDependencies`; it may
+lack a separate lock entry. A lock entry at
+`<parent-path>/node_modules/<bundled-name>` must instead have `inBundle: true`,
+a nonempty version, no `link`, `resolved` or `integrity` fields, and a matching
+name if present. Exact numeric declarations on the parent must match that
+version; npm remains responsible for general semver ranges. Conflicting entries
+fail even if a hoisted package could resolve the name. Every explicit `inBundle`
+entry needs such a parent declaration; undeclared or nested indirect bundle
+entries are unsupported. Other dependency-presence checks remain in force,
+including dependencies declared by explicit bundled entries.
+
+The audit sensor's `ConfigurationBinding.bundled_dependencies` is a deterministic
+lock-derived array. Each record contains `name`, `version` (null without an
+explicit entry), `parent_path`, `parent_name`, `parent_version`,
+`parent_integrity`, and `coverage` with the exact value
+**`bundled, not individually audited`**. No version is inferred from a range.
+The array is included in prepared output and the collected sensor configuration,
+and in its configuration digest. It is omitted when empty, preserving existing
+configuration serialization. A successful root audit does not establish
+individual audit coverage for these records.
+
+Inventory is independent of host installation: optional platform-specific
+parents absent from `node_modules` remain represented with all their bundle
+names and parent identities. Absence does not remove or turn them into audited
+dependencies. Selected installed-package checks are unchanged.
+
+The positive Rust fixture mirrors oxide-wasm32-wasi 4.3.3 with six missing child
+entries; negative fixtures cover unpinned/non-registry parents, undeclared names,
+conflicts, malformed declarations and root/member bundles. The native proof uses
+the same temporary-only network boundary and pinned toolchain as P1:
+
+```console
+cargo test --locked --offline -p policy-acceptance --test native_npm_workspace native_npm_bundled_platform_inventory -- --ignored --nocapture
+```
+
+It installs `@tailwindcss/oxide` 4.3.3, checks npm's absent wasm32 parent and
+six missing bundled child entries, prepares the configuration and performs one
+root audit. Set `POLICY_NPM_BUNDLES_OUTPUT` to a fresh absolute directory to
+retain the lock, prepared inventory, audit JSON and summary. The
+[local execution record](../archive/reviews/2026-10-17-npm-bundles-local.md)
+establishes fixture observations only; TJERP P8 must adopt the merged reviewed
+revision and re-verify its own frontend `prepare`.

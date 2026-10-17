@@ -18,6 +18,12 @@ Root npm override는 graph의 `workspace.overrides`와 `package.json.overrides`�
 거부합니다. 고정 toolchain의 네이티브 fixture는 취약/수정 override 버전을 단일
 root audit으로 검증합니다. [제한과 검증 명령](docs/integrations/npm-workspaces.md#reviewed-root-overrides)을 참고하세요.
 
+서드파티 `bundleDependencies`는 lock의 부모 package에 HTTPS npm registry tarball과
+sha512 integrity가 있어야 허용합니다. Audit configuration은 각 항목을
+`bundled, not individually audited`로 기록하며, 호스트에 설치되지 않은 optional
+플랫폼 부모도 포함합니다. Root/member bundle은 계속 거부합니다.
+[Bundle 계약](docs/integrations/npm-workspaces.md#third-party-bundled-dependencies)을 참고하세요.
+
 증거(evidence)를 릴리스 정책과 대조해 결정하는 결정론적 Rust 구성 요소 모음입니다.
 이 커널은 에이전트 실행 환경이나 모델 제공자에 의존하지 않습니다. 타입이 정해진 입력을
 평가해 타입이 정해진 결정을 만들고, 인증과 릴리스 권한은 명시적인 통합 경계에서만

@@ -437,10 +437,11 @@ pub(crate) fn validate_files(
                 if !prefix.is_empty() && !dirs.contains(prefix) {
                     return Err(invalid("undeclared workspace lock package location"));
                 }
-                if !package
-                    .get("resolved")
-                    .and_then(Value::as_str)
-                    .is_some_and(|url| url.starts_with("https://registry.npmjs.org/"))
+                if package.get("inBundle").and_then(Value::as_bool) != Some(true)
+                    && !package
+                        .get("resolved")
+                        .and_then(Value::as_str)
+                        .is_some_and(|url| url.starts_with("https://registry.npmjs.org/"))
                 {
                     return Err(invalid(
                         "workspace lock dependencies must resolve to the HTTPS npm registry",
@@ -463,6 +464,7 @@ fn validate_dependency_inventory(
     packages: &serde_json::Map<String, Value>,
     overridden: &BTreeSet<(String, String)>,
 ) -> Result<(), Error> {
+    let bundles = bundled_inventory(packages)?;
     for (path, package) in packages {
         if package.get("link").and_then(Value::as_bool) == Some(true) {
             continue;
@@ -482,6 +484,12 @@ fn validate_dependency_inventory(
             {
                 if !package_name(name) {
                     return Err(invalid("invalid locked dependency name"));
+                }
+                if bundles
+                    .iter()
+                    .any(|b| b.parent_path == *path && b.name == *name)
+                {
+                    continue;
                 }
                 let resolved = resolve(packages, path, name).map(|p| &packages[p]);
                 let optional_peer = field == "peerDependencies"
@@ -517,6 +525,149 @@ fn validate_dependency_inventory(
         }
     }
     Ok(())
+}
+
+/// Lock-derived exclusions from individual npm audit coverage, including parents
+/// that npm omits from the current host's installation for platform reasons.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct BundledDependency {
+    pub name: String,
+    pub version: Option<String>,
+    pub parent_path: String,
+    pub parent_name: String,
+    pub parent_version: String,
+    pub parent_integrity: String,
+    pub coverage: String,
+}
+
+pub(crate) fn bundled_inventory(
+    packages: &serde_json::Map<String, Value>,
+) -> Result<Vec<BundledDependency>, Error> {
+    let mut inventory = Vec::new();
+    let mut accepted_entries = BTreeSet::new();
+    for (path, parent) in packages {
+        if parent.get("bundledDependencies").is_some() {
+            return Err(invalid(
+                "locked bundledDependencies alias is unsupported; use bundleDependencies",
+            ));
+        }
+        let Some(names) = parent.get("bundleDependencies") else {
+            continue;
+        };
+        let parent_name = installed_name(path)
+            .filter(|n| package_name(n))
+            .ok_or_else(|| invalid("bundles require a third-party locked parent"))?;
+        let version = parent
+            .get("version")
+            .and_then(Value::as_str)
+            .filter(|v| !v.is_empty())
+            .ok_or_else(|| invalid("bundled parent needs a version"))?;
+        let integrity = parent
+            .get("integrity")
+            .and_then(Value::as_str)
+            .filter(|s| {
+                s.strip_prefix("sha512-").is_some_and(|hash| {
+                    hash.len() == 88
+                        && hash.ends_with("==")
+                        && hash.as_bytes()[..86]
+                            .iter()
+                            .all(|c| c.is_ascii_alphanumeric() || b"+/".contains(c))
+                        && b"AQgw".contains(&hash.as_bytes()[85])
+                })
+            })
+            .ok_or_else(|| invalid("bundled parent needs canonical sha512 integrity"))?;
+        let tarball_prefix = format!("https://registry.npmjs.org/{parent_name}/-/");
+        if parent.get("link").and_then(Value::as_bool) == Some(true)
+            || parent.get("inBundle").and_then(Value::as_bool) == Some(true)
+            || parent
+                .get("name")
+                .is_some_and(|n| n.as_str() != Some(parent_name))
+            || !parent
+                .get("resolved")
+                .and_then(Value::as_str)
+                .is_some_and(|url| {
+                    url.strip_prefix(&tarball_prefix).is_some_and(|file| {
+                        file.ends_with(".tgz")
+                            && file.len() > 4
+                            && file
+                                .bytes()
+                                .all(|c| c.is_ascii_alphanumeric() || b"-._".contains(&c))
+                    })
+                })
+        {
+            return Err(invalid(
+                "bundled parent needs an HTTPS npm registry tarball",
+            ));
+        }
+        let mut seen = BTreeSet::new();
+        for name in names
+            .as_array()
+            .ok_or_else(|| invalid("bundleDependencies must be a name array"))?
+        {
+            let name = name
+                .as_str()
+                .filter(|n| override_name(n))
+                .ok_or_else(|| invalid("invalid bundled dependency name"))?;
+            if !seen.insert(name) {
+                return Err(invalid("duplicate bundled dependency"));
+            }
+            let child_path = format!("{path}/node_modules/{name}");
+            let child_version = if let Some(child) = packages.get(&child_path) {
+                let child_version = child
+                    .get("version")
+                    .and_then(Value::as_str)
+                    .filter(|v| !v.is_empty())
+                    .ok_or_else(|| invalid("bundled lock entry needs a version"))?;
+                if child.get("inBundle").and_then(Value::as_bool) != Some(true)
+                    || child.get("link").is_some()
+                    || child.get("resolved").is_some()
+                    || child.get("integrity").is_some()
+                    || child.get("name").is_some_and(|n| n.as_str() != Some(name))
+                {
+                    return Err(invalid("conflicting bundled lock entry"));
+                }
+                for field in [
+                    "dependencies",
+                    "optionalDependencies",
+                    "devDependencies",
+                    "peerDependencies",
+                ] {
+                    if parent
+                        .get(field)
+                        .and_then(|d| d.get(name))
+                        .and_then(Value::as_str)
+                        .filter(|v| crate::selection::numeric_version(v).is_ok())
+                        .is_some_and(|v| v != child_version)
+                    {
+                        return Err(invalid("bundled version differs from parent declaration"));
+                    }
+                }
+                accepted_entries.insert(child_path);
+                Some(child_version.to_owned())
+            } else {
+                None
+            };
+            inventory.push(BundledDependency {
+                name: name.to_owned(),
+                version: child_version,
+                parent_path: path.clone(),
+                parent_name: parent_name.to_owned(),
+                parent_version: version.to_owned(),
+                parent_integrity: integrity.to_owned(),
+                coverage: "bundled, not individually audited".to_owned(),
+            });
+        }
+    }
+    if packages.iter().any(|(path, value)| {
+        value.get("inBundle").and_then(Value::as_bool) == Some(true)
+            && !accepted_entries.contains(path)
+    }) {
+        return Err(invalid(
+            "inBundle entry lacks a declared integrity-pinned parent",
+        ));
+    }
+    Ok(inventory)
 }
 
 fn installed_name(path: &str) -> Option<&str> {

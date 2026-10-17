@@ -1,5 +1,18 @@
 # Current status
 
+## Third-party npm bundled inventory
+
+The [bundled-dependency contract](integrations/npm-workspaces.md#third-party-bundled-dependencies)
+accepts declared names only under a registry-tarball/sha512-pinned third-party
+lock parent. Evidence configurations label them `bundled, not individually audited`
+and retain optional platform parents absent on the host. Root/member bundles,
+undeclared names and conflicting entries fail closed. The
+[2026-10-17 native fixture](archive/reviews/2026-10-17-npm-bundles-local.md)
+confirmed npm 11.20.0/Node 26.12.0 oxide 4.3.3 lock shape and successful preparation.
+Local scope is satisfied; bundled names have no individual audit coverage.
+TJERP P8 adoption and frontend re-verification remain pending. No authoritative
+decision, protected merge or production promotion is established here.
+
 ## Reviewed npm root overrides
 
 The [workspace override extension](integrations/npm-workspaces.md#reviewed-root-overrides)
