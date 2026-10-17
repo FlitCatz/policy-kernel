@@ -2,6 +2,11 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
+and records `bundled, not individually audited`, including absent optional
+platform parents. The native oxide fixture satisfies local scope; TJERP P8
+adoption and re-verification remain pending. See [[kernel#Npm workspace graph]].
+
 Reviewed npm root overrides bind exact versions into the profile and verify
 affected lock resolutions. Native Node 26.12.0/npm 11.20.0 audits detect vulnerable
 and fixed override versions. Local scope is satisfied; TJERP adoption and

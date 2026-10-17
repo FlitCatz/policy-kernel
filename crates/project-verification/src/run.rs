@@ -51,6 +51,9 @@ pub struct ConfigurationBinding {
     /// Absolute runtime location of `component_path`; excluded from the policy binding.
     pub component_root: PathBuf,
     pub inputs: Vec<ArtifactDigest>,
+    /// Explicit exclusions from individual npm audit coverage, derived from the bound lock.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub bundled_dependencies: Vec<crate::npm_workspace::BundledDependency>,
 }
 
 /// Policy-bound configuration identity. The absolute checkout location is excluded,
@@ -185,6 +188,21 @@ fn configuration(
         crate::selection::validate_component_files(selection, &sensor.component, &selected_files)?;
     }
     inputs.sort_by(|a, b| a.path.cmp(&b.path));
+    let mut bundled_dependencies = Vec::new();
+    if let Some(selection) = &request.profile.selection {
+        for graph in selection.graphs.iter().filter(|g| {
+            g.component == sensor.component
+                && g.workspace.is_some()
+                && g.audit_sensor == sensor.definition.id.as_str()
+        }) {
+            let lock: serde_json::Value = serde_json::from_slice(&selected_files[&graph.lockfile])?;
+            bundled_dependencies.extend(crate::npm_workspace::bundled_inventory(
+                lock["packages"]
+                    .as_object()
+                    .ok_or_else(|| invalid("missing npm lock inventory"))?,
+            )?);
+        }
+    }
     Ok(ConfigurationBinding {
         schema_version: 2,
         project_profile_digest: request.expected_profile_digest.clone(),
@@ -192,6 +210,7 @@ fn configuration(
         component_path: component.root.clone(),
         component_root: cwd,
         inputs,
+        bundled_dependencies,
     })
 }
 

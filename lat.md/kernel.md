@@ -73,6 +73,13 @@ Contract [[crates/project-verification/src/npm_workspace.rs#validate_contract]];
 lock declarations [[crates/project-verification/src/npm_workspace.rs#validate_files]];
 filesystem inventory [[crates/project-verification/src/npm_workspace.rs#validate_layout]].
 Dependency inventory [[crates/project-verification/src/npm_workspace.rs#validate_dependency_inventory]].
+Bundle exclusions [[crates/project-verification/src/npm_workspace.rs#bundled_inventory]]
+require registry tarball/sha512 parents and consistent explicit child entries.
+[[crates/project-verification/src/npm_workspace.rs#BundledDependency]] records
+`bundled, not individually audited` in the bound audit configuration, retaining
+optional platform parents absent on the host. Root/member bundles stay forbidden.
+Regressions [[crates/project-verification/tests/npm_workspace.rs#bundles_reject_unpinned_parents_conflicts_and_undeclared_names]];
+native lock shape [[acceptance/tests/native_npm_workspace.rs#native_npm_bundled_platform_inventory]].
 Reviewed root overrides [[crates/project-verification/src/npm_workspace.rs#override_rules]]
 bind exact stable versions into the profile and reject member/contract targets.
 Logical lock ancestry [[crates/project-verification/src/npm_workspace.rs#validate_overrides]]

@@ -333,3 +333,107 @@ fn native_npm_overrides_audit_resolved_versions() {
         fs::write(out.join("summary.json"), serde_json::to_vec_pretty(&json!({"status":"local scope satisfied","trust":"LocalUntrusted","node":"26.12.0","npm":"11.20.0","audits_per_phase":1,"vulnerable_override":"minimist 0.0.8: audit exit 1","fixed_scoped_override":"mkdirp > minimist 1.2.8: audit exit 0","installation":"temporary fixture only"})).unwrap()).unwrap();
     }
 }
+
+#[test]
+#[ignore = "requires Node 26.12.0/npm 11.20.0 and temporary registry install/audit access"]
+fn native_npm_bundled_platform_inventory() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path();
+    for (program, expected) in [("node", "v26.12.0"), ("npm", "11.20.0")] {
+        assert_eq!(
+            String::from_utf8(checked(root, program, &["--version"]).stdout)
+                .unwrap()
+                .trim(),
+            expected
+        );
+    }
+    let request = workspace::fixture(root);
+    fs::remove_dir_all(root.join("node_modules")).unwrap();
+    fs::remove_dir_all(root.join("tools/openapi/node_modules")).unwrap();
+    fs::remove_file(root.join("package-lock.json")).unwrap();
+    let manifest_path = root.join("package.json");
+    let mut manifest: Value = serde_json::from_slice(&fs::read(&manifest_path).unwrap()).unwrap();
+    manifest["dependencies"] = json!({"@tailwindcss/oxide":"4.3.3"});
+    fs::write(manifest_path, serde_json::to_vec_pretty(&manifest).unwrap()).unwrap();
+    checked(
+        root,
+        "npm",
+        &[
+            "install",
+            "--ignore-scripts",
+            "--no-audit",
+            "--no-fund",
+            "--include=dev",
+            "--include=optional",
+            "--include=peer",
+            "--workspaces",
+            "--include-workspace-root",
+            "--userconfig=.policy-npm-userconfig",
+            "--globalconfig=.policy-npm-globalconfig",
+        ],
+    );
+    let lock_bytes = fs::read(root.join("package-lock.json")).unwrap();
+    let lock: Value = serde_json::from_slice(&lock_bytes).unwrap();
+    let parent_path = "node_modules/@tailwindcss/oxide-wasm32-wasi";
+    let parent = &lock["packages"][parent_path];
+    assert_eq!(parent["version"], "4.3.3");
+    assert_eq!(parent["optional"], true);
+    assert_eq!(parent["cpu"], json!(["wasm32"]));
+    assert!(!root.join(parent_path).exists());
+    let prepared = project_verification::run::prepare(&request).unwrap();
+    let inventory = &prepared.configurations[0].bundled_dependencies;
+    assert_eq!(inventory.len(), 6);
+    for name in parent["bundleDependencies"].as_array().unwrap() {
+        let name = name.as_str().unwrap();
+        assert!(lock["packages"]
+            .get(format!("{parent_path}/node_modules/{name}"))
+            .is_none());
+        let entry = inventory.iter().find(|e| e.name == name).unwrap();
+        assert_eq!(entry.coverage, "bundled, not individually audited");
+        assert_eq!(
+            entry.parent_integrity,
+            parent["integrity"].as_str().unwrap()
+        );
+        assert!(entry.version.is_none());
+    }
+    let audit = command(
+        root,
+        "npm",
+        &[
+            "audit",
+            "--json",
+            "--audit-level=low",
+            "--include=dev",
+            "--include=optional",
+            "--include=peer",
+            "--workspaces",
+            "--include-workspace-root",
+            "--userconfig=.policy-npm-userconfig",
+            "--globalconfig=.policy-npm-globalconfig",
+        ],
+    );
+    assert!(
+        matches!(audit.status.code(), Some(0 | 1)),
+        "{}",
+        String::from_utf8_lossy(&audit.stderr)
+    );
+    let report: Value = serde_json::from_slice(&audit.stdout).unwrap();
+    assert!(report.get("error").is_none(), "{report}");
+    assert!(report["metadata"]["vulnerabilities"]["total"].is_number());
+    if let Some(out) = std::env::var_os("POLICY_NPM_BUNDLES_OUTPUT") {
+        let out = std::path::PathBuf::from(out);
+        fs::create_dir(&out).unwrap();
+        fs::write(out.join("package-lock.json"), lock_bytes).unwrap();
+        fs::write(out.join("audit.json"), audit.stdout).unwrap();
+        fs::write(
+            out.join("prepared.json"),
+            serde_json::to_vec_pretty(&prepared).unwrap(),
+        )
+        .unwrap();
+        fs::write(out.join("summary.json"), serde_json::to_vec_pretty(&json!({
+            "status":"local scope satisfied", "trust":"LocalUntrusted", "node":"26.12.0", "npm":"11.20.0",
+            "parent":parent_path, "installed":false, "bundle_count":6,
+            "coverage":"bundled, not individually audited", "audit_exit":audit.status.code()
+        })).unwrap()).unwrap();
+    }
+}

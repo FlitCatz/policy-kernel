@@ -36,6 +36,140 @@ fn edit(root: &Path, path: &str, f: impl FnOnce(&mut Value)) {
     write(root, path, value);
 }
 
+const BUNDLE_PARENT: &str = "node_modules/@tailwindcss/oxide-wasm32-wasi";
+const BUNDLE_NAMES: [&str; 6] = [
+    "@napi-rs/wasm-runtime",
+    "@emnapi/core",
+    "@emnapi/runtime",
+    "@tybys/wasm-util",
+    "@emnapi/wasi-threads",
+    "tslib",
+];
+
+fn bundle_fixture(root: &Path) -> project_verification::RunRequest {
+    let request = fixture(root);
+    edit(root, "package-lock.json", |v| {
+        v["packages"][BUNDLE_PARENT] = json!({
+            "version":"4.3.3", "optional":true, "cpu":["wasm32"],
+            "resolved":"https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/oxide-wasm32-wasi-4.3.3.tgz",
+            "integrity":format!("sha512-{}==", "A".repeat(86)),
+            "bundleDependencies":BUNDLE_NAMES,
+            "dependencies": BUNDLE_NAMES.into_iter().map(|n| (n, "1.0.0")).collect::<std::collections::BTreeMap<_, _>>()
+        });
+    });
+    request
+}
+
+#[test]
+fn bundled_dependencies_record_unaudited_platform_inventory_and_versions() {
+    let temp = tempfile::tempdir().unwrap();
+    let request = bundle_fixture(temp.path());
+    for explicit in [false, true] {
+        if explicit {
+            edit(temp.path(), "package-lock.json", |v| {
+                v["packages"][format!("{BUNDLE_PARENT}/node_modules/@emnapi/core")] =
+                    json!({"version":"1.0.0","inBundle":true});
+            });
+        }
+        let prepared = prepare(&request).unwrap();
+        let config = &prepared.configurations[0];
+        assert_eq!(config.bundled_dependencies.len(), 6);
+        assert!(prepared.configurations[1].bundled_dependencies.is_empty());
+        assert!(!temp.path().join(BUNDLE_PARENT).exists());
+        for item in &config.bundled_dependencies {
+            assert_eq!(item.coverage, "bundled, not individually audited");
+            assert_eq!(item.parent_name, "@tailwindcss/oxide-wasm32-wasi");
+            assert_eq!(item.parent_version, "4.3.3");
+            assert_eq!(
+                item.parent_integrity,
+                format!("sha512-{}==", "A".repeat(86))
+            );
+            assert_eq!(
+                item.version.as_deref(),
+                (explicit && item.name == "@emnapi/core").then_some("1.0.0")
+            );
+        }
+        let serialized = serde_json::to_value(config).unwrap();
+        assert_eq!(
+            serialized["bundled_dependencies"][0]["coverage"],
+            "bundled, not individually audited"
+        );
+        let mut altered = config.clone();
+        altered.bundled_dependencies.clear();
+        assert_ne!(
+            project_verification::run::configuration_digest(config).unwrap(),
+            project_verification::run::configuration_digest(&altered).unwrap()
+        );
+    }
+}
+
+#[test]
+fn bundles_reject_unpinned_parents_conflicts_and_undeclared_names() {
+    for case in 0..24 {
+        let temp = tempfile::tempdir().unwrap();
+        let request = bundle_fixture(temp.path());
+        edit(temp.path(), "package-lock.json", |v| {
+            let parent = &mut v["packages"][BUNDLE_PARENT];
+            match case {
+                0 => {
+                    parent.as_object_mut().unwrap().remove("integrity");
+                }
+                1 => parent["integrity"] = json!("sha256-AAAA"),
+                2 => parent["integrity"] = json!("sha512-invalid"),
+                3 => parent["resolved"] = json!("http://registry.npmjs.org/a/-/a.tgz"),
+                4 => parent["resolved"] = json!("https://example.org/a.tgz"),
+                5 => parent["resolved"] = json!("git+https://registry.npmjs.org/a.tgz"),
+                6 => parent["resolved"] = json!("file:vendor/a.tgz"),
+                7 => parent["resolved"] = json!("https://registry.npmjs.org/a"),
+                8 => {
+                    parent["resolved"] =
+                        json!("https://registry.npmjs.org/@tailwindcss/oxide-wasm32-wasi/-/a.tgz?x")
+                }
+                9 => parent["bundleDependencies"] = json!(["tslib"]),
+                10 => parent["bundleDependencies"] = json!(true),
+                11 => parent["bundleDependencies"] = json!(["../escape"]),
+                12 => parent["bundleDependencies"] = json!(["tslib", "tslib"]),
+                13 => {
+                    parent.as_object_mut().unwrap().remove("version");
+                }
+                14 => parent["name"] = json!("different"),
+                15 => parent["integrity"] = json!(format!("sha512-{}==", "é".repeat(43))),
+                _ => {
+                    let mut child = json!({"version":"1.0.0","inBundle":true});
+                    match case {
+                        16 => child["inBundle"] = json!(false),
+                        17 => child["version"] = json!("2.0.0"),
+                        18 => {
+                            child["resolved"] =
+                                json!("https://registry.npmjs.org/@emnapi/core/-/core-1.0.0.tgz")
+                        }
+                        19 => child["link"] = json!(true),
+                        20 => child["name"] = json!("other"),
+                        21 => {
+                            child.as_object_mut().unwrap().remove("version");
+                        }
+                        22 => parent["bundleDependencies"] = json!(["tslib"]),
+                        23 => {
+                            parent.as_object_mut().unwrap().remove("bundleDependencies");
+                        }
+                        _ => unreachable!(),
+                    }
+                    v["packages"][format!("{BUNDLE_PARENT}/node_modules/@emnapi/core")] = child;
+                }
+            }
+        });
+        assert!(prepare(&request).is_err(), "bundle rejection case {case}");
+    }
+    for manifest in ["package.json", "tools/openapi/package.json"] {
+        for field in ["bundledDependencies", "bundleDependencies"] {
+            let temp = tempfile::tempdir().unwrap();
+            let request = bundle_fixture(temp.path());
+            edit(temp.path(), manifest, |v| v[field] = json!(["tslib"]));
+            assert!(prepare(&request).is_err(), "{manifest}:{field}");
+        }
+    }
+}
+
 #[test]
 fn workspace_rejects_manifest_inventory_and_lock_drift() {
     for case in 0..12 {

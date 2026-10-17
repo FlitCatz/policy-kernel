@@ -175,6 +175,12 @@ scope are supported; contract targets, member overrides, dead rules and lock
 drift fail. The pinned native fixture verifies vulnerable/fixed overridden
 versions through one root audit. See [override limits and checks](docs/integrations/npm-workspaces.md#reviewed-root-overrides).
 
+Third-party `bundleDependencies` require an HTTPS npm registry tarball and
+sha512 integrity on their locked parent. Audit configurations record each as
+`bundled, not individually audited`, including optional platform parents absent
+on the host. Root/member bundles remain forbidden. See the
+[bundle contract](docs/integrations/npm-workspaces.md#third-party-bundled-dependencies).
+
 Generate the five checked-in contract schemas in [`schemas/`](schemas/):
 
 ```console
