@@ -35,7 +35,7 @@ member manifest is added to every sensor's configuration binding. The graph,
 root `workspaces` array, filesystem manifest inventory, lock member records,
 lock links and installed workspace links must agree. Globs and unsafe paths,
 undeclared packages, symlink members, external/file dependencies, nested locks,
-bundles, overrides and project `.npmrc` files fail closed. Registry lock URLs
+bundles and project `.npmrc` files fail closed. Registry lock URLs
 are limited to `https://registry.npmjs.org/` in this initial contract.
 
 Workspace audit arguments extend the existing root audit with `--workspaces`,
@@ -61,7 +61,7 @@ member addition/removal or manifest/lock mutation cannot reuse the prepared
 configuration. Source inventory completeness and actual Git identity retain
 the caller responsibilities described in [project verification](project-verification.md).
 
-`crates/project-verification/tests/npm_workspace.rs` covers eleven
+`crates/project-verification/tests/npm_workspace.rs` covers eighteen
 local regression groups. The opt-in native test is:
 
 ```console
@@ -87,3 +87,74 @@ observations. See the [local execution record](../archive/reviews/2026-10-16-npm
 
 Successful direct evidence remains LocalUntrusted and can be described only as
 “local scope satisfied”; it cannot authorize promotion or a protected merge.
+
+## Reviewed root overrides
+
+The optional `workspace.overrides` profile field must exactly match the root
+manifest's `overrides` object. It is omitted when empty, preserving existing
+profile serialization. A changed reviewed set changes the canonical profile
+digest as well as the manifest input binding; updating only the manifest fails.
+An older reader rejects the new field. Consumers must raise
+`minimum_pk_revision` to a reviewed revision containing this extension; the
+earlier P1 revision above does not contain override support.
+
+The supported forms are global exact versions and a single package scope with
+exact child versions. For TJERP's frontend root, put this same object in both
+`package.json.overrides` and the graph's `workspace.overrides`:
+
+```json
+{
+  "svelte-toolbelt": "0.10.5",
+  "fdir": { "picomatch": "4.0.7" },
+  "@tailwindcss/cli": { "@parcel/watcher": "2.6.0" }
+}
+```
+
+There may be at most 32 target rules, each with a distinct target name. Names
+are lowercase ASCII registry names, at most 214 bytes, with each name/scope
+starting with a letter or digit; npm's reserved `node_modules` and `favicon.ico`
+names are rejected. Only stable numeric `major.minor.patch`
+versions are accepted. Ranges, prereleases, build metadata, version-qualified
+selectors, `.` self selectors, `$ref`, aliases, protocols, paths, URLs,
+tarballs, wildcards, empty scopes and deeper nesting are rejected. The root and
+workspace members cannot be override targets or scopes. Member manifests must
+not declare overrides, even if the root also declares them. A global override
+of a direct root dependency must exactly equal its declared spec, following
+npm's direct-dependency restriction.
+
+All selected package names are protected, including selections using `record`
+acceptance. The frozen bootstrap contract names `vite`, `typescript`, `eslint`,
+`vitest`, `@playwright/test`, `@typescript-eslint/parser` and `jsdom` are also
+forbidden targets regardless of their presence in the consumer selection. This
+deliberately rejects both upgrades and downgrades of those packages. Scoped
+overrides of their transitive dependencies remain possible. Frozen bootstrap
+assets and profiles are unchanged.
+
+Validation follows logical dependency edges from the root and all members,
+using ancestor resolution and workspace links. A scoped rule remains active
+under its parent, including hoisted and transitive descendants; physical
+directory nesting alone does not establish scope. Every affected edge must
+resolve to the exact override version, and every rule must match an edge.
+Global rules additionally check every locked copy of the target. Unaffected
+exact dependency requirements retain their original checks. npm installation
+must use separate package instances if a target declaration would be shared
+both inside and outside a scoped override; ambiguous shared declarations fail.
+npm still owns general semver compatibility; this validates lock inventory rather
+than attesting all installed bytes or proving installation reproducibility.
+
+The native override proof uses the same pinned toolchain and temporary-only
+network boundary as P1:
+
+```console
+cargo test --locked --offline -p policy-acceptance --test native_npm_workspace native_npm_overrides_audit_resolved_versions -- --ignored --nocapture
+```
+
+It installs a member dependency on `mkdirp` 0.5.0. A global `minimist` 0.0.8
+override produces a vulnerable resolved lock and root audit exit 1; a scoped
+`mkdirp` → `minimist` 1.2.8 override produces root audit exit 0 with zero
+findings. Each phase verifies actual Node resolution, every locked target copy
+and successful preparation against the reviewed profile, then runs one root
+audit. Set `POLICY_NPM_OVERRIDES_OUTPUT` to a fresh **absolute** output directory
+to retain manifests, locks, audit JSON and summary. Audit results depend on
+the live advisory service; a network/service failure is not a passing audit.
+See the [override execution record](../archive/reviews/2026-10-17-npm-overrides-local.md).

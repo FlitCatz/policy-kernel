@@ -12,6 +12,12 @@ root와 member를 감사하며 member별 lock은 만들지 않습니다. Node 26
 네이티브 fixture 결과는 **로컬 범위 충족(local scope satisfied)** 이며 TJERP 도입 완료나
 Trusted 증거가 아닙니다. [현재 상태](docs/status.md)를 참고하세요.
 
+Root npm override는 graph의 `workspace.overrides`와 `package.json.overrides`에 동일한 검토된
+객체를 선언하여 사용합니다. 정확한 stable 버전과 package scope 한 단계만
+지원하며 contract 대상, member override, 적용되지 않는 규칙과 lock 불일치는
+거부합니다. 고정 toolchain의 네이티브 fixture는 취약/수정 override 버전을 단일
+root audit으로 검증합니다. [제한과 검증 명령](docs/integrations/npm-workspaces.md#reviewed-root-overrides)을 참고하세요.
+
 증거(evidence)를 릴리스 정책과 대조해 결정하는 결정론적 Rust 구성 요소 모음입니다.
 이 커널은 에이전트 실행 환경이나 모델 제공자에 의존하지 않습니다. 타입이 정해진 입력을
 평가해 타입이 정해진 결정을 만들고, 인증과 릴리스 권한은 명시적인 통합 경계에서만

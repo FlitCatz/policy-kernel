@@ -73,8 +73,17 @@ Contract [[crates/project-verification/src/npm_workspace.rs#validate_contract]];
 lock declarations [[crates/project-verification/src/npm_workspace.rs#validate_files]];
 filesystem inventory [[crates/project-verification/src/npm_workspace.rs#validate_layout]].
 Dependency inventory [[crates/project-verification/src/npm_workspace.rs#validate_dependency_inventory]].
+Reviewed root overrides [[crates/project-verification/src/npm_workspace.rs#override_rules]]
+bind exact stable versions into the profile and reject member/contract targets.
+Logical lock ancestry [[crates/project-verification/src/npm_workspace.rs#validate_overrides]]
+checks hoisted/scoped targets and rejects dead rules and drift.
+Shared target declarations reachable outside the reviewed scope fail closed.
+Ancestor lookup [[crates/project-verification/src/npm_workspace.rs#resolve]] skips
+node_modules itself and resolves workspace links.
 The local regressions are in
 [[crates/project-verification/tests/npm_workspace.rs#root_workspace_binds_members_and_uses_one_audit]].
+Override regressions [[crates/project-verification/tests/npm_workspace.rs#overrides_reject_contract_targets_dead_rules_and_lock_drift]];
+native audit proof [[acceptance/tests/native_npm_workspace.rs#native_npm_overrides_audit_resolved_versions]].
 See [integration limits](../docs/integrations/npm-workspaces.md) and [[status]].
 
 ## Compiler-generated output

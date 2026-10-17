@@ -169,6 +169,12 @@ audit covers the root and members; no per-member locks are needed. Native
 Node 26.12.0/npm 11.20.0 fixture results are **local scope satisfied** only,
 not TJERP adoption or Trusted evidence. See [current status](docs/status.md).
 
+Root npm overrides require the same reviewed map in `package.json.overrides`
+and the graph's `workspace.overrides`. Only exact stable versions and one package
+scope are supported; contract targets, member overrides, dead rules and lock
+drift fail. The pinned native fixture verifies vulnerable/fixed overridden
+versions through one root audit. See [override limits and checks](docs/integrations/npm-workspaces.md#reviewed-root-overrides).
+
 Generate the five checked-in contract schemas in [`schemas/`](schemas/):
 
 ```console
