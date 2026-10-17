@@ -4,7 +4,7 @@
   "evaluation_time": "2026-09-07T09:00:00Z",
   "policy": {
     "schema_version": 1,
-    "policy_digest": "977d4fef6ae40140eeb9b40439fc56a9c1344e5cf9f664f87c379373d352d611",
+    "policy_digest": "63fd019c05bc9d002a803fbf5187ab59f2316e012c421c13d4220a780e090e46",
     "required_check_name": "policy-kernel",
     "max_evidence_age_seconds": 3600,
     "authorized_actors": [
@@ -17,7 +17,7 @@
       "compile",
       "tests"
     ],
-    "sensor_profile_digest": "3b1c5bbac368064c4c21998b5cf9c23cf09404928ddaca77f946300939c8a869"
+    "sensor_profile_digest": "d2b522ebcbc246daab82d69e41a9c842495ecbbae298dcc86ae1febda374f9e9"
   },
   "work_item": {
     "schema_version": 1,
@@ -44,7 +44,7 @@
       "work_item_id": "task-6",
       "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
-      "policy_digest": "977d4fef6ae40140eeb9b40439fc56a9c1344e5cf9f664f87c379373d352d611",
+      "policy_digest": "63fd019c05bc9d002a803fbf5187ab59f2316e012c421c13d4220a780e090e46",
       "source_set_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
       "workflow_run_id": "run-6",
       "created_at": "2026-09-07T08:58:00Z",
@@ -75,7 +75,7 @@
         },
         {
           "path": "test_adequacy",
-          "digest": "77ad23db5a1ed4616a645e310cdf7aece0679286f076f5b4c67cf1ae0f3cf724"
+          "digest": "741aff060009606fbd1762e11d4a839fadc03268843ca5532aabd131d3c3f3d2"
         },
         {
           "path": "waivers",
@@ -193,6 +193,12 @@
           "test_ids": [
             "test-1"
           ]
+        },
+        {
+          "requirement_id": "NEG-1",
+          "test_ids": [
+            "test-1"
+          ]
         }
       ],
       "negative_case_ids": [
@@ -237,7 +243,8 @@
           "AC-1"
         ],
         "changed_behavior_ids": [
-          "BEHAVIOR-1"
+          "BEHAVIOR-1",
+          "NEG-1"
         ],
         "negative_case_ids": [
           "NEG-1"

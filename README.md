@@ -197,6 +197,12 @@ are documented in [promotion and rollback](docs/promotion.md).
 
 ## Project verification and bootstrap
 
+Adequacy is mandatory for a passing core evaluation. Empty policies report
+`PK-ADEQ-POLICY-EMPTY`; consumer profile schemas 3/4 reject them before execution.
+Negative IDs must also be required changed behaviors mapped to executed test IDs.
+Frozen profiles still parse, but their empty placeholders cannot establish readiness.
+See the [adequacy contract and compatibility note](docs/integrations/adequacy.md).
+
 `project-verification` turns an adopted project profile and checked source
 inventory into local observations. It supports React/TypeScript, .NET, and
 full-stack assets and user profiles, and normalizes Vitest JSON, Jest JSON,

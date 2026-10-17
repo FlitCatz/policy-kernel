@@ -16,6 +16,13 @@ Required sensors come from any-path `required_when` matches, while a not-applica
 
 Resolution [[crates/policy-core/src/sensors.rs#resolve_required_sensors]] and [[crates/policy-core/src/sensors.rs#condition_matches]]; exemptions [[crates/policy-core/src/sensors.rs#condition_covers]]; glob semantics [[crates/policy-core/src/sensors.rs#path_glob]]; evidence rules [[crates/policy-core/src/sensors.rs#evaluate_sensor_evidence_for_change]].
 
+## Test adequacy
+
+Empty policies cannot pass. Negative cases need required changed-behavior IDs and mappings to executed tests; duplicate or blank IDs cannot establish coverage.
+
+Core [[crates/policy-core/src/sensors.rs#evaluate_adequacy]] and [[crates/policy-core/src/sensors.rs#validate_mappings]]; consumer validation [[crates/project-verification/src/profile.rs#ProjectProfile#validate]].
+The [adequacy contract](../docs/integrations/adequacy.md) records preserved legacy parsing and changed readiness. Direct-call regressions are in [[crates/policy-core/tests/sensors.rs#empty_policy_is_explained_non_pass_even_with_positive_counts]] and [[crates/policy-core/tests/sensors.rs#missing_or_malformed_adequacy_ids_never_pass_direct_core_calls]].
+
 ## Review consensus and waivers
 
 Reviews need independent providers; unwaived High or Critical findings block, and a blocked report whose actionable findings are all validly waived does not conflict with an approval.

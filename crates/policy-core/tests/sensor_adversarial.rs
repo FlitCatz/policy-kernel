@@ -31,7 +31,7 @@ fn profile() -> SensorProfile {
             result_binding: None,
         }],
         adequacy: TestAdequacyPolicy {
-            acceptance_criterion_ids: vec![],
+            acceptance_criterion_ids: vec!["AC-1".into()],
             changed_behavior_ids: vec![],
             negative_case_ids: vec![],
         },
@@ -77,6 +77,20 @@ fn empty_adequacy() -> TestAdequacyEvidence {
     }
 }
 
+fn adequate() -> TestAdequacyEvidence {
+    TestAdequacyEvidence {
+        acceptance_criteria: vec![policy_contracts::TestMapping {
+            requirement_id: "AC-1".into(),
+            test_ids: vec!["test-1".into()],
+        }],
+        executed_test_ids: vec!["test-1".into()],
+        discovered: 1,
+        executed: 1,
+        passed: 1,
+        ..empty_adequacy()
+    }
+}
+
 #[test]
 fn passed_status_with_unaccepted_exit_code_is_blocked() {
     let result = evaluate_sensor_evidence_for_change(
@@ -84,7 +98,7 @@ fn passed_status_with_unaccepted_exit_code_is_blocked() {
         &["src/lib.rs"],
         Risk::Low,
         &[evidence(SensorStatus::Passed, Some(1))],
-        None,
+        Some(&adequate()),
     )
     .unwrap();
     assert_eq!(result.status, SensorEvaluationStatus::Blocked);
@@ -98,7 +112,7 @@ fn missing_exit_code_is_inconclusive_not_blocked() {
         &["src/lib.rs"],
         Risk::Low,
         &[evidence(SensorStatus::Passed, None)],
-        None,
+        Some(&adequate()),
     )
     .unwrap();
     assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
@@ -110,9 +124,14 @@ fn missing_exit_code_is_inconclusive_not_blocked() {
 fn partially_recorded_sensor_counts_are_inconclusive() {
     let mut item = evidence(SensorStatus::Passed, Some(0));
     item.discovered = Some(1);
-    let result =
-        evaluate_sensor_evidence_for_change(&profile(), &["src/lib.rs"], Risk::Low, &[item], None)
-            .unwrap();
+    let result = evaluate_sensor_evidence_for_change(
+        &profile(),
+        &["src/lib.rs"],
+        Risk::Low,
+        &[item],
+        Some(&adequate()),
+    )
+    .unwrap();
     assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
     assert!(result.has_reason("PK-SENSOR-RESULT-INCOMPLETE"));
 }
@@ -128,7 +147,7 @@ fn not_applicable_must_match_an_explicit_na_condition_for_this_change() {
         &["src/lib.rs"],
         Risk::Low,
         &[item.clone()],
-        None,
+        Some(&adequate()),
     )
     .unwrap();
     assert_eq!(mismatch.status, SensorEvaluationStatus::Inconclusive);
@@ -138,7 +157,7 @@ fn not_applicable_must_match_an_explicit_na_condition_for_this_change() {
         &["docs/readme.md"],
         Risk::Low,
         &[item],
-        None,
+        Some(&adequate()),
     )
     .unwrap();
     assert_eq!(matched.status, SensorEvaluationStatus::Passed);
@@ -160,7 +179,7 @@ fn not_applicable_condition_must_cover_every_changed_path() {
             paths,
             Risk::Low,
             &[item.clone()],
-            None,
+            Some(&adequate()),
         )
         .unwrap();
         assert_eq!(
@@ -182,15 +201,20 @@ fn not_applicable_condition_must_cover_every_changed_path() {
         &["docs/guide.md", "README.md"],
         Risk::Low,
         &[item.clone()],
-        None,
+        Some(&adequate()),
     )
     .unwrap();
     assert_eq!(covered.status, SensorEvaluationStatus::Passed);
 
     multi.sensors[0].not_applicable_when[0].risks = vec![Risk::Low];
-    let wrong_risk =
-        evaluate_sensor_evidence_for_change(&multi, &["docs/guide.md"], Risk::High, &[item], None)
-            .unwrap();
+    let wrong_risk = evaluate_sensor_evidence_for_change(
+        &multi,
+        &["docs/guide.md"],
+        Risk::High,
+        &[item],
+        Some(&adequate()),
+    )
+    .unwrap();
     assert_eq!(wrong_risk.status, SensorEvaluationStatus::Inconclusive);
 }
 
@@ -253,9 +277,15 @@ fn single_star_stays_within_one_path_segment() {
     let mut exempt = profile.clone();
     exempt.sensors[0].required = true;
     let covered = |paths: &[&str]| {
-        evaluate_sensor_evidence_for_change(&exempt, paths, Risk::Low, &[item.clone()], None)
-            .unwrap()
-            .status
+        evaluate_sensor_evidence_for_change(
+            &exempt,
+            paths,
+            Risk::Low,
+            &[item.clone()],
+            Some(&adequate()),
+        )
+        .unwrap()
+        .status
     };
     assert_eq!(covered(&["docs/readme.md"]), SensorEvaluationStatus::Passed);
     assert_eq!(

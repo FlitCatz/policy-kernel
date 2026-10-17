@@ -1,6 +1,6 @@
 {
   "adequacy": {
-    "acceptance_criterion_ids": [],
+    "acceptance_criterion_ids": ["frontend:greeting"],
     "changed_behavior_ids": [],
     "negative_case_ids": []
   },

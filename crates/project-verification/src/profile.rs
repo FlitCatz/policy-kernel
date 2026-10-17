@@ -68,6 +68,13 @@ impl<'de> Deserialize<'de> for ProjectProfile {
 
 fn profile_schema(schema: &mut schemars::Schema) {
     schema.insert("allOf".into(), serde_json::json!([
+        {"if":{"properties":{"schema_version":{"enum":[3,4]}}},"then":{"properties":{"adequacy":{
+            "anyOf":[
+                {"properties":{"acceptance_criterion_ids":{"minItems":1}}},
+                {"properties":{"changed_behavior_ids":{"minItems":1}}},
+                {"properties":{"negative_case_ids":{"minItems":1}}}
+            ]
+        }}}},
         {"if":{"properties":{"schema_version":{"const":2}}},"then":{"properties":{"selection":{
             "properties":{"schema_version":{"const":1}},
             "not":{"required":["consumer"]},
@@ -259,6 +266,26 @@ impl ProjectProfile {
             }
         }
         let mut ids = BTreeSet::new();
+        if self.schema_version >= 3 {
+            if self.adequacy.acceptance_criterion_ids.is_empty()
+                && self.adequacy.changed_behavior_ids.is_empty()
+                && self.adequacy.negative_case_ids.is_empty()
+            {
+                return Err(invalid(
+                    "consumer adequacy policy must contain requirements",
+                ));
+            }
+            if self
+                .adequacy
+                .negative_case_ids
+                .iter()
+                .any(|id| !self.adequacy.changed_behavior_ids.contains(id))
+            {
+                return Err(invalid(
+                    "negative cases must also be required changed behaviors",
+                ));
+            }
+        }
         for requirement_ids in [
             &self.adequacy.acceptance_criterion_ids,
             &self.adequacy.changed_behavior_ids,

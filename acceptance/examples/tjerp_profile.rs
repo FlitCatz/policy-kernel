@@ -222,7 +222,7 @@ fn main() {
     ]);
     let packages:Vec<_>=[("vitest","4.1.11"),("@playwright/test","1.63.0"),("vite","6.4.3"),("react","19.0.0"),("react-dom","19.0.0")].into_iter().map(|(name,v)|json!({"component":"frontend","installed_manifest":format!("node_modules/{name}/package.json"),"lockfile":"package-lock.json","lock_pointer":format!("/packages/node_modules~1{}/version",name.replace('/',"~1")),"requirement":format!("={v}")})).collect();
     let profile = json!({"schema_version":3,"id":"fullstack","version":"1.2.0","components":[{"id":"frontend","root":"frontend"},{"id":"backend","root":"backend"}],"sensors":sensors,
-        "adequacy":{"acceptance_criterion_ids":[],"changed_behavior_ids":[],"negative_case_ids":[]},
+        "adequacy":{"acceptance_criterion_ids":["frontend:greeting"],"changed_behavior_ids":[],"negative_case_ids":[]},
         "selection":{"schema_version":2,"tools":tools,"bindings":bindings,"packages":packages,"graphs":graphs,
         "runtime_files":[{"component":"frontend","path":".node-version","tool":"frontend:node","format":"node_version"},{"component":"backend","path":"global.json","tool":"backend:app-audit","format":"dotnet_global"}],
         "consumer":{"development_only":true,"suites":suites,"framework_props":props,"runtime_policies":{"backend:global.json":{"roll_forward":"latestPatch","allow_prerelease":true}}}}});

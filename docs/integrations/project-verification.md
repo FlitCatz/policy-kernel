@@ -24,7 +24,8 @@ A required test-count sensor cannot pass by omitting counts even when another
 suite provides positive aggregate adequacy. Existing validation still rejects
 partial counts, zero discovery, count disagreement and non-success sensor status.
 Counts alone do not establish acceptance-criterion coverage: the separate adequacy
-mapping and all other kernel gates remain required when declared by policy.
+mapping and all other kernel gates remain required. An all-empty adequacy policy
+cannot pass core evaluation; see the [adequacy contract](adequacy.md).
 
 These are policy requirements, not values inferred from a submitted report.
 The canonical profile digest in `PolicySnapshot.sensor_profile_digest` binds them.
@@ -54,8 +55,11 @@ Strict JSON parsing and the generated schema reject unknown fields; semantic
 validation rejects duplicate IDs, unsafe relative paths, missing application
 components, report/result mismatches and missing fullstack contract/E2E suites.
 Raw profiles must not contain result bindings: `prepare` derives them from checked
-input files. Empty adequacy requirements in the distributed assets are placeholders
-for consumer policy authoring, not evidence of application behavior coverage.
+input files. Empty adequacy requirements in frozen assets are compatibility
+placeholders, not runnable adequacy examples. Schemas 3/4 reject all-empty policies;
+legacy parsing remains supported but the core reports `PK-ADEQ-POLICY-EMPTY`.
+Copy a legacy asset into a separately adopted consumer policy and supply real
+requirements and executed-test mappings before evaluating readiness.
 
 `Impact` is explicitly `{"kind":"unknown"}` or
 `{"kind":"known","paths":["frontend/src/App.tsx"],"risk":"high"}`.

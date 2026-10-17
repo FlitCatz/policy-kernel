@@ -612,7 +612,7 @@
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, globset::Error> with Ok(Default::default())\n@@ -506,13 +506,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// Changed-path globs follow GitHub Actions `paths` semantics: `*` and `?` stay\n /// within one path segment, while `**` crosses directories.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, globset::Error> {\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, globset::Error> with Ok(Default::default())\n@@ -579,13 +579,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// Changed-path globs follow GitHub Actions `paths` semantics: `*` and `?` stay\n /// within one path segment, while `**` crosses directories.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, globset::Error> {\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "path_glob",
@@ -620,26 +620,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 518
+              "line": 591
             },
             "start": {
               "column": 1,
-              "line": 511
+              "line": 584
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/sensors.rs:514:5: replace path_glob -> Result<GlobMatcher, globset::Error> with Ok(Default::default())",
+        "name": "crates/policy-core/src/sensors.rs:587:5: replace path_glob -> Result<GlobMatcher, globset::Error> with Ok(Default::default())",
         "package": "policy-core",
         "replacement": "Ok(Default::default())",
         "span": {
           "end": {
             "column": 44,
-            "line": 517
+            "line": 590
           },
           "start": {
             "column": 5,
-            "line": 514
+            "line": 587
           }
         }
       },
@@ -648,11 +648,11 @@
       "span": {
         "end": {
           "column": 44,
-          "line": 517
+          "line": 590
         },
         "start": {
           "column": 5,
-          "line": 514
+          "line": 587
         }
       }
     },
@@ -800,18 +800,18 @@
   ],
   "schema_version": 1,
   "sources": {
+    "crates/policy-ci/src/controller.rs": "ddc342aa2aaa4e83ef1abe8a018b3cedb3c6dde24d9aa0d58d9c136e7d1ba318",
     "crates/policy-contracts/src/decision.rs": "513a58a2f4458d63cdea95802bdac2c140c2073de67a7b5bbd98a7f45bb0bcbd",
-    "crates/policy-contracts/src/identity.rs": "c72a1f4062a92250c0cb14cf18f47c1904149b1375b5329f2de56b42fa43a851",
     "crates/policy-contracts/src/evidence.rs": "32420efe5224ca15b69b71c6ba8dc67230fa65aea3dd57baca487b73c043c495",
     "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
+    "crates/policy-contracts/src/identity.rs": "c72a1f4062a92250c0cb14cf18f47c1904149b1375b5329f2de56b42fa43a851",
     "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
     "crates/policy-contracts/src/policy.rs": "ada1e048c23941d05af058e3ff5b8238fa9d58bbe39e60090e836c6c72005c5e",
-    "crates/policy-ci/src/controller.rs": "ddc342aa2aaa4e83ef1abe8a018b3cedb3c6dde24d9aa0d58d9c136e7d1ba318",
     "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
     "crates/policy-core/src/post_merge.rs": "f0f97a1279c1f8b75b0271b651ad44139ecc0951cdce5318b6022e38c3462ada",
     "crates/policy-core/src/pre_merge.rs": "445ccbc8892e5a7e1c0fdcaa472692a0b8c23440f20c9ef98a4bf4f07d2a9b60",
     "crates/policy-core/src/provenance.rs": "3198ad6a32168e7afcc0fb47cdc314bc00f54e4fc047e96cf80fbe5e94cf87a4",
     "crates/policy-core/src/reviews.rs": "8b5c591432f9d0acb01b6586e46b6c89deaf7f842e368f64acca2a82fb287806",
-    "crates/policy-core/src/sensors.rs": "7d73ce092ab3dcb2b5754a7308a6b5b426d6323d266b381a46f4a0e356115228"
+    "crates/policy-core/src/sensors.rs": "96c6948b990212ae00c6994299021d180ee8ffe7279efa6a6ffaa4463c17a7b2"
   }
 }

@@ -11,6 +11,7 @@ fn schema_three_bootstrap_is_explicit_and_preserves_native_files() {
     ))
     .unwrap();
     value["schema_version"] = json!(3);
+    value["adequacy"]["acceptance_criterion_ids"] = json!(["backend:unit-contract"]);
     value["selection"]["schema_version"] = json!(2);
     value["selection"]["consumer"] = json!({"development_only":false,"suites":[
         {"role":"unit","sensor":"backend:unit","graph":"backend-unit-dependencies"},

@@ -76,6 +76,25 @@ fn authoritative_ready_requires_all_evidence_classes() {
 }
 
 #[test]
+fn empty_policy_does_not_remove_the_pre_merge_missing_adequacy_guard() {
+    let mut value = raw("ready");
+    value["context"]["sensor_profile"]["adequacy"] = json!({
+        "acceptance_criterion_ids":[], "changed_behavior_ids":[], "negative_case_ids":[]
+    });
+    value["evidence"]["test_adequacy"] = Value::Null;
+    seal_policy(&mut value);
+    seal(&mut value);
+    let result = evaluate_pre_merge(&input(value));
+    assert_eq!(result.status, PreMergeStatus::Inconclusive);
+    for code in ["PK-ADEQ-MISSING", "PK-ADEQ-POLICY-EMPTY"] {
+        assert!(
+            result.reasons.iter().any(|reason| reason.code == code),
+            "{code}"
+        );
+    }
+}
+
+#[test]
 fn missing_agent_ready_and_replayed_head_cannot_authorize() {
     assert_result(
         raw("missing-agent-ready"),
@@ -593,16 +612,16 @@ fn freshness_accepts_exact_boundary_but_rejects_one_nanosecond_beyond() {
 #[test]
 fn digest_protocol_matches_independently_computed_sha256_vectors() {
     // Calculated independently over the documented canonical domain envelopes, not
-    // with the production projection or hashing helpers (originally Node crypto;
-    // recomputed with jq canonicalization and shasum after heads were bound).
+    // with the production projection or hashing helpers. P3 vectors use sorted
+    // serde_json values and sha2 with a literal ready decision envelope.
     let decision = evaluate_pre_merge(&input(raw("ready")));
     assert_eq!(
         decision.binding.evidence_digest.as_str(),
-        "efd6c523fbb8fe3228eb00eb63a86b022a0558d6e48856bf2436508e009f7cb4"
+        "4683ca506ea94a31512cad6be570ea7891be4dedaf8a291a2144c79b7fb1158c"
     );
     assert_eq!(
         decision.decision_digest.as_str(),
-        "64929621381819ce6303bea26c7bd27337a3ab82e1a7077dc9b82e315bef0b4c"
+        "bdfb5b83188916472a14a84856ad6f0a822c0bdd5bfec241e8d0d32b498fc62d"
     );
 }
 

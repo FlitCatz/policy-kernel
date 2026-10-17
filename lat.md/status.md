@@ -8,6 +8,10 @@ establish TJERP adoption, authoritative CI or trust. See [[kernel#Compiler-gener
 The current-status authority records local scope satisfied for the cached-package
 native proof, including the empty-output rejection.
 
+P3 makes empty adequacy an explained non-pass, rejects empty schema 3/4 consumer
+policies and requires negative cases to map to executed tests. Frozen parsing
+is preserved; local tests do not establish adoption or promotion. See [[kernel#Test adequacy]].
+
 Native fixture dependencies use Jest 30.5.2 with scoped `js-yaml` 4 and
 parser 8.42.0 with scoped `typescript-estree` 8.48.0 overrides. Frozen bootstrap
 pins remain unchanged; this refresh alone makes no hosted or promotion claim.
