@@ -1,5 +1,17 @@
 # Current status
 
+## P7 TJERP split-profile harness
+
+The [P7 Rust harness](integrations/tjerp-adoption.md) checks approved catalog
+completeness, raw-selector/normalized-ID mappings, Git archive inventory and
+split HEAD/source/profile bindings through existing project-verification/core APIs.
+Its FI-00–FI-09 fixtures are synthetic Rust producers and protocol faults, not
+actual TJERP source injections. Successful local composition is labelled
+**local scope satisfied**, remains LocalUntrusted and leaves review unfulfilled.
+P8 real profiles/run lifecycle and P9 first actual dry-run remain pending.
+This does not establish real TJERP adoption, Trusted evidence, an authoritative
+decision, a protected merge or production promotion.
+
 ## P2 bounded MSBuild generated output
 
 The [P2 contract](integrations/consumer-schema3.md#compiler-generated-files-p2)

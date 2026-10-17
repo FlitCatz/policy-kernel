@@ -225,3 +225,11 @@ Additional pin references: [Node/npm](https://raw.githubusercontent.com/nodejs/n
 
 See [the execution plan](../archive/plans/2026-09-09-task-12-project-profiles.md) and
 [implementation status](../archive/reviews/2026-09-09-task-12-project-profiles.md).
+
+## TJERP split-profile composition (P7)
+
+The [TJERP harness contract](tjerp-adoption.md) connects two existing profile
+runs to an externally approved requirement catalog, raw selectors, and the same
+Git archive inventory. It invokes this runner and the core sensor/provenance
+APIs separately. Its tests are synthetic; real profile authoring and first
+TJERP execution remain P8/P9. Results remain local advisory and LocalUntrusted.

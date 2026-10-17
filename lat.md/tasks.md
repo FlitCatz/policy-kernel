@@ -22,3 +22,6 @@
 
 See [[status]] for the repository-wide latest state, [[trust-boundaries]] for
 authority limits, and [[kernel]] for where each rule is enforced in code.
+
+The adoption-plan P7 glue extends the Task 16/17 integration through [[tjerp]];
+P8 real profiles and P9 first execution remain separate from numbered Task completion.

@@ -199,3 +199,17 @@ The preset `run` command remains scoped to the three built-in scenario suites.
 
 See the [Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
 for actual commands, results, and open native/CI acceptance requirements.
+
+## TJERP P7 synthetic protocol acceptance
+
+The [P7 harness](tjerp-adoption.md) has a separate synthetic FI-00–FI-09 matrix:
+
+```console
+cargo test --locked --offline -p policy-acceptance --test tjerp_adoption
+cargo build --locked --offline -p policy-acceptance --example tjerp_adoption
+```
+
+The six ignored functions in that integration-test executable are Rust reporter
+subprocess entry points invoked by its active tests. They are not six unexecuted
+fault scenarios. These tests use no real TJERP checkout, C#/Svelte build,
+installation or download; native source faults and real adoption remain P9.

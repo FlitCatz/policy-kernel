@@ -2,6 +2,11 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+P7 adds the [[tjerp]] local harness and synthetic FI-00–FI-09 protocol tests.
+It binds approved catalogs, raw identities and split source/head/profile results
+through existing APIs. LocalUntrusted remains; real P8 profiles and P9 execution
+are pending, with no adoption, authoritative decision or promotion claim.
+
 P2 adds explicit graph opt-in for bounded compiler-generated output, with XML,
 command/environment and filesystem checks. The offline Mapperly fixture does not
 establish TJERP adoption, authoritative CI or trust. See [[kernel#Compiler-generated output]].
