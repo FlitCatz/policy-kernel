@@ -60,7 +60,12 @@ pub fn link_report(root: &Path, id: &str, suite: &Suite, bytes: &[u8]) -> Result
             let results = doc
                 .root_element()
                 .children()
-                .find(|n| n.tag_name().name() == "Results")
+                .find(|n| {
+                    n.has_tag_name((
+                        "http://microsoft.com/schemas/VisualStudio/TeamTest/2010",
+                        "Results",
+                    ))
+                })
                 .ok_or("TJ-RAW-TRX")?;
             for t in results.children().filter(|n| n.is_element()) {
                 let name = t.attribute("testName").ok_or("TJ-RAW-TRX")?;

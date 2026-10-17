@@ -703,6 +703,28 @@ fn theory_rows_keep_each_raw_identity_and_foreign_checkout_paths_are_rejected() 
 }
 
 #[test]
+fn foreign_namespace_trx_names_cannot_be_linked_to_other_normalized_tests() {
+    let f = Fixture::new("baseline");
+    let suite = &f.suites.backend.suites["contract"];
+    let actual = String::from_utf8(report(&f.root, "backend", "contract", "baseline"))
+        .unwrap()
+        .replace(
+            "TjArch.Tests.contractTests.Check",
+            "TjArch.Tests.contractTests.Other",
+        );
+    let foreign = r#"<f:Results xmlns:f="urn:foreign"><f:UnitTestResult testId="forged" testName="TjArch.Tests.contractTests.Check"/></f:Results><Results>"#;
+    let bytes = actual.replace("<Results>", foreign);
+    let raw = link_report(&f.root, "backend:contract", suite, bytes.as_bytes()).unwrap();
+    assert_eq!(raw[0].selector, "TjArch.Tests.contractTests.Other");
+    assert!(
+        resolve(&f.catalog.requirements[0].tests[0], &raw, &f.suites)
+            .unwrap_err()
+            .to_string()
+            .contains("TJ-SELECTOR-MISSING")
+    );
+}
+
+#[test]
 fn split_inventory_profile_final_identity_and_freshness_must_all_match() {
     let f = Fixture::new("baseline");
     let mut r = f.requests();

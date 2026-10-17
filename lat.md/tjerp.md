@@ -14,6 +14,8 @@ negative membership, suites and the externally approved catalog file digest.
 [[acceptance/src/tjerp/reports.rs#link_report]] preserves raw identities in parser
 order. [[acceptance/src/tjerp/reports.rs#resolve]] rejects missing, ambiguous and
 non-passing selectors while retaining flat TRX theory rows.
+TRX raw names are read only from the parser's exact XML namespace; foreign
+elements cannot attach a different name to a normalized ID.
 
 ## Source and split binding
 

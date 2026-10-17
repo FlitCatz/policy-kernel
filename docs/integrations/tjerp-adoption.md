@@ -104,7 +104,9 @@ absolute names must belong to the current archive. Playwright resolves `file`
 against raw `config.rootDir` and matches exact title. Ambiguous matches fail.
 TRX matches the catalog FQN/class/source filename and preserves every flat
 parameterized row's original `testId`/`testName`; exact matches cannot be mixed
-with multiple theory rows. Failed, skipped, renamed, zero, malformed and retry
+with multiple theory rows. Only the parser's exact TRX XML namespace supplies raw
+names; foreign elements cannot link a different name to a normalized ID.
+Failed, skipped, renamed, zero, malformed and retry
 reports cannot satisfy a selector. Each required regression selector also passes.
 Final-run mappings must equal discovery mappings and reference passed tests from
 the final raw reports, within the same component namespace.
