@@ -2,6 +2,11 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+Reviewed npm root overrides bind exact versions into the profile and verify
+affected lock resolutions. Native Node 26.12.0/npm 11.20.0 audits detect vulnerable
+and fixed override versions. Local scope is satisfied; TJERP adoption and
+promotion remain unestablished. See [[kernel#Npm workspace graph]].
+
 P7 adds the [[tjerp]] local harness and synthetic FI-00–FI-09 protocol tests.
 It binds approved catalogs, raw identities and split source/head/profile results
 through existing APIs. LocalUntrusted remains; real P8 profiles and P9 execution

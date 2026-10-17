@@ -1,5 +1,19 @@
 # Current status
 
+## Reviewed npm root overrides
+
+The [workspace override extension](integrations/npm-workspaces.md#reviewed-root-overrides)
+binds a limited exact-version override set into the profile digest and checks
+all affected lock resolutions. Member declarations, contract targets, unsupported
+specs, dead overrides and drift fail closed. The
+[2026-10-17 native execution](archive/reviews/2026-10-17-npm-overrides-local.md)
+records Node 26.12.0/npm 11.20.0 root-audit failure for overridden vulnerable
+minimist 0.0.8 and clean success for scoped minimist 1.2.8. Local scope is
+satisfied; evidence remains LocalUntrusted. Frozen bootstrap assets are unchanged.
+TJERP P8 must adopt a reviewed revision containing this change and re-verify
+frontend `prepare`; no TJERP adoption, merge, authoritative decision or production
+promotion is established by this local fixture.
+
 ## P7 TJERP split-profile harness
 
 The [P7 Rust harness](integrations/tjerp-adoption.md) checks approved catalog

@@ -21,6 +21,96 @@ pub struct NpmWorkspace {
     /// Consumer-declared minimum source revision containing this extension.
     /// This is compatibility metadata, not authenticated provenance.
     pub minimum_pk_revision: String,
+    /// Exact reviewed root overrides; omitted for existing profiles.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub overrides: BTreeMap<String, NpmOverride>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum NpmOverride {
+    Version(String),
+    Children(BTreeMap<String, String>),
+}
+
+struct OverrideRule<'a> {
+    parent: Option<&'a str>,
+    target: &'a str,
+    version: &'a str,
+}
+
+fn override_rules(workspace: &NpmWorkspace) -> Result<Vec<OverrideRule<'_>>, Error> {
+    let mut rules = Vec::new();
+    let mut targets = BTreeSet::new();
+    for (name, value) in &workspace.overrides {
+        if !override_name(name) {
+            return Err(invalid(
+                "override needs a lowercase ASCII registry package name",
+            ));
+        }
+        match value {
+            NpmOverride::Version(version) => rules.push(OverrideRule {
+                parent: None,
+                target: name,
+                version,
+            }),
+            NpmOverride::Children(children) => {
+                if children.is_empty() {
+                    return Err(invalid("empty scoped override"));
+                }
+                for (target, version) in children {
+                    rules.push(OverrideRule {
+                        parent: Some(name),
+                        target,
+                        version,
+                    });
+                }
+            }
+        }
+    }
+    if rules.len() > 32 {
+        return Err(invalid("override rule limit exceeded"));
+    }
+    for rule in &rules {
+        if !override_name(rule.target)
+            || crate::selection::numeric_version(rule.version).is_err()
+            || !targets.insert(rule.target)
+            || rule.parent == Some(rule.target)
+            || [
+                "vite",
+                "typescript",
+                "eslint",
+                "vitest",
+                "@playwright/test",
+                "@typescript-eslint/parser",
+                "jsdom",
+            ]
+            .contains(&rule.target)
+        {
+            return Err(invalid(
+                "unsupported, overlapping or frozen-contract override",
+            ));
+        }
+    }
+    Ok(rules)
+}
+
+fn override_name(name: &str) -> bool {
+    name.len() <= 214
+        && !matches!(name, "node_modules" | "favicon.ico")
+        && package_name(name)
+        && name
+            .strip_prefix('@')
+            .unwrap_or(name)
+            .split('/')
+            .all(|part| {
+                part.as_bytes()
+                    .first()
+                    .is_some_and(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
+                    && part.bytes().all(|c| {
+                        c.is_ascii_lowercase() || c.is_ascii_digit() || b"-._".contains(&c)
+                    })
+            })
 }
 
 fn explicit(path: &str) -> bool {
@@ -39,6 +129,23 @@ pub(crate) fn validate_contract(
     let Some(workspace) = &graph.workspace else {
         return Ok(());
     };
+    let rules = override_rules(workspace)?;
+    for package in selection
+        .packages
+        .iter()
+        .filter(|p| p.component == graph.component)
+    {
+        let name = package
+            .installed_manifest
+            .rsplit_once("node_modules/")
+            .and_then(|(_, p)| p.strip_suffix("/package.json"));
+        if rules
+            .iter()
+            .any(|r| name.is_some_and(|n| r.target.eq_ignore_ascii_case(n)))
+        {
+            return Err(invalid("override targets a selected contract package"));
+        }
+    }
     if selection.schema_version != 3
         || graph.adapter != DependencyAdapter::Npm
         || graph.manifest != "package.json"
@@ -143,11 +250,9 @@ fn declarations(manifest: &Value, locked: &Value) -> Result<(), Error> {
             }
         }
     }
-    if manifest.get("bundledDependencies").is_some()
-        || manifest.get("bundleDependencies").is_some()
-        || manifest.get("overrides").is_some()
+    if manifest.get("bundledDependencies").is_some() || manifest.get("bundleDependencies").is_some()
     {
-        return Err(invalid("workspace bundles and overrides are unsupported"));
+        return Err(invalid("workspace bundles are unsupported"));
     }
     Ok(())
 }
@@ -179,6 +284,7 @@ pub(crate) fn validate_files(
     };
     let root = read(&graph.manifest)?;
     let lock = read(&graph.lockfile)?;
+    let rules = override_rules(workspace)?;
     let dirs: BTreeSet<_> = workspace
         .member_manifests
         .iter()
@@ -207,6 +313,55 @@ pub(crate) fn validate_files(
     };
     if let Some(root) = &root {
         declared(root)?;
+        let expected = serde_json::to_value(&workspace.overrides)?;
+        if root.get("overrides").unwrap_or(&serde_json::json!({})) != &expected {
+            return Err(invalid("root overrides disagree with reviewed profile"));
+        }
+        if rules.iter().any(|r| {
+            root.get("name").and_then(Value::as_str).is_some_and(|n| {
+                n.eq_ignore_ascii_case(r.target)
+                    || r.parent.is_some_and(|p| n.eq_ignore_ascii_case(p))
+            })
+        }) {
+            return Err(invalid("override targets the workspace root"));
+        }
+        for rule in rules.iter().filter(|r| r.parent.is_none()) {
+            for field in [
+                "dependencies",
+                "devDependencies",
+                "optionalDependencies",
+                "peerDependencies",
+            ] {
+                if root
+                    .get(field)
+                    .and_then(|v| v.get(rule.target))
+                    .is_some_and(|v| v.as_str() != Some(rule.version))
+                {
+                    return Err(invalid(
+                        "direct root override must equal the declared dependency spec",
+                    ));
+                }
+            }
+        }
+    }
+    // Member overrides are never interpreted by npm and must not be ignored here.
+    for member in &workspace.member_manifests {
+        if let Some(manifest) = read(member)? {
+            if manifest.get("overrides").is_some() {
+                return Err(invalid("workspace member overrides are unsupported"));
+            }
+            if rules.iter().any(|r| {
+                manifest
+                    .get("name")
+                    .and_then(Value::as_str)
+                    .is_some_and(|n| {
+                        n.eq_ignore_ascii_case(r.target)
+                            || r.parent.is_some_and(|p| n.eq_ignore_ascii_case(p))
+                    })
+            }) {
+                return Err(invalid("override targets a workspace member"));
+            }
+        }
     }
     let packages = lock
         .as_ref()
@@ -296,14 +451,18 @@ pub(crate) fn validate_files(
         if !expected_links.is_empty() {
             return Err(invalid("missing workspace lock links"));
         }
-        validate_dependency_inventory(packages)?;
+        let overridden = validate_overrides(&rules, packages, &dirs)?;
+        validate_dependency_inventory(packages, &overridden)?;
     }
     Ok(())
 }
 
 /// Check that npm's ancestor lookup can find each declared dependency in the
 /// audited lock inventory. Optional peers may legitimately be absent.
-fn validate_dependency_inventory(packages: &serde_json::Map<String, Value>) -> Result<(), Error> {
+fn validate_dependency_inventory(
+    packages: &serde_json::Map<String, Value>,
+    overridden: &BTreeSet<(String, String)>,
+) -> Result<(), Error> {
     for (path, package) in packages {
         if package.get("link").and_then(Value::as_bool) == Some(true) {
             continue;
@@ -324,23 +483,7 @@ fn validate_dependency_inventory(packages: &serde_json::Map<String, Value>) -> R
                 if !package_name(name) {
                     return Err(invalid("invalid locked dependency name"));
                 }
-                let mut directory = path.as_str();
-                let mut resolved = None;
-                loop {
-                    let candidate = if directory.is_empty() {
-                        format!("node_modules/{name}")
-                    } else {
-                        format!("{directory}/node_modules/{name}")
-                    };
-                    if let Some(value) = packages.get(&candidate) {
-                        resolved = Some(value);
-                        break;
-                    }
-                    if directory.is_empty() {
-                        break;
-                    }
-                    directory = directory.rsplit_once('/').map_or("", |(parent, _)| parent);
-                }
+                let resolved = resolve(packages, path, name).map(|p| &packages[p]);
                 let optional_peer = field == "peerDependencies"
                     && package
                         .get("peerDependenciesMeta")
@@ -362,16 +505,8 @@ fn validate_dependency_inventory(packages: &serde_json::Map<String, Value>) -> R
                 if let Some(exact) = requirement
                     .as_str()
                     .filter(|v| crate::selection::numeric_version(v).is_ok())
+                    .filter(|_| !overridden.contains(&(path.clone(), name.clone())))
                 {
-                    let resolved = if resolved.get("link").and_then(Value::as_bool) == Some(true) {
-                        resolved
-                            .get("resolved")
-                            .and_then(Value::as_str)
-                            .and_then(|p| packages.get(p))
-                            .ok_or_else(|| invalid("unresolved workspace dependency link"))?
-                    } else {
-                        resolved
-                    };
                     if resolved.get("version").and_then(Value::as_str) != Some(exact) {
                         return Err(invalid(
                             "exact workspace dependency differs from lock resolution",
@@ -382,6 +517,126 @@ fn validate_dependency_inventory(packages: &serde_json::Map<String, Value>) -> R
         }
     }
     Ok(())
+}
+
+fn installed_name(path: &str) -> Option<&str> {
+    path.rsplit_once("node_modules/").map(|(_, name)| name)
+}
+
+fn resolve<'a>(
+    packages: &'a serde_json::Map<String, Value>,
+    path: &str,
+    name: &str,
+) -> Option<&'a str> {
+    let mut directory = path;
+    loop {
+        let candidate = if directory.is_empty() {
+            format!("node_modules/{name}")
+        } else {
+            format!("{directory}/node_modules/{name}")
+        };
+        // Node skips node_modules itself when constructing ancestor lookups.
+        if let Some((key, value)) = packages
+            .get_key_value(&candidate)
+            .filter(|_| directory.rsplit('/').next() != Some("node_modules"))
+        {
+            return if value.get("link").and_then(Value::as_bool) == Some(true) {
+                value
+                    .get("resolved")
+                    .and_then(Value::as_str)
+                    .and_then(|p| packages.get_key_value(p).map(|(key, _)| key.as_str()))
+            } else {
+                Some(key)
+            };
+        }
+        if directory.is_empty() {
+            return None;
+        }
+        directory = directory.rsplit_once('/').map_or("", |(parent, _)| parent);
+    }
+}
+
+/// Follow logical dependency ancestry, including hoisted packages. Physical
+/// node_modules nesting alone does not describe npm's scoped override semantics.
+fn validate_overrides(
+    rules: &[OverrideRule<'_>],
+    packages: &serde_json::Map<String, Value>,
+    members: &BTreeSet<&str>,
+) -> Result<BTreeSet<(String, String)>, Error> {
+    let mut overridden = BTreeSet::new();
+    for rule in rules {
+        let mut pending: Vec<_> = members
+            .iter()
+            .copied()
+            .chain([""])
+            .map(|p| (p, rule.parent.is_none()))
+            .collect();
+        let mut visited = BTreeSet::new();
+        let mut outside_scope = BTreeSet::new();
+        let mut matched = false;
+        while let Some((path, active)) = pending.pop() {
+            let active = active || rule.parent.is_some_and(|p| installed_name(path) == Some(p));
+            if !visited.insert((path, active)) {
+                continue;
+            }
+            let package = &packages[path];
+            for field in [
+                "dependencies",
+                "devDependencies",
+                "optionalDependencies",
+                "peerDependencies",
+            ] {
+                let Some(deps) = package.get(field).and_then(Value::as_object) else {
+                    continue;
+                };
+                for name in deps.keys() {
+                    let Some(target) = resolve(packages, path, name) else {
+                        continue;
+                    };
+                    let edge = (path.to_owned(), name.clone());
+                    if name == rule.target && !active {
+                        if overridden.contains(&edge) {
+                            return Err(invalid(
+                                "scoped override shares a declaration outside its scope",
+                            ));
+                        }
+                        outside_scope.insert(edge.clone());
+                    }
+                    if active && name == rule.target {
+                        if outside_scope.contains(&edge) {
+                            return Err(invalid(
+                                "scoped override shares a declaration outside its scope",
+                            ));
+                        }
+                        let value = &packages[target];
+                        if installed_name(target) != Some(rule.target)
+                            || value
+                                .get("name")
+                                .is_some_and(|n| n.as_str() != Some(rule.target))
+                            || value.get("version").and_then(Value::as_str) != Some(rule.version)
+                        {
+                            return Err(invalid("override differs from affected lock resolution"));
+                        }
+                        matched = true;
+                        overridden.insert(edge);
+                    }
+                    pending.push((target, active));
+                }
+            }
+        }
+        if !matched {
+            return Err(invalid("dead or ignored override"));
+        }
+        if rule.parent.is_none()
+            && packages.iter().any(|(path, value)| {
+                installed_name(path) == Some(rule.target)
+                    && value.get("version").and_then(Value::as_str) != Some(rule.version)
+            })
+        {
+            return Err(invalid("global override has a drifting lock copy"));
+        }
+    }
+    Ok(overridden)
 }
 
 pub(crate) fn validate_layout(
