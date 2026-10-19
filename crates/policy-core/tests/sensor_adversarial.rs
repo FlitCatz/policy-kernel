@@ -293,3 +293,160 @@ fn single_star_stays_within_one_path_segment() {
         SensorEvaluationStatus::Inconclusive
     );
 }
+
+#[test]
+fn github_filter_subset_conformance() {
+    // Accepted examples from GitHub's filter-pattern cheat sheet, plus boundaries.
+    for (pattern, yes, no) in [
+        ("*", "README.md", "docs/README.md"),
+        ("**", "all/the/files.md", ""),
+        ("*.js", "app.js", "js/app.js"),
+        ("docs/*", "docs/README.md", "docs/mona/octocat.txt"),
+        ("docs/**", "docs/mona/octocat.txt", "other/docs/file.txt"),
+        ("docs/**/*.md", "docs/README.md", "docs/file.txt"),
+        ("docs/**/*.md", "docs/a/markdown/file.md", "other/file.md"),
+        ("**/docs/**", "dir/docs/my-file.txt", "dir/my-file.txt"),
+        ("**/docs/**", "docs/hello.md", "mydocs/hello.md"),
+        ("**/README.md", "README.md", "README.md.bak"),
+        ("**/README.md", "js/README.md", "js/readme.md"),
+        ("**/*src/**", "my-src/code/js/app.js", "src-other/app.js"),
+        ("**/*-post.md", "path/their-post.md", "path/post.md"),
+        ("**/migrate-*.sql", "db/migrate-v1.0.sql", "db/migrate.sql"),
+        ("src/*.js", "src/.js", "src/page.jsx"),
+        ("A_0-z.txt", "A_0-z.txt", "a_0-z.txt"),
+    ] {
+        let mut profile = profile();
+        profile.sensors[0].required = false;
+        profile.sensors[0].required_when = vec![condition("filter", pattern)];
+        assert_eq!(
+            resolve_required_sensors(&profile, &[yes], Risk::Low).unwrap(),
+            vec![id("compile")],
+            "{pattern}: {yes}"
+        );
+        // An empty change has no path to match, including for `**`.
+        let paths = if no.is_empty() { vec![] } else { vec![no] };
+        assert!(
+            resolve_required_sensors(&profile, &paths, Risk::Low)
+                .unwrap()
+                .is_empty(),
+            "{pattern}: {no}"
+        );
+    }
+}
+
+#[test]
+fn unsupported_github_filters_fail_closed_in_both_sensor_conditions() {
+    for pattern in [
+        "src/*.jsx?",
+        "*.jsx?",
+        "v[12].[0-9]+.[0-9]+",
+        "[CB]at",
+        "a+",
+        "**.js",
+        "src/a**b",
+        "***",
+        "!README.md",
+        "a!b",
+        r"\*",
+        r"src\*.js",
+        "{a,b}",
+        "(a)",
+        "a|b",
+        "a b",
+        "é",
+        "",
+        "/src/*",
+        "src/",
+        "src//a",
+        "./src/*",
+        "src/../a",
+        "src/./a",
+        "src/\0a",
+    ] {
+        for exemption in [false, true] {
+            let mut profile = profile();
+            let conditions = if exemption {
+                &mut profile.sensors[0].not_applicable_when
+            } else {
+                &mut profile.sensors[0].required_when
+            };
+            *conditions = vec![condition("unsupported", pattern)];
+            for paths in [
+                &["src/page.js"][..],
+                &["src/page.jsx"],
+                &["src/page.jsxa"],
+                &[],
+            ] {
+                assert!(
+                    matches!(
+                        resolve_required_sensors(&profile, paths, Risk::Low),
+                        Err(policy_core::SensorResolutionError::InvalidGlob(_))
+                    ),
+                    "{pattern}: {paths:?}"
+                );
+            }
+            let result =
+                policy_core::evaluate_sensor_evidence(&profile, &[], &[], Some(&adequate()));
+            assert_eq!(result.status, SensorEvaluationStatus::Inconclusive);
+            assert!(result.has_reason("PK-SENSOR-PROFILE-INVALID"));
+        }
+    }
+}
+
+#[test]
+fn explicit_js_and_jsx_patterns_require_evidence_and_cover_only_matching_changes() {
+    let mut profile = profile();
+    profile.sensors[0].required = false;
+    let mut filter = condition("frontend", "src/*.js");
+    filter.path_globs.push("src/*.jsx".into());
+    profile.sensors[0].required_when = vec![filter.clone()];
+    filter.id = "frontend-exempt".into();
+    profile.sensors[0].not_applicable_when = vec![filter];
+    for (paths, applies) in [
+        (vec!["src/page.js"], true),
+        (vec!["src/page.jsx"], true),
+        (vec!["src/page.js", "src/page.jsx"], true),
+        (vec!["src/page.jsxa"], false),
+        (vec!["src/nested/page.js"], false),
+        (vec!["docs/page.js"], false),
+    ] {
+        let result = evaluate_sensor_evidence_for_change(
+            &profile,
+            &paths,
+            Risk::Low,
+            &[],
+            Some(&adequate()),
+        )
+        .unwrap();
+        assert_eq!(result.has_reason("PK-SENSOR-MISSING"), applies, "{paths:?}");
+        let mut exempt = profile.clone();
+        exempt.sensors[0].required = true;
+        let mut item = evidence(SensorStatus::NotApplicable, None);
+        item.not_applicable_condition_id = Some("frontend-exempt".into());
+        item.not_applicable_reason = Some("declared exemption".into());
+        let result = evaluate_sensor_evidence_for_change(
+            &exempt,
+            &paths,
+            Risk::Low,
+            &[item.clone()],
+            Some(&adequate()),
+        )
+        .unwrap();
+        assert_eq!(
+            result.status == SensorEvaluationStatus::Passed,
+            applies,
+            "{paths:?}"
+        );
+        let mut mixed = paths;
+        mixed.push("src/server.rs");
+        let result = evaluate_sensor_evidence_for_change(
+            &exempt,
+            &mixed,
+            Risk::Low,
+            &[item],
+            Some(&adequate()),
+        )
+        .unwrap();
+        assert!(result.has_reason("PK-SENSOR-NOT-APPLICABLE-INVALID"));
+    }
+}

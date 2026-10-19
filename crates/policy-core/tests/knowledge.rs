@@ -197,6 +197,50 @@ fn knowledge_path_single_star_stays_within_one_segment() {
 }
 
 #[test]
+fn github_optional_extension_is_invalid_and_explicit_alternatives_are_enforced() {
+    for path in [
+        "src/page.js",
+        "src/page.jsx",
+        "src/page.jsxa",
+        "src/nested/page.js",
+    ] {
+        for patterns in [json!(["src/*.jsx?"]), json!(["src/*.js", "src/*.jsx"])] {
+            let mut value = required();
+            value["policy"]["required_knowledge"][0]["required_when"] =
+                json!([{"risks": [], "path_globs": patterns}]);
+            value["context"]["changed_paths"] = json!([path]);
+            value["evidence"]["knowledge"] = json!([]);
+            seal_policy(&mut value);
+            seal_evidence(&mut value);
+            if patterns == json!(["src/*.jsx?"]) {
+                assert_reason(value, "PK-KNOWLEDGE-POLICY-INVALID");
+            } else if matches!(path, "src/page.js" | "src/page.jsx") {
+                assert_reason(value, "PK-KNOWLEDGE-MISSING");
+            } else {
+                assert_ready(value);
+            }
+        }
+    }
+    for pattern in [
+        "!src/**",
+        "**.js",
+        "src/[ab].js",
+        "src/a+.js",
+        r"src/\*.js",
+        "src/{a,b}.js",
+    ] {
+        let mut value = required();
+        value["policy"]["required_knowledge"][0]["required_when"] =
+            json!([{"risks": ["critical"], "path_globs": [pattern]}]);
+        // Validation is unconditional, even when neither risk nor path matches.
+        value["context"]["risk"] = json!("low");
+        value["context"]["changed_paths"] = json!([]);
+        seal_policy(&mut value);
+        assert_reason(value, "PK-KNOWLEDGE-POLICY-INVALID");
+    }
+}
+
+#[test]
 fn knowledge_conditions_use_current_paths_and_risk() {
     for (paths, risk, applies) in [
         (json!(["src/main.rs"]), "high", true),

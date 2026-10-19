@@ -31,10 +31,32 @@ Sensor `required_when` conditions apply when any changed path matches. A
 `not_applicable_when` exemption is valid only when its risks match and every
 changed path matches one of its `path_globs`; an empty known change cannot be
 exempted by a path condition. A mixed documentation and source change therefore
-cannot use a documentation-only exemption. Sensor and knowledge path globs follow
-GitHub Actions `paths` semantics: `*` and `?` stay within one path segment and
-`**` crosses directories, so `src/*.rs` no longer matches `src/nested/lib.rs`.
-Profiles that relied on the earlier cross-segment `*` must use `**`. A blocked review whose Medium, High
+cannot use a documentation-only exemption. Sensor and knowledge path globs accept
+a conservative subset of the [GitHub Actions filter syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#filter-pattern-cheat-sheet).
+Patterns match the whole normalized repository-relative path, case-sensitively.
+Literal characters are ASCII letters, digits, `.`, `_`, and `-`, with `/` separating
+nonempty segments (segments `.` and `..` are invalid). `*` matches zero or more
+characters within a segment; `**` is accepted only as an entire segment and crosses
+directories. Thus `src/*.rs` excludes `src/nested/lib.rs`, while `src/**/*.rs`
+includes both `src/lib.rs` and `src/nested/lib.rs`. `**/README.md` also matches the
+root `README.md`. Changed paths retain the existing normalization of backslashes,
+repeated separators and `.` segments; parent traversal is rejected.
+
+All other pattern characters and forms are rejected, including `?`, `+`, brackets,
+braces, backslash escaping, negation (`!`), whitespace, non-ASCII literals, and
+embedded/repeated globstars such as `**.js`, `a**b`, or `***`. Pattern lists are
+unordered positive alternatives; GitHub's ordered exclusion/re-inclusion syntax
+is unsupported. Invalid patterns yield `PK-SENSOR-PROFILE-INVALID` or
+`PK-KNOWLEDGE-POLICY-INVALID`, even when their conditions would not apply.
+An empty `path_globs` list still means any path; an empty pattern is invalid.
+
+In particular, GitHub's `src/*.jsx?` means `.js` or `.jsx`, whereas globset's `?`
+means one arbitrary character. This pattern now fails closed: use the two entries
+`src/*.js` and `src/*.jsx`. Replace `**.js` with `**/*.js`. This subset keeps the
+existing matcher small without silently accepting incompatible syntax. Existing
+shipped profiles and fixtures use supported patterns and need no migration.
+
+A blocked review whose Medium, High
 and Critical findings are all validly waived does not conflict with an approving
 review; any unwaived, expired or low-only blocked report still does. A gate that
 withholds readiness without a reason fails closed with `PK-PRE-GATE-UNEXPLAINED`.

@@ -90,6 +90,11 @@ configuration 바인딩이 checkout 위치에 좌우되지 않게 하고, author
 증거의 head 바인딩을 요구하며, merge 보호 여부를 GitHub 브랜치 관측과 대조하고, 경로 glob의 `*`가
 한 경로 단계 안에서만 매칭되게 합니다(디렉터리를 넘으려면 `**`를 씁니다).
 
+센서와 knowledge 경로 필터는 [GitHub 호환 부분집합](docs/trust-model.md)만 허용합니다:
+ASCII 영숫자와 `.`, `_`, `-`, `/`, 한 경로 단계의 `*`, 단계 전체를 차지하는 `**`입니다.
+그 밖의 문법은 fail-closed로 거부합니다. `src/*.jsx?` 대신 `src/*.js`와 `src/*.jsx`를
+별도 항목으로 사용해야 하며, 부정 패턴과 순서에 따른 제외는 지원하지 않습니다.
+
 프로젝트는 Rust 우선 정책을 따릅니다. 저장소의 실행 로직, CLI, 검증 도구, 보고서 변환,
 bootstrap 설치기, 테스트는 Rust로 작성합니다. JavaScript/TypeScript와 C#은 `examples/`
 아래에서 승인된 네이티브 소비 프로젝트 fixture 및 선언형 도구 설정에만 사용합니다.

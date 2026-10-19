@@ -76,6 +76,12 @@ and adequacy evidence for authoritative evaluation, cross-check merge protection
 against GitHub, and keep `*` in path globs within one segment (use `**` to cross
 directories).
 
+Sensor and knowledge path filters accept a [GitHub-compatible subset](docs/trust-model.md):
+ASCII alphanumeric literals plus `.`, `_`, `-`, `/`, segment-local `*`, and
+whole-segment `**`. Other syntax fails closed. Use separate `src/*.js` and
+`src/*.jsx` entries instead of `src/*.jsx?`; negation and ordered exclusions are
+unsupported.
+
 The project is Rust-first. Repository execution logic, CLIs, verification tools,
 report conversion, bootstrap installation, and tests are Rust. JavaScript,
 TypeScript, and C# occur only in the approved native consumer fixtures and
