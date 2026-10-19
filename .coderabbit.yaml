@@ -11,6 +11,8 @@ reviews:
     drafts: false
   path_filters:
     - "!Cargo.lock"
+    - "!**/package-lock.json"
+    - "!**/packages.lock.json"
     - "!docs/archive/**"
     - "!verification/mutation-contract.json"
     - "!schemas/*.schema.json"
