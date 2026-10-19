@@ -9,14 +9,23 @@ structural validation, three crate-owned schemas and a conformance corpus.
 The importer merged in [PR 25](https://github.com/FlitCatz/policy-kernel/pull/25), adding `policy-native-importer`: a Unix adapter library checking
 raw paths/limits/hashes, independent subject/run/scope/time expectations and
 recomputed report observations. Fresh output directories retain failure records
-and bounded raw copies, with an atomic persistence marker. The PR 5 candidate adds
+and bounded raw copies, with an atomic persistence marker. Plan PR 5 added
 kernel-owned `policy-native-verifier` core evidence assembly and advisory
 `policy-cli evaluate-scope` (0 satisfied, 2 non-pass, 64 incomplete/invalid).
 The kernel depends on contracts/core only; the adapter exports typed observations.
 Required sets, mappings, exclusions and command/config/parser bindings remain
 independent of observations. Trust stays local-untrusted, review unmet, with no
 ReadyToMerge path. Conformance covers failures and comparison with the existing
-project normalizer on the same report bytes. Ownership transfers remain planned.
+project normalizer on the same report bytes.
+
+Plan PRs 6–7 transferred and adopted the TJERP-owned harness. Plan PR 8 completes
+stage 1 in implementation by removing the former product module, examples and
+catalog tests. TJERP main `3c62b9e` owns `tools/policy-adoption`, pinned over public
+HTTPS to PK `4df10fa`; that dependency and its approved binary hashes are unchanged.
+The [ownership pointer](../../integrations/tjerp-adoption.md) links the records.
+The generic [split-consumer fixture](../../../examples/split-consumer/README.md)
+retains report, audit and tool-version regression coverage. Stage 2 remains out
+of scope; implementation completion does not assert this PR has merged.
 The historical ADR retains its original planning context.
 
 New exact native combinations and bootstrap presets stop. Existing profile

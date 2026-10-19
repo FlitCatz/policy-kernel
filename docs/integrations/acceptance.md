@@ -200,16 +200,16 @@ The preset `run` command remains scoped to the three built-in scenario suites.
 See the [Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
 for actual commands, results, and open native/CI acceptance requirements.
 
-## TJERP P7 synthetic protocol acceptance
+## Split-consumer conformance
 
-The [P7 harness](tjerp-adoption.md) has a separate synthetic FI-00–FI-09 matrix:
+The [synthetic split-consumer fixture](../../examples/split-consumer/README.md)
+retains report, audit and version regressions. Staging runs with:
 
 ```console
-cargo test --locked --offline -p policy-acceptance --test tjerp_adoption
-cargo build --locked --offline -p policy-acceptance --example tjerp_adoption
+cargo test --locked --offline -p policy-acceptance --test native_split_consumer
 ```
 
-The six ignored functions in that integration-test executable are Rust reporter
-subprocess entry points invoked by its active tests. They are not six unexecuted
-fault scenarios. These tests use no real TJERP checkout, C#/Svelte build,
-installation or download; native source faults and real adoption remain P9.
+The real-producer test remains ignored by default; its tool and output
+requirements are in [native verification](consumer-schema3.md#native-verification).
+The former TJERP-specific catalog and FI protocol tests now belong to the
+[consumer-owned harness](tjerp-adoption.md).

@@ -10,7 +10,7 @@ short paths between the concepts an agent or maintainer needs to understand.
 - [[trust-boundaries]] — why local evidence cannot authorize a release
 - [[kernel]] — authorization rules anchored to the Rust symbols that enforce them
 - [[native-contracts]] — additive native v1 wire types, digest domains and conformance
-- [[tjerp]] — P7 split-profile local acceptance and synthetic fault matrix
+- [[tjerp]] — consumer-owned harness status and historical local acceptance records
 - [[github-tests]] — executable publication and adapter process regressions
 
 Start with [Current status](../docs/status.md) and the

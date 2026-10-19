@@ -47,9 +47,9 @@ regression explicitly checks this change without editing the historical matrix.
 Current synthetic pre-merge fixtures include negative mappings and refreshed
 bindings so their unrelated gates remain testable.
 
-The maintained Jest and synthetic TJERP-shaped examples declare greeting
+The maintained Jest and synthetic split-consumer examples declare greeting
 requirements. Their request authors must map those requirements to actual
-report IDs; neither example is a TJERP business-requirement catalog. Frozen
+report IDs; neither example is a product business-requirement catalog. Frozen
 empty templates are compatibility inputs, not runnable adequacy examples.
 
 ## Ownership and evidence limits
@@ -57,8 +57,8 @@ empty templates are compatibility inputs, not runnable adequacy examples.
 The slice owner maintains its requirement catalog; the captain owns business
 requirements and reviews list shrinkage separately. The kernel cannot discover
 a requirement removed from both an adopted policy and its external catalog.
-Removing only its evidence mapping fails. The TJERP pilot requires **each** of
-the three lists to be nonempty, a stricter adoption rule than this general reader.
+Removing only its evidence mapping fails. Consumer-specific catalog rules belong to the consumer-owned harness; see the
+[TJERP ownership pointer](tjerp-adoption.md) for its historical pilot boundary.
 
 Local observations remain LocalUntrusted and may only be described as **local
 scope satisfied** when the declared scope is actually satisfied. These checks

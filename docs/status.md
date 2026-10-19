@@ -11,14 +11,23 @@ combinations and bootstrap presets stop. The parser extraction merged in
 validation, crate-owned schemas and conformance vectors (PR 24). The importer merged in
 [PR 25](https://github.com/FlitCatz/policy-kernel/pull/25), adding the Unix `policy-native-importer` adapter library for raw artifact/subject
 verification, shared-parser recomputation and retained failure records. It exposes
-no scope decision itself. The PR 5 candidate adds `policy-native-verifier`, which
+no scope decision itself. Plan PR 5 added `policy-native-verifier`, which
 assembles existing core evidence and evaluates independently approved scope, plus
 `policy-cli evaluate-scope --expected FILE --observations FILE` (exit 0/2/64).
 Successful imports export typed observations, including parser-level failure flags.
 This path is local advisory only: trust is `local_untrusted`, review is `unmet`,
 and no pre-merge decision or `ReadyToMerge` is produced. JSON-only evaluation
-checks consistency; it does not authenticate raw artifacts. Stage-1 PRs 6–8 remain planned.
-TJERP execution is unchanged. Profile schemas 1–4, selection
+checks consistency; it does not authenticate raw artifacts.
+
+Plan PRs 6–7 transferred and adopted the TJERP-owned harness. Plan PR 8
+completes stage 1 in implementation: TJERP main `3c62b9e` owns
+`tools/policy-adoption`, pinned to policy-kernel `rev = 4df10fa` over public HTTPS.
+Its approved binary hashes and pinned dependency are unaffected; TJERP was not
+modified by PR 8. The former product module, examples and catalog tests are
+removed here. The generic `examples/split-consumer` fixture and
+`native_split_consumer` tests retain report, audit and version regressions.
+This is implementation completion, not a claim that this PR has merged.
+TJERP's pinned execution is unchanged. Profile schemas 1–4, selection
 schemas 1–3, bootstrap releases and every existing required environment check
 are preserved. Adapter repository ownership/support and PR 14 compatibility
 end conditions remain open. No new native adoption, authoritative decision,
@@ -64,15 +73,11 @@ adoption, merge, authoritative decision or production promotion.
 
 ## P7 TJERP split-profile harness
 
-The [P7 Rust harness](integrations/tjerp-adoption.md) checks approved catalog
-completeness, raw-selector/normalized-ID mappings, Git archive inventory and
-split HEAD/source/profile bindings through existing project-verification/core APIs.
-Its FI-00–FI-09 fixtures are synthetic Rust producers and protocol faults, not
-actual TJERP source injections. Successful local composition is labelled
-**local scope satisfied**, remains LocalUntrusted and leaves review unfulfilled.
-The synthetic harness tests alone do not establish real TJERP adoption,
-Trusted evidence, an authoritative
-decision, a protected merge or production promotion.
+The former P7 harness checked approved catalog completeness, report identities
+and split source/head bindings. It now belongs to TJERP's `tools/policy-adoption`;
+the [ownership pointer](integrations/tjerp-adoption.md) replaces the old PK commands.
+Its product-specific assertions are no longer maintained in this workspace.
+The following P8/P9 records retain their original execution scope and revisions.
 
 ## TJERP P8 adoption and P9 first actual dry-run
 

@@ -44,8 +44,8 @@ fn request(root: &Path) -> RunRequest {
     files.sort_by(|a, b| a.path.cmp(&b.path));
     let head = command(root, &["git", "rev-parse", "HEAD"]);
     serde_json::from_value(json!({"schema_version":1,"profile":profile,"expected_profile_digest":canonical_sha256(&profile).unwrap(),
-        "root":root,"repository":"acceptance/tjerp","head_sha":head,"source_files":files,"expected_source_digest":canonical_sha256(&files).unwrap(),
-        "provider":"local","model":"native-tjerp","execution_id":"tjerp-native","impact":{"kind":"unknown"},
+        "root":root,"repository":"acceptance/split-consumer","head_sha":head,"source_files":files,"expected_source_digest":canonical_sha256(&files).unwrap(),
+        "provider":"local","model":"native-split-consumer","execution_id":"split-consumer-native","impact":{"kind":"unknown"},
         "mappings":{"acceptance_criteria":[],"changed_behaviors":[],"negative_case_ids":[]}})).unwrap()
 }
 
@@ -55,7 +55,7 @@ fn schema_three_fixture_stages_without_preset_layout() {
     let output = tempfile::tempdir().unwrap();
     let target = output.path().canonicalize().unwrap().join("consumer");
     policy_acceptance::stage_profile(
-        &workspace.join("examples/tjerp-compatible"),
+        &workspace.join("examples/split-consumer"),
         "project-profile.json",
         &target,
     )
@@ -71,14 +71,15 @@ fn schema_three_fixture_stages_without_preset_layout() {
 }
 
 #[test]
-#[ignore = "requires exact fixture Node/npm/.NET tools, browser, network, and POLICY_TJERP_OUTPUT"]
-fn native_tjerp_reports_audits_and_rejection_paths() {
+#[ignore = "requires exact fixture Node/npm/.NET tools, browser, network, and POLICY_SPLIT_CONSUMER_OUTPUT"]
+fn native_split_consumer_reports_audits_and_rejection_paths() {
     let workspace = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
-    let output = PathBuf::from(std::env::var_os("POLICY_TJERP_OUTPUT").expect("fresh output path"));
+    let output =
+        PathBuf::from(std::env::var_os("POLICY_SPLIT_CONSUMER_OUTPUT").expect("fresh output path"));
     fs::create_dir(&output).unwrap();
     let root = output.join("consumer");
     policy_acceptance::stage_profile(
-        &workspace.join("examples/tjerp-compatible"),
+        &workspace.join("examples/split-consumer"),
         "project-profile.json",
         &root,
     )

@@ -12,7 +12,7 @@ fn consumer_profiles_reject_empty_adequacy_without_changing_legacy_parsing() {
     .unwrap();
     for mut profile in [
         parse_profile(include_str!(
-            "../../../examples/tjerp-compatible/project-profile.json"
+            "../../../examples/split-consumer/project-profile.json"
         ))
         .unwrap(),
         project_verification::selection::upgrade_frontend_profile(legacy).unwrap(),
@@ -43,7 +43,7 @@ fn consumer_negative_ids_must_be_required_behaviors_and_map_to_report_tests() {
     use policy_contracts::{TestAdequacyEvidence, TestMapping};
     use project_verification::reports::{parse_report, ReportFormat};
     let mut profile = parse_profile(include_str!(
-        "../../../examples/tjerp-compatible/project-profile.json"
+        "../../../examples/split-consumer/project-profile.json"
     ))
     .unwrap();
     profile.adequacy.negative_case_ids = vec!["frontend:reject-empty".into()];

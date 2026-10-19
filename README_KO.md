@@ -52,14 +52,15 @@ bootstrap preset 추가는 중단했습니다. [Native 계약](docs/integrations
 v1 타입, adapter 측 원본·subject importer와 kernel 소유 로컬 scope verifier를 제공합니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
 유지하고, TJERP 실행은 변경하지 않습니다.
 
-[P7 TJERP 인수 harness](docs/integrations/tjerp-adoption.md)는 기존 Rust API로
-두 로컬 profile, 승인 catalog와 원본 test identity를 결합합니다. FI-00–FI-09는
-합성 시험입니다. TJERP는 2026-10-17 P8 profile·실행 절차와 P9 실제 dry-run을
-완료했습니다. FI-00과 회복은 **local scope satisfied**이며 FI-01–FI-09는
-의도대로 거부되었습니다. 증거는 LocalUntrusted이고 review gate는 미충족이며,
-pre-merge 판정이나 production promotion은 없습니다.
-[현재 상태와 TJERP revision 근거](docs/status.md#tjerp-p8-adoption-and-p9-first-actual-dry-run)를 참고하세요.
-`cargo test --locked --offline -p policy-acceptance --test tjerp_adoption`으로 검증합니다.
+계획 PR 8로 stage 1 구현을 완료했습니다. TJERP main `3c62b9e`의
+`tools/policy-adoption`이 harness를 소유하며 공개 HTTPS로 policy-kernel
+`4df10fa`를 고정합니다. 이 저장소의 제품 module·example·catalog 시험은 제거했고,
+고정된 실행 경로는 영향을 받지 않습니다. [소유권 안내](docs/integrations/tjerp-adoption.md)에서
+도입 기록을 확인할 수 있습니다. 합성 [split-consumer fixture](examples/split-consumer/README.md)는
+report·audit·version 회귀 검증을 유지합니다.
+`cargo test --locked --offline -p policy-acceptance --test native_split_consumer`는
+staging을 검증하며 native 실행은 명시적으로 선택해야 합니다. 증거는 로컬 advisory이며
+stage 1 구현 완료가 promotion이나 protected merge를 의미하지 않습니다.
 
 네이티브 fixture는 Jest 30.5.2와 범위를 제한한 `js-yaml` 4 override를 사용합니다.
 React/TypeScript는 parser 8.42.0 및 동결된 bootstrap 버전 고정을 유지하며,

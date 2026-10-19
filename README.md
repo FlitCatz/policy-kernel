@@ -30,14 +30,16 @@ combinations and bootstrap presets have stopped. The [native contract](docs/inte
 provides v1 types, an adapter-side artifact/subject importer and a kernel-owned local scope verifier. Existing profiles, CLI paths, bootstrap recovery and
 required environment checks are preserved. TJERP execution is unchanged.
 
-The [P7 TJERP acceptance harness](docs/integrations/tjerp-adoption.md) binds two
-local profiles, approved catalogs and raw test identities through existing Rust
-APIs. Its FI-00–FI-09 tests are synthetic. TJERP completed P8 profiles/run procedure
-and the P9 real dry-run on 2026-10-17: FI-00 and recovery satisfied local scope,
-and FI-01–FI-09 were rejected as intended. Evidence stays LocalUntrusted; the
-review gate is unmet, with no pre-merge decision or production promotion.
-See [current status and TJERP revision citations](docs/status.md#tjerp-p8-adoption-and-p9-first-actual-dry-run).
-Run `cargo test --locked --offline -p policy-acceptance --test tjerp_adoption`.
+Stage-1 scope reduction is complete in implementation with plan PR 8: TJERP owns
+its harness at `tools/policy-adoption` on main `3c62b9e`, pinned over public HTTPS
+to policy-kernel `4df10fa`. This repository no longer ships its product module,
+examples or catalog tests. The [ownership pointer](docs/integrations/tjerp-adoption.md)
+links the adoption records; that pinned execution remains unaffected.
+The synthetic [split-consumer fixture](examples/split-consumer/README.md) retains
+report, audit and version regressions. Run
+`cargo test --locked --offline -p policy-acceptance --test native_split_consumer`
+for staging coverage; native execution remains opt-in. Evidence remains local
+and advisory; stage-1 completion establishes no promotion or protected merge.
 
 The native fixtures use Jest 30.5.2 with a scoped `js-yaml` 4 override.
 React/TypeScript keeps parser 8.42.0 and the frozen bootstrap pins, with a

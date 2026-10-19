@@ -21,7 +21,7 @@ fn mapperly_files_are_generated_and_read_by_architecture_test() {
         std::env::var("POLICY_GENERATED_DOTNET").expect("absolute path to installed dotnet RC1");
     let packages = std::env::var("POLICY_GENERATED_PACKAGES").expect("existing NuGet cache path");
     let workspace = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
-    let source = workspace.join("examples/tjerp-compatible/backend");
+    let source = workspace.join("examples/split-consumer/backend");
     // Fail before launching .NET if any selected package is absent. No fallback feed.
     for lock in [
         "src/Api/packages.lock.json",
@@ -95,7 +95,7 @@ public class ArchitectureTests {
 }
 "#).unwrap();
     let mut profile: Value = serde_json::from_slice(
-        &fs::read(workspace.join("examples/tjerp-compatible/project-profile.json")).unwrap(),
+        &fs::read(workspace.join("examples/split-consumer/project-profile.json")).unwrap(),
     )
     .unwrap();
     profile["selection"]["consumer"]["generated_files_graphs"] = json!(["modules"]);
