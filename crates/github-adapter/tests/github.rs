@@ -26,7 +26,11 @@ fn process_fixture(path: &std::path::Path, mode: &str) {
         output
     });
     if !path.exists() {
-        fs::copy(executable, path).unwrap();
+        // OnceLock publishes only after rustc exits. Link that closed inode:
+        // copying opens a new executable for writing, and a concurrent fork
+        // can retain that descriptor until exec even with O_CLOEXEC set.
+        // Closing our copy would then still leave Linux exec returning ETXTBSY.
+        fs::hard_link(executable, path).unwrap();
     }
     fs::write(path.with_extension("mode"), mode).unwrap();
 }
@@ -285,13 +289,116 @@ fn inherited_output_pipe_does_not_extend_gh_timeout() {
     fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
     let api = GhCliApi::new(&script, Duration::from_millis(100), 4096);
     let started = std::time::Instant::now();
-    assert!(matches!(
-        api.pull_request("owner", "repo", 1),
-        Err(AdapterError::Timeout(_))
-    ));
+    let result = api.pull_request("owner", "repo", 1);
+    assert!(
+        matches!(result, Err(AdapterError::Timeout(_))),
+        "{result:?}"
+    );
     assert!(started.elapsed() < Duration::from_secs(1));
     assert!(script.with_extension("started").exists());
     assert_descendant_killed(&script, "API timeout");
+    fs::remove_dir_all(temp).unwrap();
+}
+
+#[test]
+fn process_fixtures_share_the_closed_executable_inode() {
+    use std::os::unix::fs::MetadataExt;
+
+    let temp = std::env::temp_dir().join(format!("policy-gh-inode-{}", std::process::id()));
+    fs::create_dir_all(&temp).unwrap();
+    let first = temp.join("first");
+    let second = temp.join("second");
+    process_fixture(&first, "args");
+    process_fixture(&second, "failure");
+    let first_metadata = fs::metadata(&first).unwrap();
+    let second_metadata = fs::metadata(&second).unwrap();
+    assert_eq!(first_metadata.dev(), second_metadata.dev());
+    assert_eq!(first_metadata.ino(), second_metadata.ino());
+    // Modes remain private to each pathname despite sharing executable bytes.
+    let first_api = GhCliApi::new(&first, Duration::from_secs(1), 4096);
+    assert!(first_api.pull_request("owner", "repo", 1).is_ok());
+    let second_api = GhCliApi::new(&second, Duration::from_secs(1), 4096);
+    let result = second_api.pull_request("owner", "repo", 1);
+    assert!(
+        matches!(
+            result,
+            Err(AdapterError::ProcessFailure {
+                status: Some(7),
+                ..
+            })
+        ),
+        "{result:?}"
+    );
+    fs::remove_dir_all(temp).unwrap();
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn executable_writer_explains_route_and_timeout_spawn_errors() {
+    // Keep the intentional executable writer out of the parallel test process.
+    // Otherwise another test's fork could retain it past our final drop too.
+    const CHILD: &str = "PK_GH_EXECUTABLE_WRITER_CHILD";
+    if std::env::var_os(CHILD).is_none() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "executable_writer_explains_route_and_timeout_spawn_errors",
+                "--nocapture",
+            ])
+            .env(CHILD, "1")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    let temp = std::env::temp_dir().join(format!("policy-gh-writer-{}", std::process::id()));
+    fs::create_dir_all(&temp).unwrap();
+    let linked = temp.join("linked");
+    process_fixture(&linked, "args");
+    let copied = temp.join("copied");
+    fs::copy(&linked, &copied).unwrap();
+    // Widen the race to an event-controlled interval: this descriptor stands
+    // in for the copy writer retained by another child between fork and exec.
+    // The OS write exclusion depends on the inode, not which process owns it.
+    let writer = fs::OpenOptions::new().write(true).open(&copied).unwrap();
+    for mode in ["args", "inherited"] {
+        process_fixture(&copied, mode);
+        let api = GhCliApi::new(&copied, Duration::from_millis(100), 4096);
+        let result = api.pull_request("owner", "repo", 1);
+        assert!(
+            matches!(result, Err(AdapterError::Io(ref error)) if error.raw_os_error() == Some(26)),
+            "{mode}: {result:?}"
+        );
+        assert!(!copied.with_extension("started").exists());
+
+        // A linked fixture has no new executable writer, so both original
+        // expectations hold even while the copied inode's writer stays open.
+        process_fixture(&linked, mode);
+        let api = GhCliApi::new(&linked, Duration::from_secs(1), 4096);
+        let result = api.pull_request("owner", "repo", 1);
+        if mode == "args" {
+            assert_eq!(
+                result.unwrap(),
+                b"api\n--hostname\ngithub.com\n--method\nGET\n/repos/owner/repo/pulls/1\n{}"
+            );
+        } else {
+            assert!(
+                matches!(result, Err(AdapterError::Timeout(_))),
+                "{result:?}"
+            );
+            assert_descendant_killed(&linked, "linked fixture timeout");
+        }
+    }
+    drop(writer);
+    // Closing the last writer is the smallest counterfactual for the copy.
+    process_fixture(&copied, "args");
+    let api = GhCliApi::new(&copied, Duration::from_secs(1), 4096);
+    assert!(api.pull_request("owner", "repo", 1).is_ok());
     fs::remove_dir_all(temp).unwrap();
 }
 
