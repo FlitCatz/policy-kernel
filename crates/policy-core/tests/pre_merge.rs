@@ -484,6 +484,50 @@ fn conditional_requirements_and_policy_required_union_cannot_be_skipped() {
 }
 
 #[test]
+fn optional_frontend_sensor_cannot_be_silently_skipped_by_github_question_mark() {
+    for path in [
+        "src/page.js",
+        "src/page.jsx",
+        "src/page.jsxa",
+        "src/nested/page.js",
+    ] {
+        for pattern in ["src/*.jsx?", "src/*.js", "src/*.jsx"] {
+            let mut value = raw("ready");
+            value["context"]["changed_paths"] = json!([path]);
+            value["context"]["sensor_profile"]["sensors"]
+                .as_array_mut()
+                .unwrap()
+                .push(json!({
+                    "id": "frontend-security", "required": false,
+                    "required_when": [{"id": "frontend", "risks": [], "path_globs": [pattern]}],
+                    "not_applicable_when": [], "accepted_exit_codes": [0]
+                }));
+            seal_policy(&mut value);
+            seal(&mut value);
+            if pattern == "src/*.jsx?" {
+                assert_result(
+                    value,
+                    PreMergeStatus::Inconclusive,
+                    "PK-SENSOR-PROFILE-INVALID",
+                );
+            } else if (pattern == "src/*.js" && path == "src/page.js")
+                || (pattern == "src/*.jsx" && path == "src/page.jsx")
+            {
+                assert_result(value, PreMergeStatus::Inconclusive, "PK-SENSOR-MISSING");
+            } else {
+                let decision = evaluate_pre_merge(&input(value));
+                assert_eq!(
+                    decision.status,
+                    PreMergeStatus::ReadyToMerge,
+                    "{:?}",
+                    decision.reasons
+                );
+            }
+        }
+    }
+}
+
+#[test]
 fn declared_not_applicable_condition_uses_actual_change_context() {
     let mut value = raw("ready");
     value["context"]["sensor_profile"]["sensors"][0]["not_applicable_when"] =

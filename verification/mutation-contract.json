@@ -612,15 +612,15 @@
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, globset::Error> with Ok(Default::default())\n@@ -579,13 +579,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// Changed-path globs follow GitHub Actions `paths` semantics: `*` and `?` stay\n /// within one path segment, while `**` crosses directories.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, globset::Error> {\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())\n@@ -579,24 +579,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// GitHub Actions subset: ASCII alphanumerics, `.`, `_`, `-`, `/`, segment-local\n /// `*`, and whole-segment `**`. Reject other syntax before compiling with globset.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, SensorResolutionError> {\n-    let invalid = || SensorResolutionError::InvalidGlob(pattern.to_owned());\n-    if !pattern\n-        .bytes()\n-        .all(|byte| byte.is_ascii_alphanumeric() || b\"._-/*\".contains(&byte))\n-        || pattern.split('/').any(|segment| {\n-            matches!(segment, \"\" | \".\" | \"..\") || (segment.contains(\"**\") && segment != \"**\")\n-        })\n-    {\n-        return Err(invalid());\n-    }\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n-        .map_err(|_| invalid())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "path_glob",
-          "return_type": "-> Result<GlobMatcher, globset::Error>",
+          "return_type": "-> Result<GlobMatcher, SensorResolutionError>",
           "span": {
             "end": {
               "column": 2,
-              "line": 591
+              "line": 602
             },
             "start": {
               "column": 1,
@@ -629,13 +629,13 @@
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/sensors.rs:587:5: replace path_glob -> Result<GlobMatcher, globset::Error> with Ok(Default::default())",
+        "name": "crates/policy-core/src/sensors.rs:587:5: replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())",
         "package": "policy-core",
         "replacement": "Ok(Default::default())",
         "span": {
           "end": {
-            "column": 44,
-            "line": 590
+            "column": 32,
+            "line": 601
           },
           "start": {
             "column": 5,
@@ -647,8 +647,8 @@
       "replacement": "Ok(GlobBuilder::new(\"**\").build().unwrap().compile_matcher())",
       "span": {
         "end": {
-          "column": 44,
-          "line": 590
+          "column": 32,
+          "line": 601
         },
         "start": {
           "column": 5,
@@ -812,6 +812,6 @@
     "crates/policy-core/src/pre_merge.rs": "445ccbc8892e5a7e1c0fdcaa472692a0b8c23440f20c9ef98a4bf4f07d2a9b60",
     "crates/policy-core/src/provenance.rs": "3198ad6a32168e7afcc0fb47cdc314bc00f54e4fc047e96cf80fbe5e94cf87a4",
     "crates/policy-core/src/reviews.rs": "8b5c591432f9d0acb01b6586e46b6c89deaf7f842e368f64acca2a82fb287806",
-    "crates/policy-core/src/sensors.rs": "96c6948b990212ae00c6994299021d180ee8ffe7279efa6a6ffaa4463c17a7b2"
+    "crates/policy-core/src/sensors.rs": "6369d6488f47af134b1afb8b5afd105cce243f9bfc7941dccfc683fa9acebc05"
   }
 }

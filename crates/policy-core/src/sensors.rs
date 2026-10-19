@@ -581,11 +581,22 @@ fn insert_reason(reasons: &mut Vec<Reason>, code: &str, message: &str) {
     }
 }
 
-/// Changed-path globs follow GitHub Actions `paths` semantics: `*` and `?` stay
-/// within one path segment, while `**` crosses directories.
-pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, globset::Error> {
+/// GitHub Actions subset: ASCII alphanumerics, `.`, `_`, `-`, `/`, segment-local
+/// `*`, and whole-segment `**`. Reject other syntax before compiling with globset.
+pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, SensorResolutionError> {
+    let invalid = || SensorResolutionError::InvalidGlob(pattern.to_owned());
+    if !pattern
+        .bytes()
+        .all(|byte| byte.is_ascii_alphanumeric() || b"._-/*".contains(&byte))
+        || pattern.split('/').any(|segment| {
+            matches!(segment, "" | "." | "..") || (segment.contains("**") && segment != "**")
+        })
+    {
+        return Err(invalid());
+    }
     GlobBuilder::new(pattern)
         .literal_separator(true)
         .build()
         .map(|glob| glob.compile_matcher())
+        .map_err(|_| invalid())
 }

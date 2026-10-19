@@ -12,9 +12,20 @@ Entry point [[crates/policy-core/src/pre_merge.rs#evaluate_pre_merge]]; gate com
 
 ## Sensor evaluation
 
-Required sensors come from any-path `required_when` matches, while a not-applicable exemption must cover every changed path. Globs keep `*` within one segment.
+Required sensors use any-path matches; exemptions must cover every changed path. Sensor and knowledge globs accept ASCII literals, segment-local `*`, and whole-segment `**`; unsupported syntax fails closed.
 
 Resolution [[crates/policy-core/src/sensors.rs#resolve_required_sensors]] and [[crates/policy-core/src/sensors.rs#condition_matches]]; exemptions [[crates/policy-core/src/sensors.rs#condition_covers]]; glob semantics [[crates/policy-core/src/sensors.rs#path_glob]]; evidence rules [[crates/policy-core/src/sensors.rs#evaluate_sensor_evidence_for_change]].
+
+The [trust model](../docs/trust-model.md) specifies the exact GitHub-compatible subset
+and migration from `src/*.jsx?` to explicit alternatives. Conformance:
+[[crates/policy-core/tests/sensor_adversarial.rs#github_filter_subset_conformance]].
+Rejection and exemptions:
+[[crates/policy-core/tests/sensor_adversarial.rs#unsupported_github_filters_fail_closed_in_both_sensor_conditions]]
+and [[crates/policy-core/tests/sensor_adversarial.rs#explicit_js_and_jsx_patterns_require_evidence_and_cover_only_matching_changes]].
+False-ready regression:
+[[crates/policy-core/tests/pre_merge.rs#optional_frontend_sensor_cannot_be_silently_skipped_by_github_question_mark]].
+Required knowledge:
+[[crates/policy-core/tests/knowledge.rs#github_optional_extension_is_invalid_and_explicit_alternatives_are_enforced]].
 
 ## Test adequacy
 
