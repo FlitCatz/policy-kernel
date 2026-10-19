@@ -305,6 +305,11 @@ Release verification workflow의 `lat.md knowledge graph` job이 같은 버전�
 
 ## CI 통합
 
+현재 게시기는 `READY_TO_MERGE`를 `success`로, `BLOCKED`와 `INCONCLUSIVE`를
+모두 `failure`로 게시하며 제목과 출력의 구분은 유지합니다. 전용 필수 검사만으로
+차단하려면 소유자가 설치한 바이너리를 업데이트하고 기존 neutral 검사를 다시
+게시해야 합니다. [마이그레이션 안내](action/README.md#results)를 참고하세요.
+
 체크인된 복합 [GitHub Action](action/README.md)은 소유자가 미리 빌드·설치한 `policy-ci`를
 절대 경로인 `executable-path` 입력으로 실행합니다(기본값 `/opt/policy-kernel/bin/policy-ci`).
 runner가 제어하는 환경에서 정확한 GitHub workflow와

@@ -137,6 +137,40 @@ fn trusted_check_requires_exact_receipt_workflow_head_and_digest_bindings() {
 }
 
 #[test]
+fn trusted_check_accepts_failure_but_rejects_legacy_neutral() {
+    let mut check: serde_json::Value = serde_json::from_slice(include_bytes!(
+        "../../../tests/fixtures/github/check-success.json"
+    ))
+    .unwrap();
+    let workflow = include_bytes!("../../../tests/fixtures/github/workflow-run.json");
+    for title in ["BLOCKED", "INCONCLUSIVE"] {
+        check["output"]["title"] = serde_json::json!(title);
+        check["conclusion"] = serde_json::json!("failure");
+        let parsed = parse_trusted_check(
+            &serde_json::to_vec(&check).unwrap(),
+            workflow,
+            &receipt(),
+            &expectation(),
+        )
+        .unwrap();
+        assert_eq!(
+            parsed.observation.conclusion,
+            policy_contracts::CheckConclusion::Failure
+        );
+    }
+    check["conclusion"] = serde_json::json!("neutral");
+    assert!(matches!(
+        parse_trusted_check(
+            &serde_json::to_vec(&check).unwrap(),
+            workflow,
+            &receipt(),
+            &expectation(),
+        ),
+        Err(AdapterError::Binding(_))
+    ));
+}
+
+#[test]
 fn check_run_binding_payload_stays_bounded_and_rejects_oversized_fields() {
     let binding = CheckBinding {
         schema_version: 1,

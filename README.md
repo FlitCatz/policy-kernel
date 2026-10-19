@@ -329,6 +329,11 @@ Maintenance rules are in [AGENTS.md](AGENTS.md).
 
 ## CI integration
 
+The current publisher maps `READY_TO_MERGE` to `success` and both `BLOCKED` and
+`INCONCLUSIVE` to `failure`, retaining distinct titles and outputs. Upgrade the
+owner-installed binary and republish outstanding legacy neutral checks before
+relying on the dedicated required check alone; see [migration details](action/README.md#results).
+
 The checked-in composite [GitHub Action](action/README.md) invokes an
 already-built, owner-installed `policy-ci` binary through the absolute
 `executable-path` input (default `/opt/policy-kernel/bin/policy-ci`). It verifies exact GitHub

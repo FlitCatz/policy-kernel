@@ -162,18 +162,24 @@ Pre-merge emits canonical `pre-merge-input.json`, `decision.json`,
 `post-merge-input.json` and `decision.json`. Check binding JSON is capped at 4 KiB.
 
 `READY_TO_MERGE` publishes success; `BLOCKED` publishes failure; `INCONCLUSIVE`
-publishes neutral. Both non-ready decisions return exit code 1 **after** publishing
+publishes failure. Both non-ready decisions return exit code 1 **after** publishing
 and emitting step outputs. Invalid inputs, authentication/API errors and binding
 failures return 2, without reporting authorization. Post-merge returns 0 only for
 `SHIPPED`.
 
-When promoting this gate, require both the dedicated Check Run and the Actions
-job that invokes this Action, and do not use `continue-on-error` or skip that job.
-The task's prescribed inconclusive conclusion is `neutral`, which [GitHub accepts
-as passing for branch protection](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks).
-The failing Actions job is therefore necessary to block merging an inconclusive
-result. Requiring only the dedicated Check Run is insufficient. The core still
-requires an actual `success` conclusion before it can emit `SHIPPED`.
+When promoting this gate, require the dedicated `policy-kernel/pre-merge` Check
+Run: its failure conclusion blocks both non-ready outcomes. Also require the
+Actions job that invokes this Action as defence in depth, and do not use
+`continue-on-error` or skip that job. Titles and step outputs retain the
+`BLOCKED` / `INCONCLUSIVE` distinction. The core still requires an actual
+`success` conclusion before it can emit `SHIPPED`.
+
+The current adapter rejects legacy `neutral` publications, including schema-1
+bindings and receipts; rerun evaluation and publish a fresh check. The wire schema
+is unchanged. Existing neutral checks on GitHub are not retroactively changed:
+update the owner-installed binary and rerun outstanding checks before relying on
+the dedicated check alone. Versioned bootstrap snapshots describe their original
+release behavior.
 
 The Action exposes status, head, decision/policy digests, check ID and
 current workflow run/attempt, and writes a concise step summary.

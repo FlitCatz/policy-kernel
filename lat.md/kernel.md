@@ -69,6 +69,21 @@ Shipping needs an authoritative ready decision, its published check, and a prote
 
 Evaluation [[crates/policy-core/src/post_merge.rs#evaluate_post_merge]]; receipt parsing [[crates/github-adapter/src/parse.rs#parse_merge]]; protection cross-check [[crates/github-adapter/src/parse.rs#validate_merge_protection]].
 
+## Published pre-merge conclusions
+
+Ready publishes success; blocked and inconclusive publish failure with distinct titles and outputs. Legacy neutral checks require republication; shipping still requires actual success.
+
+Publication [[crates/github-adapter/src/parse.rs#publish_pre_merge_check]];
+receipt authentication [[crates/github-adapter/src/parse.rs#parse_trusted_check]];
+legacy rejection [[crates/github-adapter/src/parse.rs#parse_conclusion]].
+Recorded transport verifies titles, outputs and exit codes in
+`ready_blocked_and_inconclusive_publish_bound_checks_before_exit` in
+[the CI integration tests](../crates/policy-ci/tests/ci.rs).
+Parser coverage [[crates/github-adapter/tests/github.rs#trusted_check_accepts_failure_but_rejects_legacy_neutral]];
+shipping coverage [[crates/policy-core/tests/post_merge.rs#unsuccessful_or_invalid_check_observations_are_inconclusive]].
+The schema is unchanged; upgrade the installed binary and republish outstanding
+neutral checks as described in the [Action contract](../action/README.md#results).
+
 ## Controller authentication
 
 The controller verifies observer and producer signatures with owner-installed keys before promoting local evidence to trusted-runner provenance.

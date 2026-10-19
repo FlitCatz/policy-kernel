@@ -369,7 +369,7 @@ pub fn publish_pre_merge_check<A: GitHubApi>(
     let conclusion = match decision.status {
         PreMergeStatus::ReadyToMerge => CheckConclusion::Success,
         PreMergeStatus::Blocked => CheckConclusion::Failure,
-        PreMergeStatus::Inconclusive => CheckConclusion::Neutral,
+        PreMergeStatus::Inconclusive => CheckConclusion::Failure,
     };
     let binding = CheckBinding {
         completed_at: completed_at.clone(),
@@ -631,7 +631,8 @@ fn parse_conclusion(value: &str) -> Result<CheckConclusion, AdapterError> {
         "failure" => Ok(CheckConclusion::Failure),
         "cancelled" => Ok(CheckConclusion::Cancelled),
         "timed_out" => Ok(CheckConclusion::TimedOut),
-        "neutral" => Ok(CheckConclusion::Neutral),
+        // Legacy inconclusive publications must not be trusted as passing checks.
+        "neutral" => Err(binding_error("legacy neutral check requires republication")),
         "skipped" => Ok(CheckConclusion::Skipped),
         _ => Err(binding_error("unknown check conclusion")),
     }
