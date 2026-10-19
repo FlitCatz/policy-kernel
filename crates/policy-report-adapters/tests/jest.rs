@@ -1,6 +1,6 @@
-use project_verification::reports::{parse_report, ReportFormat};
+use policy_report_adapters::{parse_report, ReportFormat};
 use serde_json::{json, Value};
-const REPORT: &str = include_str!("../../../tests/fixtures/project-reports/jest.json");
+const REPORT: &str = include_str!("fixtures/project-reports/jest.json");
 
 fn format() -> ReportFormat {
     serde_json::from_str("\"jest_json\"").unwrap()

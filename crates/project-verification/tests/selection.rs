@@ -46,7 +46,8 @@ fn runner_accepts_two_compatible_versions_and_rejects_malformed_or_out_of_range(
     let root = tempfile::tempdir().unwrap();
     let request = request(root.path());
     let config = prepare(&request).unwrap().configurations.remove(0);
-    let report = include_bytes!("../../../tests/fixtures/project-reports/vitest.json");
+    let report =
+        include_bytes!("../../policy-report-adapters/tests/fixtures/project-reports/vitest.json");
     std::fs::create_dir(root.path().join("reports")).unwrap();
     std::fs::write(root.path().join("reports/unit.json"), report).unwrap();
     for (version, passed) in [

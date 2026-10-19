@@ -181,6 +181,7 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 | `evidence-collector` | 명시된 argv 실행을 제한하고 아티팩트 digest를 수집 |
 | `github-adapter` | CI 통합에 사용하는 GitHub 관측 및 프로세스 어댑터 |
 | `project-verification` | 프로젝트 프로필 검증·준비·실행·보고서 정규화 |
+| `policy-report-adapters` | 공용 TRX·Vitest·Jest·Playwright reader; `project_verification::reports`에서 재노출 |
 | `policy-bootstrap` | 프로필의 트랜잭션 설치·복구·제거 |
 | `policy-acceptance` | 네이티브 소비 프로젝트 fixture를 stage하고 실행하는 Rust harness |
 | `xtask` | 스키마 생성 및 저장소·릴리스 검증 명령 |

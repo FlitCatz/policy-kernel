@@ -414,7 +414,8 @@ fn workspace_inputs_bind_all_sensors_and_detect_post_collection_drift() {
         .into_iter()
         .find(|c| c.sensor.definition.id.as_str() == "frontend:unit")
         .unwrap();
-    let report = include_bytes!("../../../tests/fixtures/project-reports/vitest.json");
+    let report =
+        include_bytes!("../../policy-report-adapters/tests/fixtures/project-reports/vitest.json");
     fs::create_dir(temp.path().join("reports")).unwrap();
     fs::write(temp.path().join("reports/unit.json"), report).unwrap();
     let collection = common::collection(&request, &config, report);

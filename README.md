@@ -172,6 +172,7 @@ supplied decision.
 | `evidence-collector` | Bounded explicit-argv execution with artifact digests. |
 | `github-adapter` | GitHub observation and process adapter used by CI integration. |
 | `project-verification` | Profile validation, preparation, execution, and report normalization. |
+| `policy-report-adapters` | Shared TRX, Vitest, Jest, and Playwright readers; re-exported by `project_verification::reports`. |
 | `policy-bootstrap` | Transactional profile installation, recovery, and uninstall. |
 | `policy-acceptance` | Rust harness that stages and exercises native consumer fixtures. |
 | `xtask` | Schema generation and repository/release verification commands. |

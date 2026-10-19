@@ -7,6 +7,7 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+policy-report-adapters = { path = "../policy-report-adapters" }
 policy-contracts = { path = "../policy-contracts" }
 policy-core = { path = "../policy-core" }
 evidence-collector = { path = "../evidence-collector" }

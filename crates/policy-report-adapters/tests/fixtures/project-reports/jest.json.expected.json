@@ -1,0 +1,1 @@
+{"discovered":2,"executed":2,"passed":2,"failed":0,"skipped":0,"tests":[{"id":"auth:4f2fbab79a059f04b2a2447535fce153455362ef8474e2cb729cc006e4f24ac4","outcome":"passed","messages":[]},{"id":"auth:9d716d55f1da57269067f9ee2dec0a2ebba726fd3c95677358f5501601e08cce","outcome":"passed","messages":[]}],"messages":[],"successful":true,"started_at":"2025-09-01T00:00:00Z"}

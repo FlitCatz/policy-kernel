@@ -2,7 +2,8 @@ mod common;
 use policy_contracts::{ExecutionStatus, SensorStatus, TrustClass};
 use policy_core::canonical_sha256;
 use project_verification::run::{normalize_collection, prepare};
-const REPORT: &[u8] = include_bytes!("../../../tests/fixtures/project-reports/vitest.json");
+const REPORT: &[u8] =
+    include_bytes!("../../policy-report-adapters/tests/fixtures/project-reports/vitest.json");
 
 #[test]
 fn normalization_preserves_original_artifact_and_never_promotes_trust() {

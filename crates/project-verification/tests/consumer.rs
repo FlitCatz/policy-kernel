@@ -187,7 +187,8 @@ fn suite_reports_reject_missing_or_reused_executions() {
     use std::collections::BTreeMap;
     let parsed = parse_profile(&combined().to_string()).unwrap();
     let consumer = parsed.selection.unwrap().consumer.unwrap();
-    let bytes = include_bytes!("../../../tests/fixtures/project-reports/vstest.trx");
+    let bytes =
+        include_bytes!("../../policy-report-adapters/tests/fixtures/project-reports/vstest.trx");
     let unit = parse_report(ReportFormat::Trx, "backend:unit", bytes).unwrap();
     let integration = parse_report(ReportFormat::Trx, "backend:integration", bytes).unwrap();
     let mut reports = BTreeMap::from([("backend:unit".into(), unit)]);

@@ -44,6 +44,21 @@ Empty policies cannot pass. Negative cases need required changed-behavior IDs an
 Core [[crates/policy-core/src/sensors.rs#evaluate_adequacy]] and [[crates/policy-core/src/sensors.rs#validate_mappings]]; consumer validation [[crates/project-verification/src/profile.rs#ProjectProfile#validate]].
 The [adequacy contract](../docs/integrations/adequacy.md) records preserved legacy parsing and changed readiness. Direct-call regressions are in [[crates/policy-core/tests/sensors.rs#empty_policy_is_explained_non_pass_even_with_positive_counts]] and [[crates/policy-core/tests/sensors.rs#missing_or_malformed_adequacy_ids_never_pass_direct_core_calls]].
 
+## Report adapters
+
+The shared report-adapter crate owns strict TRX, Vitest, Jest and Playwright parsing. The compatibility runner re-exports the same types; parsing alone supplies no authentication or release authority.
+
+Entry and bounds [[crates/policy-report-adapters/src/reports.rs#parse_report]];
+versions [[crates/policy-report-adapters/src/reports.rs#ReportFormat#parser_version]];
+identities [[crates/policy-report-adapters/src/reports.rs#id]];
+duplicate and outcome checks [[crates/policy-report-adapters/src/reports.rs#finish]].
+The only workspace dependency is `policy-contracts`, for the existing timestamp type.
+Fixed pre-extraction bytes are checked by
+[[crates/policy-report-adapters/tests/corpus.rs#corpus_serialization_matches_pre_extraction_bytes]];
+legacy API compatibility by
+[[crates/project-verification/tests/report_compatibility.rs#legacy_module_reexports_identical_types_and_corpus_outputs]].
+See [report formats](../docs/integrations/report-formats.md) for the unchanged contract.
+
 ## Review consensus and waivers
 
 V3 binds an approving-review quorum and provider allowlist. Independent providers remain mandatory; waivers never supply approvals. Legacy policies require explicit v3 reapproval before readiness or shipping.
