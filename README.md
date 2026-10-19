@@ -27,7 +27,7 @@ required check, protected-branch merge evidence, and owner approval. Read the
 The [scope decision (Task 18)](docs/tasks/task-18/README.md) narrows the product
 to deterministic evidence, scope and release decisions. New exact native tool
 combinations and bootstrap presets have stopped. The [native contract](docs/integrations/native-contracts-v1.md)
-provides v1 types and an adapter-side artifact/subject importer; scope evaluation and core evidence conversion remain planned. Existing profiles, CLI paths, bootstrap recovery and
+provides v1 types, an adapter-side artifact/subject importer and a kernel-owned local scope verifier. Existing profiles, CLI paths, bootstrap recovery and
 required environment checks are preserved. TJERP execution is unchanged.
 
 The [P7 TJERP acceptance harness](docs/integrations/tjerp-adoption.md) binds two
@@ -167,8 +167,9 @@ supplied decision.
 | --- | --- |
 | `policy-contracts` | Strict, versioned wire types and schema source types. |
 | `policy-native-contracts` | Native v1 wire types, structural validation, schemas and conformance corpus; no importer. |
+| `policy-native-verifier` | Typed local scope assembly and core evaluation; no adapter dependency or authorization. |
 | `policy-core` | Deterministic policy, provenance, review, sensor, and merge evaluation. |
-| `policy-cli` | Local advisory pre-merge evaluation and typed-object inspection. |
+| `policy-cli` | Local advisory scope/pre-merge evaluation and typed-object inspection. |
 | `policy-ci` | Authoritative GitHub Actions evaluation and dedicated check publication. |
 | `evidence-collector` | Bounded explicit-argv execution with artifact digests. |
 | `github-adapter` | GitHub observation and process adapter used by CI integration. |
@@ -377,3 +378,20 @@ See the [review requirements and migration](docs/trust-model.md).
 - [Current status](docs/status.md)
 - [Task index](docs/tasks/README.md)
 - [Repository CI workflows](.github/workflows/)
+
+## Native local scope
+
+After an adapter calls `policy-native-importer::import_run` successfully, evaluate
+its exported observations against the independently approved expectation:
+
+```sh
+cargo run --locked -p policy-cli -- evaluate-scope \
+  --expected approved-scope.json --observations imported-run/observations.json
+```
+
+Exit codes are **0** satisfied, **2** valid non-pass, **64** invalid or incomplete
+input. Either file may be `-` for stdin, but not both. Output is `LocalScopeResultV1`;
+trust remains `local_untrusted` and review `unmet`. This JSON-only command checks
+typed consistency, not raw artifact authenticity, and never produces a pre-merge
+or ReadyToMerge decision. Existing `evaluate-pre` exit codes remain 0/2/3/64.
+See the [native contract reference](docs/integrations/native-contracts-v1.md).

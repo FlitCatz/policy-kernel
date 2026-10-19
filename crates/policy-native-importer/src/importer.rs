@@ -1,6 +1,7 @@
 use crate::{fs, reports};
 use policy_contracts::ExecutionId;
 use policy_native_contracts::*;
+use policy_native_verifier::ImportedObservationsV1;
 use policy_report_adapters::ParsedReport;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -49,6 +50,8 @@ pub struct RecomputedReport {
 /// requirements are satisfied. Recomputed reports may contain failing tests.
 #[derive(Debug, Clone, Serialize)]
 pub struct ImportRecord {
+    #[serde(skip)]
+    verified: Option<ImportedObservationsV1>,
     pub adapter_version: &'static str,
     pub trust: LocalTrust,
     pub review: ReviewGate,
@@ -57,6 +60,12 @@ pub struct ImportRecord {
     pub reports: Vec<RecomputedReport>,
 }
 impl ImportRecord {
+    /// Available only after successful raw verification. It remains an
+    /// unauthenticated local observation, not a scope verdict.
+    pub fn verified_observations(&self) -> Option<&ImportedObservationsV1> {
+        self.verified.as_ref()
+    }
+
     fn issue(&mut self, code: IssueCode, location: impl Into<String>, detail: impl ToString) {
         self.issues.push(ImportIssue {
             code,
@@ -108,6 +117,7 @@ pub fn import_run(
         fs::write(&out, name, &value)?;
     }
     let mut record = ImportRecord {
+        verified: None,
         adapter_version: env!("CARGO_PKG_VERSION"),
         trust: LocalTrust::LocalUntrusted,
         review: ReviewGate::Unmet,
@@ -186,6 +196,40 @@ pub fn import_run(
         }
     }
     verify(expected, identity, run, &bytes, &mut record);
+    if record.issues.is_empty() {
+        let mut verified_run = run.clone();
+        verified_run.test_observations = record
+            .reports
+            .iter()
+            .map(|r| r.observation.clone())
+            .collect();
+        let verified = ImportedObservationsV1 {
+            schema_version: VersionV1::default(),
+            expected_scope_digest: expected.digest().map_err(|e| fs::invalid(e.to_string()))?,
+            expected_run_id: identity.run_id.clone(),
+            expected_scope_id: identity.scope_id.clone(),
+            adapter_version: RecordId::parse(concat!(
+                "policy-native-importer/",
+                env!("CARGO_PKG_VERSION")
+            ))
+            .expect("static version"),
+            trust: LocalTrust::LocalUntrusted,
+            review: ReviewGate::Unmet,
+            unsuccessful_reports: record
+                .reports
+                .iter()
+                .filter(|r| !r.report.successful)
+                .map(|r| r.observation.observation_id.clone())
+                .collect(),
+            run: verified_run,
+        };
+        fs::write(
+            &out,
+            "observations.json",
+            &serde_json::to_vec_pretty(&verified)?,
+        )?;
+        record.verified = Some(verified);
+    }
     fs::write(&out, "import.json", &serde_json::to_vec_pretty(&record)?)?;
     fs::complete(&out)?;
     Ok(record)

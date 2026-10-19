@@ -30,6 +30,13 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Evaluate native local scope (typed JSON only; no raw artifact verification).
+    EvaluateScope {
+        #[arg(long)]
+        expected: String,
+        #[arg(long)]
+        observations: String,
+    },
     /// Evaluate complete pre-merge input in advisory mode.
     EvaluatePre { input: String },
     /// Validate and display a decision or evidence bundle without evaluating it.
@@ -64,6 +71,20 @@ fn main() -> ExitCode {
 
 fn run(cli: Cli) -> Result<u8, String> {
     match cli.command {
+        Command::EvaluateScope {
+            expected,
+            observations,
+        } => {
+            if expected == "-" && observations == "-" {
+                return Err("expected scope and observations cannot both use stdin".into());
+            }
+            let (result, exit) = policy_cli::evaluate_scope_json(
+                &read_input(&expected)?,
+                &read_input(&observations)?,
+            )?;
+            write_json(&result)?;
+            Ok(exit)
+        }
         Command::EvaluatePre { input } => evaluate_pre(&input),
         Command::Inspect { input } => inspect(&input),
     }

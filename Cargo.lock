@@ -786,6 +786,8 @@ dependencies = [
  "clap",
  "policy-contracts",
  "policy-core",
+ "policy-native-contracts",
+ "policy-native-verifier",
  "serde",
  "serde_json",
  "tempfile",
@@ -835,16 +837,33 @@ dependencies = [
 name = "policy-native-importer"
 version = "0.1.0"
 dependencies = [
+ "evidence-collector",
  "hex",
+ "policy-cli",
  "policy-contracts",
+ "policy-core",
  "policy-native-contracts",
+ "policy-native-verifier",
  "policy-report-adapters",
+ "project-verification",
  "roxmltree",
  "rustix",
  "serde",
  "serde_json",
  "sha2",
  "tempfile",
+]
+
+[[package]]
+name = "policy-native-verifier"
+version = "0.1.0"
+dependencies = [
+ "policy-contracts",
+ "policy-core",
+ "policy-native-contracts",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

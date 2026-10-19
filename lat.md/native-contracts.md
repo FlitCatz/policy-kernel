@@ -1,6 +1,6 @@
 # Native contracts
 
-The additive v1 contract describes already-executed native runs. The contract validates typed consistency; a separate adapter imports raw reports. Execution, core evidence conversion and a scope command are outside this boundary.
+The additive v1 contract describes already-executed native runs. The contract validates typed consistency, an adapter imports raw reports, and a kernel verifier assembles evidence for local advisory scope evaluation.
 
 The [contract reference](../docs/integrations/native-contracts-v1.md) defines the
 boundary and [Task 18](../docs/tasks/task-18/README.md) tracks later work.
@@ -63,3 +63,27 @@ and failure data [[crates/policy-native-importer/tests/import.rs#failed_native_t
 Nested roots [[crates/policy-native-importer/tests/import.rs#nested_artifacts_and_symlinked_roots_have_no_implicit_path_exceptions]]
 and missing-report process errors [[crates/policy-native-importer/tests/import.rs#failed_process_logs_survive_even_when_no_raw_report_was_produced]]
 retain diagnostics without a weaker symlink path or empty success record.
+
+## Local scope verifier
+
+The kernel assembles imported observations into core evidence and evaluates independently approved scope. It enforces required sets, mappings, exclusions and bindings; local trust and unmet review cannot authorize a merge.
+
+Entry [[crates/policy-native-verifier/src/lib.rs#evaluate_scope]] delegates sensor
+and adequacy evaluation to core. [[crates/policy-native-verifier/src/lib.rs#assemble]]
+uses explicit local recorder identity and no reviews. The adapter exports
+[[crates/policy-native-importer/src/importer.rs#ImportRecord#verified_observations]]
+only after successful verification, retaining parser-level failure flags.
+[[crates/policy-cli/src/lib.rs#evaluate_scope_json]] implements the JSON-only
+command with 0/2/64 exits. It cannot authenticate artifact bytes or grant trust.
+
+Conformance [[crates/policy-native-verifier/tests/scope.rs#satisfied_scope_assembles_local_evidence_without_reviews]],
+[[crates/policy-native-verifier/tests/scope.rs#missing_and_unexecuted_mappings_never_pass]],
+[[crates/policy-native-verifier/tests/scope.rs#empty_policy_fake_trust_review_and_unknown_versions_are_rejected]],
+[[crates/policy-native-verifier/tests/scope.rs#subject_binding_time_required_set_and_exclusions_fail_closed]],
+[[crates/policy-native-verifier/tests/scope.rs#native_bounds_policy_digest_and_incomplete_completion_are_enforced]];
+exclusions [[crates/policy-native-verifier/tests/scope.rs#exclusions_never_waive_required_mappings_or_allow_unapproved_scope]];
+mapping limits [[crates/policy-native-verifier/tests/scope.rs#mapping_minimum_and_allowed_suite_are_independent_of_passing_counts]];
+command [[crates/policy-cli/tests/scope.rs#local_scope_command_exit_codes_and_input_boundaries]];
+comparison [[crates/policy-native-importer/tests/import.rs#importer_verifier_command_and_project_normalization_agree_on_failed_fixture]];
+parser failure [[crates/policy-native-importer/tests/import.rs#parser_level_failure_survives_even_when_all_tests_pass]];
+failed imports [[crates/policy-native-importer/tests/import.rs#rejected_imports_never_export_verified_observations]].
