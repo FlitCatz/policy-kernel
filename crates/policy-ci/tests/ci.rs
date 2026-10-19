@@ -328,16 +328,16 @@ mod integration {
 
     #[test]
     fn ready_blocked_and_inconclusive_publish_bound_checks_before_exit() {
-        for (status, conclusion, success) in [
-            ("ready", "success", true),
-            ("blocked", "failure", false),
-            ("inconclusive", "neutral", false),
+        for (status, conclusion, title, exit_code) in [
+            ("ready", "success", "READY_TO_MERGE", 0),
+            ("blocked", "failure", "BLOCKED", 1),
+            ("inconclusive", "failure", "INCONCLUSIVE", 1),
         ] {
             let fixture = Fixture::new(status);
             let output = fixture.command().output().unwrap();
             assert_eq!(
-                output.status.success(),
-                success,
+                output.status.code(),
+                Some(exit_code),
                 "{}",
                 String::from_utf8_lossy(&output.stderr)
             );
@@ -346,6 +346,13 @@ mod integration {
             )
             .unwrap();
             assert_eq!(published["conclusion"], conclusion);
+            assert_eq!(published["output"]["title"], title);
+            assert!(fs::read_to_string(fixture.root.join("output"))
+                .unwrap()
+                .contains(&format!("status={title}\n")));
+            assert!(fs::read_to_string(fixture.root.join("summary"))
+                .unwrap()
+                .contains(&format!("**{title}**")));
             assert_eq!(published["head_sha"], fixture.head);
             let decision: Value =
                 serde_json::from_slice(&fs::read(fixture.artifacts.join("decision.json")).unwrap())

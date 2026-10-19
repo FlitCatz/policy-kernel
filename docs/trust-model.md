@@ -6,6 +6,20 @@ identity, execution, or permission of the producer.
 
 ## Boundaries
 
+Current pre-merge publication uses `success` only for `READY_TO_MERGE` and
+`failure` for both `BLOCKED` and `INCONCLUSIVE`. Titles, step outputs and exit
+codes preserve the decision distinction. A required dedicated check therefore
+blocks both non-ready results. Keep the invoking Actions job required as defence
+in depth. Upgrade the runner binary and republish outstanding legacy neutral
+checks before relying on this mapping.
+
+Schema-1 check bindings and publication receipts retain their shape. Trusted-check
+parsing authenticates the receipt and digest, not a decision status supplied by
+the check title; it rejects legacy `neutral` conclusions and accepts `failure`
+observations for either non-ready decision. No neutral-to-failure reinterpretation
+is performed. Post-merge still requires an authoritative ready decision and an
+actual `success` observation for `SHIPPED`.
+
 | Component | Responsibility | Authority |
 | --- | --- | --- |
 | policy-contracts | Strict versioned wire parsing and schemas | No observation authentication |

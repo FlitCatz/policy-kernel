@@ -178,6 +178,15 @@ fn merge_must_match_the_authorized_pr_and_policy() {
 
 #[test]
 fn unsuccessful_or_invalid_check_observations_are_inconclusive() {
+    for conclusion in ["failure", "neutral", "skipped", "cancelled", "timed_out"] {
+        let mut value = raw("merge.json");
+        value["check"]["conclusion"] = json!(conclusion);
+        assert_reason(
+            value,
+            PostMergeStatus::Inconclusive,
+            "PK-POST-CHECK-NOT-SUCCESS",
+        );
+    }
     for (pointer, replacement, reason) in [
         (
             "/check/conclusion",
