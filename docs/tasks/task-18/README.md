@@ -2,8 +2,12 @@
 
 The [accepted scope ADR](../../archive/specs/2026-10-19-scope-reduction-adr.md)
 records the product boundary, target ownership, frozen compatibility paths and
-ordered stage-1 PRs 1–8. PR 1 is documentation only; the additive native façade,
-parser extraction and ownership transfers are planned, not implemented here.
+ordered stage-1 PRs 1–8. PR 1 recorded the decision. The parser extraction merged
+in [PR 23](https://github.com/FlitCatz/policy-kernel/pull/23). The additive
+[native contract](../../integrations/native-contracts-v1.md) now provides v1 types,
+structural validation, three crate-owned schemas and a conformance corpus.
+There is no importer, scope command or evidence conversion yet; ownership
+transfers remain planned. The historical ADR retains its original planning context.
 
 New exact native combinations and bootstrap presets stop. Existing profile
 schemas 1–4, selection schemas 1–3, bootstrap releases and required environment

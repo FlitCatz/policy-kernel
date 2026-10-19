@@ -819,6 +819,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "policy-native-contracts"
+version = "0.1.0"
+dependencies = [
+ "jsonschema",
+ "policy-contracts",
+ "policy-core",
+ "schemars",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "policy-report-adapters"
 version = "0.1.0"
 dependencies = [

@@ -1,0 +1,18 @@
+{
+  "command": {
+    "kind": "canonical_sha256",
+    "role": "command",
+    "schema": "policy_native_v1",
+    "sha256": "b4f2f5bcea157af11a683fc3b776ef230cac5b7a4678ed099e3defc9cf75716f"
+  },
+  "configuration": {
+    "kind": "canonical_sha256",
+    "role": "configuration",
+    "schema": "policy_native_v1",
+    "sha256": "5a2e426a2d27701d524a703932306fd4efca0eceb6b0474567ad75c3765fc238"
+  },
+  "value": {
+    "a": 2,
+    "z": 1
+  }
+}

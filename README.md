@@ -26,8 +26,8 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 The [scope decision (Task 18)](docs/tasks/task-18/README.md) narrows the product
 to deterministic evidence, scope and release decisions. New exact native tool
-combinations and bootstrap presets have stopped. The minimal native-result path
-is planned, not implemented; existing profiles, CLI paths, bootstrap recovery and
+combinations and bootstrap presets have stopped. The [native contract](docs/integrations/native-contracts-v1.md)
+provides v1 types only; no importer or scope command yet. Existing profiles, CLI paths, bootstrap recovery and
 required environment checks are preserved. TJERP execution is unchanged.
 
 The [P7 TJERP acceptance harness](docs/integrations/tjerp-adoption.md) binds two
@@ -166,6 +166,7 @@ supplied decision.
 | Package | Purpose |
 | --- | --- |
 | `policy-contracts` | Strict, versioned wire types and schema source types. |
+| `policy-native-contracts` | Native v1 wire types, structural validation, schemas and conformance corpus; no importer. |
 | `policy-core` | Deterministic policy, provenance, review, sensor, and merge evaluation. |
 | `policy-cli` | Local advisory pre-merge evaluation and typed-object inspection. |
 | `policy-ci` | Authoritative GitHub Actions evaluation and dedicated check publication. |

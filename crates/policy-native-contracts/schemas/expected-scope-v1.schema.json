@@ -1,0 +1,432 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExpectedScopeV1",
+  "type": "object",
+  "properties": {
+    "bindings": {
+      "$ref": "#/$defs/BindingsV1"
+    },
+    "requirements": {
+      "$ref": "#/$defs/RequirementsV1"
+    },
+    "schema_version": {
+      "$ref": "#/$defs/VersionV1"
+    },
+    "subject": {
+      "$ref": "#/$defs/SubjectV1"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "subject",
+    "requirements",
+    "bindings"
+  ],
+  "$defs": {
+    "BindingsV1": {
+      "type": "object",
+      "properties": {
+        "evaluated_at": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "maximum_age_seconds": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "mode": {
+          "$ref": "#/$defs/LocalMode"
+        },
+        "observations": {
+          "$ref": "#/$defs/RequiredSet_ObservationBindingV1"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "observations",
+        "evaluated_at",
+        "maximum_age_seconds",
+        "mode"
+      ]
+    },
+    "CanonicalDigest": {
+      "description": "SHA-256 of the canonical {schema, role, value} envelope.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/CanonicalHashKind"
+        },
+        "role": {
+          "$ref": "#/$defs/DigestRole"
+        },
+        "schema": {
+          "$ref": "#/$defs/DigestSchema"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256Digest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "schema",
+        "role",
+        "sha256"
+      ]
+    },
+    "CanonicalHashKind": {
+      "type": "string",
+      "enum": [
+        "canonical_sha256"
+      ]
+    },
+    "CommitSha": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "DigestRole": {
+      "type": "string",
+      "enum": [
+        "expected_scope",
+        "native_run",
+        "local_scope_result",
+        "source_set",
+        "scope_definition",
+        "command",
+        "configuration",
+        "policy",
+        "evidence"
+      ]
+    },
+    "DigestSchema": {
+      "type": "string",
+      "enum": [
+        "policy_native_v1"
+      ]
+    },
+    "ExclusionV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "reason": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "scope": {
+          "$ref": "#/$defs/WorkItemId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "scope",
+        "reason"
+      ]
+    },
+    "LocalMode": {
+      "type": "string",
+      "enum": [
+        "local_advisory"
+      ]
+    },
+    "ObservationBindingV1": {
+      "type": "object",
+      "properties": {
+        "command_digest": {
+          "$ref": "#/$defs/CanonicalDigest"
+        },
+        "configuration_digest": {
+          "$ref": "#/$defs/CanonicalDigest"
+        },
+        "id": {
+          "$ref": "#/$defs/SensorId"
+        },
+        "parser": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParserBindingV1"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "command_digest",
+        "configuration_digest"
+      ]
+    },
+    "ObservationRuleV1": {
+      "type": "object",
+      "properties": {
+        "accepted_exit_codes": {
+          "$ref": "#/$defs/RequiredSet_int32"
+        },
+        "id": {
+          "$ref": "#/$defs/SensorId"
+        },
+        "tests": {
+          "description": "None identifies a process sensor; Some identifies a test suite.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TestRuleV1"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "accepted_exit_codes"
+      ]
+    },
+    "ParserBindingV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "version": {
+          "$ref": "#/$defs/WorkItemId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version"
+      ]
+    },
+    "RawByteDigest": {
+      "description": "An externally computed SHA-256 of exact file bytes, never typed JSON.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/RawHashKind"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256Digest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "sha256"
+      ]
+    },
+    "RawHashKind": {
+      "type": "string",
+      "enum": [
+        "raw_byte_sha256"
+      ]
+    },
+    "RepositoryId": {
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$"
+    },
+    "RequiredSet_ObservationBindingV1": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ObservationBindingV1"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "RequiredSet_ObservationRuleV1": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ObservationRuleV1"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "RequiredSet_RequirementV1": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RequirementV1"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "RequiredSet_SensorId": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SensorId"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "RequiredSet_int32": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "int32"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "RequirementKind": {
+      "type": "string",
+      "enum": [
+        "acceptance_criterion",
+        "changed_behavior",
+        "negative_case"
+      ]
+    },
+    "RequirementV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "kind": {
+          "$ref": "#/$defs/RequirementKind"
+        },
+        "minimum_executed_tests": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "suites": {
+          "$ref": "#/$defs/RequiredSet_SensorId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "minimum_executed_tests",
+        "suites"
+      ]
+    },
+    "RequirementsV1": {
+      "type": "object",
+      "properties": {
+        "approved_file_digest": {
+          "$ref": "#/$defs/RawByteDigest"
+        },
+        "exemptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExclusionV1"
+          }
+        },
+        "observations": {
+          "$ref": "#/$defs/RequiredSet_ObservationRuleV1"
+        },
+        "requirements": {
+          "$ref": "#/$defs/RequiredSet_RequirementV1"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "approved_file_digest",
+        "observations",
+        "requirements",
+        "exemptions"
+      ]
+    },
+    "SensorId": {
+      "type": "string",
+      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
+    },
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "SubjectV1": {
+      "type": "object",
+      "properties": {
+        "head": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "repository": {
+          "$ref": "#/$defs/RepositoryId"
+        },
+        "scope_definition_digest": {
+          "$ref": "#/$defs/CanonicalDigest"
+        },
+        "source_inventory_digest": {
+          "$ref": "#/$defs/RawByteDigest"
+        },
+        "source_set_digest": {
+          "$ref": "#/$defs/CanonicalDigest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "repository",
+        "head",
+        "source_set_digest",
+        "source_inventory_digest",
+        "scope_definition_digest"
+      ]
+    },
+    "TestRuleV1": {
+      "type": "object",
+      "properties": {
+        "maximum_failed": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "maximum_retries": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "maximum_skipped": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "minimum_discovered": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "minimum_executed": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "minimum_passed": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "minimum_discovered",
+        "minimum_executed",
+        "minimum_passed",
+        "maximum_failed",
+        "maximum_skipped",
+        "maximum_retries"
+      ]
+    },
+    "UtcTimestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "VersionV1": {
+      "description": "An unforgeable version value for each independently versioned v1 document.",
+      "type": "integer",
+      "format": "uint8",
+      "maximum": 1,
+      "minimum": 1
+    },
+    "WorkItemId": {
+      "type": "string",
+      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
+    }
+  }
+}

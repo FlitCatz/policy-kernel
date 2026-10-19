@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "crates/policy-contracts",
     "crates/policy-core",
+    "crates/policy-native-contracts",
     "crates/policy-cli",
     "crates/policy-ci",
     "crates/evidence-collector",
