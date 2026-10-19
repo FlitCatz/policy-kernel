@@ -24,6 +24,12 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 ## Status and scope
 
+The [scope decision (Task 18)](docs/tasks/task-18/README.md) narrows the product
+to deterministic evidence, scope and release decisions. New exact native tool
+combinations and bootstrap presets have stopped. The minimal native-result path
+is planned, not implemented; existing profiles, CLI paths, bootstrap recovery and
+required environment checks are preserved. TJERP execution is unchanged.
+
 The [P7 TJERP acceptance harness](docs/integrations/tjerp-adoption.md) binds two
 local profiles, approved catalogs and raw test identities through existing Rust
 APIs. Its FI-00–FI-09 tests are synthetic. TJERP completed P8 profiles/run procedure

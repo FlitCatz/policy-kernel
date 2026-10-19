@@ -1,5 +1,18 @@
 # Current status
 
+## Scope reduction decision
+
+On 2026-10-19, [Task 18](tasks/task-18/README.md) records the
+[accepted ADR](archive/specs/2026-10-19-scope-reduction-adr.md): the kernel product
+is deterministic evidence/scope/release decisions; new exact native tool
+combinations and bootstrap presets stop. The additive native façade and stage-1
+PRs 2–8 remain planned. This is a documentation-only decision, with no code,
+schema, CLI, test or TJERP execution change. Profile schemas 1–4, selection
+schemas 1–3, bootstrap releases and every existing required environment check
+are preserved. Adapter repository ownership/support and PR 14 compatibility
+end conditions remain open. No new native adoption, authoritative decision,
+protected merge or production promotion is established.
+
 ## Policy v3 review quorum
 
 The [review contract](trust-model.md) binds approving-review quorum and allowed

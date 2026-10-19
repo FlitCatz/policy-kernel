@@ -4,6 +4,16 @@ Maps each authorization rule to the Rust symbol that enforces it. Rules are spec
 
 `lat check` fails if a referenced symbol is renamed or removed, so update the matching section in the same change.
 
+## Scope boundary
+
+The kernel owns deterministic evidence, scope and release decisions. The native façade and ownership transfers are planned; existing compatibility and required environment checks remain.
+
+[Task 18](../docs/tasks/task-18/README.md) links the accepted ADR and stage-1
+sequence. New exact native combinations and bootstrap presets stop. Typed
+verification stays in the kernel; raw parsing/execution belongs to the planned
+adapter product and TJERP composition to its consumer. No implementation changes
+are claimed; [[status]] summarizes the current-status authority.
+
 ## Pre-merge gates
 
 Pre-merge evaluation combines independent gates; a blocked or inconclusive gate always wins over readiness, and a reasonless non-ready gate records `PK-PRE-GATE-UNEXPLAINED`.
