@@ -10,6 +10,7 @@ members = [
     "crates/github-adapter",
     "crates/project-verification",
     "crates/policy-report-adapters",
+    "crates/policy-native-importer",
     "bootstrap",
     "acceptance",
     "xtask",

@@ -1,0 +1,21 @@
+[package]
+name = "policy-native-importer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+policy-contracts = { path = "../policy-contracts" }
+policy-native-contracts = { path = "../policy-native-contracts" }
+policy-report-adapters = { path = "../policy-report-adapters" }
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+hex.workspace = true
+roxmltree.workspace = true
+rustix = { workspace = true, features = ["fs"] }
+
+[dev-dependencies]
+tempfile.workspace = true

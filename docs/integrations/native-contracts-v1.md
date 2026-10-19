@@ -1,6 +1,6 @@
 # Native contracts v1
 
-**v1 types only; no importer or scope command yet.**
+**v1 types plus an adapter importer; no scope command or evidence conversion.**
 `policy-native-contracts` is the additive Rust contract crate for already-executed
 native runs. It neither executes commands nor reads files, Git, reports or the
 network. It does not construct core evidence or evaluate policy. Existing core
@@ -52,9 +52,10 @@ no failure reasons. Non-pass results require evidence and reasons. Only
 Reason codes describe failures and locations; their presence does not authenticate
 a supplied result or recompute its decision.
 
-Cross-document completeness, freshness, approved mapping/exclusion enforcement,
-command/configuration/parser comparison, raw-byte verification, report reparsing
-and scope decisions remain later importer/verifier work. JSON Schema covers wire
+The adapter importer below checks artifact bytes, subject/freshness and raw report
+claims against approved parser bindings. Required-set completeness, approved
+mapping/exclusion enforcement, command/configuration binding evaluation and
+scope decisions remain later typed-verifier work. JSON Schema covers wire
 shape; Rust validation additionally covers ID collisions, references, count/time
 consistency and digest roles. Consumers must use both layers as appropriate, not
 substitute schema validation for these relational checks.
@@ -101,3 +102,85 @@ reject typed-invalid vectors and pin canonical hash values. The workspace CI
 runs these tests, including on Rust 1.85.0 and 1.95.0. It does not run a native
 consumer or establish promotion. See [Task 18](../tasks/task-18/README.md) and
 [Current status](../status.md).
+
+## Adapter import library (PR 4)
+
+`policy-native-importer::import_run(run_directory, output_directory, expected,
+identity, run)` is a Unix library, with no CLI or exit-code contract. It never
+executes argv, selects tools, reads Git, downloads artifacts, converts evidence or
+constructs `LocalScopeResultV1`. Kernel crates do not depend on it. The existing
+runner, core contracts, schemas, mutation pins and TJERP paths are unchanged.
+
+`ExpectedIdentity { run_id, scope_id }` is a mandatory independent caller input:
+`ExpectedScopeV1` has neither field, and its v1 schema is unchanged. The caller
+must obtain fresh expected identity, subject and evaluation time independently,
+not copy them from the run. This is consistency/replay checking, not a persistent
+registry of used run IDs or authentication of producer claims.
+
+The run directory contains exactly the declared artifacts and their ancestor
+directories; input JSON records are passed separately, not implicit extra files.
+All relative paths must be portable, and all directory components (including
+parents of input/output roots) must be symlink-free. Files are opened relative to
+pinned directory descriptors with no-follow and nonblocking flags. Symlinks,
+special files, missing files, undeclared files and extra empty directories are
+rejected. Limits are 16 MiB per file, 256 MiB total, 4096 entries and 32 nested
+directory levels. Raw SHA-256 is over the bytes copied and parsed, never reserialized
+JSON. Before/after inventories detect ordinary concurrent changes; producers must
+quiesce the directory, and this is not isolation from a hostile concurrent writer.
+
+The entire source subject (repository/head/source-set/source-inventory/scope-definition
+digests) must match, as must independent run/scope IDs and every observation's
+subject. Ordered timestamps must not be in the future or older than maximum age,
+measured from observation start against the supplied evaluation time, including
+subsecond precision. The raw report start must fall within its observation interval.
+Source digests are compared, not recomputed from a checkout or authenticated.
+
+Parser IDs are `vitest_json`, `jest_json`, `playwright_json` and `trx`; versions must
+exactly equal the corresponding shared `ReportFormat::parser_version()` and the
+expected suite parser binding. The namespace is the observation ID. The shared
+parser remains authoritative for report validity, normalized IDs, outcomes,
+counts and diagnostic messages. The importer supplements it with a projection
+of raw identities and attempts; no parser behavior is changed.
+
+For these adapters, `TestV1.raw_identity` is a compact JSON string encoding the
+original two identity components, retaining any absolute producer path:
+
+| Parser | Components, in order |
+| --- | --- |
+| Vitest/Jest | suite `name`, assertion `fullName` |
+| Playwright | spec `id`, test `projectId` |
+| TRX | result `testId`, result `testName` |
+
+Test arrays must match parser traversal order. Claims must agree on every count,
+normalized ID, raw identity, outcome and attempt count. Empty, skipped or retried
+reports receive verification issues. Unsupported parser versions, malformed raw
+reports, duplicate suites and contradictory summaries cannot silently pass.
+Valid failed tests and process failures remain data; the importer does not compare
+exit codes/counts to policy bounds or declare requirements satisfied. Parser-level
+`successful` and messages remain in the audit record so downstream consumers
+cannot lose a run-level failure that is not represented by test counts alone.
+Required observation coverage, mappings/exclusions and command/configuration
+policy evaluation remain PR 5 work. No issues means only that these import checks
+found no disagreement, never that local scope is satisfied.
+
+The output parent must exist, the output must be outside the input tree, and the
+output directory must not already exist. Output contains `expected.json`,
+`identity.json`, `run.json`, numbered artifact copies and `import.json`, mapping
+original paths to copies, hashes, sizes, recomputed observations and issues.
+Records always say `local_untrusted` and review `unmet`. Regular extra files and
+hash-mismatched files are copied for diagnosis within the limits. Unsafe,
+oversize or unreadable artifacts are never followed or deleted: originals remain
+in place, with issues explaining why they could not be copied. Inventory failure
+also leaves source untouched and records the failure. The caller must retain the
+source directory for such incomplete snapshots.
+
+A synced pending marker is atomically linked as `complete` after all outputs are
+written and synced. It marks a persisted import record, including rejected
+imports, not a successful scope. Filesystem/output errors return `io::Error` and
+leave any partial directory in place; absence of `complete` means incomplete
+publication. Existing output is never overwritten. Local fixture verification
+does not establish native adoption, authoritative CI or promotion.
+
+```console
+cargo test --locked -p policy-native-importer
+```

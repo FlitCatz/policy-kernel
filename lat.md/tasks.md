@@ -19,7 +19,7 @@
 - [Task 15 — strict mutation locally verified; operational follow-up pending](../docs/tasks/task-15/README.md)
 - [Task 16 — explicit TJERP-shaped consumer](../docs/tasks/task-16/README.md)
 - [Task 17 — project-owned frontend tool versions](../docs/tasks/task-17/README.md)
-- [Task 18 — scope decision accepted; stage-1 implementation planned](../docs/tasks/task-18/README.md)
+- [Task 18 — scope decision, native contracts and adapter importer; later stage-1 work planned](../docs/tasks/task-18/README.md)
 
 See [[status]] for the repository-wide latest state, [[trust-boundaries]] for
 authority limits, and [[kernel]] for where each rule is enforced in code.

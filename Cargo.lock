@@ -832,6 +832,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "policy-native-importer"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "policy-contracts",
+ "policy-native-contracts",
+ "policy-report-adapters",
+ "roxmltree",
+ "rustix",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
 name = "policy-report-adapters"
 version = "0.1.0"
 dependencies = [

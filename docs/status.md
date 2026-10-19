@@ -7,9 +7,11 @@ On 2026-10-19, [Task 18](tasks/task-18/README.md) records the
 is deterministic evidence/scope/release decisions; new exact native tool
 combinations and bootstrap presets stop. The parser extraction merged in
 [PR 23](https://github.com/FlitCatz/policy-kernel/pull/23). The additive
-[native contract](integrations/native-contracts-v1.md) supplies v1 types only:
-structural validation, crate-owned schemas and conformance vectors. There is no
-importer, scope command or evidence conversion yet; stage-1 PRs 4–8 remain planned.
+[native contract](integrations/native-contracts-v1.md) supplies v1 types, structural
+validation, crate-owned schemas and conformance vectors (PR 24). The PR 4 candidate
+adds the Unix `policy-native-importer` adapter library for raw artifact/subject
+verification, shared-parser recomputation and retained failure records. It exposes
+no scope decision or core evidence conversion; stage-1 PRs 5–8 remain planned.
 TJERP execution is unchanged. Profile schemas 1–4, selection
 schemas 1–3, bootstrap releases and every existing required environment check
 are preserved. Adapter repository ownership/support and PR 14 compatibility

@@ -27,7 +27,7 @@ required check, protected-branch merge evidence, and owner approval. Read the
 The [scope decision (Task 18)](docs/tasks/task-18/README.md) narrows the product
 to deterministic evidence, scope and release decisions. New exact native tool
 combinations and bootstrap presets have stopped. The [native contract](docs/integrations/native-contracts-v1.md)
-provides v1 types only; no importer or scope command yet. Existing profiles, CLI paths, bootstrap recovery and
+provides v1 types and an adapter-side artifact/subject importer; scope evaluation and core evidence conversion remain planned. Existing profiles, CLI paths, bootstrap recovery and
 required environment checks are preserved. TJERP execution is unchanged.
 
 The [P7 TJERP acceptance harness](docs/integrations/tjerp-adoption.md) binds two
@@ -173,6 +173,7 @@ supplied decision.
 | `evidence-collector` | Bounded explicit-argv execution with artifact digests. |
 | `github-adapter` | GitHub observation and process adapter used by CI integration. |
 | `project-verification` | Profile validation, preparation, execution, and report normalization. |
+| `policy-native-importer` | Unix adapter library: raw artifact/subject verification, shared-parser recomputation and failure retention; no scope decision. |
 | `policy-report-adapters` | Shared TRX, Vitest, Jest, and Playwright readers; re-exported by `project_verification::reports`. |
 | `policy-bootstrap` | Transactional profile installation, recovery, and uninstall. |
 | `policy-acceptance` | Rust harness that stages and exercises native consumer fixtures. |

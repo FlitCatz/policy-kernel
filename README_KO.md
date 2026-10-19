@@ -49,7 +49,7 @@ sha512 integrity가 있어야 허용합니다. Audit configuration은 각 항목
 [범위 결정(Task 18)](docs/tasks/task-18/README.md)은 제품을 결정론적
 evidence·scope·release 판정으로 좁힙니다. 새로운 exact native 도구 조합과
 bootstrap preset 추가는 중단했습니다. [Native 계약](docs/integrations/native-contracts-v1.md)은
-v1 타입만 제공하며 importer와 scope 명령은 아직 없습니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
+v1 타입과 adapter 측 원본·subject importer를 제공합니다. scope 판정과 core evidence 변환은 아직 계획 단계입니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
 유지하고, TJERP 실행은 변경하지 않습니다.
 
 [P7 TJERP 인수 harness](docs/integrations/tjerp-adoption.md)는 기존 Rust API로
@@ -182,6 +182,7 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 | `evidence-collector` | 명시된 argv 실행을 제한하고 아티팩트 digest를 수집 |
 | `github-adapter` | CI 통합에 사용하는 GitHub 관측 및 프로세스 어댑터 |
 | `project-verification` | 프로젝트 프로필 검증·준비·실행·보고서 정규화 |
+| `policy-native-importer` | Unix adapter 라이브러리: 원본·subject 검증, 공용 parser 재계산과 실패 자료 보존; scope 판정 없음 |
 | `policy-report-adapters` | 공용 TRX·Vitest·Jest·Playwright reader; `project_verification::reports`에서 재노출 |
 | `policy-bootstrap` | 프로필의 트랜잭션 설치·복구·제거 |
 | `policy-acceptance` | 네이티브 소비 프로젝트 fixture를 stage하고 실행하는 Rust harness |
