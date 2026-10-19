@@ -26,8 +26,11 @@ required check, protected-branch merge evidence, and owner approval. Read the
 
 The [P7 TJERP acceptance harness](docs/integrations/tjerp-adoption.md) binds two
 local profiles, approved catalogs and raw test identities through existing Rust
-APIs. Its FI-00–FI-09 tests are synthetic; P8 profiles and the P9 real dry-run
-remain separate work. Results stay LocalUntrusted and use **local scope satisfied**.
+APIs. Its FI-00–FI-09 tests are synthetic. TJERP completed P8 profiles/run procedure
+and the P9 real dry-run on 2026-10-17: FI-00 and recovery satisfied local scope,
+and FI-01–FI-09 were rejected as intended. Evidence stays LocalUntrusted; the
+review gate is unmet, with no pre-merge decision or production promotion.
+See [current status and TJERP revision citations](docs/status.md#tjerp-p8-adoption-and-p9-first-actual-dry-run).
 Run `cargo test --locked --offline -p policy-acceptance --test tjerp_adoption`.
 
 The native fixtures use Jest 30.5.2 with a scoped `js-yaml` 4 override.

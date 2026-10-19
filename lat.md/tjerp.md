@@ -1,6 +1,6 @@
 # TJERP local acceptance
 
-P7 connects split local profiles to approved catalogs and raw reports. Its synthetic fixtures exercise protocol rejection; actual TJERP profiles and the first native dry-run remain P8/P9.
+P7 connects split local profiles to approved catalogs and raw reports. Its fixtures exercise protocol rejection; TJERP completed P8 profiles and the P9 native dry-run on 2026-10-17 with LocalUntrusted evidence and the review gate unmet.
 
 The contract is [TJERP adoption](../docs/integrations/tjerp-adoption.md).
 Current status belongs to [[status]], and core rules remain in [[kernel]].
