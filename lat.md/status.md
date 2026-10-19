@@ -2,6 +2,12 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+[Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
+New exact native combinations/presets stop; the native façade and stage-1 PRs 2–8
+remain planned. Profiles, bootstrap and required environment checks are preserved;
+TJERP is unchanged. Adapter support and compatibility end conditions remain open.
+See [[kernel#Scope boundary]]. No adoption or promotion is established by this decision.
+
 Policy v3 binds approving-review quorum and allowed providers. Legacy policy
 digests remain valid, but readiness and shipping require explicit v3 reapproval.
 Consumer profiles are unchanged; reapproval and promotion are not established.
@@ -48,7 +54,7 @@ See [[kernel#Npm workspace graph]] and the current-status authority.
 
 It identifies the implemented scope, dated verification evidence, and conditions
 not demonstrated in production. [[overview]] explains the repository's role,
-[[tasks]] maps evidence to Tasks 1–17, and [[trust-boundaries]] explains why
+[[tasks]] maps evidence to Tasks 1–18, and [[trust-boundaries]] explains why
 local evidence cannot by itself authorize a release.
 
 [Task 17](../docs/tasks/task-17/README.md) adds project-owned frontend tool

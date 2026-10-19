@@ -1,6 +1,6 @@
 # Task index
 
-This directory is the canonical starting point for Tasks 1–17. Each landing page
+This directory is the canonical starting point for Tasks 1–18. Each landing page
 summarizes the latest known state and points to the implementation, reference
 documentation, and archived evidence for that Task.
 
@@ -45,3 +45,6 @@ its local native verification and remaining consumer/hosted adoption work.
 
 [Task 17](task-17/README.md) tracks project-owned frontend tool versions, native
 conformance and remaining hosted/operational adoption work.
+
+[Task 18](task-18/README.md) records the accepted scope-reduction ADR and planned
+stage-1 sequence. PR 1 is documentation only; implementation remains planned.
