@@ -49,7 +49,7 @@ sha512 integrity가 있어야 허용합니다. Audit configuration은 각 항목
 [범위 결정(Task 18)](docs/tasks/task-18/README.md)은 제품을 결정론적
 evidence·scope·release 판정으로 좁힙니다. 새로운 exact native 도구 조합과
 bootstrap preset 추가는 중단했습니다. [Native 계약](docs/integrations/native-contracts-v1.md)은
-v1 타입과 adapter 측 원본·subject importer를 제공합니다. scope 판정과 core evidence 변환은 아직 계획 단계입니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
+v1 타입, adapter 측 원본·subject importer와 kernel 소유 로컬 scope verifier를 제공합니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
 유지하고, TJERP 실행은 변경하지 않습니다.
 
 [P7 TJERP 인수 harness](docs/integrations/tjerp-adoption.md)는 기존 Rust API로
@@ -176,8 +176,9 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 | --- | --- |
 | `policy-contracts` | 엄격하고 버전이 관리되는 전송 타입 및 스키마 원본 타입 |
 | `policy-native-contracts` | Native v1 전송 타입·구조 검증·스키마·적합성 corpus; importer 없음 |
+| `policy-native-verifier` | Typed 로컬 scope 조립과 core 판정; adapter 의존 및 권한 부여 없음 |
 | `policy-core` | 결정론적 정책·출처·검토·센서·병합 평가 |
-| `policy-cli` | 로컬 자문 병합 전 평가와 타입 객체 검사 |
+| `policy-cli` | 로컬 자문 scope·병합 전 평가와 타입 객체 검사 |
 | `policy-ci` | 권한 있는 GitHub Actions 평가 및 전용 검사 게시 |
 | `evidence-collector` | 명시된 argv 실행을 제한하고 아티팩트 digest를 수집 |
 | `github-adapter` | CI 통합에 사용하는 GitHub 관측 및 프로세스 어댑터 |
@@ -351,3 +352,20 @@ digest는 유지되지만, 새 digest 및 결합된 증거를 갖춘 v3로 명�
 - [현재 상태](docs/status.md)
 - [Task 색인](docs/tasks/README.md)
 - [저장소 CI workflow](.github/workflows/)
+
+## Native 로컬 scope
+
+Adapter가 `policy-native-importer::import_run`을 성공적으로 수행한 뒤,
+내보낸 관찰을 독립적으로 승인한 기대값과 비교합니다.
+
+```sh
+cargo run --locked -p policy-cli -- evaluate-scope \
+  --expected approved-scope.json --observations imported-run/observations.json
+```
+
+종료 코드는 **0** 충족, **2** 유효한 non-pass, **64** 잘못되거나 불완전한
+입력입니다. 파일 하나만 `-`로 지정하여 stdin을 사용할 수 있습니다.
+출력은 `LocalScopeResultV1`이며 trust는 `local_untrusted`, review는 `unmet`입니다.
+JSON 전용 명령은 typed 일관성을 검사하며 원본 진위를 인증하지 않습니다.
+Pre-merge 또는 ReadyToMerge 판정을 만들지 않으며 기존 `evaluate-pre`의
+0/2/3/64 종료 코드는 유지합니다. [Native 계약 안내](docs/integrations/native-contracts-v1.md)를 참고하세요.

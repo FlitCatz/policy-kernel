@@ -6,13 +6,18 @@ Maps each authorization rule to the Rust symbol that enforces it. Rules are spec
 
 ## Scope boundary
 
-The kernel owns deterministic evidence, scope and release decisions. Native v1 types and an adapter importer exist; scope evaluation and ownership transfers remain planned. Existing compatibility and required environment checks remain.
+The kernel owns deterministic evidence, scope and release decisions. Native v1 types, an adapter importer and a local scope verifier exist; ownership transfers remain planned. Existing compatibility and required environment checks remain.
 
 [Task 18](../docs/tasks/task-18/README.md) links the accepted ADR and stage-1
 sequence. New exact native combinations and bootstrap presets stop. Typed
 verification stays in the kernel; raw parsing/execution belongs to the planned
 adapter product and TJERP composition to its consumer. [[native-contracts]] records
-the contracts and adapter importer; [[status]] summarizes the current-status authority.
+the contracts, adapter importer and kernel verifier; [[status]] summarizes the current-status authority.
+
+Local scope [[crates/policy-native-verifier/src/lib.rs#evaluate_scope]] enforces
+approved bindings and delegates sensor/adequacy decisions to core. Assembly
+[[crates/policy-native-verifier/src/lib.rs#assemble]] uses local recorder identity,
+local-untrusted executions/sensors and no reviews. It never calls pre-merge evaluation.
 
 ## Pre-merge gates
 

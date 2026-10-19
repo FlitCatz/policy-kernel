@@ -6,11 +6,18 @@ ordered stage-1 PRs 1–8. PR 1 recorded the decision. The parser extraction mer
 in [PR 23](https://github.com/FlitCatz/policy-kernel/pull/23). The additive
 [native contract](../../integrations/native-contracts-v1.md) now provides v1 types,
 structural validation, three crate-owned schemas and a conformance corpus.
-The PR 4 candidate adds `policy-native-importer`: a Unix adapter library checking
+The importer merged in [PR 25](https://github.com/FlitCatz/policy-kernel/pull/25), adding `policy-native-importer`: a Unix adapter library checking
 raw paths/limits/hashes, independent subject/run/scope/time expectations and
 recomputed report observations. Fresh output directories retain failure records
-and bounded raw copies, with an atomic persistence marker. Scope decisions,
-core evidence conversion and ownership transfers remain planned. The historical ADR retains its original planning context.
+and bounded raw copies, with an atomic persistence marker. The PR 5 candidate adds
+kernel-owned `policy-native-verifier` core evidence assembly and advisory
+`policy-cli evaluate-scope` (0 satisfied, 2 non-pass, 64 incomplete/invalid).
+The kernel depends on contracts/core only; the adapter exports typed observations.
+Required sets, mappings, exclusions and command/config/parser bindings remain
+independent of observations. Trust stays local-untrusted, review unmet, with no
+ReadyToMerge path. Conformance covers failures and comparison with the existing
+project normalizer on the same report bytes. Ownership transfers remain planned.
+The historical ADR retains its original planning context.
 
 New exact native combinations and bootstrap presets stop. Existing profile
 schemas 1–4, selection schemas 1–3, bootstrap releases and required environment

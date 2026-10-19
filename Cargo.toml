@@ -4,6 +4,7 @@ members = [
     "crates/policy-contracts",
     "crates/policy-core",
     "crates/policy-native-contracts",
+    "crates/policy-native-verifier",
     "crates/policy-cli",
     "crates/policy-ci",
     "crates/evidence-collector",

@@ -14,6 +14,8 @@ path = "src/main.rs"
 clap.workspace = true
 policy-contracts = { path = "../policy-contracts" }
 policy-core = { path = "../policy-core" }
+policy-native-contracts = { path = "../policy-native-contracts" }
+policy-native-verifier = { path = "../policy-native-verifier" }
 serde.workspace = true
 serde_json.workspace = true
 

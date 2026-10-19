@@ -68,6 +68,8 @@ impl Fixture {
         };
         let mut bindings = expected.bindings.observations.as_slice().to_vec();
         bindings[0].parser = Some(parser.clone());
+        bindings[0].command_digest =
+            canonical_digest(DigestRole::Command, &run.observations[0].command).unwrap();
         expected.bindings.observations = RequiredSet::new(bindings).unwrap();
         expected.bindings.evaluated_at = UtcTimestamp::parse("2025-09-01T00:01:00Z").unwrap();
         run.observations[0].started_at = parsed.started_at.clone();
@@ -438,4 +440,100 @@ fn failed_process_logs_survive_even_when_no_raw_report_was_produced() {
         .unwrap()
         .contains("native tool failed"));
     assert!(record.reports.is_empty());
+}
+
+#[path = "../../project-verification/tests/common/mod.rs"]
+mod project_fixture;
+
+#[test]
+fn importer_verifier_command_and_project_normalization_agree_on_failed_fixture() {
+    for failed in [false, true] {
+        let mut f = Fixture::new(ReportFormat::VitestJson);
+        if failed {
+            let mut v = f.raw();
+            v["numPassedTests"] = json!(0);
+            v["numFailedTests"] = json!(1);
+            v["success"] = json!(false);
+            v["testResults"][0]["assertionResults"][0]["status"] = json!("failed");
+            f.replace_raw(v);
+            f.run.test_observations[0].counts.passed = 0;
+            f.run.test_observations[0].counts.failed = 1;
+            f.run.test_observations[0].tests[0].outcome = TestOutcome::Failed;
+            f.run.observations[0].completion = CompletionV1::Exited { code: 1 };
+        }
+        let record = f.import();
+        assert!(record.issues.is_empty(), "{:?}", record.issues);
+        let imported = record.verified_observations().unwrap();
+        let evaluation = policy_native_verifier::evaluate_scope(&f.expected, imported).unwrap();
+        let (result, exit) = policy_cli::evaluate_scope_json(
+            &serde_json::to_vec(&f.expected).unwrap(),
+            &fs::read(f.output().join("observations.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(exit, if failed { 2 } else { 0 });
+        assert_eq!(result, evaluation.result);
+        assert_eq!(result.trust, LocalTrust::LocalUntrusted);
+        assert_eq!(result.review, ReviewGate::Unmet);
+
+        // Feed exactly the same report bytes through the compatibility normalizer.
+        let root = tempfile::tempdir().unwrap();
+        let request = project_fixture::request(root.path());
+        let config = project_verification::run::prepare(&request)
+            .unwrap()
+            .configurations
+            .remove(0);
+        let raw = fs::read(f.input.join("raw.json")).unwrap();
+        fs::create_dir(root.path().join("reports")).unwrap();
+        fs::write(root.path().join("reports/unit.json"), &raw).unwrap();
+        let mut collection = project_fixture::collection(&request, &config, &raw);
+        if failed {
+            collection.record.execution.exit_code = Some(1);
+            collection.record.execution.status = policy_contracts::ExecutionStatus::Failed;
+            collection.evidence.status = policy_contracts::ExecutionStatus::Failed;
+            project_fixture::reseal(&mut collection);
+        }
+        let normalized =
+            project_verification::run::normalize_collection(&request, config, collection).unwrap();
+        let native_evidence = evaluation.evidence.as_ref().unwrap();
+        assert_eq!(
+            normalized.evidence.status,
+            native_evidence.sensors[0].status
+        );
+        let mut sensor = normalized.evidence;
+        sensor.sensor_id = native_evidence.sensors[0].sensor_id.clone();
+        let comparison = policy_core::evaluate_sensor_evidence(
+            &evaluation.profile,
+            &[sensor.sensor_id.clone()],
+            &[sensor],
+            native_evidence.test_adequacy.as_ref(),
+        );
+        assert_eq!(comparison.reasons, evaluation.core_reasons);
+        if failed {
+            assert!(comparison.has_reason("PK-SENSOR-FAILED"));
+        }
+    }
+}
+
+#[test]
+fn rejected_imports_never_export_verified_observations() {
+    let f = Fixture::new(ReportFormat::VitestJson);
+    fs::write(f.input.join("raw.json"), b"tampered").unwrap();
+    let record = f.import();
+    assert!(record.verified_observations().is_none());
+    assert!(!f.output().join("observations.json").exists());
+}
+
+#[test]
+fn parser_level_failure_survives_even_when_all_tests_pass() {
+    let mut f = Fixture::new(ReportFormat::VitestJson);
+    let mut raw = f.raw();
+    raw["testResults"][0]["message"] = json!("suite teardown failed");
+    f.replace_raw(raw);
+    let record = f.import();
+    assert!(record.issues.is_empty(), "{:?}", record.issues);
+    let observations = record.verified_observations().unwrap();
+    assert_eq!(observations.unsuccessful_reports.len(), 1);
+    let e = policy_native_verifier::evaluate_scope(&f.expected, observations).unwrap();
+    assert_eq!(e.result.status, ScopeStatus::NonPass);
+    assert!(e.core_reasons.iter().any(|r| r.code == "PK-SENSOR-FAILED"));
 }

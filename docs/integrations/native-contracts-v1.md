@@ -1,6 +1,6 @@
 # Native contracts v1
 
-**v1 types plus an adapter importer; no scope command or evidence conversion.**
+**v1 types, an adapter importer and a kernel-owned local scope verifier.**
 `policy-native-contracts` is the additive Rust contract crate for already-executed
 native runs. It neither executes commands nor reads files, Git, reports or the
 network. It does not construct core evidence or evaluate policy. Existing core
@@ -55,7 +55,7 @@ a supplied result or recompute its decision.
 The adapter importer below checks artifact bytes, subject/freshness and raw report
 claims against approved parser bindings. Required-set completeness, approved
 mapping/exclusion enforcement, command/configuration binding evaluation and
-scope decisions remain later typed-verifier work. JSON Schema covers wire
+scope decisions belong to the typed verifier described below. JSON Schema covers wire
 shape; Rust validation additionally covers ID collisions, references, count/time
 consistency and digest roles. Consumers must use both layers as appropriate, not
 substitute schema validation for these relational checks.
@@ -160,13 +160,18 @@ exit codes/counts to policy bounds or declare requirements satisfied. Parser-lev
 `successful` and messages remain in the audit record so downstream consumers
 cannot lose a run-level failure that is not represented by test counts alone.
 Required observation coverage, mappings/exclusions and command/configuration
-policy evaluation remain PR 5 work. No issues means only that these import checks
+policy evaluation belong to the kernel verifier. No issues means only that these import checks
 found no disagreement, never that local scope is satisfied.
 
 The output parent must exist, the output must be outside the input tree, and the
 output directory must not already exist. Output contains `expected.json`,
 `identity.json`, `run.json`, numbered artifact copies and `import.json`, mapping
 original paths to copies, hashes, sizes, recomputed observations and issues.
+Only an issue-free import also writes `observations.json` and exposes
+`ImportRecord::verified_observations()`. This export carries the recomputed run,
+independent expected-scope digest and run/scope IDs, adapter version, local trust,
+unmet review and `unsuccessful_reports` IDs. The latter preserves parser-level
+failures such as suite diagnostics even when every test count passes.
 Records always say `local_untrusted` and review `unmet`. Regular extra files and
 hash-mismatched files are copied for diagnosis within the limits. Unsafe,
 oversize or unreadable artifacts are never followed or deleted: originals remain
@@ -184,3 +189,66 @@ does not establish native adoption, authoritative CI or promotion.
 ```console
 cargo test --locked -p policy-native-importer
 ```
+
+## Kernel verifier and local command
+
+`policy-native-verifier::evaluate_scope(expected, imported)` accepts an independent
+`ExpectedScopeV1` and `ImportedObservationsV1`. The latter is a strict version-1
+kernel-owned transfer record, exported by the adapter; it is not an attestation.
+The dependency direction is importer → verifier → native contracts/core. Neither
+`policy-cli` nor the verifier depends on the importer or report adapters.
+
+The verifier checks the expected digest, complete subject/run/scope identity,
+exact required observation set, freshness, command digest (argv and relative cwd),
+configuration and parser bindings. Every exclusion must match its approved entry,
+including its explanation; exclusions never waive required observations or
+mappings. Unknown mapping requirements fail. Missing mappings, insufficient mapped
+executions, wrong allowed suites and failed tests cannot satisfy requirements.
+Malformed/unexecuted references fail structural validation. Empty policies cannot
+decode. Incomplete processes, absent reports and skipped/retried/partial reports
+cannot yield successful evidence.
+
+Assembly produces `EvidenceManifest`, `ExecutionEvidence`, `SensorEvidence`,
+`TestAdequacyEvidence`, `SensorProfile` and `TestAdequacyPolicy`, delegating sensor
+and adequacy evaluation to existing policy-core functions. Native minimum/maximum
+bounds add constraints; they cannot relax core all-tests-passed rules. Independent
+negative IDs become required core changed behaviors with negative obligations.
+Suite/test tuple encoding prevents ID collisions. Parser-level failure flags
+produce failed sensor evidence even with passing test counts.
+
+The diagnostic Rust return includes core reasons and optional evidence separately
+from `LocalScopeResultV1`. Invalid structural records return an error; incomplete
+binding/input checks yield an error result without evidence. Valid evaluated
+failures retain evidence and stable reason codes with suite/requirement/artifact
+locations. Policy digests bind native requirements, approved file digest, bounds,
+exemptions, bindings and time policy as well as the core profile. Evidence digests
+cover the assembled bundle and its child digests; the expected and run digests
+retain their separate roles.
+
+All execution/sensor trust is `local_untrusted`; review is always `unmet` and the
+review list is empty. Legacy execution identity slots explicitly record
+`local-recorder` / `not-a-model`; neither represents an AI identity. The legacy
+manifest uses the same head for base/head and a `local:` run label, without a
+synthetic PR or authenticated workflow. No pre-merge evaluator is called and no
+ReadyToMerge path exists. No core source or mutation-contract pin changes are
+required by this façade.
+
+```sh
+cargo run --locked -p policy-cli -- evaluate-scope \
+  --expected approved-scope.json --observations imported-run/observations.json
+```
+
+Exit 0 means satisfied, 2 valid non-pass, 64 invalid/incomplete input. Either path
+may be `-` for stdin, but not both. A typed evaluation prints one result JSON;
+structural/JSON/I/O errors print a diagnostic to stderr without a result. Existing
+commands retain their behavior and exit codes. The command does not run an
+importer, execute native commands or observe artifact files. Handwritten export
+JSON has the same local-untrusted status: typed agreement cannot authenticate a
+claimed parser execution or independently approve consumer policy.
+
+Conformance runs with `cargo test --locked -p policy-native-verifier -p policy-cli
+-p policy-native-importer`. Adapter-side tests pass fixture bytes through importer,
+verifier and the command function, and compare core failure reasons with the
+project-verification normalizer on the same bytes. Separate binary tests check
+CLI argument parsing, stdin and exits. These are synthetic conformance checks,
+not a new TJERP/native adoption or authoritative execution record.

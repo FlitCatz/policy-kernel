@@ -9,6 +9,7 @@ publish.workspace = true
 [dependencies]
 policy-contracts = { path = "../policy-contracts" }
 policy-native-contracts = { path = "../policy-native-contracts" }
+policy-native-verifier = { path = "../policy-native-verifier" }
 policy-report-adapters = { path = "../policy-report-adapters" }
 serde.workspace = true
 serde_json.workspace = true
@@ -18,4 +19,8 @@ roxmltree.workspace = true
 rustix = { workspace = true, features = ["fs"] }
 
 [dev-dependencies]
+evidence-collector = { path = "../evidence-collector" }
 tempfile.workspace = true
+policy-cli = { path = "../policy-cli" }
+policy-core = { path = "../policy-core" }
+project-verification = { path = "../project-verification" }
