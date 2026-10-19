@@ -20,6 +20,11 @@ example. Profile commands must be reviewed separately, including any audit resto
 
 ## Inputs and invocation
 
+TJERP completed P8 and P9 on 2026-10-17. The
+[current-status record](../status.md#tjerp-p8-adoption-and-p9-first-actual-dry-run)
+cites its local revisions and native results; evidence remains LocalUntrusted
+and the review gate unmet. P8/P9 obligations below also apply to future runs.
+
 Build with installed dependencies only:
 
 ```console
@@ -152,7 +157,8 @@ and [trust model](../trust-model.md).
 ## Synthetic fault matrix
 
 Each row has an explicit non-pass assertion in the Rust acceptance suite.
-FI-00 is a positive baseline; source-level native demonstrations are deferred to P9.
+FI-00 is a positive baseline; source-level native demonstrations belong to P9,
+whose completed execution is cited in the current-status record above.
 
 | Case | Synthetic injection and expected result |
 |---|---|

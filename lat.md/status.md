@@ -5,17 +5,22 @@ The current-state authority is [docs/status.md](../docs/status.md); this page on
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
 and records `bundled, not individually audited`, including absent optional
 platform parents. The native oxide fixture satisfies local scope; TJERP P8
-adoption and re-verification remain pending. See [[kernel#Npm workspace graph]].
+adoption and re-verification completed at `4cf51da`. See [[kernel#Npm workspace graph]].
 
 Reviewed npm root overrides bind exact versions into the profile and verify
 affected lock resolutions. Native Node 26.12.0/npm 11.20.0 audits detect vulnerable
-and fixed override versions. Local scope is satisfied; TJERP adoption and
-promotion remain unestablished. See [[kernel#Npm workspace graph]].
+and fixed override versions. TJERP P8 adopted `4df10fa` and re-verified frontend
+preparation; promotion remains unestablished. See [[kernel#Npm workspace graph]].
 
 P7 adds the [[tjerp]] local harness and synthetic FI-00–FI-09 protocol tests.
 It binds approved catalogs, raw identities and split source/head/profile results
-through existing APIs. LocalUntrusted remains; real P8 profiles and P9 execution
-are pending, with no adoption, authoritative decision or promotion claim.
+through existing APIs. TJERP completed P8 profiles/run procedure (`1fd96a7`,
+merged as `4cf51da`) and P9 execution (`3556ce9`, merged as `6e688e9`) on
+2026-10-17. FI-00 and recovery on `f926418` satisfied local scope; FI-01–FI-09
+were rejected as intended. Evidence remains LocalUntrusted and the review gate
+is unmet: no independent review or pre-merge decision, Trusted evidence,
+authoritative decision, protected merge or production promotion is established.
+Full revision and catalog-digest citations are in the current-status authority.
 
 P2 adds explicit graph opt-in for bounded compiler-generated output, with XML,
 command/environment and filesystem checks. The offline Mapperly fixture does not

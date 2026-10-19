@@ -10,7 +10,8 @@ undeclared names and conflicting entries fail closed. The
 [2026-10-17 native fixture](archive/reviews/2026-10-17-npm-bundles-local.md)
 confirmed npm 11.20.0/Node 26.12.0 oxide 4.3.3 lock shape and successful preparation.
 Local scope is satisfied; bundled names have no individual audit coverage.
-TJERP P8 adoption and frontend re-verification remain pending. No authoritative
+TJERP P8 adoption and frontend re-verification are complete at `4cf51da`, as
+recorded in the P8/P9 status below. No authoritative
 decision, protected merge or production promotion is established here.
 
 ## Reviewed npm root overrides
@@ -23,9 +24,9 @@ specs, dead overrides and drift fail closed. The
 records Node 26.12.0/npm 11.20.0 root-audit failure for overridden vulnerable
 minimist 0.0.8 and clean success for scoped minimist 1.2.8. Local scope is
 satisfied; evidence remains LocalUntrusted. Frozen bootstrap assets are unchanged.
-TJERP P8 must adopt a reviewed revision containing this change and re-verify
-frontend `prepare`; no TJERP adoption, merge, authoritative decision or production
-promotion is established by this local fixture.
+TJERP P8 adopted reviewed revision `4df10fa` and re-verified frontend `prepare`
+at `4cf51da`, as recorded below. This local fixture alone establishes no TJERP
+adoption, merge, authoritative decision or production promotion.
 
 ## P7 TJERP split-profile harness
 
@@ -35,9 +36,42 @@ split HEAD/source/profile bindings through existing project-verification/core AP
 Its FI-00–FI-09 fixtures are synthetic Rust producers and protocol faults, not
 actual TJERP source injections. Successful local composition is labelled
 **local scope satisfied**, remains LocalUntrusted and leaves review unfulfilled.
-P8 real profiles/run lifecycle and P9 first actual dry-run remain pending.
-This does not establish real TJERP adoption, Trusted evidence, an authoritative
+The synthetic harness tests alone do not establish real TJERP adoption,
+Trusted evidence, an authoritative
 decision, a protected merge or production promotion.
+
+## TJERP P8 adoption and P9 first actual dry-run
+
+P8 and P9 are complete in TJERP's local-only repository (no remote). On
+2026-10-17, P8 branch commit `1fd96a79983a92be1a52871a6800c0ce687345f0`
+was merged into TJERP main with `--no-ff` as
+`4cf51da42c6cda4f4544bb996e3da0e3e780dab4`. It delivered split profiles and
+the run procedure, adopting policy-kernel
+`4df10fa44f3bce79c0613bf8e918cd2d75222d68`; both profiles passed validation
+and preparation, including frontend override and bundled-inventory checks.
+
+On the same date, P9 branch commit
+`3556ce981c04a6117bd9c762dca1821d0778be81` was merged with `--no-ff` as
+`6e688e9d17a3a7e880c23aecc4d8b612634288b3`. FI-00 and fresh recovery on
+execution head `f926418605d47d4036b064abfd116143fa329691` returned
+**local scope satisfied**; FI-01–FI-09 were rejected as intended. The approved
+SHA-256 of `config/policy/requirements.json` was
+`4f3102ff93edc471084581903a5e2ffa8830b2cd2ebc05347f4df837d71ac74d`.
+The later documentation and merge revisions are not new native execution heads.
+
+These facts are recorded in TJERP at the revisions above:
+`.planning/phases/10-policy-kernel-local-adoption/10-05-SUMMARY.md` for P8,
+`10-06-SUMMARY.md` and `10-06-VERIFICATION.md` in that directory for P9,
+and `docs/policy/local-adoption.md` for the procedure and completed-run pointer.
+The local Git history confirms the branch and merge revisions; these are TJERP
+revision citations, not hosted policy-kernel commits.
+
+Evidence remains **LocalUntrusted**, and the **review gate is unmet**: no
+independent review was supplied and no pre-merge decision was produced.
+Completion covers the selected ten criteria and the specified local fault matrix;
+bundled dependencies remain `bundled, not individually audited`. It establishes
+no Trusted evidence, authoritative decision, protected merge or production
+promotion. Earlier dated records retain their contemporaneous scope and status.
 
 ## P2 bounded MSBuild generated output
 

@@ -48,8 +48,11 @@ sha512 integrity가 있어야 허용합니다. Audit configuration은 각 항목
 
 [P7 TJERP 인수 harness](docs/integrations/tjerp-adoption.md)는 기존 Rust API로
 두 로컬 profile, 승인 catalog와 원본 test identity를 결합합니다. FI-00–FI-09는
-합성 시험이며 P8 profile 작성과 P9 실제 dry-run은 별도 작업입니다. 결과는
-LocalUntrusted를 유지하고 **local scope satisfied**로 표기합니다.
+합성 시험입니다. TJERP는 2026-10-17 P8 profile·실행 절차와 P9 실제 dry-run을
+완료했습니다. FI-00과 회복은 **local scope satisfied**이며 FI-01–FI-09는
+의도대로 거부되었습니다. 증거는 LocalUntrusted이고 review gate는 미충족이며,
+pre-merge 판정이나 production promotion은 없습니다.
+[현재 상태와 TJERP revision 근거](docs/status.md#tjerp-p8-adoption-and-p9-first-actual-dry-run)를 참고하세요.
 `cargo test --locked --offline -p policy-acceptance --test tjerp_adoption`으로 검증합니다.
 
 네이티브 fixture는 Jest 30.5.2와 범위를 제한한 `js-yaml` 4 override를 사용합니다.
