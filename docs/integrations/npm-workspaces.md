@@ -99,7 +99,7 @@ An older reader rejects the new field. Consumers must raise
 earlier P1 revision above does not contain override support.
 
 The supported forms are global exact versions and a single package scope with
-exact child versions. For TJERP's frontend root, put this same object in both
+exact child versions. For a frontend root, put the same reviewed object in both
 `package.json.overrides` and the graph's `workspace.overrides`:
 
 ```json
@@ -216,5 +216,6 @@ six missing bundled child entries, prepares the configuration and performs one
 root audit. Set `POLICY_NPM_BUNDLES_OUTPUT` to a fresh absolute directory to
 retain the lock, prepared inventory, audit JSON and summary. The
 [local execution record](../archive/reviews/2026-10-17-npm-bundles-local.md)
-establishes fixture observations only; TJERP P8 must adopt the merged reviewed
-revision and re-verify its own frontend `prepare`.
+establishes fixture observations only. Consumer adoption and re-verification are
+recorded separately in [current status](../status.md); the
+[TJERP ownership pointer](tjerp-adoption.md) identifies its current harness.

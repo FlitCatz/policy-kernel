@@ -8,7 +8,7 @@ const PROPS: &str =
 
 fn profile() -> Value {
     let mut value: Value = serde_json::from_str(include_str!(
-        "../../../examples/tjerp-compatible/project-profile.json"
+        "../../../examples/split-consumer/project-profile.json"
     ))
     .unwrap();
     value["selection"]["consumer"]["generated_files_graphs"] = json!(["modules"]);

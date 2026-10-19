@@ -5,9 +5,14 @@ The current-state authority is [docs/status.md](../docs/status.md); this page on
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
 New exact native combinations/presets stop. Parser extraction merged in PR 23;
 [[native-contracts]] supplies v1 types and the importer merged in PR 25.
-The PR 5 candidate adds kernel-owned core evidence assembly and a local advisory
+Plan PR 5 added kernel-owned core evidence assembly and a local advisory
 scope command (0/2/64). Trust remains local-untrusted, review unmet; no pre-merge
-decision is produced. Stage-1 PRs 6–8 remain planned. Profiles, bootstrap and required environment checks are preserved;
+decision is produced. Plan PRs 6–7 transferred and adopted the TJERP harness;
+PR 8 completes stage 1
+in implementation, removing product code here and retaining generic split-consumer
+conformance. TJERP main `3c62b9e` owns `tools/policy-adoption`, pinned to `4df10fa`.
+This does not assert that the PR has merged.
+Profiles, bootstrap and required environment checks are preserved;
 TJERP is unchanged. Adapter support and compatibility end conditions remain open.
 See [[kernel#Scope boundary]]. No adoption or promotion is established by this decision.
 
@@ -26,9 +31,9 @@ affected lock resolutions. Native Node 26.12.0/npm 11.20.0 audits detect vulnera
 and fixed override versions. TJERP P8 adopted `4df10fa` and re-verified frontend
 preparation; promotion remains unestablished. See [[kernel#Npm workspace graph]].
 
-P7 adds the [[tjerp]] local harness and synthetic FI-00–FI-09 protocol tests.
-It binds approved catalogs, raw identities and split source/head/profile results
-through existing APIs. TJERP completed P8 profiles/run procedure (`1fd96a7`,
+The former P7 [[tjerp]] harness and its product-specific assertions now belong
+to TJERP; the pinned dependency is unaffected.
+TJERP completed P8 profiles/run procedure (`1fd96a7`,
 merged as `4cf51da`) and P9 execution (`3556ce9`, merged as `6e688e9`) on
 2026-10-17. FI-00 and recovery on `f926418` satisfied local scope; FI-01–FI-09
 were rejected as intended. Evidence remains LocalUntrusted and the review gate

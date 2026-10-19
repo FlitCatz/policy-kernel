@@ -4,8 +4,8 @@ Project profile schema 3 pairs only with selection schema 2 and an explicit
 `selection.consumer`. Schema 1/2 profiles keep their existing behavior and frozen
 template assets. There is no implicit migration or policy adoption.
 
-The [synthetic TJERP-shaped fixture](../../examples/tjerp-compatible/project-profile.json)
-shows the full contract. It does not contain TJERP application code or data.
+The [synthetic split-consumer fixture](../../examples/split-consumer/project-profile.json)
+shows the full contract. It contains no product application code or data.
 
 ## Tool and runtime contracts
 
@@ -49,7 +49,7 @@ The collector does not infer business-rule adequacy from suite labels.
 Schema 3 and schema 4 consumer profiles must declare at least one adequacy
 requirement. Every negative ID must also occur in `changed_behavior_ids`, with
 an ID-to-executed-test mapping. See [adequacy](adequacy.md) for validation,
-legacy readiness changes and the stricter TJERP pilot catalog boundary.
+legacy readiness changes and consumer-owned catalog boundaries.
 
 Fullstack schema 3 needs frontend/backend components and their real application
 graphs. It does not require an artificial shared npm project. Contract and E2E
@@ -170,7 +170,7 @@ consumers. The initial npm lock was generated with npm 12.1.0; native execution
 uses the selected npm 10.9.3 `ci` and `audit` with all dependency classes included.
 
 ```console
-POLICY_TJERP_OUTPUT=/private/tmp/tjerp-native-new rtk cargo test --locked -p policy-acceptance --test native_tjerp native_tjerp_reports -- --ignored --nocapture
+POLICY_SPLIT_CONSUMER_OUTPUT=/private/tmp/split-consumer-native-new rtk cargo test --locked -p policy-acceptance --test native_split_consumer native_split_consumer_reports -- --ignored --nocapture
 ```
 
 Use a fresh output directory. The Rust harness stages the fixture, installs locked

@@ -61,7 +61,7 @@ fn copy(source: &Path, target: &Path) {
 
 fn profile(npm: &str) -> project_verification::ProjectProfile {
     let mut value: Value = serde_json::from_str(include_str!(
-        "../../examples/tjerp-compatible/project-profile.json"
+        "../../examples/split-consumer/project-profile.json"
     ))
     .unwrap();
     value["id"] = json!("react-typescript");

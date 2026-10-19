@@ -6,7 +6,7 @@ Maps each authorization rule to the Rust symbol that enforces it. Rules are spec
 
 ## Scope boundary
 
-The kernel owns deterministic evidence, scope and release decisions. Native v1 types, an adapter importer and a local scope verifier exist; ownership transfers remain planned. Existing compatibility and required environment checks remain.
+The kernel owns deterministic evidence, scope and release decisions. Native types, importer and local scope verifier exist. TJERP owns its harness; adapter separation remains planned. Compatibility and required environment checks remain.
 
 [Task 18](../docs/tasks/task-18/README.md) links the accepted ADR and stage-1
 sequence. New exact native combinations and bootstrap presets stop. Typed
@@ -181,12 +181,12 @@ Authorization modules, including sensor evaluation, must have every selected mut
 
 Scope and result validation [[xtask/src/verification.rs#mutation_scope]]; the contract is [verification/mutation-contract.json](../verification/mutation-contract.json).
 
-## TJERP local composition
+## Split-consumer conformance
 
-The P7 harness preserves LocalUntrusted, checks exact catalog lists and raw executed selectors, and requires both profiles to bind one Git archive. It delegates decisions to existing core APIs and cannot authorize promotion.
+The synthetic split-consumer fixture preserves report, audit and tool-version regressions. Product catalogs, parent requirements and split-scope assertions now belong to the consumer-owned harness described in [[tjerp]].
 
-[[acceptance/src/tjerp/catalog.rs#check_catalog]] enforces pilot completeness;
-[[acceptance/src/tjerp/source.rs#git_inventory]] checks local source consistency;
-[[acceptance/src/tjerp/mod.rs#evaluate_pair]] binds both results and invokes the
-sensor, bundle and advisory provenance checks. See [[tjerp]] for the synthetic
-matrix and P8/P9 boundary.
+Staging [[acceptance/tests/native_split_consumer.rs#schema_three_fixture_stages_without_preset_layout]]
+keeps the explicit layout contract. Opt-in native regression
+[[acceptance/tests/native_split_consumer.rs#native_split_consumer_reports_audits_and_rejection_paths]]
+checks real report failures, audits and stale bindings. See the
+[fixture guide](../examples/split-consumer/README.md) for execution limits.
