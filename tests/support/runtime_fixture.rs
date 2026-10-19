@@ -7,7 +7,7 @@ fn main() {
                 .duration_since(std::time::UNIX_EPOCH)
                 .unwrap()
                 .as_millis();
-            let report = include_str!("../fixtures/project-reports/vitest.json")
+            let report = include_str!("../../crates/policy-report-adapters/tests/fixtures/project-reports/vitest.json")
                 .replace("1756684800000", &millis.to_string());
             std::fs::create_dir_all("reports").unwrap();
             std::fs::write("reports/unit.json", report).unwrap();

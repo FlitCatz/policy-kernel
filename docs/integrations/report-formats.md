@@ -1,5 +1,8 @@
 # Project report adapters
 
+The shared readers live in `crates/policy-report-adapters`; the compatibility
+runner preserves `project_verification::reports` through a re-export.
+
 Schema-4 frontend profiles select `vitest-json/v1`, `jest-json/v1`, or
 `playwright-json/v1` independently of the producer version and bind npm graph
 audits to `npm-ci-audit/v1`. These names map to the parser versions below. The
@@ -24,7 +27,7 @@ requirements in the collector. Empty or skipped-only reports never succeed.
 Producer versions identify exercised combinations, not claims that untrusted input proves
 which executable produced it. Schema 2 separates adapter intervals from actual
 observations; see the [selection contract](tool-selection.md). Earlier fixtures in
-`tests/fixtures/project-reports/` are hand-authored minimal examples. `jest.json`
+`crates/policy-report-adapters/tests/fixtures/project-reports/` are hand-authored minimal examples. `jest.json`
 was captured from the native Jest fixture, with path and timestamp normalized for
 deterministic parsing tests; raw native runs retain the original reports.
 Parser identifiers retain their original names because the normalized field

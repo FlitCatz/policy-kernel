@@ -6,6 +6,7 @@ on:
       - 'examples/**'
       - 'bootstrap/**'
       - 'crates/project-verification/**'
+      - 'crates/policy-report-adapters/**'
       - 'crates/evidence-collector/**'
       - 'crates/policy-core/**'
       - 'crates/policy-contracts/**'
@@ -49,7 +50,7 @@ jobs:
           cargo run --locked -p project-verification -- provision-npm 'bootstrap/templates/1.1.0/profiles/${{ matrix.profile }}/profile.json' --prefix '${{ runner.temp }}/selected-npm'
           echo '${{ runner.temp }}/selected-npm/node_modules/.bin' >> "$GITHUB_PATH"
       - name: Acceptance orchestration and trust regressions
-        run: cargo test --locked -p policy-acceptance -p policy-bootstrap -p project-verification -p policy-core
+        run: cargo test --locked -p policy-acceptance -p policy-bootstrap -p project-verification -p policy-report-adapters -p policy-core
       - name: Native baseline, isolated failures and corrected heads
         run: cargo run --locked -p policy-acceptance -- run --profile '${{ matrix.profile }}' --output '${{ runner.temp }}/task14-${{ matrix.profile }}' --provision
       - name: Retain observations, raw reports and provisioning logs

@@ -54,7 +54,7 @@ fn consumer_negative_ids_must_be_required_behaviors_and_map_to_report_tests() {
     let report = parse_report(
         ReportFormat::JestJson,
         "frontend:unit",
-        include_bytes!("../../../tests/fixtures/project-reports/jest.json"),
+        include_bytes!("../../policy-report-adapters/tests/fixtures/project-reports/jest.json"),
     )
     .unwrap();
     let ids: Vec<_> = report.tests.iter().map(|t| t.id.clone()).collect();

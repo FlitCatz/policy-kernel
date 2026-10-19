@@ -1,14 +1,13 @@
-use project_verification::reports::{parse_report, ReportFormat, TestOutcome};
+use policy_report_adapters::{parse_report, ReportFormat, TestOutcome};
 use serde_json::{json, Value};
 
-const VITEST: &[u8] = include_bytes!("../../../tests/fixtures/project-reports/vitest.json");
-const PLAYWRIGHT: &[u8] = include_bytes!("../../../tests/fixtures/project-reports/playwright.json");
-const TRX: &str = include_str!("../../../tests/fixtures/project-reports/vstest.trx");
+const VITEST: &[u8] = include_bytes!("fixtures/project-reports/vitest.json");
+const PLAYWRIGHT: &[u8] = include_bytes!("fixtures/project-reports/playwright.json");
+const TRX: &str = include_str!("fixtures/project-reports/vstest.trx");
 fn parse_json(
     format: ReportFormat,
     value: &Value,
-) -> Result<project_verification::reports::ParsedReport, project_verification::reports::ReportError>
-{
+) -> Result<policy_report_adapters::ParsedReport, policy_report_adapters::ReportError> {
     parse_report(format, "auth", &serde_json::to_vec(value).unwrap())
 }
 
