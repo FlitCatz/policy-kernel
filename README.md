@@ -341,6 +341,16 @@ its local cryptographic tests do not establish deployed provider services.
 Policy schema 2 can require explicit knowledge evidence. Policies with no such
 requirement continue to allow an empty knowledge collection.
 
+Readiness now requires policy schema 3 with digest-bound `required_reviews`:
+a positive `minimum_reviewers`, `require_provider_independence: true`, and
+`allowed_providers` (empty permits any provider). Core counts distinct approving
+review executions; waivers do not count as approvals. V1/v2 documents retain
+their bytes and digests but fail closed with `PK-POLICY-V3-MIGRATION-REQUIRED`
+until explicitly reapproved as v3 with a new digest and bound evidence. The
+controller's `minimum_reviewers` must equal `max(2, policy minimum_reviewers)`.
+This does not migrate consumer project profiles or establish production approval.
+See the [review requirements and migration](docs/trust-model.md).
+
 ## Further reading
 
 - [Architecture specification](docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md)

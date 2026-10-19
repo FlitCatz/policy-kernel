@@ -35,6 +35,43 @@ impl ReviewEvaluation {
 
 pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
     let mut reasons = Vec::new();
+    if input.policy.validate_version().is_err() {
+        insert_reason(
+            &mut reasons,
+            "PK-REVIEW-POLICY-INVALID",
+            "review policy version or quorum is invalid",
+        );
+    }
+    if input.policy.schema_version < 3 {
+        insert_reason(
+            &mut reasons,
+            "PK-POLICY-V3-MIGRATION-REQUIRED",
+            "reapprove the policy as v3 with explicit required_reviews before readiness",
+        );
+    }
+    if let Some(rules) = &input.policy.required_reviews {
+        let approvals = input
+            .reviews
+            .iter()
+            .filter(|review| review.status == ReviewStatus::Approved)
+            .map(|review| &review.execution_id)
+            .collect::<BTreeSet<_>>();
+        if (approvals.len() as u64) < u64::from(rules.minimum_reviewers) {
+            insert_reason(&mut reasons, "PK-REVIEW-QUORUM", "distinct approving review executions do not meet the policy quorum; waivers are not approvals");
+        }
+        if !rules.allowed_providers.is_empty()
+            && input
+                .reviews
+                .iter()
+                .any(|review| !rules.allowed_providers.contains(&review.provider))
+        {
+            insert_reason(
+                &mut reasons,
+                "PK-REVIEW-PROVIDER-NOT-ALLOWED",
+                "a review provider is outside the policy allowed_providers",
+            );
+        }
+    }
     if input.reviews.is_empty() {
         insert_reason(
             &mut reasons,

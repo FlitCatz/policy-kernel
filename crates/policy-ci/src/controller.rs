@@ -302,6 +302,16 @@ fn exact_inventory<'a>(
 pub fn produce(config: &ControllerConfig, signed: &SignedObservation, output: &Path) -> Result<()> {
     let raw = &signed.observation;
     let binding = &config.expected;
+    raw.policy
+        .validate_version()
+        .map_err(|error| format!("invalid review policy: {error}"))?;
+    let reviews =
+        raw.policy.required_reviews.as_ref().ok_or(
+            "PK-POLICY-V3-MIGRATION-REQUIRED: reapprove policy as v3 with required_reviews",
+        )?;
+    if config.minimum_reviewers as u64 != u64::from(reviews.minimum_reviewers.max(2)) {
+        return Err("controller configuration/current-run binding mismatch: minimum_reviewers must equal max(2, policy required_reviews.minimum_reviewers)".into());
+    }
     if config.schema_version != 1
         || raw.domain != DOMAIN
         || &raw.binding != binding
@@ -392,7 +402,12 @@ pub fn produce(config: &ControllerConfig, signed: &SignedObservation, output: &P
             inv.knowledge.iter().map(String::as_str),
             knowledge.iter().map(String::as_str),
         )
-        || bundle.reviews.len() < config.minimum_reviewers
+        || bundle
+            .reviews
+            .iter()
+            .filter(|review| review.status == policy_contracts::ReviewStatus::Approved)
+            .count()
+            < config.minimum_reviewers
         || raw
             .policy
             .required_sensor_ids

@@ -21,6 +21,33 @@ multiple agents from the same model provider is not provider independence. Model
 prose naming a provider, a local signature, and a structurally valid CI-shaped JSON
 object do not establish trusted provenance.
 
+Policy schema v3 requires a digest-bound `required_reviews` object:
+`minimum_reviewers` is a positive integer (1–4294967295),
+`require_provider_independence` must be `true`, and `allowed_providers` is an
+explicit list (empty permits any provider). The existing independence invariant
+cannot be disabled: review providers must be distinct and independent of every
+contributor, and execution IDs must be unique. Every supplied review must use an
+allowed provider. Only distinct executions with `approved` status count toward
+the quorum; waived findings do not turn a blocked report into an approval.
+Below quorum is inconclusive with `PK-REVIEW-QUORUM`; an excluded provider produces
+`PK-REVIEW-PROVIDER-NOT-ALLOWED`. Other provenance and blocking checks still apply.
+
+V1/v2 policy documents retain their serialization and policy digests, but cannot
+authorize readiness or shipping: `PK-POLICY-V3-MIGRATION-REQUIRED` requires owner
+reapproval as v3. No implicit quorum is inserted under an old digest. Migration
+adds `required_reviews`, changes `schema_version` to 3, and recomputes the policy
+digest; evidence, current-run bindings, and approvals must bind the new digest.
+V1/v2 reject the new field (including null); v3 rejects its absence, null, zero
+quorum, or disabled independence. Direct Rust construction is checked too.
+This policy version is separate from project-profile schema versions; existing
+consumer project profiles are not automatically rewritten or reapproved.
+
+The reference controller retains its floor of two approving providers. Its
+`minimum_reviewers` configuration must equal
+`max(2, policy.required_reviews.minimum_reviewers)`; the field is a consistency
+assertion, not an independent policy knob. Policy-core enforces the declared
+quorum for every caller, including local advisory evaluation and other adapters.
+
 All identities bind the exact repository, PR number, PR head, policy and evidence
 content, workflow run and explicit evaluation time. Unknown versions/fields,
 missing evidence, stale timestamps, malformed digests, process failure, timeout,
@@ -87,7 +114,7 @@ Task 11 plus sensor evaluation (`sensors.rs`), added on 2026-09-30. A completed 
 timeouts; unviable mutants remain separately counted, never counted as killed.
 Tool failure, missing files, incomplete outcomes and skipped coverage cannot pass.
 
-Knowledge claims and indexes provide context, not approvals. Policy schema v2 can
+Knowledge claims and indexes provide context, not approvals. Policy schemas v2/v3 can
 declare `required_knowledge` entries with `kind` (`lat_claim` or `code_graph_index`),
 an exact `source` identity, and `required_when` conditions. An empty condition list
 means always required. Otherwise any condition applies when both its `risks` and
@@ -112,7 +139,8 @@ The declaration and policy schema version enter the policy digest, and all
 knowledge metadata enters the evidence and decision digests. Evidence bound to a
 previous policy is rejected after adopting or changing a requirement. The new
 reader preserves v1 policy serialization and digests, and accepts v2 policies
-with no declaration without requiring knowledge. A v1 policy cannot carry
+with no declaration without requiring knowledge. Legacy policies still require
+the v3 review-policy migration above before readiness. A v1 policy cannot carry
 `required_knowledge`, even an empty array or null; v2 rejects null. Old readers
 reject v2 and unknown declarations. Evidence and decision wire versions remain
 v1 because their existing fields already carry the required bindings. Existing

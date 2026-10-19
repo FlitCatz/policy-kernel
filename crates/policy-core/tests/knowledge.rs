@@ -18,7 +18,7 @@ fn seal_policy(value: &mut Value) {
 
 fn required() -> Value {
     let mut value = ready_value();
-    value["policy"]["schema_version"] = json!(2);
+    value["policy"]["schema_version"] = json!(3);
     value["policy"]["required_knowledge"] = json!([requirement()]);
     value["evidence"]["knowledge"] = json!([{
         "kind": "code_graph_index", "source": "ci/codegraph", "version": "1.7.0",
@@ -61,7 +61,7 @@ fn assert_reason(mut value: Value, reason: &str) {
 
 #[test]
 fn knowledge_is_optional_for_legacy_and_undeclared_v2_policies() {
-    let mut legacy = ready_value();
+    let mut legacy = support::fixture_value("tests/fixtures/pre-merge/legacy-ready.json");
     legacy["evidence"]["knowledge"] = json!([]);
     seal_evidence(&mut legacy);
     let parsed = pre_merge_input(legacy.clone());
@@ -69,10 +69,10 @@ fn knowledge_is_optional_for_legacy_and_undeclared_v2_policies() {
         pre_merge_policy_digest(&parsed.policy).unwrap(),
         parsed.policy.policy_digest
     );
-    assert_ready(legacy.clone());
+    assert_reason(legacy.clone(), "PK-POLICY-V3-MIGRATION-REQUIRED");
     legacy["policy"]["schema_version"] = json!(2);
     seal_policy(&mut legacy);
-    assert_ready(legacy);
+    assert_reason(legacy, "PK-POLICY-V3-MIGRATION-REQUIRED");
 }
 
 #[test]

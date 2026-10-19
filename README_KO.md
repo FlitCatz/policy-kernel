@@ -315,6 +315,16 @@ receipt를 발행합니다. 로컬 암호 테스트가 실제 제공자 서비�
 정책 schema 2는 필수 knowledge를 명시할 수 있으며, 선언이 없는 정책은 계속 빈 knowledge를
 허용합니다.
 
+이제 readiness에는 digest에 결합된 `required_reviews`를 갖춘 정책 schema 3이 필요합니다:
+양수인 `minimum_reviewers`, `require_provider_independence: true`,
+`allowed_providers`(빈 배열이면 모든 제공자 허용)를 명시합니다. Core는 서로 다른 승인
+리뷰 실행만 정족수로 계산하며 waiver는 승인으로 계산하지 않습니다. V1/v2 문서의 바이트와
+digest는 유지되지만, 새 digest 및 결합된 증거를 갖춘 v3로 명시적으로 재승인하기 전에는
+`PK-POLICY-V3-MIGRATION-REQUIRED`로 fail closed 됩니다. 컨트롤러의
+`minimum_reviewers`는 `max(2, 정책 minimum_reviewers)`와 같아야 합니다.
+이는 소비 프로젝트 프로필의 자동 마이그레이션이나 운영 승인을 의미하지 않습니다.
+[리뷰 요구사항 및 마이그레이션](docs/trust-model.md)을 참고하세요.
+
 ## 추가 문서
 
 - [아키텍처 명세](docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md)

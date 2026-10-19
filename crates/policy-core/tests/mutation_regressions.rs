@@ -300,10 +300,12 @@ fn waiver_issued_exactly_at_evaluation_is_valid_until_expiry() {
     let result = evaluate_reviews(input);
     assert_eq!(
         result.status,
-        ReviewStatus::Approved,
+        ReviewStatus::Inconclusive,
         "{:?}",
         result.reasons
     );
+    assert!(result.has_reason("PK-WAIVER-APPLIED"));
+    assert!(result.has_reason("PK-REVIEW-QUORUM"));
 }
 
 #[test]

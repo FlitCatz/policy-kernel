@@ -2,6 +2,11 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+Policy v3 binds approving-review quorum and allowed providers. Legacy policy
+digests remain valid, but readiness and shipping require explicit v3 reapproval.
+Consumer profiles are unchanged; reapproval and promotion are not established.
+See [[kernel#Review consensus and waivers]].
+
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
 and records `bundled, not individually audited`, including absent optional
 platform parents. The native oxide fixture satisfies local scope; TJERP P8

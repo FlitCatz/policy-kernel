@@ -54,6 +54,100 @@ fn independent_approval_without_findings_is_approved() {
 }
 
 #[test]
+fn approving_quorum_boundaries_and_provider_constraints() {
+    let mut input = load("approved.json");
+    input
+        .policy
+        .required_reviews
+        .as_mut()
+        .unwrap()
+        .minimum_reviewers = 3;
+    for index in 0..2 {
+        let mut review = input.reviews[0].clone();
+        review.provider = policy_contracts::ProviderId::parse(format!("provider-{index}")).unwrap();
+        review.execution_id =
+            policy_contracts::ExecutionId::parse(format!("review-{index}")).unwrap();
+        input.reviews.push(review);
+    }
+    assert_eq!(
+        evaluate_reviews(input.clone()).status,
+        ReviewStatus::Approved
+    );
+    let mut below = input.clone();
+    below.reviews.pop();
+    let result = evaluate_reviews(below);
+    assert_eq!(result.status, ReviewStatus::Inconclusive);
+    assert!(result.has_reason("PK-REVIEW-QUORUM"));
+    let mut not_approving = input.clone();
+    not_approving.reviews[2].status = ReviewStatus::Inconclusive;
+    assert!(evaluate_reviews(not_approving).has_reason("PK-REVIEW-QUORUM"));
+    let mut duplicate = input.clone();
+    duplicate.reviews[2].execution_id = duplicate.reviews[1].execution_id.clone();
+    assert!(evaluate_reviews(duplicate).has_reason("PK-REVIEW-QUORUM"));
+    let mut same_provider = input.clone();
+    same_provider.reviews[2].provider = same_provider.reviews[1].provider.clone();
+    assert!(evaluate_reviews(same_provider).has_reason("PK-PROV-DUPLICATE-PROVIDER"));
+    input
+        .policy
+        .required_reviews
+        .as_mut()
+        .unwrap()
+        .allowed_providers = input.reviews.iter().map(|r| r.provider.clone()).collect();
+    assert_eq!(
+        evaluate_reviews(input.clone()).status,
+        ReviewStatus::Approved
+    );
+    input
+        .policy
+        .required_reviews
+        .as_mut()
+        .unwrap()
+        .allowed_providers
+        .pop();
+    assert!(evaluate_reviews(input).has_reason("PK-REVIEW-PROVIDER-NOT-ALLOWED"));
+}
+
+#[test]
+fn direct_rust_policy_construction_cannot_bypass_version_or_quorum() {
+    let original = load("approved.json");
+    for case in 0..5 {
+        let mut input = original.clone();
+        match case {
+            0 => input.policy.required_reviews = None,
+            1 => {
+                input
+                    .policy
+                    .required_reviews
+                    .as_mut()
+                    .unwrap()
+                    .minimum_reviewers = 0
+            }
+            2 => {
+                input
+                    .policy
+                    .required_reviews
+                    .as_mut()
+                    .unwrap()
+                    .require_provider_independence = false
+            }
+            3 => input.policy.schema_version = 2,
+            _ => input.policy.schema_version = 99,
+        }
+        let result = evaluate_reviews(input);
+        assert_eq!(result.status, ReviewStatus::Inconclusive);
+        assert!(result.has_reason("PK-REVIEW-POLICY-INVALID"));
+    }
+    for version in [1, 2] {
+        let mut input = original.clone();
+        input.policy.schema_version = version;
+        input.policy.required_reviews = None;
+        let result = evaluate_reviews(input);
+        assert_eq!(result.status, ReviewStatus::Inconclusive);
+        assert!(result.has_reason("PK-POLICY-V3-MIGRATION-REQUIRED"));
+    }
+}
+
+#[test]
 fn original_producer_cannot_review_after_an_independent_one_line_repair() {
     let mut input = load("self-review.json");
     input
@@ -123,7 +217,8 @@ fn waiver_must_match_every_binding_and_injected_time() {
     let mut valid = load("waiver-expired.json");
     valid.waivers[0].expires_at = UtcTimestamp::parse("2026-09-04T10:00:00Z").unwrap();
     let accepted = evaluate_reviews(valid.clone());
-    assert_eq!(accepted.status, ReviewStatus::Approved);
+    assert_eq!(accepted.status, ReviewStatus::Inconclusive);
+    assert!(accepted.has_reason("PK-REVIEW-QUORUM"));
     assert!(accepted.has_reason("PK-WAIVER-APPLIED"));
 
     valid.waivers[0].evidence_digest = policy_contracts::Sha256Digest::parse(
@@ -187,7 +282,7 @@ fn adding_an_approval_never_weakens_a_waived_blocked_report() {
     waived.waivers[0].expires_at = UtcTimestamp::parse("2026-09-04T10:00:00Z").unwrap();
     assert_eq!(
         evaluate_reviews(waived.clone()).status,
-        ReviewStatus::Approved
+        ReviewStatus::Inconclusive
     );
 
     let mut approval = waived.reviews[0].clone();

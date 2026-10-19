@@ -117,7 +117,9 @@ proptest! {
         ).unwrap();
         let actual = evaluate_reviews(input);
         if offset_seconds > 0 {
-            prop_assert_eq!(actual.status, ReviewStatus::Approved);
+            prop_assert_eq!(actual.status, ReviewStatus::Inconclusive);
+            prop_assert!(actual.has_reason("PK-REVIEW-QUORUM"));
+            prop_assert!(actual.has_reason("PK-WAIVER-APPLIED"));
         } else {
             prop_assert_eq!(actual.status, ReviewStatus::Blocked);
             prop_assert!(actual.reasons.iter().any(|reason| reason.code == "PK-WAIVER-EXPIRED"));

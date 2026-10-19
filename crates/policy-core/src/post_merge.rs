@@ -37,6 +37,12 @@ pub fn evaluate_post_merge(input: &PostMergeEvaluationInput) -> PostMergeDecisio
 }
 
 fn validate_policy_and_versions(input: &PostMergeEvaluationInput, gates: &mut Gates) {
+    if input.policy.schema_version < 3 {
+        gates.unknown(
+            "PK-POLICY-V3-MIGRATION-REQUIRED",
+            "reapprove the policy as v3 with explicit required_reviews before shipping",
+        );
+    }
     let mut versions = vec![
         input.schema_version,
         input.pre_merge.as_decision().schema_version,

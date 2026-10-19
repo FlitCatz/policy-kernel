@@ -67,6 +67,39 @@
       ],
       "type": "string"
     },
+    "ProviderId": {
+      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+      "type": "string"
+    },
+    "RequiredReviewPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_providers": {
+          "description": "Empty permits any provider; otherwise every review must use a listed one.",
+          "items": {
+            "$ref": "#/$defs/ProviderId"
+          },
+          "type": "array"
+        },
+        "minimum_reviewers": {
+          "format": "uint32",
+          "maximum": 4294967295,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "require_provider_independence": {
+          "const": true,
+          "description": "V3 cannot disable the kernel's provider-independence invariant.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "minimum_reviewers",
+        "require_provider_independence",
+        "allowed_providers"
+      ],
+      "type": "object"
+    },
     "Risk": {
       "enum": [
         "low",
@@ -87,6 +120,29 @@
   },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "else": {
+        "not": {
+          "required": [
+            "required_reviews"
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 3
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "required_reviews"
+        ]
+      }
+    }
+  ],
   "if": {
     "properties": {
       "schema_version": {
@@ -141,6 +197,10 @@
       },
       "type": "array"
     },
+    "required_reviews": {
+      "$ref": "#/$defs/RequiredReviewPolicy",
+      "default": null
+    },
     "required_sensor_ids": {
       "items": {
         "$ref": "#/$defs/SensorId"
@@ -150,7 +210,8 @@
     "schema_version": {
       "enum": [
         1,
-        2
+        2,
+        3
       ],
       "type": "integer"
     },
