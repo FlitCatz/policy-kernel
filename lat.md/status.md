@@ -4,8 +4,9 @@ The current-state authority is [docs/status.md](../docs/status.md); this page on
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
 New exact native combinations/presets stop. Parser extraction merged in PR 23;
-[[native-contracts]] supplies v1 types only, with no importer or scope command.
-Stage-1 PRs 4–8 remain planned. Profiles, bootstrap and required environment checks are preserved;
+[[native-contracts]] supplies v1 types; the PR 4 candidate adds a Unix adapter
+importer with retained verification records, without scope decisions or evidence
+conversion. Stage-1 PRs 5–8 remain planned. Profiles, bootstrap and required environment checks are preserved;
 TJERP is unchanged. Adapter support and compatibility end conditions remain open.
 See [[kernel#Scope boundary]]. No adoption or promotion is established by this decision.
 

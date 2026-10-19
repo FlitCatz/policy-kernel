@@ -9,8 +9,8 @@ or authorize a production release.
 - Authority boundaries: [[trust-boundaries]]
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope boundary:
-new native combinations/presets stop; [[native-contracts]] supplies v1 types only.
-Importing, scope evaluation and ownership transfers remain planned.
+new native combinations/presets stop; [[native-contracts]] supplies v1 types and
+an adapter importer. Scope evaluation and ownership transfers remain planned.
 See [[kernel#Scope boundary]] and [[tasks]].
 
 Canonical entry points are [README](../README.md),
