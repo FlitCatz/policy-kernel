@@ -52,7 +52,21 @@ The strict Rust wire types are in
 [`controller.rs`](../crates/policy-ci/src/controller.rs). Unknown fields are
 rejected. `ControllerConfig.schema_version` is 1. Its fields are `expected`
 (`RunBinding`), `observer_public_key` (absolute PEM path), `producer_keys`,
-`openssl` (absolute executable path), and `minimum_reviewers` (at least 2).
+`openssl` (absolute executable path), and `minimum_reviewers`, which must equal
+`max(2, policy.required_reviews.minimum_reviewers)`. The v3 policy is the source
+of the quorum; this configuration field asserts agreement while retaining the
+reference controller's floor of two approving providers. A larger or smaller
+independent configuration value is rejected. Only `approved` reviews count;
+waived blocked reports do not count as approvals.
+
+Policy v3 requires `required_reviews` with a positive `minimum_reviewers`,
+`require_provider_independence: true`, and `allowed_providers` (empty means any
+provider). Core evaluates that digest-bound quorum and provider list, while the
+controller authenticates identities and promotes provenance. V1/v2 policy
+documents and digests remain valid but cannot issue a controller receipt or
+authorize readiness/shipping: `PK-POLICY-V3-MIGRATION-REQUIRED` requests explicit
+owner reapproval as v3. Recompute the policy digest and bind new evidence and
+current-run observations after migration; do not reuse approval of an old digest.
 Each producer registry entry has `key_id`, `public_key`, `provider` and `model`.
 Observer and producer public keys must all be distinct, compared as DER public
 keys rather than PEM formatting. A producer key may authenticate multiple

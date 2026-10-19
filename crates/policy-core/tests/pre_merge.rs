@@ -19,6 +19,90 @@ fn input(value: Value) -> PreMergeEvaluationInput {
     serde_json::from_value(value).unwrap()
 }
 
+#[test]
+fn legacy_policy_requires_explicit_v3_reapproval_even_with_reviews() {
+    for version in [1, 2] {
+        let mut value = raw("ready");
+        value["policy"]["schema_version"] = json!(version);
+        value["policy"]
+            .as_object_mut()
+            .unwrap()
+            .remove("required_reviews");
+        seal_policy(&mut value);
+        assert_result(
+            value,
+            PreMergeStatus::Inconclusive,
+            "PK-POLICY-V3-MIGRATION-REQUIRED",
+        );
+    }
+}
+
+#[test]
+fn one_review_cannot_reach_ready_after_transport_hashes_are_recomputed() {
+    let mut value = raw("ready");
+    value["evidence"]["reviews"]
+        .as_array_mut()
+        .unwrap()
+        .truncate(1);
+    seal(&mut value);
+    assert!(policy_core::validate_bundle(&input(value.clone()).evidence).is_valid());
+    assert_result(value, PreMergeStatus::Inconclusive, "PK-REVIEW-QUORUM");
+}
+
+#[test]
+fn policy_quorum_and_provider_allowlist_are_digest_bound() {
+    for (field, replacement) in [
+        ("minimum_reviewers", json!(3)),
+        ("allowed_providers", json!(["reviewer-b"])),
+    ] {
+        let mut value = raw("ready");
+        let original = value["policy"]["policy_digest"].clone();
+        value["policy"]["required_reviews"][field] = replacement;
+        assert_result(
+            value.clone(),
+            PreMergeStatus::Inconclusive,
+            "PK-PRE-POLICY-DIGEST",
+        );
+        seal_policy(&mut value);
+        assert_ne!(value["policy"]["policy_digest"], original);
+        let reason = if field == "minimum_reviewers" {
+            "PK-REVIEW-QUORUM"
+        } else {
+            "PK-REVIEW-PROVIDER-NOT-ALLOWED"
+        };
+        assert_result(value, PreMergeStatus::Inconclusive, reason);
+    }
+}
+
+#[test]
+fn legacy_policy_digest_preimage_is_unchanged() {
+    let value: Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/pre-merge/legacy-ready.json"
+    ))
+    .unwrap();
+    let policy: PolicySnapshot = serde_json::from_value(value["policy"].clone()).unwrap();
+    assert_eq!(serde_json::to_value(&policy).unwrap(), value["policy"]);
+    assert_eq!(
+        policy_core::pre_merge_policy_digest(&policy).unwrap(),
+        policy.policy_digest
+    );
+    for version in [1, 2] {
+        let mut document = value["policy"].clone();
+        document["schema_version"] = json!(version);
+        let policy: PolicySnapshot = serde_json::from_value(document.clone()).unwrap();
+        document.as_object_mut().unwrap().remove("policy_digest");
+        assert_eq!(
+            policy_core::pre_merge_policy_digest(&policy).unwrap(),
+            canonical_sha256(&document).unwrap()
+        );
+        assert!(!serde_json::to_value(policy)
+            .unwrap()
+            .as_object()
+            .unwrap()
+            .contains_key("required_reviews"));
+    }
+}
+
 // Only test setup: repair transport hashes after deliberately changing evidence.
 // Expected decisions below are literal and do not depend on the sealing helper.
 fn seal(value: &mut Value) {
@@ -661,11 +745,42 @@ fn digest_protocol_matches_independently_computed_sha256_vectors() {
     let decision = evaluate_pre_merge(&input(raw("ready")));
     assert_eq!(
         decision.binding.evidence_digest.as_str(),
-        "4683ca506ea94a31512cad6be570ea7891be4dedaf8a291a2144c79b7fb1158c"
+        "cb66737163db53bd1b13a3486c785c17cff72d0eb6c395ef594424f3172e4a85"
     );
     assert_eq!(
         decision.decision_digest.as_str(),
-        "bdfb5b83188916472a14a84856ad6f0a822c0bdd5bfec241e8d0d32b498fc62d"
+        "f7f6795dc882e5eaaef504ae423492dc54f4ac92070c28757aaf94a0d93414c4"
+    );
+    // Independent canonical projection and literal decision envelope for v3.
+    use sha2::{Digest, Sha256};
+    let mut projected = serde_json::to_value(input(raw("ready"))).unwrap();
+    projected["evidence"]["manifest"]
+        .as_object_mut()
+        .unwrap()
+        .remove("child_digests");
+    for field in [
+        "modifications",
+        "executions",
+        "reviews",
+        "findings",
+        "waivers",
+        "sensors",
+        "knowledge",
+    ] {
+        projected["evidence"][field]
+            .as_array_mut()
+            .unwrap()
+            .sort_by_key(|record| serde_json::to_vec(record).unwrap());
+    }
+    let expected = json!({"schema_version":1,"mode":"authoritative","advisory":false,"status":"ready_to_merge","binding":{
+        "repository":"FlitCatz/policy-kernel","pull_request_number":6,"head_sha":"c".repeat(40),
+        "policy_digest":"9d8ed57f0955bfd8916cf6a655a7cdaf32e794909e28e1fd0f6dc595c47f21c8",
+        "evidence_digest":"cb66737163db53bd1b13a3486c785c17cff72d0eb6c395ef594424f3172e4a85",
+        "evaluated_at":"2026-09-07T09:00:00Z"},"reasons":[]});
+    let bytes = serde_json::to_vec(&json!({"domain":"policy-kernel/pre-merge-decision/v1","input":projected,"decision":expected})).unwrap();
+    assert_eq!(
+        format!("{:x}", Sha256::digest(bytes)),
+        decision.decision_digest.as_str()
     );
 }
 

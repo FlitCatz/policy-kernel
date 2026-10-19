@@ -1,5 +1,15 @@
 # Current status
 
+## Policy v3 review quorum
+
+The [review contract](trust-model.md) binds approving-review quorum and allowed
+providers into policy schema v3. V1/v2 documents retain their digests but cannot
+authorize readiness or shipping until explicit v3 reapproval, reported as
+`PK-POLICY-V3-MIGRATION-REQUIRED`. Waivers do not supply approvals; the reference
+controller mirrors the policy quorum with a floor of two. Consumer project
+profiles are unchanged. This implementation does not establish consumer
+reapproval, an authoritative decision, a protected merge, or production promotion.
+
 ## Third-party npm bundled inventory
 
 The [bundled-dependency contract](integrations/npm-workspaces.md#third-party-bundled-dependencies)

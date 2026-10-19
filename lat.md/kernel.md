@@ -36,9 +36,20 @@ The [adequacy contract](../docs/integrations/adequacy.md) records preserved lega
 
 ## Review consensus and waivers
 
-Reviews need independent providers; unwaived High or Critical findings block, and a blocked report whose actionable findings are all validly waived does not conflict with an approval.
+V3 binds an approving-review quorum and provider allowlist. Independent providers remain mandatory; waivers never supply approvals. Legacy policies require explicit v3 reapproval before readiness or shipping.
 
 Consensus [[crates/policy-core/src/reviews.rs#evaluate_reviews]]; waiver validity [[crates/policy-core/src/reviews.rs#waiver_state]]; waived blocked reports [[crates/policy-core/src/reviews.rs#blocked_report_is_waived]].
+
+Version boundary [[crates/policy-contracts/src/policy.rs#PolicySnapshot#validate_version]];
+rules [[crates/policy-contracts/src/policy.rs#RequiredReviewPolicy]].
+V1/v2 serialization and digests stay unchanged; `PK-POLICY-V3-MIGRATION-REQUIRED`
+blocks legacy authorization. V3 requires positive quorum and independence enabled;
+an empty allowlist permits any provider. Unwaived High/Critical findings still
+block, and a fully waived blocked report no longer conflicts with an approval.
+Regression [[crates/policy-core/tests/pre_merge.rs#one_review_cannot_reach_ready_after_transport_hashes_are_recomputed]];
+boundaries and providers [[crates/policy-core/tests/reviews.rs#approving_quorum_boundaries_and_provider_constraints]];
+legacy digests [[crates/policy-core/tests/pre_merge.rs#legacy_policy_digest_preimage_is_unchanged]];
+legacy receipts [[crates/policy-core/tests/post_merge.rs#legacy_policy_cannot_ship_through_a_preexisting_receipt]].
 
 ## Provenance and head binding
 
@@ -63,6 +74,9 @@ Evaluation [[crates/policy-core/src/post_merge.rs#evaluate_post_merge]]; receipt
 The controller verifies observer and producer signatures with owner-installed keys before promoting local evidence to trusted-runner provenance.
 
 Authentication [[crates/policy-ci/src/controller.rs#produce]]; producer payload [[crates/policy-ci/src/controller.rs#producer_payload]]; signed bytes [[crates/policy-ci/src/controller.rs#canonical]]; input bounds [[crates/policy-ci/src/controller.rs#read_json]].
+
+The v3 policy governs quorum. Controller configuration must mirror the policy
+minimum with a floor of two approving providers; mismatches fail before issuance.
 
 ## Project verification binding
 

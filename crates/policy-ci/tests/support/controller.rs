@@ -34,7 +34,7 @@ mod authenticated_controller {
             let mut context: PreMergeContext = read_json(&ci.trusted.join("context.json")).unwrap();
             context.agent_ready.as_mut().unwrap().trust = TrustClass::LocalUntrusted;
             let mut policy: PolicySnapshot = read_json(&ci.root.join("policy.json")).unwrap();
-            policy.schema_version = 2;
+            policy.schema_version = 3;
             policy.required_knowledge = serde_json::from_value(json!([{"kind":"code_graph_index", "source":"ci/codegraph", "required_when":[]}])).unwrap();
             evidence.knowledge = serde_json::from_value(json!([{
                 "kind":"code_graph_index", "source":"ci/codegraph", "version":"1.7.0",
@@ -231,6 +231,36 @@ mod authenticated_controller {
     }
 
     #[test]
+    fn controller_quorum_is_policy_governed_and_keeps_reference_floor() {
+        for (minimum, configured, expected) in [
+            (1, 2, None),
+            (2, 2, None),
+            (3, 2, Some("minimum_reviewers must equal")),
+            (3, 3, Some("inventory is incomplete")),
+            (2, 3, Some("minimum_reviewers must equal")),
+        ] {
+            let mut fixture = SignedFixture::new();
+            fixture.signed.observation.policy.required_reviews.as_mut().unwrap().minimum_reviewers = minimum;
+            let digest = policy_core::pre_merge_policy_digest(&fixture.signed.observation.policy).unwrap();
+            fixture.signed.observation.policy.policy_digest = digest.clone();
+            fixture.signed.observation.evidence.manifest.policy_digest = digest.clone();
+            fixture.signed.observation.binding.policy_digest = digest.clone();
+            fixture.config.expected.policy_digest = digest;
+            fixture.config.minimum_reviewers = configured;
+            fixture.sign();
+            if let Some(message) = expected { fixture.reject(message); } else { fixture.produce().unwrap(); }
+        }
+        let mut legacy = SignedFixture::new();
+        legacy.signed.observation.policy.schema_version = 2;
+        legacy.signed.observation.policy.required_reviews = None;
+        legacy.reject("PK-POLICY-V3-MIGRATION-REQUIRED");
+        let mut blocked_review = SignedFixture::new();
+        blocked_review.signed.observation.evidence.reviews[0].status = policy_contracts::ReviewStatus::Blocked;
+        blocked_review.sign();
+        blocked_review.reject("inventory is incomplete");
+    }
+
+    #[test]
     fn signed_but_invalid_controller_configuration_cannot_issue_a_receipt() {
         let mut fixture = SignedFixture::new();
         let original = fixture.config.clone();
@@ -252,7 +282,7 @@ mod authenticated_controller {
         }
         fixture.config = original.clone(); fixture.signed = signed.clone();
         fixture.config.minimum_reviewers = 3;
-        fixture.reject("inventory is incomplete");
+        fixture.reject("minimum_reviewers must equal");
         for variant in 0..3 {
             fixture.config = original.clone(); fixture.signed = signed.clone();
             match variant {

@@ -32,6 +32,9 @@ pub struct PolicySnapshot {
     /// Policy v2 obligations; absent from the serialized legacy v1 projection.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub required_knowledge: Vec<KnowledgeRequirement>,
+    /// Mandatory in v3; omitted from legacy digest preimages.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub required_reviews: Option<RequiredReviewPolicy>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -87,10 +90,19 @@ struct PolicySnapshotWire {
     #[serde(default, deserialize_with = "deserialize_knowledge_requirements")]
     #[schemars(with = "Vec<KnowledgeRequirement>")]
     required_knowledge: Option<Vec<KnowledgeRequirement>>,
+    #[serde(default, deserialize_with = "deserialize_required_reviews")]
+    #[schemars(with = "RequiredReviewPolicy")]
+    required_reviews: Option<RequiredReviewPolicy>,
+}
+
+fn deserialize_required_reviews<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<RequiredReviewPolicy>, D::Error> {
+    RequiredReviewPolicy::deserialize(deserializer).map(Some)
 }
 
 fn policy_schema_version_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({"type": "integer", "enum": [1, 2]})
+    schemars::json_schema!({"type": "integer", "enum": [1, 2, 3]})
 }
 
 fn deserialize_knowledge_requirements<'de, D: serde::Deserializer<'de>>(
@@ -102,9 +114,20 @@ fn deserialize_knowledge_requirements<'de, D: serde::Deserializer<'de>>(
 impl PolicySnapshot {
     /// Direct Rust construction must obey the same version boundary as JSON.
     pub fn validate_version(&self) -> Result<(), &'static str> {
+        match (self.schema_version, &self.required_reviews) {
+            (1 | 2, Some(_)) => return Err("policy v1/v2 cannot declare required_reviews"),
+            (3, None) => return Err("policy v3 requires required_reviews"),
+            (3, Some(rules)) if rules.minimum_reviewers == 0 => {
+                return Err("required_reviews minimum_reviewers must be positive");
+            }
+            (3, Some(rules)) if !rules.require_provider_independence => {
+                return Err("policy v3 requires provider independence");
+            }
+            _ => {}
+        }
         match self.schema_version {
             1 if self.required_knowledge.is_empty() => Ok(()),
-            2 => Ok(()),
+            2 | 3 => Ok(()),
             1 => Err("policy v1 cannot declare required_knowledge"),
             _ => Err("unsupported policy schema version"),
         }
@@ -131,6 +154,7 @@ impl<'de> Deserialize<'de> for PolicySnapshot {
             protected_target_branches: wire.protected_target_branches,
             allowed_merge_methods: wire.allowed_merge_methods,
             required_knowledge: wire.required_knowledge.unwrap_or_default(),
+            required_reviews: wire.required_reviews,
         };
         policy
             .validate_version()
@@ -147,6 +171,17 @@ impl JsonSchema for PolicySnapshot {
     fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
         let mut schema = PolicySnapshotWire::json_schema(generator);
         schema.insert(
+            "allOf".into(),
+            schemars::json_schema!({"allOf": [{
+                "if": {"properties": {"schema_version": {"const": 3}}},
+                "then": {"required": ["required_reviews"]},
+                "else": {"not": {"required": ["required_reviews"]}}
+            }]})
+            .get("allOf")
+            .unwrap()
+            .clone(),
+        );
+        schema.insert(
             "if".into(),
             schemars::json_schema!({"properties": {"schema_version": {"const": 1}}}).into(),
         );
@@ -161,9 +196,17 @@ impl JsonSchema for PolicySnapshot {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct RequiredReviewPolicy {
+    #[schemars(range(min = 1, max = 4294967295_u32))]
     pub minimum_reviewers: u32,
+    /// V3 cannot disable the kernel's provider-independence invariant.
+    #[schemars(schema_with = "required_independence_schema")]
     pub require_provider_independence: bool,
+    /// Empty permits any provider; otherwise every review must use a listed one.
     pub allowed_providers: Vec<ProviderId>,
+}
+
+fn required_independence_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({"type": "boolean", "const": true})
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]

@@ -108,26 +108,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 316
+              "line": 322
             },
             "start": {
               "column": 1,
-              "line": 300
+              "line": 306
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/post_merge.rs:304:5: replace post_merge_decision_digest -> Sha256Digest with Default::default()",
+        "name": "crates/policy-core/src/post_merge.rs:310:5: replace post_merge_decision_digest -> Sha256Digest with Default::default()",
         "package": "policy-core",
         "replacement": "Default::default()",
         "span": {
           "end": {
             "column": 74,
-            "line": 315
+            "line": 321
           },
           "start": {
             "column": 5,
-            "line": 304
+            "line": 310
           }
         }
       },
@@ -136,11 +136,11 @@
       "span": {
         "end": {
           "column": 74,
-          "line": 315
+          "line": 321
         },
         "start": {
           "column": 5,
-          "line": 304
+          "line": 310
         }
       }
     },
@@ -390,7 +390,7 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 233
+              "line": 270
             },
             "start": {
               "column": 1,
@@ -405,7 +405,7 @@
         "span": {
           "end": {
             "column": 41,
-            "line": 232
+            "line": 269
           },
           "start": {
             "column": 5,
@@ -418,7 +418,7 @@
       "span": {
         "end": {
           "column": 41,
-          "line": 232
+          "line": 269
         },
         "start": {
           "column": 5,
@@ -800,18 +800,18 @@
   ],
   "schema_version": 1,
   "sources": {
-    "crates/policy-ci/src/controller.rs": "ddc342aa2aaa4e83ef1abe8a018b3cedb3c6dde24d9aa0d58d9c136e7d1ba318",
+    "crates/policy-ci/src/controller.rs": "2c073130f5ed661c79719e5186616840a8a979b810906ba085c37c02d769e0f9",
     "crates/policy-contracts/src/decision.rs": "513a58a2f4458d63cdea95802bdac2c140c2073de67a7b5bbd98a7f45bb0bcbd",
     "crates/policy-contracts/src/evidence.rs": "32420efe5224ca15b69b71c6ba8dc67230fa65aea3dd57baca487b73c043c495",
     "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
     "crates/policy-contracts/src/identity.rs": "c72a1f4062a92250c0cb14cf18f47c1904149b1375b5329f2de56b42fa43a851",
     "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
-    "crates/policy-contracts/src/policy.rs": "ada1e048c23941d05af058e3ff5b8238fa9d58bbe39e60090e836c6c72005c5e",
+    "crates/policy-contracts/src/policy.rs": "9017c6b45429d7a705ff95da7e4a98d656114bfb8a4bb434772212ee137b9afb",
     "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
-    "crates/policy-core/src/post_merge.rs": "f0f97a1279c1f8b75b0271b651ad44139ecc0951cdce5318b6022e38c3462ada",
+    "crates/policy-core/src/post_merge.rs": "15906c3b1a35befaa06d89d63164f05b035a6a3f52d4acb58b96b47e7baa9e65",
     "crates/policy-core/src/pre_merge.rs": "445ccbc8892e5a7e1c0fdcaa472692a0b8c23440f20c9ef98a4bf4f07d2a9b60",
     "crates/policy-core/src/provenance.rs": "3198ad6a32168e7afcc0fb47cdc314bc00f54e4fc047e96cf80fbe5e94cf87a4",
-    "crates/policy-core/src/reviews.rs": "8b5c591432f9d0acb01b6586e46b6c89deaf7f842e368f64acca2a82fb287806",
+    "crates/policy-core/src/reviews.rs": "5d65f95ac345ec4f9051fe95384bd8384b33334fa81b0f0fb05f007e1ac3ef36",
     "crates/policy-core/src/sensors.rs": "6369d6488f47af134b1afb8b5afd105cce243f9bfc7941dccfc683fa9acebc05"
   }
 }

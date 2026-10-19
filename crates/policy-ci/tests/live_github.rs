@@ -67,7 +67,7 @@ fn real_actions_run_publishes_and_reads_back_blocked_decision() {
         },
     };
     let mut policy = PolicySnapshot {
-        schema_version: SCHEMA_VERSION,
+        schema_version: 3,
         policy_digest: Sha256Digest::parse("0".repeat(64)).unwrap(),
         required_check_name: "policy-kernel/pre-merge".into(),
         max_evidence_age_seconds: 600,
@@ -76,6 +76,11 @@ fn real_actions_run_publishes_and_reads_back_blocked_decision() {
         required_sensor_ids: vec![],
         sensor_profile_digest: Some(canonical_sha256(&profile).unwrap()),
         required_knowledge: vec![],
+        required_reviews: Some(policy_contracts::RequiredReviewPolicy {
+            minimum_reviewers: 2,
+            require_provider_independence: true,
+            allowed_providers: vec![],
+        }),
         protected_target_branches: vec![],
         allowed_merge_methods: vec![],
     };

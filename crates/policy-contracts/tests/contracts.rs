@@ -2,8 +2,10 @@ use policy_contracts::*;
 
 #[test]
 fn knowledge_policy_v2_is_explicit_and_legacy_policies_round_trip() {
-    let ready: serde_json::Value =
-        serde_json::from_str(include_str!("../../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    let ready: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../tests/fixtures/pre-merge/legacy-ready.json"
+    ))
+    .unwrap();
     let legacy = ready["policy"].clone();
     let parsed: PolicySnapshot = serde_json::from_value(legacy.clone()).unwrap();
     assert_eq!(serde_json::to_value(parsed).unwrap(), legacy);

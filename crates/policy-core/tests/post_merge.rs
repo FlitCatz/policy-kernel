@@ -42,9 +42,13 @@ fn assert_reason(value: Value, status: PostMergeStatus, reason: &str) {
 }
 
 #[test]
-fn policy_v2_preserves_the_bound_post_merge_authorization_chain() {
+fn legacy_policy_cannot_ship_through_a_preexisting_receipt() {
     let mut value = raw("merge.json");
     value["policy"]["schema_version"] = json!(2);
+    value["policy"]
+        .as_object_mut()
+        .unwrap()
+        .remove("required_reviews");
     value["policy"]["required_knowledge"] = json!([{
         "kind": "code_graph_index", "source": "ci/codegraph", "required_when": []
     }]);
@@ -58,10 +62,14 @@ fn policy_v2_preserves_the_bound_post_merge_authorization_chain() {
     let decision = evaluate_post_merge(&input);
     assert_eq!(
         decision.status,
-        PostMergeStatus::Shipped,
+        PostMergeStatus::Inconclusive,
         "{:?}",
         decision.reasons
     );
+    assert!(decision
+        .reasons
+        .iter()
+        .any(|r| r.code == "PK-POLICY-V3-MIGRATION-REQUIRED"));
 }
 
 #[test]

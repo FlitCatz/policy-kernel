@@ -346,8 +346,10 @@ fn knowledge_policy_schema_matches_versioned_rust_contract() {
     let schema: Value =
         serde_json::from_str(include_str!("../../schemas/policy.schema.json")).unwrap();
     let validator = jsonschema::draft202012::options().build(&schema).unwrap();
-    let ready: Value =
-        serde_json::from_str(include_str!("../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    let ready: Value = serde_json::from_str(include_str!(
+        "../../tests/fixtures/pre-merge/legacy-ready.json"
+    ))
+    .unwrap();
     let legacy = ready["policy"].clone();
     let mut v2 = legacy.clone();
     v2["schema_version"] = json!(2);
@@ -472,4 +474,69 @@ fn knowledge_policy_schema_matches_versioned_rust_contract() {
             "schema {name}: {instance}"
         );
     }
+}
+
+#[test]
+fn review_policy_schema_matches_versioned_rust_contract() {
+    let schema: Value =
+        serde_json::from_str(include_str!("../../schemas/policy.schema.json")).unwrap();
+    let validator = jsonschema::draft202012::options().build(&schema).unwrap();
+    let ready: Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    let v3 = ready["policy"].clone();
+    let check = |value: Value, expected: bool| {
+        assert_eq!(validator.is_valid(&value), expected, "schema: {value}");
+        assert_eq!(
+            serde_json::from_value::<policy_contracts::PolicySnapshot>(value.clone()).is_ok(),
+            expected,
+            "Rust: {value}"
+        );
+    };
+    check(v3.clone(), true);
+    for version in [1, 2] {
+        let mut legacy = v3.clone();
+        legacy["schema_version"] = json!(version);
+        check(legacy.clone(), false);
+        legacy.as_object_mut().unwrap().remove("required_reviews");
+        check(legacy.clone(), true);
+        legacy["required_reviews"] = Value::Null;
+        check(legacy, false);
+    }
+    for field in [
+        "minimum_reviewers",
+        "require_provider_independence",
+        "allowed_providers",
+    ] {
+        let mut value = v3.clone();
+        value["required_reviews"]
+            .as_object_mut()
+            .unwrap()
+            .remove(field);
+        check(value, false);
+    }
+    let mut absent = v3.clone();
+    absent.as_object_mut().unwrap().remove("required_reviews");
+    check(absent, false);
+    for (pointer, replacement) in [
+        ("/required_reviews", Value::Null),
+        ("/required_reviews/minimum_reviewers", json!(0)),
+        ("/required_reviews/minimum_reviewers", json!(-1)),
+        ("/required_reviews/minimum_reviewers", json!(4294967296_u64)),
+        (
+            "/required_reviews/require_provider_independence",
+            json!(false),
+        ),
+        ("/required_reviews/allowed_providers", Value::Null),
+        ("/required_reviews/allowed_providers", json!([""])),
+    ] {
+        let mut value = v3.clone();
+        *value.pointer_mut(pointer).unwrap() = replacement;
+        check(value, false);
+    }
+    let mut unknown = v3.clone();
+    unknown["required_reviews"]["unexpected"] = json!(true);
+    check(unknown, false);
+    let mut one = v3;
+    one["required_reviews"]["minimum_reviewers"] = json!(1);
+    check(one, true);
 }

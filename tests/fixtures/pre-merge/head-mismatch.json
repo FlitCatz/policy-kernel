@@ -3,8 +3,9 @@
   "mode": "authoritative",
   "evaluation_time": "2026-09-07T09:00:00Z",
   "policy": {
-    "schema_version": 1,
-    "policy_digest": "63fd019c05bc9d002a803fbf5187ab59f2316e012c421c13d4220a780e090e46",
+    "required_reviews": {"allowed_providers":[],"minimum_reviewers":2,"require_provider_independence":true},
+    "schema_version": 3,
+    "policy_digest": "9d8ed57f0955bfd8916cf6a655a7cdaf32e794909e28e1fd0f6dc595c47f21c8",
     "required_check_name": "policy-kernel",
     "max_evidence_age_seconds": 3600,
     "authorized_actors": [
@@ -44,7 +45,7 @@
       "work_item_id": "task-6",
       "base_sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
       "head_sha": "cccccccccccccccccccccccccccccccccccccccc",
-      "policy_digest": "63fd019c05bc9d002a803fbf5187ab59f2316e012c421c13d4220a780e090e46",
+      "policy_digest": "9d8ed57f0955bfd8916cf6a655a7cdaf32e794909e28e1fd0f6dc595c47f21c8",
       "source_set_digest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
       "workflow_run_id": "run-6",
       "created_at": "2026-09-07T08:58:00Z",
