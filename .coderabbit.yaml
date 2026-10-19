@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: ko-KR
+reviews:
+  profile: chill
+  high_level_summary: true
+  poem: false
+  review_status: true
+  request_changes_workflow: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!Cargo.lock"
+    - "!docs/archive/**"
+    - "!verification/mutation-contract.json"
+    - "!schemas/*.schema.json"
+    - "!crates/*/schemas/*.schema.json"
+  path_instructions:
+    - path: "crates/policy-core/**"
+      instructions: >-
+        Deterministic decision core. Flag any fail-open path, ambient state
+        (environment, clock, filesystem, network) or nondeterminism.
+    - path: "**/*.md"
+      instructions: >-
+        README.md and README_KO.md must change together. Status claims must not
+        assert production promotion, authoritative decisions or protected merges
+        from local tests alone. Historical records under docs/archive stay as written.
+chat:
+  auto_reply: true

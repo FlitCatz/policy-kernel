@@ -1,0 +1,6 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax", "style"],
+  "ignorePatterns": "Cargo.lock\ndocs/archive/**\nverification/mutation-contract.json\nschemas/*.schema.json\ncrates/*/schemas/*.schema.json",
+  "instructions": "Write all review comments in Korean. This is a Rust policy kernel: execution logic, CLIs, verification tools and tests must be Rust (see AGENTS.md). Prioritise fail-open paths, nondeterminism and trust-boundary mistakes in crates/policy-core and crates/policy-ci over style. README.md and README_KO.md must change together."
+}
