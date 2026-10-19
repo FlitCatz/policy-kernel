@@ -10,6 +10,7 @@ short paths between the concepts an agent or maintainer needs to understand.
 - [[trust-boundaries]] — why local evidence cannot authorize a release
 - [[kernel]] — authorization rules anchored to the Rust symbols that enforce them
 - [[tjerp]] — P7 split-profile local acceptance and synthetic fault matrix
+- [[github-tests]] — executable publication and adapter process regressions
 
 Start with [Current status](../docs/status.md) and the
 [Task index](../docs/tasks/README.md).
