@@ -3,8 +3,9 @@
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
-New exact native combinations/presets stop; the native façade and stage-1 PRs 2–8
-remain planned. Profiles, bootstrap and required environment checks are preserved;
+New exact native combinations/presets stop. Parser extraction merged in PR 23;
+[[native-contracts]] supplies v1 types only, with no importer or scope command.
+Stage-1 PRs 4–8 remain planned. Profiles, bootstrap and required environment checks are preserved;
 TJERP is unchanged. Adapter support and compatibility end conditions remain open.
 See [[kernel#Scope boundary]]. No adoption or promotion is established by this decision.
 

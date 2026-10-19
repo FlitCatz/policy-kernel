@@ -1,0 +1,491 @@
+{
+  "invalid": [
+    {
+      "document": "expected",
+      "name": "unknown-version",
+      "pointer": "/schema_version",
+      "schema_valid": false,
+      "value": 2
+    },
+    {
+      "document": "run",
+      "name": "unknown-field",
+      "pointer": "/trusted",
+      "schema_valid": false,
+      "value": true
+    },
+    {
+      "document": "expected",
+      "name": "unknown-nested-field",
+      "pointer": "/subject/trusted",
+      "schema_valid": false,
+      "value": true
+    },
+    {
+      "document": "expected",
+      "name": "empty-required-set",
+      "pointer": "/requirements/observations",
+      "schema_valid": false,
+      "value": []
+    },
+    {
+      "document": "expected",
+      "name": "duplicate-required-set",
+      "pointer": "/requirements/observations/0/accepted_exit_codes",
+      "schema_valid": false,
+      "value": [
+        0,
+        0
+      ]
+    },
+    {
+      "document": "expected",
+      "name": "requirement-id-collision",
+      "pointer": "/requirements/requirements/1/id",
+      "schema_valid": true,
+      "value": "AC-1"
+    },
+    {
+      "document": "expected",
+      "name": "unknown-suite",
+      "pointer": "/requirements/requirements/0/suites/0",
+      "schema_valid": true,
+      "value": "missing"
+    },
+    {
+      "document": "expected",
+      "name": "raw-in-typed-slot",
+      "pointer": "/subject/source_set_digest",
+      "schema_valid": false,
+      "value": {
+        "kind": "raw_byte_sha256",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "document": "run",
+      "name": "typed-in-raw-slot",
+      "pointer": "/artifacts/0/digest",
+      "schema_valid": false,
+      "value": {
+        "kind": "canonical_sha256",
+        "role": "evidence",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    },
+    {
+      "document": "expected",
+      "name": "wrong-hash-role",
+      "pointer": "/subject/source_set_digest/role",
+      "schema_valid": true,
+      "value": "command"
+    },
+    {
+      "document": "run",
+      "name": "mismatched-child-subject",
+      "pointer": "/observations/0/subject/source/head",
+      "schema_valid": true,
+      "value": "2222222222222222222222222222222222222222"
+    },
+    {
+      "document": "pair",
+      "name": "mismatched-expected-subject",
+      "pointer": "/subject/source/head",
+      "schema_valid": true,
+      "value": "2222222222222222222222222222222222222222"
+    },
+    {
+      "document": "run",
+      "name": "artifact-hash-mismatch",
+      "pointer": "/artifacts/0/digest/sha256",
+      "schema_valid": true,
+      "value": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    {
+      "document": "run",
+      "name": "unknown-artifact",
+      "pointer": "/test_observations/0/raw_report/id",
+      "schema_valid": true,
+      "value": "missing"
+    },
+    {
+      "document": "run",
+      "name": "count-mismatch",
+      "pointer": "/test_observations/0/counts/passed",
+      "schema_valid": true,
+      "value": 0
+    },
+    {
+      "document": "run",
+      "name": "unknown-mapped-test",
+      "pointer": "/mappings/0/tests/0/test_id",
+      "schema_valid": true,
+      "value": "missing"
+    },
+    {
+      "document": "run",
+      "name": "path-traversal",
+      "pointer": "/artifacts/0/path",
+      "schema_valid": true,
+      "value": "../raw.json"
+    },
+    {
+      "document": "result",
+      "name": "empty-success",
+      "pointer": "/requirements",
+      "schema_valid": true,
+      "value": []
+    },
+    {
+      "document": "result",
+      "name": "success-without-evidence",
+      "pointer": "/digests/evidence",
+      "schema_valid": true,
+      "value": null
+    },
+    {
+      "document": "result",
+      "name": "trust-promotion",
+      "pointer": "/trust",
+      "schema_valid": false,
+      "value": "ci_observed"
+    },
+    {
+      "document": "result",
+      "name": "review-promotion",
+      "pointer": "/review",
+      "schema_valid": false,
+      "value": "met"
+    }
+  ],
+  "valid": {
+    "expected": {
+      "bindings": {
+        "evaluated_at": "2026-10-19T01:01:00Z",
+        "maximum_age_seconds": 3600,
+        "mode": "local_advisory",
+        "observations": [
+          {
+            "command_digest": {
+              "kind": "canonical_sha256",
+              "role": "command",
+              "schema": "policy_native_v1",
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "configuration_digest": {
+              "kind": "canonical_sha256",
+              "role": "configuration",
+              "schema": "policy_native_v1",
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "id": "unit",
+            "parser": {
+              "id": "example-json",
+              "version": "1"
+            }
+          }
+        ]
+      },
+      "requirements": {
+        "approved_file_digest": {
+          "kind": "raw_byte_sha256",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "exemptions": [],
+        "observations": [
+          {
+            "accepted_exit_codes": [
+              0
+            ],
+            "id": "unit",
+            "tests": {
+              "maximum_failed": 0,
+              "maximum_retries": 0,
+              "maximum_skipped": 0,
+              "minimum_discovered": 1,
+              "minimum_executed": 1,
+              "minimum_passed": 1
+            }
+          }
+        ],
+        "requirements": [
+          {
+            "id": "AC-1",
+            "kind": "acceptance_criterion",
+            "minimum_executed_tests": 1,
+            "suites": [
+              "unit"
+            ]
+          },
+          {
+            "id": "B-1",
+            "kind": "changed_behavior",
+            "minimum_executed_tests": 1,
+            "suites": [
+              "unit"
+            ]
+          },
+          {
+            "id": "N-1",
+            "kind": "negative_case",
+            "minimum_executed_tests": 1,
+            "suites": [
+              "unit"
+            ]
+          }
+        ]
+      },
+      "schema_version": 1,
+      "subject": {
+        "head": "1111111111111111111111111111111111111111",
+        "repository": "example/project",
+        "scope_definition_digest": {
+          "kind": "canonical_sha256",
+          "role": "scope_definition",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "source_inventory_digest": {
+          "kind": "raw_byte_sha256",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source_set_digest": {
+          "kind": "canonical_sha256",
+          "role": "source_set",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    },
+    "result": {
+      "adapter_version": "example-adapter-1",
+      "digests": {
+        "evidence": {
+          "kind": "canonical_sha256",
+          "role": "evidence",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "expected_scope": {
+          "kind": "canonical_sha256",
+          "role": "expected_scope",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "native_run": {
+          "kind": "canonical_sha256",
+          "role": "native_run",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "policy": {
+          "kind": "canonical_sha256",
+          "role": "policy",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      },
+      "evaluated_at": "2026-10-19T01:01:00Z",
+      "exclusions": [],
+      "reasons": [],
+      "requirements": [
+        {
+          "id": "AC-1",
+          "reasons": [],
+          "status": "satisfied"
+        },
+        {
+          "id": "B-1",
+          "reasons": [],
+          "status": "satisfied"
+        },
+        {
+          "id": "N-1",
+          "reasons": [],
+          "status": "satisfied"
+        }
+      ],
+      "review": "unmet",
+      "schema_version": 1,
+      "status": "satisfied",
+      "subject": {
+        "run_id": "run-1",
+        "scope_id": "scope-1",
+        "source": {
+          "head": "1111111111111111111111111111111111111111",
+          "repository": "example/project",
+          "scope_definition_digest": {
+            "kind": "canonical_sha256",
+            "role": "scope_definition",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "source_inventory_digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "source_set_digest": {
+            "kind": "canonical_sha256",
+            "role": "source_set",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      },
+      "trust": "local_untrusted",
+      "verifier_version": "example-verifier-1"
+    },
+    "run": {
+      "artifacts": [
+        {
+          "digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "id": "raw-1",
+          "path": "raw.json",
+          "role": "raw_report"
+        }
+      ],
+      "exclusions": [],
+      "mappings": [
+        {
+          "requirement_id": "AC-1",
+          "tests": [
+            {
+              "suite_id": "unit",
+              "test_id": "test-1"
+            }
+          ]
+        },
+        {
+          "requirement_id": "B-1",
+          "tests": [
+            {
+              "suite_id": "unit",
+              "test_id": "test-1"
+            }
+          ]
+        },
+        {
+          "requirement_id": "N-1",
+          "tests": [
+            {
+              "suite_id": "unit",
+              "test_id": "test-1"
+            }
+          ]
+        }
+      ],
+      "observations": [
+        {
+          "command": {
+            "argv": [
+              "native-test",
+              "--report",
+              "raw.json"
+            ],
+            "cwd": "."
+          },
+          "completed_at": "2026-10-19T01:00:01Z",
+          "completion": {
+            "code": 0,
+            "kind": "exited"
+          },
+          "configuration_digest": {
+            "kind": "canonical_sha256",
+            "role": "configuration",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "execution_id": "exec-1",
+          "id": "unit",
+          "observed_at": "2026-10-19T01:00:02Z",
+          "started_at": "2026-10-19T01:00:00Z",
+          "subject": {
+            "run_id": "run-1",
+            "scope_id": "scope-1",
+            "source": {
+              "head": "1111111111111111111111111111111111111111",
+              "repository": "example/project",
+              "scope_definition_digest": {
+                "kind": "canonical_sha256",
+                "role": "scope_definition",
+                "schema": "policy_native_v1",
+                "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              "source_inventory_digest": {
+                "kind": "raw_byte_sha256",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "source_set_digest": {
+                "kind": "canonical_sha256",
+                "role": "source_set",
+                "schema": "policy_native_v1",
+                "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            }
+          }
+        }
+      ],
+      "schema_version": 1,
+      "subject": {
+        "run_id": "run-1",
+        "scope_id": "scope-1",
+        "source": {
+          "head": "1111111111111111111111111111111111111111",
+          "repository": "example/project",
+          "scope_definition_digest": {
+            "kind": "canonical_sha256",
+            "role": "scope_definition",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "source_inventory_digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "source_set_digest": {
+            "kind": "canonical_sha256",
+            "role": "source_set",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      },
+      "test_observations": [
+        {
+          "counts": {
+            "discovered": 1,
+            "executed": 1,
+            "failed": 0,
+            "passed": 1,
+            "retries": 0,
+            "skipped": 0
+          },
+          "observation_id": "unit",
+          "parser": {
+            "id": "example-json",
+            "version": "1"
+          },
+          "raw_report": {
+            "digest": {
+              "kind": "raw_byte_sha256",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "id": "raw-1"
+          },
+          "tests": [
+            {
+              "attempts": 1,
+              "id": "test-1",
+              "outcome": "passed",
+              "raw_identity": "/original/checkout/tests/test-1"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

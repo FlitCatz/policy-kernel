@@ -48,8 +48,8 @@ sha512 integrity가 있어야 허용합니다. Audit configuration은 각 항목
 
 [범위 결정(Task 18)](docs/tasks/task-18/README.md)은 제품을 결정론적
 evidence·scope·release 판정으로 좁힙니다. 새로운 exact native 도구 조합과
-bootstrap preset 추가는 중단했습니다. 최소 native-result 경로는 아직 계획이며
-구현되지 않았습니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
+bootstrap preset 추가는 중단했습니다. [Native 계약](docs/integrations/native-contracts-v1.md)은
+v1 타입만 제공하며 importer와 scope 명령은 아직 없습니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
 유지하고, TJERP 실행은 변경하지 않습니다.
 
 [P7 TJERP 인수 harness](docs/integrations/tjerp-adoption.md)는 기존 Rust API로
@@ -175,6 +175,7 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 | 패키지 | 역할 |
 | --- | --- |
 | `policy-contracts` | 엄격하고 버전이 관리되는 전송 타입 및 스키마 원본 타입 |
+| `policy-native-contracts` | Native v1 전송 타입·구조 검증·스키마·적합성 corpus; importer 없음 |
 | `policy-core` | 결정론적 정책·출처·검토·센서·병합 평가 |
 | `policy-cli` | 로컬 자문 병합 전 평가와 타입 객체 검사 |
 | `policy-ci` | 권한 있는 GitHub Actions 평가 및 전용 검사 게시 |
