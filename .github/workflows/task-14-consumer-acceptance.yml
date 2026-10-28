@@ -36,7 +36,7 @@ jobs:
       - name: Derive runtime choices from the reviewed profile
         id: selection
         run: cargo run --locked -p project-verification -- ci-inputs 'bootstrap/templates/1.1.0/profiles/${{ matrix.profile }}/profile.json' --github-output "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: matrix.profile != 'dotnet'
         with:
           node-version: ${{ steps.selection.outputs.node_version }}
@@ -83,7 +83,7 @@ jobs:
       - name: Derive alternate consumer choices
         id: selection
         run: cargo run --locked -p project-verification -- ci-inputs examples/react-jest/project-profile.json --github-output "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ steps.selection.outputs.node_version }}
       - name: Provision the selected npm release
@@ -118,7 +118,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - run: rustup toolchain install 1.95.0 --profile minimal
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 26.10.0
       - name: Provision actual npm candidates
