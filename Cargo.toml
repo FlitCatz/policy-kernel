@@ -35,8 +35,8 @@ chrono = { version = "0.4.42", default-features = false, features = ["serde", "s
 sha2 = "0.10.9"
 hex = "0.4.3"
 thiserror = "2.0.16"
-clap = { version = "~4.5.47", features = ["derive"] }
-schemars = { version = "~1.0.4", features = ["chrono04"] }
+clap = { version = "~4.6.7", features = ["derive"] }
+schemars = { version = "~1.2.3", features = ["chrono04"] }
 globset = "0.4.16"
 assert_cmd = "2.0.17"
 jsonschema = { version = "0.55.0", default-features = false }
