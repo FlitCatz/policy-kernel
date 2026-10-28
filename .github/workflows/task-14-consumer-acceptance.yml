@@ -55,7 +55,7 @@ jobs:
         run: cargo run --locked -p policy-acceptance -- run --profile '${{ matrix.profile }}' --output '${{ runner.temp }}/task14-${{ matrix.profile }}' --provision
       - name: Retain observations, raw reports and provisioning logs
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: task14-${{ matrix.profile }}-${{ github.sha }}
           include-hidden-files: true
@@ -96,7 +96,7 @@ jobs:
         run: cargo test --locked -p policy-acceptance --test native_jest -- --ignored --nocapture
       - name: Retain observations and native reports
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: task15-jest-${{ github.sha }}
           include-hidden-files: true
@@ -135,7 +135,7 @@ jobs:
         run: cargo test --locked -p policy-acceptance --test native_project_versions -- --ignored --nocapture
       - name: Retain requests, results, reports and audit observations
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: project-owned-versions-${{ github.sha }}
           include-hidden-files: true
