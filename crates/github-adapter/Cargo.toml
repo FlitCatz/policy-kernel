@@ -21,3 +21,6 @@ rustix = { workspace = true, features = ["fs", "process"] }
 
 [dev-dependencies]
 serde_json.workspace = true
+
+[lints]
+workspace = true

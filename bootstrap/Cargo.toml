@@ -20,3 +20,6 @@ roxmltree.workspace = true
 [dev-dependencies]
 tempfile.workspace = true
 assert_cmd.workspace = true
+
+[lints]
+workspace = true

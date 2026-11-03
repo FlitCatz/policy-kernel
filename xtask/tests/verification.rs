@@ -384,6 +384,28 @@ fn clean_runtime_and_public_api_pass() {
     success(&residue(t.path()));
     success(&public_api(t.path()));
 }
+
+#[test]
+fn workspace_edges_include_renamed_optional_dev_build_and_inactive_target_dependencies() {
+    for declaration in [
+        "[dependencies]\nkernel = { package = \"policy-core\", path = \"../policy-core\", optional = true }\n",
+        "[dev-dependencies]\nkernel = { package = \"policy-core\", path = \"../policy-core\" }\n",
+        "[build-dependencies]\nkernel = { package = \"policy-core\", path = \"../policy-core\" }\n",
+        "[target.'cfg(target_os = \"none\")'.dependencies]\nkernel = { package = \"policy-core\", path = \"../policy-core\" }\n",
+    ] {
+        let temp = scan_repo();
+        fs::write(temp.path().join("Cargo.toml"), "[workspace]\nmembers=[\"crates/*\"]\nresolver=\"2\"\n").unwrap();
+        let helper = temp.path().join("crates/helper");
+        fs::create_dir_all(helper.join("src")).unwrap();
+        fs::write(helper.join("src/lib.rs"), "").unwrap();
+        fs::write(helper.join("Cargo.toml"), format!("[package]\nname=\"helper\"\nversion=\"0.1.0\"\nedition=\"2021\"\n{declaration}")).unwrap();
+        let lock = std::process::Command::new("cargo").args(["generate-lockfile", "--offline"]).current_dir(temp.path()).output().unwrap();
+        success(&lock);
+        let out = residue(temp.path());
+        assert_eq!(out.status.code(), Some(1));
+        assert!(String::from_utf8_lossy(&out.stderr).contains("unapproved workspace dependency: helper -> policy-core"), "{}", String::from_utf8_lossy(&out.stderr));
+    }
+}
 #[test]
 fn scans_include_hidden_and_ignored_files() {
     for path in [

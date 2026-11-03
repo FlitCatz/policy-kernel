@@ -24,3 +24,6 @@ rustix = { workspace = true, features = ["fs"] }
 assert_cmd.workspace = true
 yaml-rust2.workspace = true
 tempfile.workspace = true
+
+[lints]
+workspace = true

@@ -24,3 +24,6 @@ rustix = { workspace = true, features = ["fs"] }
 
 [dev-dependencies]
 tempfile.workspace = true
+
+[lints]
+workspace = true

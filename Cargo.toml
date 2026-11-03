@@ -24,6 +24,10 @@ rust-version = "1.85"
 license = "MIT"
 publish = false
 
+[workspace.lints.clippy]
+too_many_arguments = "deny"
+fn_params_excessive_bools = "deny"
+
 [workspace.dependencies]
 # Wire/CLI/schema producers stay within the reviewed minor line. Cargo.lock
 # records the exact tested resolution; a compatible constraint is not evidence

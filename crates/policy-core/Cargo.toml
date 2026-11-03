@@ -22,3 +22,6 @@ globset.workspace = true
 chrono.workspace = true
 proptest.workspace = true
 yaml-rust2.workspace = true
+
+[lints]
+workspace = true

@@ -26,6 +26,17 @@ its pinned version deliberately and verify `lat check` locally with that version
 - Check documented commands, arguments, and exit codes against the implementation.
   After documentation changes, verify Markdown relative links and `git diff --check`.
 
+# Structural verification
+
+- Every workspace package inherits `[workspace.lints]` through `[lints] workspace = true`.
+  Clippy argument limits live in `clippy.toml`; do not add lint suppressions to
+  bypass them.
+- `xtask check-residue` checks declared internal dependency directions against
+  `WORKSPACE_DEPENDENCIES` in `xtask/src/verification.rs`, including optional,
+  dev, build and target-specific dependencies. Review intentional new edges and
+  update the documented allow-list in the same change. See
+  [structural verification gates](docs/integrations/structure-gates.md).
+
 # Knowledge graph and code index maintenance
 
 `lat.md/` is a [lat.md](https://github.com/vercel-labs/lat.md) navigation and code
