@@ -133,30 +133,6 @@ fn profile(npm: &str) -> project_verification::ProjectProfile {
     parse_profile(&value.to_string()).unwrap()
 }
 
-fn jest_profile() -> project_verification::ProjectProfile {
-    let legacy = parse_profile(include_str!(
-        "../../examples/react-jest/project-profile.json"
-    ))
-    .unwrap();
-    let candidate = project_verification::selection::upgrade_frontend_profile(legacy).unwrap();
-    let mut value = serde_json::to_value(candidate).unwrap();
-    value["selection"]
-        .as_object_mut()
-        .unwrap()
-        .remove("provisioning");
-    for tool in value["selection"]["tools"]
-        .as_object_mut()
-        .unwrap()
-        .values_mut()
-    {
-        tool["version"]["acceptance"] = json!({"kind":"record"});
-    }
-    for package in value["selection"]["packages"].as_array_mut().unwrap() {
-        package["acceptance"] = json!({"kind":"record"});
-    }
-    parse_profile(&value.to_string()).unwrap()
-}
-
 fn request(root: &Path) -> RunRequest {
     let profile =
         parse_profile(&fs::read_to_string(root.join("project-profile.json")).unwrap()).unwrap();
@@ -598,57 +574,5 @@ test('retries the browser check', async ({page}) => {
             phase(&root, &output, "audit-advisory", Some("frontend:audit"));
         }
     }
-    let jest = output.join("jest");
-    copy(&workspace.join("examples/react-jest"), &jest);
-    fs::write(jest.join("web/.node-version"), "26.10.0\n").unwrap();
-    fs::write(
-        jest.join("project-profile.json"),
-        serde_json::to_vec_pretty(&jest_profile()).unwrap(),
-    )
-    .unwrap();
-    fs::write(jest.join(".gitignore"), "node_modules/\njest-report.json\n").unwrap();
-    let install = command(
-        &jest.join("web"),
-        "npm",
-        &[
-            "ci",
-            "--ignore-scripts",
-            "--no-audit",
-            "--no-fund",
-            "--include=dev",
-            "--include=optional",
-            "--include=peer",
-        ],
-    );
-    fs::write(
-        output.join("jest-install.log"),
-        [&install.stdout[..], &install.stderr[..]].concat(),
-    )
-    .unwrap();
-    assert!(install.status.success(), "Jest fixture installation failed");
-    checked(&jest, "git", &["init", "--quiet"]);
-    commit(&jest, "Jest baseline");
-    let request = request(&jest);
-    let result = project_verification::run(request.clone()).unwrap();
-    retain_reports(&output, "jest", &result);
-    fs::write(
-        output.join("jest-request.json"),
-        serde_json::to_vec_pretty(&request).unwrap(),
-    )
-    .unwrap();
-    fs::write(
-        output.join("jest-result.json"),
-        serde_json::to_vec_pretty(&result).unwrap(),
-    )
-    .unwrap();
-    for sensor in &result.sensors {
-        assert_eq!(
-            sensor.evidence.status,
-            SensorStatus::Passed,
-            "Jest: {} {:?}",
-            sensor.evidence.sensor_id,
-            sensor.result.errors
-        );
-    }
-    fs::write(output.join("summary.json"), serde_json::to_vec_pretty(&json!({"status":"passed","scope":"local-native-advisory","node":"26.10.0","npm":["10.9.3","12.1.0"],"jest":"30.2.0","harness":policy_acceptance::harness::observe(workspace).unwrap()})).unwrap()).unwrap();
+    fs::write(output.join("summary.json"), serde_json::to_vec_pretty(&json!({"status":"passed","scope":"local-native-advisory","node":"26.10.0","npm":["10.9.3","12.1.0"],"harness":policy_acceptance::harness::observe(workspace).unwrap()})).unwrap()).unwrap();
 }

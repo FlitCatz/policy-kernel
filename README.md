@@ -46,14 +46,16 @@ documents the split-consumer lock refresh.
 
 Native preset acceptance selects bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
 all 1.1.0 assets remain frozen. Fixtures scope minimatch 11.0.4 and glob 14.0.3
-overrides to their affected dependency chains. Both Jest jobs still require a
-clean audit and remain blocked on unpatched deepmerge
-GHSA-gcqx-w48m-w2h4; see [current status](docs/status.md).
+overrides to their affected dependency chains. Managed Jest runner/CI guarantees
+have ended; its Rust JSON reader and wire enums remain for compatibility. Frozen
+bootstrap bytes and receipt recovery/uninstall are preserved; no schema changes.
+See [current status](docs/status.md#jest-transition-managed-execution-ended).
 
 The [alternate Vitest fixture](examples/react-vitest/project-profile.json) adds
 Node 22.19.0/npm 10.9.4, React SSR under `web/`, producer skip and nested
 `omit=dev` audit coverage. General profile tests now use Vitest; a profile-only
-Jest corpus preserves compatibility. This first stage retains the Jest jobs.
+Jest corpus preserves compatibility. Vitest JSON has no retry history: configured
+`retry: 0` does not provide Jest success-after-retry rejection parity.
 See [native commands and limits](docs/integrations/acceptance.md#alternate-vitest-transition).
 
 Tasks 1–14 provide implemented components in this workspace. The
@@ -117,7 +119,7 @@ only `EmitCompilerGeneratedFiles=true` with project-relative `obj/generated` is
 accepted, with command, inheritance and symlink checks. Local verification remains
 advisory and does not promote evidence to Trusted.
 
-Frontend projects can opt into [project-owned tool versions](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4): profile schema 4 / selection schema 3 separates version acceptance from the Vitest, Jest, Playwright, process, and npm audit contracts. Provisioning is optional; tool observation and declared runtime/lock checks remain mandatory. `migrate-profile FILE --target-schema 4` prints a candidate without changing the source. Custom bootstrap 1.3.0 accepts this frontend profile and leaves native files user-owned. The [native conformance guide](docs/integrations/acceptance.md#project-owned-frontend-conformance) covers supplied consumer candidates and raw report retention. See [Task 17](docs/tasks/task-17/README.md) for validation scope and the exact-head hosted observation; production promotion remains separate.
+Frontend projects can opt into [project-owned tool versions](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4): profile schema 4 / selection schema 3 separates version acceptance from the Vitest, Playwright, process, npm audit and compatibility-only Jest contracts. Provisioning is optional; tool observation and declared runtime/lock checks remain mandatory. `migrate-profile FILE --target-schema 4` prints a candidate without changing the source. Custom bootstrap 1.3.0 accepts this frontend profile and leaves native files user-owned. The [native conformance guide](docs/integrations/acceptance.md#project-owned-frontend-conformance) covers supplied consumer candidates and raw report retention. See [Task 17](docs/tasks/task-17/README.md) for validation scope and the exact-head hosted observation; production promotion remains separate.
 
 Explicit [schema-3 consumer profiles](docs/integrations/consumer-schema3.md) now
 support the selected .NET 11 RC1/VSTest 17.14.1 and Playwright 1.63.0 combination,
@@ -137,7 +139,7 @@ release 1.2.0 for schema 3; existing 1.1.0 presets remain unchanged. See
 - Git for the CI adapter and consumer-acceptance harness.
 - Native tools follow the adopted [selection contract](docs/integrations/tool-selection.md).
   Built-in provisioning chooses Node 22.18.0 / npm 10.9.3 and .NET SDK 9.0.304;
-  the additional React/Jest consumer chooses Node 22.19.0 / npm 10.9.4.
+  the additional React/Vitest SSR consumer chooses Node 22.19.0 / npm 10.9.4.
   Requests, exact provisioning choices and actual observations remain distinct.
 - OpenSSL for the authenticated controller and its cryptographic tests; see the
   [controller reference](action/controller.md) for owner-controlled trust anchors.
@@ -269,7 +271,7 @@ See the [adequacy contract and compatibility note](docs/integrations/adequacy.md
 
 `project-verification` turns an adopted project profile and checked source
 inventory into local observations. It supports React/TypeScript, .NET, and
-full-stack assets and user profiles, and normalizes Vitest JSON, Jest JSON,
+full-stack assets and user profiles, and normalizes Vitest JSON, compatibility-only Jest JSON,
 Playwright JSON, and VSTest TRX
 reports. The result remains local and advisory until a consumer binds it into the
 trusted CI path.

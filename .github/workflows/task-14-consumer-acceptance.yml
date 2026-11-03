@@ -70,44 +70,6 @@ jobs:
             ${{ runner.temp }}/task14-${{ matrix.profile }}/**/previous-head-rejection.json
             ${{ runner.temp }}/task14-${{ matrix.profile }}/**/reports/**
             ${{ runner.temp }}/task14-${{ matrix.profile }}/**/*.log
-  alternate:
-    name: React SSR / Jest / alternate Node and npm
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
-      - run: rustup toolchain install 1.95.0 --profile minimal
-      - name: Derive alternate consumer choices
-        id: selection
-        run: cargo run --locked -p project-verification -- ci-inputs examples/react-jest/project-profile.json --github-output "$GITHUB_OUTPUT"
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: ${{ steps.selection.outputs.node_version }}
-      - name: Provision the selected npm release
-        run: |
-          cargo run --locked -p project-verification -- provision-npm examples/react-jest/project-profile.json --prefix '${{ runner.temp }}/selected-npm'
-          echo '${{ runner.temp }}/selected-npm/node_modules/.bin' >> "$GITHUB_PATH"
-      - name: Native Jest baseline and negative cases
-        env:
-          POLICY_JEST_OUTPUT: ${{ runner.temp }}/task15-jest
-        run: cargo test --locked -p policy-acceptance --test native_jest -- --ignored --nocapture
-      - name: Retain observations and native reports
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: task15-jest-${{ github.sha }}
-          include-hidden-files: true
-          retention-days: 30
-          path: |
-            ${{ runner.temp }}/task15-jest/summary.json
-            ${{ runner.temp }}/task15-jest/*/request.json
-            ${{ runner.temp }}/task15-jest/*/result.json
-            ${{ runner.temp }}/task15-jest/*/original-report.json
-            ${{ runner.temp }}/task15-jest/*.log
-            ${{ runner.temp }}/task15-jest/previous-head-rejection.json
   alternate-vitest:
     name: React SSR / Vitest / alternate Node and npm
     runs-on: ubuntu-24.04

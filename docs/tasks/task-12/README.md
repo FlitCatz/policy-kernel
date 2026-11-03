@@ -20,3 +20,7 @@ and the Jest adapter. See [tool selection](../../integrations/tool-selection.md)
 - [2026-09-09-task-12-project-profiles.md](../../archive/plans/2026-09-09-task-12-project-profiles.md)
 - [2026-09-09-task-12-project-profiles.md](../../archive/reviews/2026-09-09-task-12-project-profiles.md)
 - [project-verification.md](../../integrations/project-verification.md)
+
+Later support scope: [managed Jest execution ended](../../integrations/jest-transition.md);
+the reader/contracts remain compatible. The historical Task observations above
+retain their original scope and dates.

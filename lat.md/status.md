@@ -52,18 +52,19 @@ policies and requires negative cases to map to executed tests. Frozen parsing
 is preserved; local tests do not establish adoption or promotion. See [[kernel#Test adequacy]].
 
 Native presets select bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
-1.1.0 bytes remain frozen. Fixture-scoped minimatch/glob overrides leave both
-Jest jobs blocked on unpatched deepmerge. See [[kernel#Bootstrap installer]]
+1.1.0 bytes remain frozen. Fixture-scoped minimatch/glob overrides remain;
+the historical Jest deepmerge failures preceded managed execution retirement. See [[kernel#Bootstrap installer]]
 and the current-status authority; no promotion is established.
 
 The split-consumer frontend separately selects Vite 6.4.5 / Vitest 4.1.12
 and locks source-map-js 1.2.2. Its selected npm 10.9.3 audit reports zero
-vulnerabilities; the separate Jest deepmerge failure remains unchanged.
+vulnerabilities; historical Jest audit failures are preserved in their record.
 See the current-status authority and [[kernel#Split-consumer conformance]].
 
-Stage one adds [[kernel#Alternate frontend conformance]] with Vitest while
-retaining existing Jest jobs and a profile-only compatibility corpus. Retry zero
-configuration cannot recover Vitest's absent retry history. See the current-status authority.
+[[kernel#Alternate frontend conformance]] now uses Vitest; managed Jest runner/CI
+guarantees have ended. Reader/enums, importer, profile-only corpus, frozen templates
+and receipt recovery/uninstall remain compatible. Retry zero does not recover
+Vitest retry history. See the current-status authority.
 
 P1 adds explicit npm members under one root graph and audit. Native
 Node 26.12.0/npm 11.20.0 fixtures satisfy the local scope; evidence remains

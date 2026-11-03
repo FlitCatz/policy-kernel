@@ -67,14 +67,16 @@ Split-consumer lock 갱신 내용은
 
 네이티브 프리셋 acceptance는 Vite 7.3.7 / Vitest 4.1.12를 고정한 bootstrap 1.1.1을 선택하며,
 1.1.0 asset의 바이트는 그대로 유지합니다. Fixture는 영향을 받는 의존성 경로에만
-minimatch 11.0.4 및 glob 14.0.3 override를 적용합니다. 두 Jest job은 clean audit
-조건을 유지하며 수정판이 없는 deepmerge GHSA-gcqx-w48m-w2h4 때문에 실패합니다.
-자세한 내용은 [현재 상태](docs/status.md)를 참고하세요.
+minimatch 11.0.4 및 glob 14.0.3 override를 적용합니다. 관리 Jest runner·CI 보증은
+종료했으며 Rust JSON reader와 wire enum은 호환용으로 유지합니다. 동결 bootstrap
+바이트와 receipt 복구·제거를 보존하며 schema는 바꾸지 않습니다.
+[현재 상태](docs/status.md#jest-transition-managed-execution-ended)를 참고하세요.
 
 [대체 Vitest fixture](examples/react-vitest/project-profile.json)는 Node 22.19.0/npm 10.9.4,
 `web/` 아래 React SSR, 실제 skip 및 중첩 `omit=dev` 감사 회귀를 추가합니다.
 일반 프로필 시험은 Vitest로 옮기며 프로필만 남긴 Jest corpus로 호환성을 검사합니다.
-이 첫 단계에서는 기존 Jest job을 유지합니다.
+Vitest JSON에는 retry 이력이 없으므로 `retry: 0` 설정만으로 Jest의 재시도 뒤 성공 거절과
+동등한 보장을 제공하지 않습니다.
 [실행 명령과 한계](docs/integrations/acceptance.md#alternate-vitest-transition)를 참고하세요.
 
 이 워크스페이스에는 Task 1–14의 구성요소가 구현되어 있습니다. 근거와 남은 구현·통합·운영 조건은
@@ -127,7 +129,7 @@ Schema 3 소비자는 검토한 NuGet 프로젝트에
 `obj/generated` 조합만 허용하며 명령, 상속 및 symlink를 검사합니다. 로컬 검증은
 advisory이며 증거를 Trusted로 승격하지 않습니다.
 
-프런트엔드 프로젝트는 [프로젝트 소유 도구 버전](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4) 경로를 선택할 수 있습니다. 프로필 schema 4 / selection schema 3은 버전 수용 규칙과 Vitest·Jest·Playwright·process·npm 감사 계약을 분리합니다. 설치 버전 선택은 선택 사항이지만 실제 도구 관측과 선언한 runtime·lock 검사는 필수입니다. `migrate-profile FILE --target-schema 4`는 원본을 바꾸지 않고 후보를 출력합니다. 사용자 프로필 전용 bootstrap 1.3.0은 네이티브 파일을 사용자 소유로 둡니다. [native 적합성 안내](docs/integrations/acceptance.md#project-owned-frontend-conformance)에는 소비자 후보 입력과 원본 보고서 보존 절차가 있습니다. 검증 범위와 특정 커밋의 hosted 실행 결과는 [Task 17](docs/tasks/task-17/README.md)에 기록하며, 운영 승격은 별도입니다.
+프런트엔드 프로젝트는 [프로젝트 소유 도구 버전](docs/integrations/tool-selection.md#project-owned-frontend-versions-schema-4) 경로를 선택할 수 있습니다. 프로필 schema 4 / selection schema 3은 버전 수용 규칙과 Vitest·Playwright·process·npm 감사 및 호환 전용 Jest 계약을 분리합니다. 설치 버전 선택은 선택 사항이지만 실제 도구 관측과 선언한 runtime·lock 검사는 필수입니다. `migrate-profile FILE --target-schema 4`는 원본을 바꾸지 않고 후보를 출력합니다. 사용자 프로필 전용 bootstrap 1.3.0은 네이티브 파일을 사용자 소유로 둡니다. [native 적합성 안내](docs/integrations/acceptance.md#project-owned-frontend-conformance)에는 소비자 후보 입력과 원본 보고서 보존 절차가 있습니다. 검증 범위와 특정 커밋의 hosted 실행 결과는 [Task 17](docs/tasks/task-17/README.md)에 기록하며, 운영 승격은 별도입니다.
 
 명시적 [schema 3 소비 프로필](docs/integrations/consumer-schema3.md)은 선택된
 .NET 11 RC1/VSTest 17.14.1 및 Playwright 1.63.0 조합, 프레임워크 설정 상속,
@@ -146,7 +148,7 @@ advisory이며 증거를 Trusted로 승격하지 않습니다.
 - CI 어댑터와 소비 프로젝트 인수 검증에 필요한 Git
 - 네이티브 도구는 채택된 [선택 계약](docs/integrations/tool-selection.md)을 따릅니다.
   내장 프로필의 설치 선택은 Node 22.18.0 / npm 10.9.3 및 .NET SDK 9.0.304이며,
-  추가 React/Jest 소비 조합은 Node 22.19.0 / npm 10.9.4를 선택합니다.
+  추가 React/Vitest SSR 소비 조합은 Node 22.19.0 / npm 10.9.4를 선택합니다.
   요청 호환 범위, 정확한 설치 선택, 실제 관측 버전은 각각 기록합니다.
 - 인증 컨트롤러와 암호 검증 테스트에는 OpenSSL이 필요합니다. 소유자가 관리할 신뢰 기준은
   [컨트롤러 참조 구현](action/controller.md)을 참고하세요.
@@ -250,7 +252,7 @@ cargo test --locked -p xtask
 
 `project-verification`은 채택된 프로젝트 프로필과 검증된 소스 인벤토리로부터 로컬 관측값을
 만듭니다. React/TypeScript, .NET, 풀스택 자산과 사용자 프로필을 지원하며 Vitest JSON,
-Jest JSON, Playwright JSON, VSTest TRX 보고서를 정규화합니다. 이 결과는 로컬 자문용입니다. 권한 있는 결정을 뒷받침하려면
+호환 전용 Jest JSON, Playwright JSON, VSTest TRX 보고서를 정규화합니다. 이 결과는 로컬 자문용입니다. 권한 있는 결정을 뒷받침하려면
 소비 프로젝트가 신뢰할 수 있는 CI 경로에 결과를 바인딩해야 합니다.
 
 스키마 2의 의존성 감사는 선택한 그래프를 각각 검사합니다. npm 설치와 감사는

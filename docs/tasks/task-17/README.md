@@ -28,3 +28,7 @@ request, result, original reports, audit observations, exact versions, lockfile,
 head and harness source binding. The PR #7 candidate has a recorded hosted
 run; later heads need their own observation. Separate operational approval
 remains necessary.
+
+Later support scope: [managed Jest execution ended](../../integrations/jest-transition.md);
+the reader/contracts remain compatible. The historical Task observations above
+retain their original scope and dates.
