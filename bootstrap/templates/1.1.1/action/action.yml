@@ -1,0 +1,71 @@
+name: Policy kernel
+description: Evaluate trusted CI evidence and publish an exact-head policy check using an already-built policy-ci.
+inputs:
+  mode:
+    description: Evaluation command, pre-merge or post-merge.
+    required: true
+    default: pre-merge
+  policy-path:
+    description: PolicySnapshot JSON path; its digest must match the trusted identity receipt.
+    required: true
+  evidence-path:
+    description: Collected EvidenceBundle JSON path (required for pre-merge).
+    required: false
+    default: ''
+  expected-head:
+    description: Full evaluated PR head SHA; checkout must be at this commit in both modes.
+    required: true
+  artifact-directory:
+    description: Fresh directory for canonical decision and publication artifacts.
+    required: true
+  trusted-observation-directory:
+    description: Runner-controlled observation directory outside GITHUB_WORKSPACE; see README.
+    required: true
+outputs:
+  status:
+    description: READY_TO_MERGE, BLOCKED, INCONCLUSIVE, or SHIPPED.
+    value: ${{ steps.evaluate.outputs.status }}
+  decision-digest:
+    description: Canonical decision digest.
+    value: ${{ steps.evaluate.outputs.decision_digest }}
+  policy-digest:
+    description: Evaluated policy digest.
+    value: ${{ steps.evaluate.outputs.policy_digest }}
+  head-sha:
+    description: Evaluated PR head.
+    value: ${{ steps.evaluate.outputs.head_sha }}
+  check-run-id:
+    description: API-observed dedicated Check Run ID.
+    value: ${{ steps.evaluate.outputs.check_run_id }}
+  workflow-run-id:
+    description: Current Actions run identity.
+    value: ${{ steps.evaluate.outputs.workflow_run_id }}
+  workflow-run-attempt:
+    description: Current Actions run attempt.
+    value: ${{ steps.evaluate.outputs.workflow_run_attempt }}
+runs:
+  using: composite
+  steps:
+    - id: evaluate
+      shell: bash
+      env:
+        POLICY_COMMAND: ${{ inputs.mode }}
+        POLICY_PATH: ${{ inputs.policy-path }}
+        POLICY_EVIDENCE: ${{ inputs.evidence-path }}
+        POLICY_HEAD: ${{ inputs.expected-head }}
+        POLICY_ARTIFACTS: ${{ inputs.artifact-directory }}
+        POLICY_OBSERVATIONS: ${{ inputs.trusted-observation-directory }}
+      run: |
+        set -euo pipefail
+        case "$POLICY_COMMAND" in
+          pre-merge|post-merge) ;;
+          *) echo 'mode must be pre-merge or post-merge' >&2; exit 2 ;;
+        esac
+        args=("$POLICY_COMMAND" --mode authoritative
+          --policy "$POLICY_PATH" --expected-head "$POLICY_HEAD"
+          --artifact-directory "$POLICY_ARTIFACTS"
+          --trusted-observations "$POLICY_OBSERVATIONS")
+        if [[ -n "$POLICY_EVIDENCE" ]]; then
+          args+=(--evidence "$POLICY_EVIDENCE")
+        fi
+        policy-ci "${args[@]}"

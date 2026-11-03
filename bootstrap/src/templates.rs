@@ -13,6 +13,7 @@ macro_rules! release_asset {
             "1.0.1" => include_str!(concat!("../templates/1.0.1/", $path)),
             "1.0.2" => include_str!(concat!("../templates/1.0.2/", $path)),
             "1.1.0" => include_str!(concat!("../templates/1.1.0/", $path)),
+            "1.1.1" => include_str!(concat!("../templates/1.1.1/", $path)),
             _ => return Err(invalid("unsupported template release")),
         }
     };
@@ -32,10 +33,10 @@ pub(crate) fn profile(installation: &Installation) -> Result<ProjectProfile> {
     }
     if !matches!(
         installation.release.as_str(),
-        "1.0.0" | "1.0.1" | "1.0.2" | "1.1.0"
+        "1.0.0" | "1.0.1" | "1.0.2" | "1.1.0" | "1.1.1"
     ) {
         return Err(invalid(
-            "unsupported template release; expected 1.0.0, 1.0.1, 1.0.2 or 1.1.0",
+            "unsupported template release; expected 1.0.0, 1.0.1, 1.0.2, 1.1.0 or 1.1.1",
         ));
     }
     let source = match installation.profile.as_str() {
@@ -118,12 +119,13 @@ pub(crate) fn profile(installation: &Installation) -> Result<ProjectProfile> {
 pub(crate) fn normalized(installation: &Installation) -> Result<Installation> {
     if let Some(source) = &installation.user_profile {
         validate_user_path(&source.path)?;
-        if !matches!(installation.release.as_str(), "1.1.0" | "1.2.0" | "1.3.0")
-            || !matches!(
-                installation.profile.as_str(),
-                "react-typescript" | "dotnet" | "fullstack"
-            )
-            || (installation.release == "1.3.0" && installation.profile != "react-typescript")
+        if !matches!(
+            installation.release.as_str(),
+            "1.1.0" | "1.1.1" | "1.2.0" | "1.3.0"
+        ) || !matches!(
+            installation.profile.as_str(),
+            "react-typescript" | "dotnet" | "fullstack"
+        ) || (installation.release == "1.3.0" && installation.profile != "react-typescript")
             || !installation.components.is_empty()
             || source.digest.len() != 64
             || !source
@@ -198,7 +200,11 @@ pub(crate) fn render(installation: &Installation) -> Result<BTreeMap<String, Str
         return Ok(BTreeMap::from([
             (
                 ".policy/USAGE.md".into(),
-                include_str!("../templates/1.1.0/USER-PROFILE.md").into(),
+                if installation.release == "1.1.1" {
+                    include_str!("../templates/1.1.1/USER-PROFILE.md").into()
+                } else {
+                    include_str!("../templates/1.1.0/USER-PROFILE.md").into()
+                },
             ),
             (
                 ".policy/ci/verification.yml".into(),

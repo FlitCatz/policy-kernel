@@ -97,7 +97,7 @@ fn installs_real_profile_without_clobbering_an_existing_destination() {
     fs::create_dir_all(examples.join("react-typescript/src")).unwrap();
     fs::write(
         examples.join("react-typescript/package.json"),
-        r#"{"devDependencies":{"vite":"7.3.6"}}"#,
+        r#"{"devDependencies":{"vite":"7.3.7"}}"#,
     )
     .unwrap();
     fs::write(

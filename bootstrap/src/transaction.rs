@@ -355,13 +355,17 @@ mod tests {
     use crate::{Operation, Request};
 
     fn fixture() -> (tempfile::TempDir, Root, Plan) {
+        fixture_release("1.0.0")
+    }
+
+    fn fixture_release(release: &str) -> (tempfile::TempDir, Root, Plan) {
         let temp = tempfile::tempdir().unwrap();
         let root = Root::open(&temp.path().canonicalize().unwrap()).unwrap();
         let plan = plan::plan(Request {
             target: root.path.clone(),
             installation: Installation {
                 profile: "dotnet".into(),
-                release: "1.0.0".into(),
+                release: release.into(),
                 components: BTreeMap::new(),
                 user_profile: None,
             },
@@ -463,26 +467,30 @@ mod tests {
     // Catches forgetting durable rollback state after partial publication.
     #[test]
     fn interrupted_apply_is_recoverable_and_blocks_new_plans() {
-        let (_temp, root, plan) = fixture();
-        let journal = journal(&root, &plan).unwrap();
-        interrupt(&root, &journal);
-        assert!(crate::plan(plan.request).is_err());
-        recover(&root.path).unwrap();
-        assert_eq!(root.names(".").unwrap().unwrap(), Vec::<String>::new());
+        for release in ["1.0.0", "1.1.0", "1.1.1"] {
+            let (_temp, root, plan) = fixture_release(release);
+            let journal = journal(&root, &plan).unwrap();
+            interrupt(&root, &journal);
+            assert!(crate::plan(plan.request).is_err());
+            recover(&root.path).unwrap();
+            assert_eq!(root.names(".").unwrap().unwrap(), Vec::<String>::new());
+        }
     }
 
     // Catches recovery overwriting a user edit or restoring arbitrary journal paths.
     #[test]
     fn recovery_edits_and_forged_paths_are_rejected_without_partial_rollback() {
-        let (_temp, root, plan) = fixture();
-        let mut journal = journal(&root, &plan).unwrap();
-        interrupt(&root, &journal);
-        let first = root.read(&journal.entries[0].path).unwrap();
-        std::fs::write(root.path.join(&journal.entries[1].path), "user edit").unwrap();
-        assert!(recover(&root.path).is_err());
-        assert_eq!(root.read(&journal.entries[0].path).unwrap(), first);
-        journal.entries[0].path = "../escape".into();
-        assert!(validate(&root, &journal).is_err());
+        for release in ["1.0.0", "1.1.0", "1.1.1"] {
+            let (_temp, root, plan) = fixture_release(release);
+            let mut journal = journal(&root, &plan).unwrap();
+            interrupt(&root, &journal);
+            let first = root.read(&journal.entries[0].path).unwrap();
+            std::fs::write(root.path.join(&journal.entries[1].path), "user edit").unwrap();
+            assert!(recover(&root.path).is_err());
+            assert_eq!(root.read(&journal.entries[0].path).unwrap(), first);
+            journal.entries[0].path = "../escape".into();
+            assert!(validate(&root, &journal).is_err());
+        }
     }
 
     // Catches an interrupted marker write being mistaken for a commit or blocking rollback.
@@ -510,21 +518,23 @@ mod tests {
     // Catches interrupted removal losing original content and the ownership receipt.
     #[test]
     fn interrupted_uninstall_restores_original_managed_files() {
-        let (_temp, root, mut saved) = fixture();
-        apply(&saved).unwrap();
-        let original = root.read(MANIFEST).unwrap();
-        saved.request.operation = Operation::Uninstall;
-        let uninstall = plan::plan(saved.request).unwrap();
-        let journal = journal(&root, &uninstall).unwrap();
-        root.mkdir(TRANSACTION).unwrap();
-        root.create(JOURNAL, json(&journal).unwrap().as_bytes())
-            .unwrap();
-        for entry in &journal.entries {
-            root.remove(&entry.path, false).unwrap();
+        for release in ["1.0.0", "1.1.0", "1.1.1"] {
+            let (_temp, root, mut saved) = fixture_release(release);
+            apply(&saved).unwrap();
+            let original = root.read(MANIFEST).unwrap();
+            saved.request.operation = Operation::Uninstall;
+            let uninstall = plan::plan(saved.request).unwrap();
+            let journal = journal(&root, &uninstall).unwrap();
+            root.mkdir(TRANSACTION).unwrap();
+            root.create(JOURNAL, json(&journal).unwrap().as_bytes())
+                .unwrap();
+            for entry in &journal.entries {
+                root.remove(&entry.path, false).unwrap();
+            }
+            recover(&root.path).unwrap();
+            assert_eq!(root.read(MANIFEST).unwrap(), original);
+            assert!(root.exists("global.json").unwrap());
         }
-        recover(&root.path).unwrap();
-        assert_eq!(root.read(MANIFEST).unwrap(), original);
-        assert!(root.exists("global.json").unwrap());
     }
 
     // Catches rolling back after link(COMMITTED) succeeded but its unlink/fsync failed.

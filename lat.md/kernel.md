@@ -135,6 +135,15 @@ Bootstrap publishes managed files transactionally with a private journal; new fi
 
 Planning [[bootstrap/src/plan.rs#plan]]; application [[bootstrap/src/transaction.rs#apply]] and [[bootstrap/src/transaction.rs#recover]]; publication [[bootstrap/src/fs.rs#Root#publish]].
 
+Preset 1.1.1 patches Vite/Vitest while retaining the exact earlier release assets.
+Receipt schema 2 and inventory reconstruction [[bootstrap/src/plan.rs#owned]]
+remain release-specific. Native staging [[acceptance/src/staging.rs#stage]]
+and runtime selection [[acceptance/src/staging.rs#builtin_profile]] use 1.1.1.
+Installer coverage [[bootstrap/tests/installer.rs#patched_release_installs_repeats_and_uninstalls_schema_two_presets]],
+[[bootstrap/tests/installer.rs#selected_release_upgrades_and_downgrades_all_frozen_releases]]
+and [[bootstrap/tests/installer.rs#patched_release_rejects_old_installed_pins_and_preserves_edited_managed_files]]
+checks pins, repeat installation, exact old receipt restoration and edit preservation.
+
 ## Npm workspace graph
 
 P1 binds explicit npm members to one root lock and audit. Manifest inventory, lock links and dependency presence must agree; local native verification does not establish adoption or trust.

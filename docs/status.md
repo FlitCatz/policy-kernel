@@ -138,14 +138,20 @@ No production promotion or authoritative CI decision is established by local tes
 
 ## Native fixture dependency refresh
 
-The Jest fixture uses 30.5.2 and overrides `js-yaml` beneath
-`@istanbuljs/load-nyc-config` to 4.x, removing the vulnerable `argparse` 1 /
-`sprintf-js` chain. React/TypeScript retains parser 8.42.0 and every frozen
-bootstrap 1.1.0 pin; its parser-scoped `typescript-estree` 8.48.0 override
-removes the vulnerable `fast-glob` / `micromatch` / `braces` chain.
-Compatible lockfile updates fix `brace-expansion` and `source-map-js`, including
-the project-owned frontend fixture. Bootstrap assets are unchanged.
-These fixture changes do not establish hosted CI success or production promotion.
+Bootstrap preset 1.1.1 selects Vite 7.3.7 / Vitest 4.1.12; every 1.1.0 asset
+remains unchanged for receipt reconstruction and recovery. Native acceptance and
+CI runtime selection use 1.1.1. React/TypeScript retains parser 8.42.0 and its
+parser-scoped `typescript-estree` 8.48.0 override, with minimatch 11.0.4 beneath
+that chain and ESLint. The project-owned frontend uses Vite 6.4.5 / Vitest 4.1.12;
+fullstack also refreshes the Vitest-owned Vite resolution within its existing range.
+
+Jest stays at 30.5.2 with scoped `js-yaml` 4, glob 14.0.3 and minimatch 11.0.4
+overrides. Both the alternate Jest and project-owned frontend jobs still require
+a clean audit and remain blocked on unpatched deepmerge
+[GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4).
+No audit exceptions, tag or production promotion are introduced. The
+[fixture audit record](integrations/native-fixture-audit.md) records validation
+and dependency changes; local observations alone do not establish hosted success.
 
 ## P1 npm workspace shared lock
 

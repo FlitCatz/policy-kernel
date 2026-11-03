@@ -103,7 +103,7 @@ pub(crate) fn manifest(installation: &Installation, files: &BTreeMap<String, Str
             4
         } else if installation.release == "1.2.0" {
             3
-        } else if installation.release == "1.1.0" {
+        } else if matches!(installation.release.as_str(), "1.1.0" | "1.1.1") {
             2
         } else {
             1
@@ -113,7 +113,7 @@ pub(crate) fn manifest(installation: &Installation, files: &BTreeMap<String, Str
             4
         } else if installation.release == "1.2.0" {
             3
-        } else if installation.release == "1.1.0" {
+        } else if matches!(installation.release.as_str(), "1.1.0" | "1.1.1") {
             2
         } else {
             1
@@ -401,10 +401,10 @@ pub fn plan(mut request: Request) -> Result<Plan> {
                     request.installation.release.as_str(),
                     profile.schema_version
                 ),
-                ("1.1.0", 2) | ("1.2.0", 3) | ("1.3.0", 4)
+                ("1.1.0" | "1.1.1", 2) | ("1.2.0", 3) | ("1.3.0", 4)
             ) {
                 return Err(invalid(
-                    "user profile requires release 1.1.0/schema 2, 1.2.0/schema 3 or 1.3.0/schema 4",
+                    "user profile requires release 1.1.0 or 1.1.1/schema 2, 1.2.0/schema 3 or 1.3.0/schema 4",
                 ));
             }
             if !request.installation.profile.is_empty()
@@ -463,7 +463,7 @@ pub fn plan(mut request: Request) -> Result<Plan> {
         let profile = match user_source {
             Some(profile) => profile,
             None => {
-                if installation.release != "1.1.0" {
+                if !matches!(installation.release.as_str(), "1.1.0" | "1.1.1") {
                     detect(&root, &mut result, &installation)?;
                 }
                 templates::profile(&installation)?

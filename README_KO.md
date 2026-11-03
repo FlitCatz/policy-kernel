@@ -62,9 +62,10 @@ report·audit·version 회귀 검증을 유지합니다.
 staging을 검증하며 native 실행은 명시적으로 선택해야 합니다. 증거는 로컬 advisory이며
 stage 1 구현 완료가 promotion이나 protected merge를 의미하지 않습니다.
 
-네이티브 fixture는 Jest 30.5.2와 범위를 제한한 `js-yaml` 4 override를 사용합니다.
-React/TypeScript는 parser 8.42.0 및 동결된 bootstrap 버전 고정을 유지하며,
-`typescript-estree` 8.48.0에만 scoped override를 적용합니다.
+네이티브 acceptance는 Vite 7.3.7 / Vitest 4.1.12를 고정한 bootstrap 1.1.1을 선택하며,
+1.1.0 asset의 바이트는 그대로 유지합니다. Fixture는 영향을 받는 의존성 경로에만
+minimatch 11.0.4 및 glob 14.0.3 override를 적용합니다. 두 Jest job은 clean audit
+조건을 유지하며 수정판이 없는 deepmerge GHSA-gcqx-w48m-w2h4 때문에 실패합니다.
 자세한 내용은 [현재 상태](docs/status.md)를 참고하세요.
 
 이 워크스페이스에는 Task 1–14의 구성요소가 구현되어 있습니다. 근거와 남은 구현·통합·운영 조건은
@@ -235,7 +236,7 @@ dev·optional·peer 의존성을 명시적으로 포함하여 npm 설정으로 �
 보고서를 거부하고, 수정 후 새 head 검증과 이전 head 결과 거부를 확인합니다.
 
 ```console
-cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.0/profiles/fullstack/profile.json
+cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.1/profiles/fullstack/profile.json
 cargo run --locked -p project-verification -- schema
 cargo run --locked -p project-verification -- prepare --input request.json
 cargo run --locked -p project-verification -- run --input request.json
@@ -243,7 +244,7 @@ cargo run --locked -p project-verification -- run --input request.json
 
 저장소 루트의 `profiles/fullstack/profile.json`은 센서 14개인 1.0.0 과거
 자산으로 유지됩니다. 동결된 릴리스 1.0.2에는 `shared:dependencies`를 포함한
-필수 센서 15개가 있습니다. 현재 1.1.0은 프로필 schema 2를 사용하며 Unit·Integration
+필수 센서 15개가 있습니다. 현재 프리셋 1.1.1은 프로필 schema 2를 사용하며 Unit·Integration
 NuGet 감사를 각각 추가해 필수 센서가 17개입니다. Bootstrap 설치
 후에는 선택된 `.policy/project-profile.json`을 검증하세요. 과거 자산과
 현재 자산의 구분은 [프로필 자산 안내](profiles/README.md)를 참고하세요.
@@ -252,8 +253,8 @@ NuGet 감사를 각각 추가해 필수 센서가 17개입니다. Bootstrap 설�
 계획을 검사하고 저장하세요. `apply`는 파일을 변경하기 전에 계획을 다시 검증합니다.
 
 ```console
-cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api
-cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
+cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.1.1 --component frontend=apps/web --component backend=apps/api
+cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.1 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
 cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-plan.json
 ```
 
