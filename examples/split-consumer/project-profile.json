@@ -122,7 +122,7 @@
         "installed_manifest": "node_modules/vitest/package.json",
         "lock_pointer": "/packages/node_modules~1vitest/version",
         "lockfile": "package-lock.json",
-        "requirement": "=4.1.11"
+        "requirement": "=4.1.12"
       },
       {
         "component": "frontend",
@@ -136,7 +136,7 @@
         "installed_manifest": "node_modules/vite/package.json",
         "lock_pointer": "/packages/node_modules~1vite/version",
         "lockfile": "package-lock.json",
-        "requirement": "=6.4.3"
+        "requirement": "=6.4.5"
       },
       {
         "component": "frontend",
@@ -319,8 +319,8 @@
         "executable": "node",
         "version": {
           "normalization": "plain",
-          "provision": "4.1.11",
-          "requirement": "=4.1.11"
+          "provision": "4.1.12",
+          "requirement": "=4.1.12"
         },
         "version_args": [
           "-p",

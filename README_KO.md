@@ -61,6 +61,9 @@ report·audit·version 회귀 검증을 유지합니다.
 `cargo test --locked --offline -p policy-acceptance --test native_split_consumer`는
 staging을 검증하며 native 실행은 명시적으로 선택해야 합니다. 증거는 로컬 advisory이며
 stage 1 구현 완료가 promotion이나 protected merge를 의미하지 않습니다.
+Frontend는 Vite 6.4.5 / Vitest 4.1.12와 source-map-js 1.2.2를 고정합니다.
+Split-consumer lock 갱신 내용은
+[감사 기록](docs/integrations/native-fixture-audit.md#split-consumer-follow-up)에 정리했습니다.
 
 네이티브 프리셋 acceptance는 Vite 7.3.7 / Vitest 4.1.12를 고정한 bootstrap 1.1.1을 선택하며,
 1.1.0 asset의 바이트는 그대로 유지합니다. Fixture는 영향을 받는 의존성 경로에만

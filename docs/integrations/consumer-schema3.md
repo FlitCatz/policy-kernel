@@ -168,6 +168,9 @@ Chromium, with their executables on PATH and DOTNET_ROOT pointing to the selecte
 SDK installation. These are fixture selections, not requirements imposed on all
 consumers. The initial npm lock was generated with npm 12.1.0; native execution
 uses the selected npm 10.9.3 `ci` and `audit` with all dependency classes included.
+The maintained split-consumer frontend now selects Vite 6.4.5 / Vitest 4.1.12
+and source-map-js 1.2.2. Its [follow-up lock refresh](native-fixture-audit.md#split-consumer-follow-up)
+used npm 11.20.0 generation followed by npm 10.9.3 normalization and verification.
 
 ```console
 POLICY_SPLIT_CONSUMER_OUTPUT=/private/tmp/split-consumer-native-new rtk cargo test --locked -p policy-acceptance --test native_split_consumer native_split_consumer_reports -- --ignored --nocapture

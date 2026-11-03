@@ -201,3 +201,8 @@ keeps the explicit layout contract. Opt-in native regression
 [[acceptance/tests/native_split_consumer.rs#native_split_consumer_reports_audits_and_rejection_paths]]
 checks real report failures, audits and stale bindings. See the
 [fixture guide](../examples/split-consumer/README.md) for execution limits.
+
+The frontend profile and manifest select Vite 6.4.5 / Vitest 4.1.12, with
+source-map-js 1.2.2 locked. Node 26.10.0/npm 10.9.3 selections remain unchanged.
+The [audit record](../docs/integrations/native-fixture-audit.md#split-consumer-follow-up)
+describes generation and verification separately.
