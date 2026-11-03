@@ -222,7 +222,10 @@ Vitest JSON has no retry history: retry zero configuration is not success-after-
 See [native procedure](../docs/integrations/acceptance.md#alternate-vitest-transition).
 
 Managed Jest removal preserves [[acceptance/tests/native_project_versions.rs#native_project_versions]]
-with its npm10/npm12 Vitest/Playwright, audit and trust checks. Frozen bootstrap
+with its npm10/npm12 Vitest/Playwright, audit and trust checks. Its final native
+phase executes [[acceptance/tests/native_project_versions.rs#migrated_vitest_profile]]:
+schema two upgraded to four, record acceptance, no provisioning and every sensor passing.
+Frozen bootstrap
 bytes and receipt recovery/uninstall are unchanged. The
 [support boundary](../docs/integrations/jest-transition.md) preserves generic
 profile execution and old wire contracts without a schema change.

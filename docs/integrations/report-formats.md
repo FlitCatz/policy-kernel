@@ -20,14 +20,15 @@ requirements in the collector. Empty or skipped-only reports never succeed.
 
 | Format | Exercised producer / maintenance scope | Parser version |
 | --- | --- | --- |
-| `vitest_json` | Vitest 3.2.4 / 4.1.12 JSON reporter | `vitest-json-3.2.4/v1` |
+| `vitest_json` | Vitest 3.2.4 / 4.1.11 / 4.1.12 JSON reporter | `vitest-json-3.2.4/v1` |
 | `playwright_json` | Playwright 1.55.0 / 1.55.1 JSON reporter; 1.63.0 exercised through schema 4 | `playwright-json-1.55.0/v1` |
 | `trx` | VSTest 17.14.1 TRX logger, flat unit results | `vstest-trx-17.14.1/v1` |
 | `jest_json` | Historical Jest 30.2.0 JSON; compatibility-only reader | `jest-json/v1` |
 
 Producer versions identify exercised combinations, not claims that untrusted input proves
 which executable produced it. Schema 2 separates adapter intervals from actual
-observations; see the [selection contract](tool-selection.md). Earlier fixtures in
+observations; see the [selection contract](tool-selection.md). Frozen preset 1.1.0
+retains Vitest 4.1.11; preset 1.1.1 and the alternate fixture use 4.1.12. Earlier fixtures in
 `crates/policy-report-adapters/tests/fixtures/project-reports/` are hand-authored minimal examples. `jest.json`
 was captured from the former native Jest fixture, with path and timestamp normalized for
 deterministic parsing tests; raw native runs retain the original reports.

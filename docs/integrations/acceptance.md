@@ -4,8 +4,11 @@
 
 The ignored `native_project_versions` Rust test exercises the same kernel build
 with frontend schema 4, two actual npm executables and Vitest/Playwright
-fixtures. The former final Jest phase is removed; all other sensors, audit
-severity, report rejection and trust gates remain. It requires Node 26.10.0,
+fixtures. The final phase now upgrades the schema-2 `examples/react-vitest`
+profile to schema 4, uses record acceptance without provisioning, and requires
+every sensor to pass on the installed runtime. Its `migrated-vitest` requests,
+results, reports and install log remain in the output directory. All other
+sensors, audit severity, report rejection and trust gates remain. It requires Node 26.10.0,
 npm 12.1.0, npm 10.9.3 (supplied through `POLICY_PROJECT_VERSIONS_NPM10` or
 installed by the harness), a Playwright browser and npm advisory network access.
 Set `POLICY_PROJECT_VERSIONS_OUTPUT` to a fresh directory whose parent exists:

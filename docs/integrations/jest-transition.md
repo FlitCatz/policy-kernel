@@ -16,7 +16,9 @@ The workflow retains `alternate-vitest` with display name
 `React SSR / Vitest / alternate Node and npm`. The former `alternate` Jest job
 is removed. `Project-owned frontend versions` keeps its job identity and all
 npm10/npm12 Vitest/Playwright, audit severity, report/head and trust checks;
-only its final Jest fixture phase is removed. No audit exception or deepmerge
+its final phase runs the schema-2 Vitest profile migrated to schema 4 with
+record acceptance and no provisioning, requiring every sensor to pass.
+No audit exception or deepmerge
 override is introduced to make the former failing Jest checks pass.
 GitHub reported main unprotected (protection endpoint 404), no repository
 rulesets and no tracked controller reference to the alternate display name

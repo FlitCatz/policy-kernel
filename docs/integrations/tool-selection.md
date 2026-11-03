@@ -107,7 +107,7 @@ range does not prove who ran a tool, and all direct collection stays LocalUntrus
 | Runtime | Node numeric probe | Adopted request | 22.18.0 and 22.19.0 |
 | Install / lock / audit | npm / `npm_audit` | >=10.9.3, <11.0.0 | npm 10.9.3 and 10.9.4, lockfile v3 |
 | Build / static analysis | Explicit process argv | Adopted request | TypeScript 5.9.2, ESLint 9.34.0, Vite 7.3.6; Node syntax check in the alternate consumer |
-| Unit / contract | `vitest_json` | >=3.2.4, <5.0.0 | Vitest 4.1.12; alternate Node 22.19.0/npm 10.9.4 `web/` SSR; historical reporter contracts retained |
+| Unit / contract | `vitest_json` | >=3.2.4, <5.0.0 | Vitest 4.1.11 / 4.1.12; alternate Node 22.19.0/npm 10.9.4 `web/` SSR; historical reporter contracts retained |
 | Compatibility reader only | `jest_json` | >=30.2.0, <31.0.0 (legacy decoding preserved) | Historical Jest corpus; managed runner/CI guarantee ended |
 | E2E | `playwright_json` | >=1.55.0, <1.56.0 | Playwright 1.55.1 with Chromium |
 | SDK / restore / audit | NuGet / `nuget_audit` | SDK >=9.0.100, <10.0.0 | SDK 9.0.304, explicit net9.0 graphs |
@@ -115,7 +115,8 @@ range does not prove who ran a tool, and all direct collection stays LocalUntrus
 
 Intervals define accepted adapter contracts; this table does not claim that every
 intermediate release was executed. Presets retain their exact reviewed package
-selections. The alternate Vitest fixture exercises React server rendering with
+selections: frozen preset 1.1.0 keeps Vitest 4.1.11, while 1.1.1 uses 4.1.12.
+The alternate Vitest fixture exercises React server rendering with
 Node 22.19.0/npm 10.9.4 and a `web/` component. Its retry-zero configuration does
 not recover missing Vitest JSON retry history or provide Jest success-after-retry
 rejection parity. Report details and native limitations are in [report formats](report-formats.md) and

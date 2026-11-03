@@ -168,6 +168,8 @@ guarantees. The alternate Jest job, `native_jest`, runtime fixture and final
 project-owned Jest phase are removed. The project-owned frontend job retains
 actual npm 10.9.3/12.1.0, all Vitest/Playwright sensors, low-level full-graph audit,
 service/advisory failures, report/head rejection and LocalUntrusted gates.
+Its final phase runs the schema-2 Vitest profile migrated to schema 4, with
+record acceptance and provisioning removed, and requires every sensor to pass.
 
 `examples/react-vitest` and `native_vitest` preserve exact Node 22.19.0/npm
 10.9.4, `web/` React SSR, actual producer skip, report/head regressions and nested

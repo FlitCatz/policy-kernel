@@ -64,7 +64,9 @@ See the current-status authority and [[kernel#Split-consumer conformance]].
 [[kernel#Alternate frontend conformance]] now uses Vitest; managed Jest runner/CI
 guarantees have ended. Reader/enums, importer, profile-only corpus, frozen templates
 and receipt recovery/uninstall remain compatible. Retry zero does not recover
-Vitest retry history. See the current-status authority.
+Vitest retry history. The project-owned native job also executes a schema-two
+Vitest profile migrated to four with record acceptance and no provisioning.
+See the current-status authority.
 
 P1 adds explicit npm members under one root graph and audit. Native
 Node 26.12.0/npm 11.20.0 fixtures satisfy the local scope; evidence remains
