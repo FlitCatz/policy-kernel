@@ -385,6 +385,25 @@ fn clean_runtime_and_public_api_pass() {
     success(&public_api(t.path()));
 }
 
+fn dependency_package(path: &Path, name: &str, declarations: &str) {
+    fs::create_dir_all(path.join("src")).unwrap();
+    fs::write(path.join("src/lib.rs"), "").unwrap();
+    fs::write(
+        path.join("Cargo.toml"),
+        format!("[package]\nname=\"{name}\"\nversion=\"0.1.0\"\nedition=\"2021\"\n{declarations}"),
+    )
+    .unwrap();
+}
+
+fn lock_workspace(path: &Path) {
+    let lock = std::process::Command::new("cargo")
+        .args(["generate-lockfile", "--offline"])
+        .current_dir(path)
+        .output()
+        .unwrap();
+    success(&lock);
+}
+
 #[test]
 fn workspace_edges_include_renamed_optional_dev_build_and_inactive_target_dependencies() {
     for declaration in [
@@ -395,16 +414,108 @@ fn workspace_edges_include_renamed_optional_dev_build_and_inactive_target_depend
     ] {
         let temp = scan_repo();
         fs::write(temp.path().join("Cargo.toml"), "[workspace]\nmembers=[\"crates/*\"]\nresolver=\"2\"\n").unwrap();
-        let helper = temp.path().join("crates/helper");
-        fs::create_dir_all(helper.join("src")).unwrap();
-        fs::write(helper.join("src/lib.rs"), "").unwrap();
-        fs::write(helper.join("Cargo.toml"), format!("[package]\nname=\"helper\"\nversion=\"0.1.0\"\nedition=\"2021\"\n{declaration}")).unwrap();
-        let lock = std::process::Command::new("cargo").args(["generate-lockfile", "--offline"]).current_dir(temp.path()).output().unwrap();
-        success(&lock);
+        dependency_package(&temp.path().join("crates/helper"), "helper", declaration);
+        lock_workspace(temp.path());
         let out = residue(temp.path());
         assert_eq!(out.status.code(), Some(1));
         assert!(String::from_utf8_lossy(&out.stderr).contains("unapproved workspace dependency: helper -> policy-core"), "{}", String::from_utf8_lossy(&out.stderr));
     }
+}
+
+#[test]
+fn excluded_path_dependencies_cannot_bridge_workspace_directions() {
+    for declaration in [
+        "[dependencies]\nshim = { path = \"../../shims/shim\" }\n",
+        "[dependencies]\nbridge = { package = \"shim\", path = \"../../shims/shim\", optional = true }\n",
+        "[dev-dependencies]\nshim = { path = \"../../shims/shim\" }\n",
+        "[build-dependencies]\nshim = { path = \"../../shims/shim\" }\n",
+        "[target.'cfg(target_os = \"none\")'.dependencies]\nshim = { path = \"../../shims/shim\" }\n",
+        "[target.'cfg(target_os = \"none\")'.dev-dependencies]\nshim = { path = \"../../shims/shim\" }\n",
+        "[target.'cfg(target_os = \"none\")'.build-dependencies]\nshim = { path = \"../../shims/shim\" }\n",
+    ] {
+        let temp = scan_repo();
+        fs::write(temp.path().join("Cargo.toml"), "[workspace]\nmembers=[\"crates/*\"]\nexclude=[\"shims/shim\"]\nresolver=\"2\"\n").unwrap();
+        dependency_package(
+            &temp.path().join("crates/github-adapter"),
+            "github-adapter",
+            declaration,
+        );
+        dependency_package(
+            &temp.path().join("shims/shim"),
+            "shim",
+            "[dependencies]\npolicy-core = { path = \"../../crates/policy-core\" }\n",
+        );
+        lock_workspace(temp.path());
+        let out = residue(temp.path());
+        assert_eq!(out.status.code(), Some(1), "{declaration}");
+        let error = String::from_utf8_lossy(&out.stderr);
+        assert!(error.contains("path dependency outside workspace members: github-adapter -> shim ("), "{error}");
+        assert!(error.contains("/shims/shim)"), "{error}");
+    }
+}
+
+#[test]
+fn absolute_path_dependency_outside_repository_is_rejected() {
+    let temp = scan_repo();
+    let external = TempDir::new().unwrap();
+    dependency_package(external.path(), "policy-contracts", "[workspace]\n");
+    // The package name is normally allowed; membership is determined by path.
+    fs::write(temp.path().join("crates/policy-core/Cargo.toml"), format!(
+        "[package]\nname=\"policy-core\"\nversion=\"0.1.0\"\nedition=\"2021\"\n[dependencies]\npolicy-contracts = {{ path = {:?} }}\n",
+        external.path().to_str().unwrap(),
+    )).unwrap();
+    lock_workspace(temp.path());
+    let out = residue(temp.path());
+    assert_eq!(out.status.code(), Some(1));
+    let error = String::from_utf8_lossy(&out.stderr);
+    assert!(
+        error.contains(
+            "path dependency outside workspace members: policy-core -> policy-contracts ("
+        ),
+        "{error}"
+    );
+    assert!(
+        error.contains(external.path().file_name().unwrap().to_str().unwrap()),
+        "{error}"
+    );
+}
+
+#[test]
+fn all_dependency_violations_are_reported_in_stable_order() {
+    let temp = scan_repo();
+    fs::write(
+        temp.path().join("Cargo.toml"),
+        "[workspace]\nmembers=[\"crates/*\"]\nexclude=[\"shims/shim\"]\nresolver=\"2\"\n",
+    )
+    .unwrap();
+    dependency_package(&temp.path().join("shims/shim"), "shim", "");
+    dependency_package(
+        &temp.path().join("crates/policy-contracts"),
+        "policy-contracts",
+        "[dependencies]\npolicy-core = { path = \"../policy-core\" }\n",
+    );
+    dependency_package(&temp.path().join("crates/github-adapter"), "github-adapter", "[dependencies]\npolicy-core = { path = \"../policy-core\" }\nshim = { path = \"../../shims/shim\" }\n[dev-dependencies]\npolicy-core = { path = \"../policy-core\" }\n");
+    lock_workspace(temp.path());
+    let out = residue(temp.path());
+    assert_eq!(out.status.code(), Some(1));
+    let error = String::from_utf8_lossy(&out.stderr);
+    let diagnostics: Vec<_> = error.lines().collect();
+    assert_eq!(diagnostics.len(), 3, "{error}");
+    assert!(
+        diagnostics[0].starts_with(
+            "xtask: path dependency outside workspace members: github-adapter -> shim ("
+        ),
+        "{error}"
+    );
+    assert_eq!(
+        diagnostics[1],
+        "unapproved workspace dependency: github-adapter -> policy-core"
+    );
+    assert_eq!(
+        diagnostics[2],
+        "unapproved workspace dependency: policy-contracts -> policy-core"
+    );
+    assert_eq!(residue(temp.path()).stderr, out.stderr);
 }
 #[test]
 fn scans_include_hidden_and_ignored_files() {

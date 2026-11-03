@@ -159,7 +159,9 @@ manifest는 검토된 호환 의존성 범위를 사용하고, 체크인된 `Car
 
 엄격한 Clippy 검사는 워크스페이스 lint 설정과 `clippy.toml`을 사용해 함수 인자 5개,
 bool 인자 2개를 초과하면 실패합니다. `cargo run --locked -p xtask -- check-residue`는
-내부 크레이트 의존 방향의 명시적 허용 목록과 기존 런타임 검사를 적용합니다.
+내부 크레이트 의존 방향의 명시적 허용 목록을 적용하고, 워크스페이스 멤버 밖의 path
+의존성을 거부하며, 기존 런타임 검사를 실행합니다. 의존성 위반은 정렬된 순서로 한 번에
+보고합니다.
 측정 기준선, 허용된 간선, 실패 동작은
 [구조 검증 게이트](docs/integrations/structure-gates.md)를 참고하세요.
 
@@ -207,7 +209,8 @@ cargo run --locked -p xtask -- schema
 
 이 명령은 워크스페이스 출력 디렉터리를 자체적으로 찾으므로, 저장소 밖에서도 Cargo의
 `--manifest-path`로 실행할 수 있습니다. 생성 스키마, 공개 문서 표면, 소스 언어 잔여물,
-제공된 mutation 결과를 다음과 같이 검증합니다.
+워크스페이스 의존 방향과 path 의존 대상의 멤버 여부, 제공된 mutation 결과를 다음과
+같이 검증합니다.
 
 ```console
 cargo run --locked -p xtask -- check-residue

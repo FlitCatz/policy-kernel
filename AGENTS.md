@@ -33,8 +33,10 @@ its pinned version deliberately and verify `lat check` locally with that version
   bypass them.
 - `xtask check-residue` checks declared internal dependency directions against
   `WORKSPACE_DEPENDENCIES` in `xtask/src/verification.rs`, including optional,
-  dev, build and target-specific dependencies. Review intentional new edges and
-  update the documented allow-list in the same change. See
+  dev, build and target-specific dependencies. Path dependencies must point to
+  workspace members; dependency violations are reported together in sorted order.
+  Review intentional new edges and update the documented allow-list in the same
+  change. See
   [structural verification gates](docs/integrations/structure-gates.md).
 
 # Knowledge graph and code index maintenance

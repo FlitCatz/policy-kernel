@@ -35,7 +35,8 @@ The approval packet must contain:
   regeneration with no tracked or untracked schema changes, deny/audit, residue
   check and a build using a fresh empty target directory.
   Strict Clippy includes the function/bool argument limits; the residue check
-  includes the workspace dependency direction allow-list documented in
+  includes workspace path membership and the dependency direction allow-list
+  documented in
   [structural verification gates](integrations/structure-gates.md).
 - Complete pinned mutation output for canonical, provenance, reviews, pre_merge,
   post_merge, controller and workflow-source: successful baselines and every

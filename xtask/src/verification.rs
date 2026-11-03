@@ -427,11 +427,12 @@ const WORKSPACE_DEPENDENCIES: &[(&str, &[&str])] = &[
 ];
 
 fn check_dependencies(text: &str, metadata: &Value) -> Result<()> {
+    let mut violations = BTreeSet::new();
     if text
         .split_whitespace()
         .any(|s| ["reqwest", "octocrab", "clap", "tokio"].contains(&s))
     {
-        return Err("forbidden policy-core dependency found".into());
+        violations.insert("forbidden policy-core dependency found".to_owned());
     }
     let members = metadata["workspace_members"]
         .as_array()
@@ -459,19 +460,29 @@ fn check_dependencies(text: &str, metadata: &Value) -> Result<()> {
                 continue;
             };
             let Some((target, _)) = workspace.get(Path::new(path)) else {
+                let target = dependency["name"]
+                    .as_str()
+                    .ok_or("missing dependency name")?;
+                violations.insert(format!(
+                    "path dependency outside workspace members: {name} -> {target} ({path})"
+                ));
                 continue;
             };
             if !WORKSPACE_DEPENDENCIES
                 .iter()
                 .any(|(source, targets)| source == name && targets.contains(target))
             {
-                return Err(format!(
+                violations.insert(format!(
                     "unapproved workspace dependency: {name} -> {target}"
                 ));
             }
         }
     }
-    Ok(())
+    if violations.is_empty() {
+        Ok(())
+    } else {
+        Err(violations.into_iter().collect::<Vec<_>>().join("\n"))
+    }
 }
 pub fn residue(root: &Path) -> Result<()> {
     nonempty(&root.join("Cargo.toml"))?;
@@ -736,5 +747,27 @@ mod tests {
             );
         }
         assert!(check_dependencies("policy-core v0.1.0\n└── serde v1.0.0", &metadata).is_ok());
+    }
+
+    #[test]
+    fn dependency_violations_are_sorted_independently_of_metadata_order() {
+        let mut metadata = dependency_graph(&[
+            ("policy-contracts", "policy-core"),
+            ("github-adapter", "policy-core"),
+            ("github-adapter", "policy-cli"),
+        ]);
+        let expected = "forbidden policy-core dependency found\nunapproved workspace dependency: github-adapter -> policy-cli\nunapproved workspace dependency: github-adapter -> policy-core\nunapproved workspace dependency: policy-contracts -> policy-core";
+        let tree = "policy-core v0.1.0\n└── tokio v1.0.0";
+        assert_eq!(check_dependencies(tree, &metadata).unwrap_err(), expected);
+        let packages = metadata["packages"].as_array_mut().unwrap();
+        packages.reverse();
+        for package in packages {
+            package["dependencies"].as_array_mut().unwrap().reverse();
+        }
+        metadata["workspace_members"]
+            .as_array_mut()
+            .unwrap()
+            .reverse();
+        assert_eq!(check_dependencies(tree, &metadata).unwrap_err(), expected);
     }
 }
