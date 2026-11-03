@@ -147,6 +147,7 @@ advisory이며 증거를 Trusted로 승격하지 않습니다.
 저장소를 받은 뒤, 잠긴(lockfile 고정) 워크스페이스를 빌드하고 테스트합니다.
 
 ```console
+cargo fetch --locked
 cargo build --locked --workspace
 cargo test --locked --workspace
 cargo fmt --all -- --check
@@ -159,9 +160,15 @@ manifest는 검토된 호환 의존성 범위를 사용하고, 체크인된 `Car
 
 엄격한 Clippy 검사는 워크스페이스 lint 설정과 `clippy.toml`을 사용해 함수 인자 5개,
 bool 인자 2개를 초과하면 실패합니다. `cargo run --locked -p xtask -- check-residue`는
-내부 크레이트 의존 방향의 명시적 허용 목록과 기존 런타임 검사를 적용합니다.
+내부 크레이트 의존 방향의 명시적 허용 목록을 적용하고, 워크스페이스 멤버 밖의 path
+의존성을 거부하며, 기존 런타임 검사를 실행합니다. 의존성 위반은 정렬된 순서로 한 번에
+보고합니다.
 측정 기준선, 허용된 간선, 실패 동작은
 [구조 검증 게이트](docs/integrations/structure-gates.md)를 참고하세요.
+
+path 멤버 검사에는 Cargo patch나 설정으로 추가된 해석 그래프의 로컬 패키지도
+포함됩니다. 테스트와 잔여물 검사가 전체 그래프를 오프라인으로 읽을 수 있도록
+`cargo fetch --locked`로 모든 플랫폼의 의존성을 먼저 캐시합니다.
 
 ### 로컬 자문 평가 실행
 
@@ -207,12 +214,13 @@ cargo run --locked -p xtask -- schema
 
 이 명령은 워크스페이스 출력 디렉터리를 자체적으로 찾으므로, 저장소 밖에서도 Cargo의
 `--manifest-path`로 실행할 수 있습니다. 생성 스키마, 공개 문서 표면, 소스 언어 잔여물,
-제공된 mutation 결과를 다음과 같이 검증합니다.
+워크스페이스 의존 방향과 path 의존 대상의 멤버 여부, 제공된 mutation 결과를 다음과
+같이 검증합니다.
 
 ```console
+cargo fetch --locked
 cargo run --locked -p xtask -- check-residue
 cargo run --locked -p xtask -- check-public-api target/doc schemas
-cargo fetch --locked
 cargo run --locked --offline -p xtask -- run-mutation-suite target/promotion-mutation
 cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-mutation
 cargo test --locked -p xtask

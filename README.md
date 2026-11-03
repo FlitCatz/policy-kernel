@@ -138,6 +138,7 @@ release 1.2.0 for schema 3; existing 1.1.0 presets remain unchanged. See
 Clone the repository, then build and test the locked workspace:
 
 ```console
+cargo fetch --locked
 cargo build --locked --workspace
 cargo test --locked --workspace
 cargo fmt --all -- --check
@@ -152,9 +153,15 @@ tested version.
 Strict Clippy denies functions over 5 arguments or 2 bool parameters, using the
 workspace lint configuration and `clippy.toml`. Run
 `cargo run --locked -p xtask -- check-residue` to enforce the explicit allow-list
-of internal crate dependency directions and the existing runtime checks. See
+of internal crate dependency directions, reject path dependencies outside
+workspace members, and run the existing runtime checks. Dependency violations
+are reported together in sorted order. See
 [structural verification gates](docs/integrations/structure-gates.md) for the
 measured baseline, allowed edges and failure behavior.
+
+The path-membership check also covers resolved local packages introduced by
+Cargo patches or configuration. `cargo fetch --locked` caches dependencies for
+all platforms before tests and the residue check read the full graph offline.
 
 ### Try local advisory evaluation
 
@@ -219,13 +226,13 @@ cargo run --locked -p xtask -- schema
 
 The command resolves its workspace output directory itself, so it can be launched
 outside the repository with Cargo's `--manifest-path`. Verify generated schemas,
-the documentation surface, source-language residue, and a supplied mutation
-result with:
+the documentation surface, source-language residue, workspace dependency
+directions and path membership, and a supplied mutation result with:
 
 ```console
+cargo fetch --locked
 cargo run --locked -p xtask -- check-residue
 cargo run --locked -p xtask -- check-public-api target/doc schemas
-cargo fetch --locked
 cargo run --locked --offline -p xtask -- run-mutation-suite target/promotion-mutation
 cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-mutation
 cargo test --locked -p xtask

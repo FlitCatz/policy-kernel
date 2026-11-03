@@ -427,11 +427,12 @@ const WORKSPACE_DEPENDENCIES: &[(&str, &[&str])] = &[
 ];
 
 fn check_dependencies(text: &str, metadata: &Value) -> Result<()> {
+    let mut violations = BTreeSet::new();
     if text
         .split_whitespace()
         .any(|s| ["reqwest", "octocrab", "clap", "tokio"].contains(&s))
     {
-        return Err("forbidden policy-core dependency found".into());
+        violations.insert("forbidden policy-core dependency found".to_owned());
     }
     let members = metadata["workspace_members"]
         .as_array()
@@ -450,6 +451,7 @@ fn check_dependencies(text: &str, metadata: &Value) -> Result<()> {
         let directory = manifest.parent().ok_or("missing package directory")?;
         workspace.insert(directory, (name, package));
     }
+    let mut reported_paths = BTreeSet::new();
     for (name, package) in workspace.values() {
         for dependency in package["dependencies"]
             .as_array()
@@ -459,19 +461,50 @@ fn check_dependencies(text: &str, metadata: &Value) -> Result<()> {
                 continue;
             };
             let Some((target, _)) = workspace.get(Path::new(path)) else {
+                let target = dependency["name"]
+                    .as_str()
+                    .ok_or("missing dependency name")?;
+                violations.insert(format!(
+                    "path dependency outside workspace members: {name} -> {target} ({path})"
+                ));
+                reported_paths.insert(Path::new(path));
                 continue;
             };
             if !WORKSPACE_DEPENDENCIES
                 .iter()
                 .any(|(source, targets)| source == name && targets.contains(target))
             {
-                return Err(format!(
+                violations.insert(format!(
                     "unapproved workspace dependency: {name} -> {target}"
                 ));
             }
         }
     }
-    Ok(())
+    // Registry declarations can resolve to local packages through Cargo patches
+    // or configuration. Avoid repeating paths already reported by declarations.
+    for package in packages
+        .iter()
+        .filter(|p| p["source"].is_null() && !members.contains(&p["id"]))
+    {
+        let name = package["name"].as_str().ok_or("missing package name")?;
+        let manifest = Path::new(
+            package["manifest_path"]
+                .as_str()
+                .ok_or("missing manifest path")?,
+        );
+        let directory = manifest.parent().ok_or("missing package directory")?;
+        if !reported_paths.contains(directory) {
+            violations.insert(format!(
+                "resolved path dependency outside workspace members: {name} ({})",
+                directory.display()
+            ));
+        }
+    }
+    if violations.is_empty() {
+        Ok(())
+    } else {
+        Err(violations.into_iter().collect::<Vec<_>>().join("\n"))
+    }
 }
 pub fn residue(root: &Path) -> Result<()> {
     nonempty(&root.join("Cargo.toml"))?;
@@ -552,17 +585,10 @@ fn scan_optional(path: &Path, skip_docs: bool) -> Result<()> {
 }
 
 fn cargo_metadata(root: &Path) -> Result<Value> {
-    // Cargo metadata is read-only: it discovers custom build/bin/lib paths and
-    // additional workspace members without executing their build scripts.
+    // Full metadata discovers resolved local packages (including Cargo patches),
+    // custom targets and workspace members without executing build scripts.
     let output = Command::new("cargo")
-        .args([
-            "metadata",
-            "--locked",
-            "--offline",
-            "--no-deps",
-            "--format-version",
-            "1",
-        ])
+        .args(["metadata", "--locked", "--offline", "--format-version", "1"])
         .current_dir(root)
         .output()
         .map_err(|e| format!("cannot run cargo metadata: {e}"))?;
@@ -736,5 +762,49 @@ mod tests {
             );
         }
         assert!(check_dependencies("policy-core v0.1.0\n└── serde v1.0.0", &metadata).is_ok());
+    }
+
+    #[test]
+    fn dependency_violations_are_sorted_independently_of_metadata_order() {
+        let mut metadata = dependency_graph(&[
+            ("policy-contracts", "policy-core"),
+            ("github-adapter", "policy-core"),
+            ("github-adapter", "policy-cli"),
+        ]);
+        metadata["packages"].as_array_mut().unwrap().push(json!({
+            "id":"patched-local", "name":"shim", "source":null,
+            "manifest_path":"/outside/shim/Cargo.toml", "dependencies":[]
+        }));
+        let expected = "forbidden policy-core dependency found\nresolved path dependency outside workspace members: shim (/outside/shim)\nunapproved workspace dependency: github-adapter -> policy-cli\nunapproved workspace dependency: github-adapter -> policy-core\nunapproved workspace dependency: policy-contracts -> policy-core";
+        let tree = "policy-core v0.1.0\n└── tokio v1.0.0";
+        assert_eq!(check_dependencies(tree, &metadata).unwrap_err(), expected);
+        let packages = metadata["packages"].as_array_mut().unwrap();
+        packages.reverse();
+        for package in packages {
+            package["dependencies"].as_array_mut().unwrap().reverse();
+        }
+        metadata["workspace_members"]
+            .as_array_mut()
+            .unwrap()
+            .reverse();
+        assert_eq!(check_dependencies(tree, &metadata).unwrap_err(), expected);
+    }
+
+    #[test]
+    fn resolved_package_membership_uses_identity_and_local_source() {
+        let mut metadata = dependency_graph(&[("policy-core", "policy-contracts")]);
+        metadata["packages"].as_array_mut().unwrap().extend([
+            json!({"id":"registry","name":"registry-lib","source":"registry+https://example.invalid/index","manifest_path":"/cache/registry-lib/Cargo.toml"}),
+            json!({"id":"git","name":"git-lib","source":"git+https://example.invalid/repo","manifest_path":"/cache/git-lib/Cargo.toml"}),
+        ]);
+        check_dependencies("", &metadata).unwrap();
+        metadata["packages"].as_array_mut().unwrap().push(json!({
+            "id":"nonmember-local", "name":"policy-contracts", "source":null,
+            "manifest_path":"/outside/policy-contracts/Cargo.toml"
+        }));
+        assert_eq!(
+            check_dependencies("", &metadata).unwrap_err(),
+            "resolved path dependency outside workspace members: policy-contracts (/outside/policy-contracts)"
+        );
     }
 }
