@@ -58,7 +58,7 @@ pub fn stage(examples: &Path, profile: &str, target: &Path) -> Result<()> {
         target: target.to_path_buf(),
         installation: Installation {
             profile: profile.into(),
-            release: "1.1.0".into(),
+            release: "1.1.1".into(),
             components: BTreeMap::new(),
             user_profile: None,
         },
@@ -141,11 +141,11 @@ pub fn stage_profile(source: &Path, profile_file: &str, target: &Path) -> Result
 pub(crate) fn builtin_profile(family: &str) -> Result<project_verification::ProjectProfile> {
     let source = match family {
         "react-typescript" => {
-            include_str!("../../bootstrap/templates/1.1.0/profiles/react-typescript/profile.json")
+            include_str!("../../bootstrap/templates/1.1.1/profiles/react-typescript/profile.json")
         }
-        "dotnet" => include_str!("../../bootstrap/templates/1.1.0/profiles/dotnet/profile.json"),
+        "dotnet" => include_str!("../../bootstrap/templates/1.1.1/profiles/dotnet/profile.json"),
         "fullstack" => {
-            include_str!("../../bootstrap/templates/1.1.0/profiles/fullstack/profile.json")
+            include_str!("../../bootstrap/templates/1.1.1/profiles/fullstack/profile.json")
         }
         _ => return Err("unknown consuming profile".into()),
     };

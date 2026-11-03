@@ -51,9 +51,10 @@ P3 makes empty adequacy an explained non-pass, rejects empty schema 3/4 consumer
 policies and requires negative cases to map to executed tests. Frozen parsing
 is preserved; local tests do not establish adoption or promotion. See [[kernel#Test adequacy]].
 
-Native fixture dependencies use Jest 30.5.2 with scoped `js-yaml` 4 and
-parser 8.42.0 with scoped `typescript-estree` 8.48.0 overrides. Frozen bootstrap
-pins remain unchanged; this refresh alone makes no hosted or promotion claim.
+Native presets select bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
+1.1.0 bytes remain frozen. Fixture-scoped minimatch/glob overrides leave both
+Jest jobs blocked on unpatched deepmerge. See [[kernel#Bootstrap installer]]
+and the current-status authority; no promotion is established.
 
 P1 adds explicit npm members under one root graph and audit. Native
 Node 26.12.0/npm 11.20.0 fixtures satisfy the local scope; evidence remains

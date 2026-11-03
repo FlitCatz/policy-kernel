@@ -1,0 +1,8 @@
+# Copy into an existing trusted job after checkout, pinned tool setup and dependency restore.
+# The caller supplies a fresh, head-bound RunRequest and an already-built Rust binary.
+# This template is intentionally not installed as an active workflow.
+steps:
+  - name: Run project checks (local advisory observations)
+    run: project-verification run --input .policy/run-request.json
+  # Trusted CI must independently collect observations and use action/README.md's
+  # policy-ci integration. A successful local run does not authorize a merge.

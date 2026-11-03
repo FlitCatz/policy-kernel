@@ -37,9 +37,15 @@ fn user_request(target: &Path) -> Request {
 
 #[test]
 fn user_profile_is_bound_but_never_owned_and_removal_survives_source_edits() {
-    for remove_source in [false, true] {
+    for (release, remove_source) in [
+        ("1.1.0", false),
+        ("1.1.0", true),
+        ("1.1.1", false),
+        ("1.1.1", true),
+    ] {
         let temp = tempfile::tempdir().unwrap();
         let mut req = user_request(temp.path());
+        req.installation.release = release.into();
         let source = temp.path().join("custom-profile.json");
         let original = fs::read(&source).unwrap();
         let saved = plan(req.clone()).unwrap();
@@ -55,6 +61,10 @@ fn user_profile_is_bound_but_never_owned_and_removal_survives_source_edits() {
         );
         apply(&saved).unwrap();
         assert_eq!(fs::read(&source).unwrap(), original);
+        let usage = fs::read_to_string(temp.path().join(".policy/USAGE.md")).unwrap();
+        assert!(usage.contains(&format!(
+            "To uninstall, pass the same --profile-file PATH and --release {release} with --uninstall."
+        )));
         let repeat = plan(req.clone()).unwrap();
         assert!(repeat.files.iter().all(|f| f.action == Action::Unchanged));
         apply(&repeat).unwrap();
@@ -167,14 +177,14 @@ fn installed_files_follow_umask_and_replacements_keep_their_mode() {
 #[test]
 fn selected_release_upgrades_and_downgrades_all_frozen_releases() {
     for family in ["react-typescript", "dotnet", "fullstack"] {
-        for release in ["1.0.0", "1.0.1", "1.0.2"] {
+        for release in ["1.0.0", "1.0.1", "1.0.2", "1.1.0"] {
             let temp = tempfile::tempdir().unwrap();
             let mut req = request(temp.path(), family);
             req.installation.release = release.into();
             apply(&plan(req.clone()).unwrap()).unwrap();
             let receipt_path = temp.path().join(".policy/bootstrap-manifest.json");
             let old_receipt = fs::read(&receipt_path).unwrap();
-            req.installation.release = "1.1.0".into();
+            req.installation.release = "1.1.1".into();
             let upgrade = plan(req.clone()).unwrap();
             assert!(upgrade.conflicts.is_empty(), "{:?}", upgrade.conflicts);
             apply(&upgrade).unwrap();
@@ -189,6 +199,95 @@ fn selected_release_upgrades_and_downgrades_all_frozen_releases() {
             req.operation = Operation::Uninstall;
             apply(&plan(req).unwrap()).unwrap();
         }
+    }
+}
+
+#[test]
+fn patched_release_installs_repeats_and_uninstalls_schema_two_presets() {
+    for family in ["react-typescript", "dotnet", "fullstack"] {
+        let temp = tempfile::tempdir().unwrap();
+        let mut req = request(temp.path(), family);
+        req.installation.release = "1.1.1".into();
+        let first = plan(req.clone()).unwrap();
+        assert!(first.conflicts.is_empty(), "{:?}", first.conflicts);
+        apply(&first).unwrap();
+        let receipt_path = temp.path().join(".policy/bootstrap-manifest.json");
+        let receipt_bytes = fs::read(&receipt_path).unwrap();
+        let receipt: serde_json::Value = serde_json::from_slice(&receipt_bytes).unwrap();
+        assert_eq!(receipt["schema_version"], 2);
+        assert_eq!(receipt["project_profile_schema"], 2);
+        assert_eq!(receipt["installation"]["release"], "1.1.1");
+        let profile = project_verification::parse_profile(
+            &fs::read_to_string(temp.path().join(".policy/project-profile.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(profile.version, "1.1.1");
+        let selection = profile.selection.unwrap();
+        for (tool, expected) in [
+            ("frontend:build", "=7.3.7"),
+            ("frontend:unit", "=4.1.12"),
+            ("shared:contract", "=4.1.12"),
+        ] {
+            if let Some(tool) = selection.tools.get(tool) {
+                assert_eq!(tool.version.legacy().unwrap().requirement, expected);
+            }
+        }
+        let repeat = plan(req.clone()).unwrap();
+        assert!(repeat
+            .files
+            .iter()
+            .all(|file| file.action == Action::Unchanged));
+        apply(&repeat).unwrap();
+        assert_eq!(fs::read(&receipt_path).unwrap(), receipt_bytes);
+        req.operation = Operation::Uninstall;
+        apply(&plan(req).unwrap()).unwrap();
+        assert!(!receipt_path.exists());
+        assert!(!temp.path().join(".policy/project-profile.json").exists());
+    }
+}
+
+#[test]
+fn patched_release_rejects_old_installed_pins_and_preserves_edited_managed_files() {
+    let temp = tempfile::tempdir().unwrap();
+    let package = temp.path().join("package.json");
+    fs::write(
+        &package,
+        r#"{"devDependencies":{"vite":"7.3.6","vitest":"4.1.11"}}"#,
+    )
+    .unwrap();
+    let installed = temp.path().join("node_modules/vite/package.json");
+    fs::create_dir_all(installed.parent().unwrap()).unwrap();
+    fs::write(&installed, r#"{"version":"7.3.6"}"#).unwrap();
+    let mut req = request(temp.path(), "react-typescript");
+    req.installation.release = "1.1.1".into();
+    let incompatible = plan(req.clone()).unwrap();
+    assert!(!incompatible.conflicts.is_empty());
+    assert!(apply(&incompatible).is_err());
+    assert!(!temp.path().join(".policy").exists());
+    fs::write(
+        &package,
+        r#"{"devDependencies":{"vite":"7.3.7","vitest":"4.1.12"}}"#,
+    )
+    .unwrap();
+    fs::write(&installed, r#"{"version":"7.3.7"}"#).unwrap();
+    let compatible = plan(req.clone()).unwrap();
+    assert!(
+        compatible.conflicts.is_empty(),
+        "{:?}",
+        compatible.conflicts
+    );
+    apply(&compatible).unwrap();
+    let receipt_path = temp.path().join(".policy/bootstrap-manifest.json");
+    let receipt = fs::read(&receipt_path).unwrap();
+    let usage = temp.path().join(".policy/USAGE.md");
+    fs::write(&usage, "consumer edit").unwrap();
+    for operation in [Operation::Install, Operation::Uninstall] {
+        req.operation = operation;
+        let conflict = plan(req.clone()).unwrap();
+        assert!(!conflict.conflicts.is_empty());
+        assert!(apply(&conflict).is_err());
+        assert_eq!(fs::read(&receipt_path).unwrap(), receipt);
+        assert_eq!(fs::read_to_string(&usage).unwrap(), "consumer edit");
     }
 }
 
@@ -549,7 +648,7 @@ fn existing_dotnet_requires_an_unambiguous_compatible_runtime() {
 
 #[test]
 fn selected_release_checks_existing_projects_without_their_lockfiles() {
-    for release in ["1.0.2", "1.1.0"] {
+    for release in ["1.0.2", "1.1.0", "1.1.1"] {
         let temp = tempfile::tempdir().unwrap();
         let mut req = request(temp.path(), "dotnet");
         req.installation.release = release.into();

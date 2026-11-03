@@ -24,12 +24,18 @@
     "eslint": "9.34.0",
     "jsdom": "26.1.0",
     "typescript": "5.9.2",
-    "vite": "7.3.6",
-    "vitest": "4.1.11"
+    "vite": "7.3.7",
+    "vitest": "4.1.12"
   },
   "overrides": {
     "@typescript-eslint/parser": {
-      "@typescript-eslint/typescript-estree": "8.48.0"
+      "@typescript-eslint/typescript-estree": {
+        ".": "8.48.0",
+        "minimatch": "11.0.4"
+      }
+    },
+    "eslint": {
+      "minimatch": "11.0.4"
     }
   }
 }

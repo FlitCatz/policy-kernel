@@ -41,9 +41,11 @@ report, audit and version regressions. Run
 for staging coverage; native execution remains opt-in. Evidence remains local
 and advisory; stage-1 completion establishes no promotion or protected merge.
 
-The native fixtures use Jest 30.5.2 with a scoped `js-yaml` 4 override.
-React/TypeScript keeps parser 8.42.0 and the frozen bootstrap pins, with a
-scoped `typescript-estree` 8.48.0 override; see [current status](docs/status.md).
+Native preset acceptance selects bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
+all 1.1.0 assets remain frozen. Fixtures scope minimatch 11.0.4 and glob 14.0.3
+overrides to their affected dependency chains. Both Jest jobs still require a
+clean audit and remain blocked on unpatched deepmerge
+GHSA-gcqx-w48m-w2h4; see [current status](docs/status.md).
 
 Tasks 1–14 provide implemented components in this workspace. The
 [current status](docs/status.md) and [Task index](docs/tasks/README.md) identify the supporting evidence and
@@ -263,7 +265,7 @@ Native acceptance also checks empty and missing Vitest, TRX and Playwright repor
 with successful producer exits, corrections and rejection of earlier-head results.
 
 ```console
-cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.0/profiles/fullstack/profile.json
+cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.1/profiles/fullstack/profile.json
 cargo run --locked -p project-verification -- schema
 cargo run --locked -p project-verification -- prepare --input request.json
 cargo run --locked -p project-verification -- run --input request.json
@@ -271,7 +273,7 @@ cargo run --locked -p project-verification -- run --input request.json
 
 The repository-root `profiles/fullstack/profile.json` is a retained 1.0.0 asset
 with 14 sensors. Frozen release 1.0.2 has 15 required sensors including
-`shared:dependencies`; current release 1.1.0 uses profile schema 2 and has 17,
+`shared:dependencies`; current preset release 1.1.1 uses profile schema 2 and has 17,
 adding separate Unit and Integration NuGet audits. After bootstrap installation,
 validate the selected copy at `.policy/project-profile.json`. See the
 [profile asset guide](profiles/README.md) for the historical/current distinction.
@@ -281,8 +283,8 @@ consumer directory. Inspect and save a plan before applying it; `apply`
 revalidates the plan before it changes files.
 
 ```console
-cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api
-cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.0 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
+cargo run --locked -p policy-bootstrap -- inspect --target /absolute/project --profile fullstack --release 1.1.1 --component frontend=apps/web --component backend=apps/api
+cargo run --locked -p policy-bootstrap -- plan --target /absolute/project --profile fullstack --release 1.1.1 --component frontend=apps/web --component backend=apps/api > /absolute/bootstrap-plan.json
 cargo run --locked -p policy-bootstrap -- apply --plan /absolute/bootstrap-plan.json
 ```
 

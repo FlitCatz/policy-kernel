@@ -48,7 +48,7 @@ existing exact-head pre-merge checks are still necessary for authorization.
 
 ## Versioned execution protocol
 
-`ProjectProfile` schema 1 / assets 1.0.0–1.0.2 and schema 2 / asset 1.1.0 wrap
+`ProjectProfile` schema 1 / assets 1.0.0–1.0.2 and schema 2 / assets 1.1.0–1.1.1 wrap
 the v2 sensor definitions. Schema 2 adds the [selection contract](tool-selection.md)
 and supports user asset versions; sensor-profile versioning is independent.
 Strict JSON parsing and the generated schema reject unknown fields; semantic
@@ -76,9 +76,9 @@ The three repository-root assets are retained historical 1.0.0 profiles:
 profile has 14 sensors. Do not treat these stable compatibility assets as an
 implicit latest release; see the [profile asset guide](../../profiles/README.md).
 
-For current direct validation, select the explicit 1.1.0 asset under
-`bootstrap/templates/1.1.0/profiles/`, or the installed/user-owned profile from a
-reviewed bootstrap plan. Fullstack 1.1.0 has 17 required sensors: shared npm plus
+For current direct validation, select the explicit 1.1.1 asset under
+`bootstrap/templates/1.1.1/profiles/`, or the installed/user-owned profile from a
+reviewed bootstrap plan. Fullstack 1.1.1 has 17 required sensors: shared npm plus
 app, Unit and Integration NuGet audits. Frozen 1.0.2 has 15 including shared npm. Standalone component
 roots are `.`; fullstack uses `frontend/`, `backend/`, and a `shared` component
 at the root. Each application component has a required test suite with
@@ -128,7 +128,7 @@ successful sensor merely because another test passed.
 Commands for the current profile contract:
 
 ```console
-rtk cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.0/profiles/fullstack/profile.json
+rtk cargo run --locked -p project-verification -- validate-profile bootstrap/templates/1.1.1/profiles/fullstack/profile.json
 rtk cargo run --locked -p project-verification -- schema
 rtk cargo run --locked -p project-verification -- prepare --input request.json
 rtk cargo run --locked -p project-verification -- run --input request.json
