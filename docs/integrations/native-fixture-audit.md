@@ -203,14 +203,14 @@ split-consumer Vitest 4.1.12/Vite 6.4.5, React 19.0.0, a Node environment with
 `retry: 0`, and the existing alternate Node 22.19.0/npm 10.9.4/web-root SSR intent.
 The former Jest fixture and jobs remain in this first PR.
 
-npm 10.9.4 lock generation failed in Arborist (`edgesOut` on null). npm 11.20.0
-then generated the lock, and npm 10.9.4 normalized it with
+npm 10.9.3 (bundled with Node) lock generation failed in Arborist (`edgesOut` on null). npm 11.20.0
+then generated the lock, and the initial npm 10.9.3 normalization used
 `install --package-lock-only --ignore-scripts --no-audit --no-fund`. The new lock
 contains 96 dependency entries: 92 MIT, two ISC, one BSD-3-Clause and one
 Apache-2.0 license declaration. There are no overrides. Its SHA-256 is
 `2f40bc98a1335d8c7b0b62210ee4f7ade23bfc293e720ae03287cf9024079294`.
 
-Local `native_vitest` ran with Node 22.19.0/npm 10.9.4 on macOS arm64 and passed
+The initial local `native_vitest` ran with Node 22.19.0/npm 10.9.3 on macOS arm64 and passed
 all nine cases: baseline, failed, corrected, skipped, empty, missing,
 final-corrected, nested-audit-failed and nested-audit-corrected. The baseline's
 selected `npm audit --audit-level=low --include=dev --include=optional
@@ -225,3 +225,12 @@ at base `7e25ab6e5d80deefdd9e69849cf956d6ef99d623`, not a hosted final-head deci
 Vitest JSON has no retry history. Configured retry zero is not equivalent to
 Jest's success-after-retry rejection. This record establishes local advisory
 coverage only; it does not establish hosted success, protected merge or promotion.
+
+A PATH review found that the initial local command selected Node's bundled npm
+10.9.3, despite requesting the separately installed npm 10.9.4. The native test
+now asserts both exact observed tokens before staging. The lock was subsequently
+normalized with actual npm 10.9.4 and the nine-case native suite replayed with
+that executable first on PATH. The fixture lock bytes remained unchanged. Hosted
+replacement job [125830197392](https://github.com/FlitCatz/policy-kernel/actions/runs/41610296561/job/125830197392)
+passed on first-stage head `8480bd31d14c47ee685b83400c521e8a5768c4f1`; subsequent
+head verification is separate.

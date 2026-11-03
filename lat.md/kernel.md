@@ -212,7 +212,8 @@ describes generation and verification separately.
 Alternate native coverage retains Node 22.19.0/npm 10.9.4, a `web/` SSR root, producer skip and nested dev-only audit rejection using Vitest while the first transition stage still retains Jest execution.
 
 The replacement [[acceptance/tests/native_vitest.rs#native_vitest_selected_paths_failures_corrections_and_prior_head_rejection]]
-reuses [[acceptance/tests/common/alternate.rs#nested_graph_audit]] and report/head checks.
+asserts both exact runtime tokens before staging and reuses
+[[acceptance/tests/common/alternate.rs#nested_graph_audit]] and report/head checks.
 General profile tests use the Vitest fixture; compatibility decoding and migration
 remain in [[crates/project-verification/tests/report_compatibility.rs#legacy_jest_profile_keeps_wire_contracts_and_schema_four_migration]].
 Vitest JSON has no retry history: retry zero configuration is not success-after-retry rejection parity.

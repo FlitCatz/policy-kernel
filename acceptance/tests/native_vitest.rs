@@ -16,6 +16,12 @@ fn native_vitest_selected_paths_failures_corrections_and_prior_head_rejection() 
         std::env::var_os("POLICY_VITEST_OUTPUT").expect("set a new output directory"),
     );
     fs::create_dir(&output).unwrap();
+    for (tool, expected) in [("node", "v22.19.0"), ("npm", "10.9.4")] {
+        let probe = command(&output, &[tool, "--version"]);
+        assert!(probe.status.success());
+        assert_eq!(String::from_utf8(probe.stdout).unwrap().trim(), expected);
+    }
+
     let root = output.join("consumer");
     fs::create_dir(&root).unwrap();
     let workspace = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
