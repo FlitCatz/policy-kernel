@@ -41,7 +41,7 @@ report, audit and version regressions. Run
 for staging coverage; native execution remains opt-in. Evidence remains local
 and advisory; stage-1 completion establishes no promotion or protected merge.
 
-Native acceptance selects bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
+Native preset acceptance selects bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
 all 1.1.0 assets remain frozen. Fixtures scope minimatch 11.0.4 and glob 14.0.3
 overrides to their affected dependency chains. Both Jest jobs still require a
 clean audit and remain blocked on unpatched deepmerge

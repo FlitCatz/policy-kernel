@@ -62,7 +62,7 @@ report·audit·version 회귀 검증을 유지합니다.
 staging을 검증하며 native 실행은 명시적으로 선택해야 합니다. 증거는 로컬 advisory이며
 stage 1 구현 완료가 promotion이나 protected merge를 의미하지 않습니다.
 
-네이티브 acceptance는 Vite 7.3.7 / Vitest 4.1.12를 고정한 bootstrap 1.1.1을 선택하며,
+네이티브 프리셋 acceptance는 Vite 7.3.7 / Vitest 4.1.12를 고정한 bootstrap 1.1.1을 선택하며,
 1.1.0 asset의 바이트는 그대로 유지합니다. Fixture는 영향을 받는 의존성 경로에만
 minimatch 11.0.4 및 glob 14.0.3 override를 적용합니다. 두 Jest job은 clean audit
 조건을 유지하며 수정판이 없는 deepmerge GHSA-gcqx-w48m-w2h4 때문에 실패합니다.

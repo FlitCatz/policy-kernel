@@ -12,10 +12,5 @@
     "@playwright/test": "1.55.1",
     "typescript": "5.9.2",
     "vitest": "4.1.12"
-  },
-  "overrides": {
-    "vitest": {
-      "vite": "8.2.4"
-    }
   }
 }

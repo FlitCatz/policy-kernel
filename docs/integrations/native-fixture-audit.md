@@ -47,9 +47,9 @@ React/TypeScript scopes minimatch 11.0.4 beneath ESLint and the existing
 parser-owned typescript-estree 8.48.0 override. This covers ESLint's config-array
 and eslintrc descendants. Jest scopes glob 14.0.3 beneath @jest/reporters,
 jest-config, jest-runtime and test-exclude; test-exclude also pins minimatch
-11.0.4. Glob's own range resolves minimatch 11.0.4. Shared Vitest scopes Vite
-to 8.2.4, preserving the existing Vite 8.2 patch line rather than selecting a
-new minor. The project-owned frontend retains React 19.0.0, Playwright 1.63.0
+11.0.4. Glob's own range resolves minimatch 11.0.4. Shared Vitest's declared Vite
+range accepts 8.2.4; a lock refresh retains that patched resolution without a Vite
+override. The project-owned frontend retains React 19.0.0, Playwright 1.63.0
 and Vite 6, patching Vite to 6.4.5 and Vitest to 4.1.12.
 
 Minimatch/glob overrides cross transitive major versions. Their used named
@@ -71,6 +71,8 @@ for the Vitest graphs. npm 11.20.0 generated those locks; actual `npm ci` with
 10.9.3 succeeded. Jest's lock was refreshed with 10.9.3 after removing stale
 glob/minimatch resolutions, preserving unrelated locked package versions.
 Generation used `--ignore-scripts`; audits remained enabled as separate checks.
+The final shared lock refresh without the Vite override succeeded with npm
+10.9.3, retaining all resolved versions and removing npm 11's extra libc metadata.
 
 ## Dependency and licence changes
 
@@ -116,8 +118,10 @@ and fullstack (four scenarios), including rejection/correction and prior-head
 checks. Alternate Jest with Node 22.19.0/npm 10.9.4 failed at its baseline audit
 assertion; node, syntax and unit sensors passed. Project-owned versions with
 Node 26.10.0/npm 10.9.3 and 12.1.0 passed both frontend graphs and their negative
-cases, then failed at the later Jest audit assertion. Both raw failing audit
-outputs contain only deepmerge GHSA-gcqx-w48m-w2h4 (five low entries).
+cases, then failed at the later Jest audit assertion. Both local raw failing audit
+outputs contain only deepmerge GHSA-gcqx-w48m-w2h4 (five low entries). Reproduce
+audits locally against the retained locks. Hosted logs identify the failing
+assertions; the advisory details here come from those local audits.
 
 Formatting and strict workspace/all-target Clippy passed. The CI-pinned lat.md
 0.12.2 check, 195 relative Markdown link paths and `git diff --check` passed.

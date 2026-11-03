@@ -24,10 +24,13 @@ contract tests live in tests/contracts; E2E journeys live in tests/e2e. Provisio
 the real servers before the shared E2E run; no example server or fake journey is
 generated. No discovered tests remains a failure.
 
-The consumer owns package manifests and lockfiles. The repository's native fixture
-scopes minimatch 11.0.4 overrides beneath ESLint and typescript-estree to address
-GHSA-g3hv-75wg-m249; use a reviewed compatible resolution and run the complete
-dependency audit. Bootstrap does not generate overrides or imply a clean audit.
+The consumer owns package manifests and lockfiles. Policy-kernel's native fixtures
+scope minimatch 11.0.4 overrides beneath ESLint and typescript-estree to address
+GHSA-g3hv-75wg-m249. This override breaks @eslint/eslintrc's ESM entry: configs
+that import FlatCompat from @eslint/eslintrc fail at startup because minimatch
+has no default export. The fixtures use the tested CommonJS entry. Review your
+config's compatibility before copying an override, and run the complete dependency
+audit. Bootstrap does not generate overrides or imply a clean audit.
 
 The project profile records component roots, explicit argv, package/runtime pins,
 report destinations and required test counts. `sensor-profile.json` is unbound;

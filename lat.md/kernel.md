@@ -143,6 +143,8 @@ Installer coverage [[bootstrap/tests/installer.rs#patched_release_installs_repea
 [[bootstrap/tests/installer.rs#selected_release_upgrades_and_downgrades_all_frozen_releases]]
 and [[bootstrap/tests/installer.rs#patched_release_rejects_old_installed_pins_and_preserves_edited_managed_files]]
 checks pins, repeat installation, exact old receipt restoration and edit preservation.
+Custom install coverage [[bootstrap/tests/installer.rs#user_profile_is_bound_but_never_owned_and_removal_survives_source_edits]]
+also checks that uninstall instructions name the installed release.
 
 ## Npm workspace graph
 

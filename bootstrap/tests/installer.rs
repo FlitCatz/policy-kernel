@@ -61,6 +61,10 @@ fn user_profile_is_bound_but_never_owned_and_removal_survives_source_edits() {
         );
         apply(&saved).unwrap();
         assert_eq!(fs::read(&source).unwrap(), original);
+        let usage = fs::read_to_string(temp.path().join(".policy/USAGE.md")).unwrap();
+        assert!(usage.contains(&format!(
+            "To uninstall, pass the same --profile-file PATH and --release {release} with --uninstall."
+        )));
         let repeat = plan(req.clone()).unwrap();
         assert!(repeat.files.iter().all(|f| f.action == Action::Unchanged));
         apply(&repeat).unwrap();
