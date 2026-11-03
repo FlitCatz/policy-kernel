@@ -56,6 +56,11 @@ Native presets select bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
 Jest jobs blocked on unpatched deepmerge. See [[kernel#Bootstrap installer]]
 and the current-status authority; no promotion is established.
 
+The split-consumer frontend separately selects Vite 6.4.5 / Vitest 4.1.12
+and locks source-map-js 1.2.2. Its selected npm 10.9.3 audit reports zero
+vulnerabilities; the separate Jest deepmerge failure remains unchanged.
+See the current-status authority and [[kernel#Split-consumer conformance]].
+
 P1 adds explicit npm members under one root graph and audit. Native
 Node 26.12.0/npm 11.20.0 fixtures satisfy the local scope; evidence remains
 LocalUntrusted and does not establish TJERP adoption or promotion.

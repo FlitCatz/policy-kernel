@@ -143,3 +143,55 @@ raw npm output must contain deepmerge GHSA-gcqx-w48m-w2h4 and no remaining
 glob/minimatch advisories. Such failures are retained failures, not green checks.
 Installation regressions exercise fresh/repeat/uninstall, schema-2 receipts,
 old-release upgrade/downgrade and interrupted install/removal recovery.
+
+## Split-consumer follow-up
+
+On 2026-11-03, the synthetic split-consumer frontend separately refreshed Vite
+6.4.3 → 6.4.5, Vitest and @vitest/{expect,mocker,pretty-format,runner,snapshot,
+spy,utils} 4.1.11 → 4.1.12, and source-map-js 1.2.1 → 1.2.2. Its schema-3 profile
+package requirements and Vitest tool selection match the manifest and lock.
+React 19.0.0, Playwright 1.63.0, Node 26.10.0 and npm 10.9.3 remain unchanged.
+There are no new package identities, licence families or overrides; updated
+Vite/Vitest packages retain MIT and source-map-js retains BSD-3-Clause.
+Unrelated chai and tinyrainbow resolutions remain at 6.2.2 and 3.1.1.
+
+Both baseline and updated `npm ci` and audits used Node 26.10.0/npm 10.9.3,
+including dev, optional and peer dependencies at severity `low`. The baseline
+audit exited 1 with four vulnerable package entries (two moderate, two high):
+vitest, @vitest/mocker, vite and source-map-js. The updated audit exited 0 with
+zero vulnerabilities. This addresses Dependabot alerts #24–#31, including
+source-map-js [GHSA-68fv-2mgg-jv7q](https://github.com/advisories/GHSA-68fv-2mgg-jv7q)
+and the Vite/mocker advisories listed above. Alert #9, the separate Jest
+deepmerge failure, remains unchanged.
+
+Initial lock generation with npm 10.9.3 failed with Arborist's internal
+`Cannot read properties of null (reading 'edgesOut')` error. As with the earlier
+refresh, npm 11.20.0 generated the lock (Node 26.13.0); a subsequent npm 10.9.3
+`install --package-lock-only --ignore-scripts --no-audit --no-fund` succeeded
+and removed libc metadata. A targeted npm 10.9.3 `update source-map-js` selected
+1.2.2. After restoring the two unrelated Vitest-range refreshes, npm 10.9.3
+normalized the lock again, installed it and performed the clean audit.
+No audit policy or frozen bootstrap asset changes are included.
+
+Local split-consumer staging and the opt-in native harness passed. The native
+run used Node 26.10.0/npm 10.9.3, .NET 11.0.100-rc.1.26425.128 and Playwright
+1.63.0 Chromium. All ten sensors passed on both baseline and corrected heads,
+including one frontend unit test, one browser-to-API E2E test and the three
+filtered backend suites. All 26 negative checks passed: empty/truncated/missing
+reports and stale report bindings, actual Vitest/TRX/Playwright failures,
+prior-head evidence, stale profile and changed framework props. These results
+remain local advisory observations.
+
+```console
+cargo test --locked -p policy-acceptance --test native_split_consumer -- --test-threads=1
+POLICY_SPLIT_CONSUMER_OUTPUT=/absolute/fresh-split-consumer cargo test --locked -p policy-acceptance --test native_split_consumer native_split_consumer_reports -- --ignored --nocapture --test-threads=1
+```
+
+The native command requires the selected tools on PATH and DOTNET_ROOT set to
+the selected SDK installation, as in the [native procedure](consumer-schema3.md#native-verification).
+
+The locked workspace suite, formatting, strict workspace/all-target Clippy,
+deterministic schema regeneration, xtask residue/public-API checks, cargo-deny
+0.20.2 and cargo-audit 0.22.2 also passed. The CI-pinned lat.md 0.12.2 reported
+`All checks passed`; 185 relative Markdown link paths and `git diff --check`
+passed. Hosted outcomes must be read from the exact-head PR checks separately.

@@ -153,6 +153,13 @@ No audit exceptions, tag or production promotion are introduced. The
 [fixture audit record](integrations/native-fixture-audit.md) records validation
 and dependency changes; local observations alone do not establish hosted success.
 
+The synthetic split-consumer frontend separately selects Vite 6.4.5 /
+Vitest 4.1.12 and locks source-map-js 1.2.2. Its Node 26.10.0/npm 10.9.3
+audit dropped from four vulnerable package entries to zero; generation used
+npm 11.20.0 followed by npm 10.9.3 normalization and installation. See the
+[follow-up record](integrations/native-fixture-audit.md#split-consumer-follow-up).
+The separate Jest deepmerge failure remains unchanged.
+
 ## P1 npm workspace shared lock
 
 The optional [P1 workspace extension](integrations/npm-workspaces.md) adds

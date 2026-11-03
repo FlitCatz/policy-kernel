@@ -40,6 +40,9 @@ report, audit and version regressions. Run
 `cargo test --locked --offline -p policy-acceptance --test native_split_consumer`
 for staging coverage; native execution remains opt-in. Evidence remains local
 and advisory; stage-1 completion establishes no promotion or protected merge.
+Its frontend pins Vite 6.4.5 / Vitest 4.1.12 with source-map-js 1.2.2;
+the [audit record](docs/integrations/native-fixture-audit.md#split-consumer-follow-up)
+documents the split-consumer lock refresh.
 
 Native preset acceptance selects bootstrap 1.1.1 with Vite 7.3.7 / Vitest 4.1.12;
 all 1.1.0 assets remain frozen. Fixtures scope minimatch 11.0.4 and glob 14.0.3
