@@ -480,6 +480,85 @@ fn absolute_path_dependency_outside_repository_is_rejected() {
     );
 }
 
+fn check_patched_path_dependency(root: &Path, shim: &Path, patch_file: &str, patch_path: &str) {
+    fs::write(
+        root.join("Cargo.toml"),
+        "[workspace]\nmembers=[\"crates/*\"]\nexclude=[\"shims/shim\"]\nresolver=\"2\"\n",
+    )
+    .unwrap();
+    dependency_package(
+        &root.join("crates/github-adapter"),
+        "github-adapter",
+        "[dependencies]\nshim = \"0.1\"\n",
+    );
+    dependency_package(
+        shim,
+        "shim",
+        &format!(
+            "[dependencies]\npolicy-core = {{ path = {:?} }}\n",
+            root.join("crates/policy-core")
+                .canonicalize()
+                .unwrap()
+                .to_str()
+                .unwrap(),
+        ),
+    );
+    let file = root.join(patch_file);
+    fs::create_dir_all(file.parent().unwrap()).unwrap();
+    let existing = fs::read_to_string(&file).unwrap_or_default();
+    fs::write(
+        file,
+        format!("{existing}\n[patch.crates-io]\nshim = {{ path = {patch_path:?} }}\n"),
+    )
+    .unwrap();
+    lock_workspace(root);
+    let out = residue(root);
+    let error = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{error}");
+    assert!(
+        error.contains("resolved path dependency outside workspace members: shim ("),
+        "{error}"
+    );
+    assert!(
+        error.contains(shim.file_name().unwrap().to_str().unwrap()),
+        "{error}"
+    );
+}
+
+#[test]
+fn patch_in_root_manifest_cannot_bridge_workspace_directions() {
+    let temp = scan_repo();
+    check_patched_path_dependency(
+        temp.path(),
+        &temp.path().join("shims/shim"),
+        "Cargo.toml",
+        "shims/shim",
+    );
+}
+
+#[test]
+fn patch_to_absolute_path_outside_repository_is_rejected() {
+    let temp = scan_repo();
+    let external = TempDir::new().unwrap();
+    check_patched_path_dependency(
+        temp.path(),
+        external.path(),
+        "Cargo.toml",
+        external.path().to_str().unwrap(),
+    );
+}
+
+#[test]
+fn patch_in_cargo_config_cannot_bridge_workspace_directions() {
+    let temp = scan_repo();
+    check_patched_path_dependency(
+        temp.path(),
+        &temp.path().join("shims/shim"),
+        ".cargo/config.toml",
+        "shims/shim",
+    );
+}
+
 #[test]
 fn all_dependency_violations_are_reported_in_stable_order() {
     let temp = scan_repo();

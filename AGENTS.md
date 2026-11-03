@@ -35,6 +35,9 @@ its pinned version deliberately and verify `lat check` locally with that version
   `WORKSPACE_DEPENDENCIES` in `xtask/src/verification.rs`, including optional,
   dev, build and target-specific dependencies. Path dependencies must point to
   workspace members; dependency violations are reported together in sorted order.
+  The full resolved graph also rejects local-source non-members introduced by
+  Cargo patches or configuration. Run `cargo fetch --locked` before workspace
+  tests and residue verification to cache all platforms for offline metadata.
   Review intentional new edges and update the documented allow-list in the same
   change. See
   [structural verification gates](docs/integrations/structure-gates.md).

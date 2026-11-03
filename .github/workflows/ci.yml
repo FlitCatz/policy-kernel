@@ -37,6 +37,8 @@ jobs:
         run: |
           mkdir -p verification
           { "$RUSTC" --version --verbose; rustup run "$RUSTUP_TOOLCHAIN" cargo --version; git rev-parse HEAD; } > verification/versions.txt
+      - name: Cache resolved dependencies for offline metadata
+        run: rustup run "$RUSTUP_TOOLCHAIN" cargo fetch --locked
       - name: Locked workspace build
         run: rustup run "$RUSTUP_TOOLCHAIN" cargo build --workspace --locked 2>&1 | tee verification/build.log
       - name: Workspace tests including isolated binary execution
@@ -90,6 +92,8 @@ jobs:
           cargo install cargo-audit --version 0.22.2 --locked
           mkdir -p verification
           { rustc --version; cargo --version; cargo deny --version; cargo audit --version; git rev-parse HEAD; } > verification/versions.txt
+      - name: Cache resolved dependencies for offline metadata
+        run: cargo fetch --locked
       - name: Format
         run: cargo fmt --all --check 2>&1 | tee verification/fmt.log
       - name: Locked workspace check

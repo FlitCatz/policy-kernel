@@ -147,6 +147,7 @@ advisory이며 증거를 Trusted로 승격하지 않습니다.
 저장소를 받은 뒤, 잠긴(lockfile 고정) 워크스페이스를 빌드하고 테스트합니다.
 
 ```console
+cargo fetch --locked
 cargo build --locked --workspace
 cargo test --locked --workspace
 cargo fmt --all -- --check
@@ -164,6 +165,10 @@ bool 인자 2개를 초과하면 실패합니다. `cargo run --locked -p xtask -
 보고합니다.
 측정 기준선, 허용된 간선, 실패 동작은
 [구조 검증 게이트](docs/integrations/structure-gates.md)를 참고하세요.
+
+path 멤버 검사에는 Cargo patch나 설정으로 추가된 해석 그래프의 로컬 패키지도
+포함됩니다. 테스트와 잔여물 검사가 전체 그래프를 오프라인으로 읽을 수 있도록
+`cargo fetch --locked`로 모든 플랫폼의 의존성을 먼저 캐시합니다.
 
 ### 로컬 자문 평가 실행
 
@@ -213,9 +218,9 @@ cargo run --locked -p xtask -- schema
 같이 검증합니다.
 
 ```console
+cargo fetch --locked
 cargo run --locked -p xtask -- check-residue
 cargo run --locked -p xtask -- check-public-api target/doc schemas
-cargo fetch --locked
 cargo run --locked --offline -p xtask -- run-mutation-suite target/promotion-mutation
 cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-mutation
 cargo test --locked -p xtask

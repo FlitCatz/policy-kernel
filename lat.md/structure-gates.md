@@ -12,11 +12,19 @@ The full measurement and applicability boundaries are in the
 
 ## Dependency directions
 
-The residue command requires path dependencies to target workspace members and checks internal directions across all declaration kinds. It reports dependency violations together in sorted order and preserves policy-core external exclusions.
+The residue command checks declared directions and local package membership in the resolved graph. It reports all dependency violations in sorted order and preserves policy-core external exclusions.
 
 Excluded local crates and absolute external paths cannot bridge the allow-list.
 Renamed, optional, dev, build and inactive-target declarations all count;
 repeated violations across declaration kinds appear once.
+Full Cargo metadata also rejects local-source non-members introduced by manifest
+or configuration patches, including transitive packages. Package IDs establish
+membership; registry and Git sources are not mistaken for local packages.
+Declared checks still cover inactive optional dependencies, and a path already
+reported from a declaration is not repeated for its resolved package.
+
+Workspace tests and residue verification need `cargo fetch --locked` first to
+cache all platform dependencies for full offline metadata; CI does this too.
 
 Rules [[xtask/src/verification.rs#WORKSPACE_DEPENDENCIES]] and
 [[xtask/src/verification.rs#check_dependencies]] reuse
@@ -34,3 +42,6 @@ CLI declarations [[xtask/tests/verification.rs#workspace_edges_include_renamed_o
 Non-member paths [[xtask/tests/verification.rs#excluded_path_dependencies_cannot_bridge_workspace_directions]]
 and [[xtask/tests/verification.rs#absolute_path_dependency_outside_repository_is_rejected]].
 Complete CLI diagnostics [[xtask/tests/verification.rs#all_dependency_violations_are_reported_in_stable_order]].
+Registry redirections [[xtask/tests/verification.rs#patch_in_root_manifest_cannot_bridge_workspace_directions]],
+[[xtask/tests/verification.rs#patch_to_absolute_path_outside_repository_is_rejected]]
+and [[xtask/tests/verification.rs#patch_in_cargo_config_cannot_bridge_workspace_directions]].

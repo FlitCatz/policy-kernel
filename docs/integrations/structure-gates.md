@@ -24,11 +24,12 @@ No lint `allow` attributes were added.
 ## Workspace dependency directions
 
 ```console
+cargo fetch --locked
 cargo run --locked -p xtask -- check-residue
 ```
 
 The command exits 0 on success and 1 on verification/input failure. It reuses
-`cargo metadata --locked --offline --no-deps --format-version 1` for source
+`cargo metadata --locked --offline --format-version 1` for source
 scanning and checks declared workspace-to-workspace edges against
 `WORKSPACE_DEPENDENCIES` in `xtask/src/verification.rs`. Dependency paths identify
 workspace members, so renamed dependencies retain their package identity. Every
@@ -36,17 +37,31 @@ path dependency must point to a workspace member: excluded crates inside the
 repository and absolute paths outside it are rejected, even if their package
 names match an allowed target. This prevents non-member shims from bypassing
 the direction allow-list.
+
+The full resolved graph also rejects every local package (`source: null`) whose
+package ID is not in `workspace_members`, naming the package and its directory.
+This catches registry dependencies redirected by root manifest patches,
+absolute-path patches and `.cargo/config.toml` patches, including transitive
+local packages. Declared path checks remain necessary for inactive optional
+dependencies. A path already reported from a declaration is not repeated as a
+resolved-package diagnostic.
+
+Fetch the locked dependencies before workspace tests or residue verification:
+full offline metadata needs dependency sources for all platforms, even those
+not built on the host. CI performs the same `cargo fetch --locked` preparation.
+
 Normal, dev, build, optional and target-specific declarations all count,
 regardless of active features or host target. A new crate has no implicitly
 allowed edges. Edge removal is permitted; a new or reversed edge requires an
 explicit allow-list change. All dependency violations are reported together,
 sorted lexicographically and deduplicated across declaration kinds, before the
-command exits 1. Failure names the edge and, for a non-member, its path:
+command exits 1. One invocation can report these sorted diagnostics; only the
+first line carries the CLI's `xtask:` prefix:
 
 ```text
-xtask: unapproved workspace dependency: policy-contracts -> policy-core
-
 xtask: path dependency outside workspace members: github-adapter -> shim (/repo/shims/shim)
+resolved path dependency outside workspace members: patched-shim (/outside/patched-shim)
+unapproved workspace dependency: policy-contracts -> policy-core
 ```
 
 The separate resolved `cargo tree --locked -p policy-core` check still rejects
@@ -121,3 +136,10 @@ absolute path outside the repository even with an allowed package name, and
 report multiple invalid edges and paths in one stable, deduplicated diagnostic.
 The current graph and existing direction/external-dependency rejections remain
 covered. These are local engineering observations, not promotion evidence.
+
+Before the resolved-graph fix, PR head
+`e71f81459a9ccab65f05f1b1457b9a3d12b9d6ae` (2026-11-03) resolved 168 packages.
+Its 14 local-source packages were exactly the 14 workspace members: zero local
+non-members. Regression tests now also reject root manifest, absolute-path and
+Cargo configuration patches, and distinguish local packages by ID from registry
+and Git sources.
