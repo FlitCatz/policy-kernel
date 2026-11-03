@@ -50,6 +50,12 @@ overrides to their affected dependency chains. Both Jest jobs still require a
 clean audit and remain blocked on unpatched deepmerge
 GHSA-gcqx-w48m-w2h4; see [current status](docs/status.md).
 
+The [alternate Vitest fixture](examples/react-vitest/project-profile.json) adds
+Node 22.19.0/npm 10.9.4, React SSR under `web/`, producer skip and nested
+`omit=dev` audit coverage. General profile tests now use Vitest; a profile-only
+Jest corpus preserves compatibility. This first stage retains the Jest jobs.
+See [native commands and limits](docs/integrations/acceptance.md#alternate-vitest-transition).
+
 Tasks 1–14 provide implemented components in this workspace. The
 [current status](docs/status.md) and [Task index](docs/tasks/README.md) identify the supporting evidence and
 remaining implementation, integration, and operational conditions.

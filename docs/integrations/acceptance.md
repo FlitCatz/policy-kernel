@@ -200,6 +200,32 @@ The preset `run` command remains scoped to the three built-in scenario suites.
 See the [Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
 for actual commands, results, and open native/CI acceptance requirements.
 
+## Alternate Vitest transition
+
+Stage one adds `examples/react-vitest` alongside the managed Jest fixture.
+It reuses the split-consumer Vitest 4.1.12/Vite 6.4.5 selection and node-environment
+configuration, with Node 22.19.0/npm 10.9.4 and a `web/` component root.
+The SSR greeting and empty-name rejection preserve the alternate consumer intent.
+
+With those exact runtimes on PATH, run:
+
+```console
+POLICY_VITEST_OUTPUT=/absolute/new/output cargo test --locked -p policy-acceptance --test native_vitest -- --ignored --nocapture
+```
+
+The native test collects baseline, failure/correction, producer `test.skip`,
+empty/missing reports, previous-head rejection and final correction. Shared
+alternate helpers also reproduce nested `.npmrc omit=dev`: legacy audit reports
+zero for a vulnerable dev-only lodash 4.17.20, selected full-graph installation
+includes it, selected low-level audit rejects it, and the corrected head passes.
+Reports and requests/results stay local-untrusted; hosted success is separate.
+
+Vitest JSON supplies no retry history. The fixture config sets `retry: 0`, which
+does not establish parity with Jest's rejection of success after retry or enforce
+arbitrary user-owned test settings. The existing Jest jobs remain in this stage.
+General contract tests use the Vitest profile; the legacy Jest profile remains
+an inert compatibility corpus beside the unchanged report-reader corpus.
+
 ## Split-consumer conformance
 
 The [synthetic split-consumer fixture](../../examples/split-consumer/README.md)

@@ -195,3 +195,33 @@ deterministic schema regeneration, xtask residue/public-API checks, cargo-deny
 0.20.2 and cargo-audit 0.22.2 also passed. The CI-pinned lat.md 0.12.2 reported
 `All checks passed`; 185 relative Markdown link paths and `git diff --check`
 passed. Hosted outcomes must be read from the exact-head PR checks separately.
+
+## Alternate Vitest replacement
+
+On 2026-11-03 the first Jest-transition PR adds `examples/react-vitest`, using
+split-consumer Vitest 4.1.12/Vite 6.4.5, React 19.0.0, a Node environment with
+`retry: 0`, and the existing alternate Node 22.19.0/npm 10.9.4/web-root SSR intent.
+The former Jest fixture and jobs remain in this first PR.
+
+npm 10.9.4 lock generation failed in Arborist (`edgesOut` on null). npm 11.20.0
+then generated the lock, and npm 10.9.4 normalized it with
+`install --package-lock-only --ignore-scripts --no-audit --no-fund`. The new lock
+contains 96 dependency entries: 92 MIT, two ISC, one BSD-3-Clause and one
+Apache-2.0 license declaration. There are no overrides. Its SHA-256 is
+`2f40bc98a1335d8c7b0b62210ee4f7ade23bfc293e720ae03287cf9024079294`.
+
+Local `native_vitest` ran with Node 22.19.0/npm 10.9.4 on macOS arm64 and passed
+all nine cases: baseline, failed, corrected, skipped, empty, missing,
+final-corrected, nested-audit-failed and nested-audit-corrected. The baseline's
+selected `npm audit --audit-level=low --include=dev --include=optional
+--include=peer` reported zero vulnerabilities. The skipped producer exited zero
+and reported two pending tests, zero passed; normalization rejected that evidence.
+The nested scenario observed legacy audit zero, a full-graph installed vulnerable
+dev-only lodash 4.17.20, selected audit rejection and a passing corrected head.
+Previous-head evidence was rejected. Requests/results, reports and logs remain in
+local `target/native-vitest-pr1/`; this initial observation used a dirty harness
+at base `7e25ab6e5d80deefdd9e69849cf956d6ef99d623`, not a hosted final-head decision.
+
+Vitest JSON has no retry history. Configured retry zero is not equivalent to
+Jest's success-after-retry rejection. This record establishes local advisory
+coverage only; it does not establish hosted success, protected merge or promotion.

@@ -1,0 +1,279 @@
+{
+  "schema_version": 2,
+  "id": "react-typescript",
+  "version": "1.1.0",
+  "components": [
+    {
+      "id": "frontend",
+      "root": "web"
+    }
+  ],
+  "sensors": [
+    {
+      "definition": {
+        "id": "frontend:node",
+        "required": true,
+        "required_when": [
+
+        ],
+        "not_applicable_when": [
+
+        ],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "--version"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": null,
+      "inputs": [
+        ".node-version",
+        "package.json",
+        "package-lock.json"
+      ],
+      "pins": [
+
+      ],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:syntax",
+        "required": true,
+        "required_when": [
+
+        ],
+        "not_applicable_when": [
+
+        ],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "--check",
+        "src/Greeting.cjs"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": null,
+      "inputs": [
+        "src/Greeting.cjs",
+        "package.json",
+        "package-lock.json"
+      ],
+      "pins": [
+
+      ],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:unit",
+        "required": true,
+        "required_when": [
+
+        ],
+        "not_applicable_when": [
+
+        ],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "test_counts"
+      },
+      "component": "frontend",
+      "argv": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--reporter=json",
+        "--outputFile=vitest-report.json"
+      ],
+      "version_args": [
+        "-p",
+        "require('./node_modules/vitest/package.json').version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": {
+        "format": "vitest_json",
+        "path": "vitest-report.json"
+      },
+      "inputs": [
+        "vitest.config.ts",
+        "src/Greeting.cjs",
+        "tests/Greeting.test.mjs",
+        "package.json",
+        "package-lock.json",
+        "node_modules/vitest/package.json"
+      ],
+      "pins": [
+
+      ],
+      "timeout_ms": 300000
+    },
+    {
+      "definition": {
+        "id": "frontend:audit",
+        "required": true,
+        "required_when": [
+
+        ],
+        "not_applicable_when": [
+
+        ],
+        "accepted_exit_codes": [
+          0
+        ],
+        "result_requirement": "process"
+      },
+      "component": "frontend",
+      "argv": [
+        "npm",
+        "audit",
+        "--audit-level=low",
+        "--include=dev",
+        "--include=optional",
+        "--include=peer"
+      ],
+      "version_args": [
+        "--version"
+      ],
+      "version_stdout": "",
+      "environment_allowlist": [
+        "PATH",
+        "HOME"
+      ],
+      "report": null,
+      "inputs": [
+        "package.json",
+        "package-lock.json"
+      ],
+      "pins": [
+
+      ],
+      "timeout_ms": 300000
+    }
+  ],
+  "adequacy": {
+    "acceptance_criterion_ids": [
+      "frontend:renders-selected-greeting"
+    ],
+    "changed_behavior_ids": [
+
+    ],
+    "negative_case_ids": [
+
+    ]
+  },
+  "selection": {
+    "schema_version": 1,
+    "tools": {
+      "node": {
+        "executable": "node",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=22.18.0, <23.0.0",
+          "normalization": "node",
+          "provision": "22.19.0"
+        },
+        "capabilities": [
+          "process"
+        ]
+      },
+      "npm": {
+        "executable": "npm",
+        "version_args": [
+          "--version"
+        ],
+        "version": {
+          "requirement": ">=10.9.3, <11.0.0",
+          "normalization": "plain",
+          "provision": "10.9.4"
+        },
+        "capabilities": [
+          "process",
+          "npm_audit"
+        ]
+      },
+      "vitest": {
+        "capabilities": [
+          "vitest_json"
+        ],
+        "executable": "node",
+        "version": {
+          "requirement": "=4.1.12",
+          "normalization": "plain",
+          "provision": "4.1.12"
+        },
+        "version_args": [
+          "-p",
+          "require('./node_modules/vitest/package.json').version"
+        ]
+      }
+    },
+    "bindings": {
+      "frontend:node": "node",
+      "frontend:syntax": "node",
+      "frontend:unit": "vitest",
+      "frontend:audit": "npm"
+    },
+    "packages": [
+      {
+        "component": "frontend",
+        "installed_manifest": "node_modules/vitest/package.json",
+        "lockfile": "package-lock.json",
+        "lock_pointer": "/packages/node_modules~1vitest/version",
+        "requirement": "=4.1.12"
+      }
+    ],
+    "graphs": [
+      {
+        "id": "web-packages",
+        "component": "frontend",
+        "role": "application",
+        "manifest": "package.json",
+        "lockfile": "package-lock.json",
+        "adapter": "npm",
+        "tool": "npm",
+        "audit_sensor": "frontend:audit",
+        "target_framework": null
+      }
+    ],
+    "runtime_files": [
+      {
+        "component": "frontend",
+        "path": ".node-version",
+        "tool": "node",
+        "format": "node_version"
+      }
+    ]
+  }
+}

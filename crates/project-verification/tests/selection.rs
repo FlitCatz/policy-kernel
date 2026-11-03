@@ -368,7 +368,7 @@ fn selected_paths_frameworks_and_runtime_files_are_checked_without_fixed_app_nam
 #[test]
 fn ci_inputs_preserve_exact_provisions_and_reject_conflicting_job_selections() {
     let profile = parse_profile(include_str!(
-        "../../../examples/react-jest/project-profile.json"
+        "../../../examples/react-vitest/project-profile.json"
     ))
     .unwrap();
     let inputs = project_verification::selection::ci_inputs(&profile).unwrap();
@@ -399,7 +399,7 @@ fn ci_inputs_preserve_exact_provisions_and_reject_conflicting_job_selections() {
 #[test]
 fn nested_npm_graph_commands_target_the_declared_manifest_directory() {
     let mut profile = parse_profile(include_str!(
-        "../../../examples/react-jest/project-profile.json"
+        "../../../examples/react-vitest/project-profile.json"
     ))
     .unwrap();
     let selection = profile.selection.as_mut().unwrap();

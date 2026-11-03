@@ -1,0 +1,13 @@
+{
+  "name": "policy-kernel-react-vitest-consumer",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "vitest": "4.1.12",
+    "vite": "6.4.5"
+  }
+}

@@ -155,7 +155,7 @@ fn stages_schema_four_with_custom_bootstrap_release() {
     let source = root.join("source");
     fs::create_dir_all(source.join("web")).unwrap();
     let old = project_verification::parse_profile(include_str!(
-        "../../examples/react-jest/project-profile.json"
+        "../../examples/react-vitest/project-profile.json"
     ))
     .unwrap();
     let new = project_verification::selection::upgrade_frontend_profile(old).unwrap();
