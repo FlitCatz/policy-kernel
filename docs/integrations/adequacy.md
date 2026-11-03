@@ -47,7 +47,7 @@ regression explicitly checks this change without editing the historical matrix.
 Current synthetic pre-merge fixtures include negative mappings and refreshed
 bindings so their unrelated gates remain testable.
 
-The maintained Jest and synthetic split-consumer examples declare greeting
+The alternate Vitest SSR and synthetic split-consumer examples declare greeting
 requirements. Their request authors must map those requirements to actual
 report IDs; neither example is a product business-requirement catalog. Frozen
 empty templates are compatibility inputs, not runnable adequacy examples.

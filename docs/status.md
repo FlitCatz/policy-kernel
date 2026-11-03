@@ -145,9 +145,9 @@ parser-scoped `typescript-estree` 8.48.0 override, with minimatch 11.0.4 beneath
 that chain and ESLint. The project-owned frontend uses Vite 6.4.5 / Vitest 4.1.12;
 fullstack also refreshes the Vitest-owned Vite resolution within its existing range.
 
-Jest stays at 30.5.2 with scoped `js-yaml` 4, glob 14.0.3 and minimatch 11.0.4
-overrides. Both the alternate Jest and project-owned frontend jobs still require
-a clean audit and remain blocked on unpatched deepmerge
+The refresh retained Jest 30.5.2 with scoped `js-yaml` 4, glob 14.0.3 and
+minimatch 11.0.4 overrides. Its alternate and project-owned Jest phases failed
+the required clean audit on unpatched deepmerge
 [GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4).
 No audit exceptions, tag or production promotion are introduced. The
 [fixture audit record](integrations/native-fixture-audit.md) records validation
@@ -158,24 +158,38 @@ Vitest 4.1.12 and locks source-map-js 1.2.2. Its Node 26.10.0/npm 10.9.3
 audit dropped from four vulnerable package entries to zero; generation used
 npm 11.20.0 followed by npm 10.9.3 normalization and installation. See the
 [follow-up record](integrations/native-fixture-audit.md#split-consumer-follow-up).
-The separate Jest deepmerge failure remains unchanged.
+That historical Jest deepmerge failure is preserved in the record; managed Jest
+execution has since ended as described below.
 
-## Jest transition: replacement coverage
+## Jest transition: managed execution ended
 
-Stage one adds `examples/react-vitest` and `native_vitest` alongside the existing
-Jest fixture/jobs. The replacement keeps Node 22.19.0/npm 10.9.4, `web/` SSR,
-producer skip, report/head regressions and the nested dev-only `omit=dev` audit
-scenario. General contract tests use Vitest; a legacy Jest profile-only corpus
-keeps decoding and schema-four migration exercised. No schemas or verdicts change.
+The two-PR transition ends managed Jest producer combinations, upgrades and CI
+guarantees. The alternate Jest job, `native_jest`, runtime fixture and final
+project-owned Jest phase are removed. The project-owned frontend job retains
+actual npm 10.9.3/12.1.0, all Vitest/Playwright sensors, low-level full-graph audit,
+service/advisory failures, report/head rejection and LocalUntrusted gates.
+Its final phase runs the schema-2 Vitest profile migrated to schema 4, with
+record acceptance and provisioning removed, and requires every sensor to pass.
 
-Vitest JSON exposes no retry history. `retry: 0` is configured, but success after
-retry rejection is not equivalent to Jest. Reader/enums, importer `jest_json`,
-frozen bootstrap releases and receipt recovery/uninstall are unchanged. The
-Jest jobs remain blocked until the second PR ends their managed execution scope.
-See [native commands](integrations/acceptance.md#alternate-vitest-transition).
-The [local replacement record](integrations/native-fixture-audit.md#alternate-vitest-replacement)
-records nine passing native cases and a zero-vulnerability selected low-level audit;
-hosted verification remains separate.
+`examples/react-vitest` and `native_vitest` preserve exact Node 22.19.0/npm
+10.9.4, `web/` React SSR, actual producer skip, report/head regressions and nested
+dev-only `.npmrc omit=dev` audit failure/correction. General contract tests use
+Vitest; an inert legacy Jest profile and original report corpus retain decoding,
+wire enums and migration compatibility. The Rust Jest reader, `jest_json` native
+importer, frozen bootstrap bytes and receipt recovery/uninstall stay unchanged.
+No schema, verdict, audit threshold or generic profile-execution ban is added.
+
+Vitest JSON exposes no retry history. The fixture asserts runtime tokens and
+sets `retry: 0`; this does not provide Jest success-after-retry rejection parity
+or enforce arbitrary user-owned test settings. See the
+[support boundary and release note](integrations/jest-transition.md) and
+[native commands](integrations/acceptance.md#alternate-vitest-transition).
+The [replacement record](integrations/native-fixture-audit.md#alternate-vitest-replacement)
+records the corrected Node22/npm10.9.4 local proof and first-stage hosted job;
+[managed-execution removal](integrations/native-fixture-audit.md#managed-jest-execution-removal)
+records the project-owned replay. Hosted checks remain separate from local
+advisory evidence; no protected merge, authoritative decision or production
+promotion is established here.
 
 ## P1 npm workspace shared lock
 

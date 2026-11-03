@@ -21,6 +21,12 @@ installer through consumer staging. Native and CI acceptance are tracked in the
 [Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md).
 This is not a verified template release.
 
+Managed Jest runner/CI support has ended; the compatibility reader, legacy
+profile contracts and generic profile execution remain. No bootstrap release
+bytes, receipt inventories, recovery or uninstall paths change. The built-in
+1.1.0/1.1.1 presets already use Vitest; no new preset or schema is needed.
+See [current scope](../status.md#jest-transition-managed-execution-ended).
+
 ## Inputs and commands
 
 Use an existing destination directory on Linux/macOS. Every ancestor must be a
@@ -93,7 +99,8 @@ its recorded release, including upgrade/downgrade back to the original bytes.
 Upgrade the consumer-owned manifests and locks separately before planning an
 upgrade; bootstrap neither installs packages nor generates npm overrides. The
 [fixture audit record](native-fixture-audit.md) documents the scoped overrides
-and the remaining deepmerge advisory. Selecting 1.1.1 alone is not a clean-audit
+and the historical Jest deepmerge failure; managed Jest execution has since ended.
+Selecting 1.1.1 alone is not a clean-audit
 claim, and this change creates no tag or production promotion.
 
 The plan reports `add`, `unchanged`, `update`, `remove`, or `conflict` for each

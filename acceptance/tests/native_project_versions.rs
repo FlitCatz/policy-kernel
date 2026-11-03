@@ -133,11 +133,12 @@ fn profile(npm: &str) -> project_verification::ProjectProfile {
     parse_profile(&value.to_string()).unwrap()
 }
 
-fn jest_profile() -> project_verification::ProjectProfile {
+fn migrated_vitest_profile() -> project_verification::ProjectProfile {
     let legacy = parse_profile(include_str!(
-        "../../examples/react-jest/project-profile.json"
+        "../../examples/react-vitest/project-profile.json"
     ))
     .unwrap();
+    assert_eq!(legacy.schema_version, 2);
     let candidate = project_verification::selection::upgrade_frontend_profile(legacy).unwrap();
     let mut value = serde_json::to_value(candidate).unwrap();
     value["selection"]
@@ -154,7 +155,9 @@ fn jest_profile() -> project_verification::ProjectProfile {
     for package in value["selection"]["packages"].as_array_mut().unwrap() {
         package["acceptance"] = json!({"kind":"record"});
     }
-    parse_profile(&value.to_string()).unwrap()
+    let profile = parse_profile(&value.to_string()).unwrap();
+    assert_eq!(profile.schema_version, 4);
+    profile
 }
 
 fn request(root: &Path) -> RunRequest {
@@ -598,17 +601,21 @@ test('retries the browser check', async ({page}) => {
             phase(&root, &output, "audit-advisory", Some("frontend:audit"));
         }
     }
-    let jest = output.join("jest");
-    copy(&workspace.join("examples/react-jest"), &jest);
-    fs::write(jest.join("web/.node-version"), "26.10.0\n").unwrap();
+    let migrated = output.join("migrated-vitest");
+    copy(&workspace.join("examples/react-vitest"), &migrated);
+    fs::write(migrated.join("web/.node-version"), "26.10.0\n").unwrap();
     fs::write(
-        jest.join("project-profile.json"),
-        serde_json::to_vec_pretty(&jest_profile()).unwrap(),
+        migrated.join("project-profile.json"),
+        serde_json::to_vec_pretty(&migrated_vitest_profile()).unwrap(),
     )
     .unwrap();
-    fs::write(jest.join(".gitignore"), "node_modules/\njest-report.json\n").unwrap();
+    fs::write(
+        migrated.join(".gitignore"),
+        "node_modules/\nvitest-report.json\n",
+    )
+    .unwrap();
     let install = command(
-        &jest.join("web"),
+        &migrated.join("web"),
         "npm",
         &[
             "ci",
@@ -621,34 +628,16 @@ test('retries the browser check', async ({page}) => {
         ],
     );
     fs::write(
-        output.join("jest-install.log"),
+        output.join("migrated-vitest-install.log"),
         [&install.stdout[..], &install.stderr[..]].concat(),
     )
     .unwrap();
-    assert!(install.status.success(), "Jest fixture installation failed");
-    checked(&jest, "git", &["init", "--quiet"]);
-    commit(&jest, "Jest baseline");
-    let request = request(&jest);
-    let result = project_verification::run(request.clone()).unwrap();
-    retain_reports(&output, "jest", &result);
-    fs::write(
-        output.join("jest-request.json"),
-        serde_json::to_vec_pretty(&request).unwrap(),
-    )
-    .unwrap();
-    fs::write(
-        output.join("jest-result.json"),
-        serde_json::to_vec_pretty(&result).unwrap(),
-    )
-    .unwrap();
-    for sensor in &result.sensors {
-        assert_eq!(
-            sensor.evidence.status,
-            SensorStatus::Passed,
-            "Jest: {} {:?}",
-            sensor.evidence.sensor_id,
-            sensor.result.errors
-        );
-    }
-    fs::write(output.join("summary.json"), serde_json::to_vec_pretty(&json!({"status":"passed","scope":"local-native-advisory","node":"26.10.0","npm":["10.9.3","12.1.0"],"jest":"30.2.0","harness":policy_acceptance::harness::observe(workspace).unwrap()})).unwrap()).unwrap();
+    assert!(
+        install.status.success(),
+        "migrated Vitest installation failed"
+    );
+    checked(&migrated, "git", &["init", "--quiet"]);
+    commit(&migrated, "migrated Vitest baseline");
+    phase(&migrated, &output, "migrated-vitest", None);
+    fs::write(output.join("summary.json"), serde_json::to_vec_pretty(&json!({"status":"passed","scope":"local-native-advisory","node":"26.10.0","npm":["10.9.3","12.1.0"],"migrated_profile":{"from_schema":2,"to_schema":4,"fixture":"react-vitest"},"harness":policy_acceptance::harness::observe(workspace).unwrap()})).unwrap()).unwrap();
 }

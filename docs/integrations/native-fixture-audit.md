@@ -4,6 +4,10 @@ Bootstrap preset 1.1.1 patches native fixture tooling without changing the bytes
 of 1.1.0 or weakening dependency audits. Observations here are local and advisory;
 hosted outcomes belong to the exact-head PR checks, not a production promotion.
 
+This dated refresh record preserves its contemporaneous Jest audit failures.
+Managed Jest execution has since ended; see [the later removal record](#managed-jest-execution-removal)
+and [current status](../status.md#jest-transition-managed-execution-ended).
+
 ## Scope and remaining failure
 
 Preset profiles retain schema 2, receipt schema 2, existing sensors, Node
@@ -234,3 +238,36 @@ that executable first on PATH. The fixture lock bytes remained unchanged. Hosted
 replacement job [125830197392](https://github.com/FlitCatz/policy-kernel/actions/runs/41610296561/job/125830197392)
 passed on first-stage head `8480bd31d14c47ee685b83400c521e8a5768c4f1`; subsequent
 head verification is separate.
+
+## Managed Jest execution removal
+
+The second transition PR removes the alternate Jest CI job, `native_jest`, the
+`examples/react-jest` runtime fixture and only the final Jest phase/helper from
+`native_project_versions`. Its npm10/npm12 Vitest/Playwright, all-sensor, report,
+retry, service/advisory audit and trust assertions remain unchanged. The Rust
+reader/enums, native importer ID, report/profile corpora, frozen templates and
+receipt recovery/uninstall remain. This is a maintenance-scope change, not a
+fixed deepmerge advisory or an audit exemption.
+
+The corrected first-stage replay at clean head
+`ca3c02c5482d62a6f28b22caabd10936107abfd4` used asserted Node 22.19.0/npm
+10.9.4 and passed nine native
+cases with a clean selected low-level audit. The actual retained summary is in
+local `target/native-vitest-pr1-final/`. No new fixture lock bytes changed.
+
+Local project-owned acceptance used Node 26.10.0, actual npm 10.9.3/12.1.0 and
+cached Playwright Chromium 1243. The entire remaining matrix passed, including
+unit failure/correction, browser success-after-retry rejection/correction,
+missing/malformed/stale reports, required audit class flags, audit-service
+failure/restoration and a vulnerable lodash advisory. Logs, raw reports and
+requests/results remain in `target/native-project-versions-pr2-selected/`.
+This precommit observation used a dirty harness based on the first-stage head;
+final-head CI remains separate. No protected merge or production promotion is
+established. Vitest retry-history parity remains unproved; `retry: 0` is only
+fixture configuration.
+
+The first PR's replacement job also passed after the explicit runtime assertions
+were added: [job 125831509762](https://github.com/FlitCatz/policy-kernel/actions/runs/41610686659/job/125831509762),
+head `ca3c02c5482d62a6f28b22caabd10936107abfd4`. The two retained Jest phases
+still failed their clean-audit assertions at that first-stage head, as expected;
+this second PR removes those execution paths rather than weakening their audit.

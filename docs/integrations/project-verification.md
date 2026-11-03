@@ -88,7 +88,9 @@ The assets describe an existing Vite/npm application and an existing .NET 9
 application with `App.csproj`, `Tests/Unit/Unit.Tests.csproj` and
 `Tests/Integration/Integration.Tests.csproj`. They do not generate those projects
 or migrate existing applications. A schema 2 user profile can select the supported
-Jest adapter, runtime/package versions and other safe app/test paths. The per-sensor
+Vitest adapter, runtime/package versions and other safe app/test paths. Jest
+JSON decoding remains compatibility-only, with no managed runner/CI guarantee;
+existing profile argv is still accepted and executed. The per-sensor
 `inputs` list plus all selected component inputs is the required file list. JSON pointers in
 `pins` verify installed JS package versions, matching package-lock entries,
 global.json SDK version, and Microsoft.NET.Test.Sdk in each test project's lock.

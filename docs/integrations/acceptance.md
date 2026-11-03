@@ -3,8 +3,12 @@
 ## Project-owned frontend conformance
 
 The ignored `native_project_versions` Rust test exercises the same kernel build
-with frontend schema 4, two actual npm executables, Vitest/Playwright and Jest
-fixtures. It requires Node 26.10.0,
+with frontend schema 4, two actual npm executables and Vitest/Playwright
+fixtures. The final phase now upgrades the schema-2 `examples/react-vitest`
+profile to schema 4, uses record acceptance without provisioning, and requires
+every sensor to pass on the installed runtime. Its `migrated-vitest` requests,
+results, reports and install log remain in the output directory. All other
+sensors, audit severity, report rejection and trust gates remain. It requires Node 26.10.0,
 npm 12.1.0, npm 10.9.3 (supplied through `POLICY_PROJECT_VERSIONS_NPM10` or
 installed by the harness), a Playwright browser and npm advisory network access.
 Set `POLICY_PROJECT_VERSIONS_OUTPUT` to a fresh directory whose parent exists:
@@ -175,7 +179,7 @@ exist, `ci_authoritative` remains **unverified** even if every native case passe
 ## CI and verification status
 
 The `task-14-consumer-acceptance.yml` matrix derives runtime provisioning values
-from each selected profile and runs three presets plus the additional React/Jest
+from each selected profile and runs three presets plus the additional React/Vitest SSR
 consumer on Ubuntu 24.04, retaining observations on failure.
 It has read-only repository permissions and leaves existing workflows intact.
 The setup actions are commit-pinned to upstream releases
@@ -183,18 +187,18 @@ The setup actions are commit-pinned to upstream releases
 [setup-dotnet 4.3.1](https://github.com/actions/setup-dotnet/releases/tag/v4.3.1).
 Adding the workflow is not evidence that it ran.
 
-The additional native Jest test selects Node 22.19.0, npm 10.9.4 and Jest 30.5.2
-with a user-owned profile and `web/` component. With those tools available, set
-`POLICY_JEST_OUTPUT` to a fresh absolute directory and run
-`cargo test --locked -p policy-acceptance --test native_jest -- --ignored --nocapture`.
-It exercises failure/correction, skip, retry, empty/missing reports and old-head
-rejection. The separate network reproduction uses `POLICY_NUGET_OUTPUT` and
+The alternate Vitest test selects Node 22.19.0/npm 10.9.4 with a user-owned
+profile and `web/` component; see [the native procedure below](#alternate-vitest-transition).
+Managed Jest producer upgrades and CI guarantees have ended. Its Rust reader,
+legacy values and inert compatibility corpus remain. Generic profile argv is
+still executed; this scope change does not ban existing Jest profiles.
+The separate network reproduction uses `POLICY_NUGET_OUTPUT` and
 `--test native_nuget_audit -- --ignored --nocapture`; it deliberately introduces a
-vulnerable dependency only in a staged test fixture. Neither ignored test counts
-as passed in the ordinary offline workspace run.
+vulnerable dependency only in a staged test fixture. Ignored native tests do not
+count as passed in the ordinary offline workspace run.
 
 For read-only staging of a complete custom fixture, use
-`policy-acceptance stage --examples examples/react-jest --profile-file project-profile.json --output /private/tmp/task15-custom`.
+`policy-acceptance stage --examples examples/react-vitest --profile-file project-profile.json --output /private/tmp/task15-custom`.
 The preset `run` command remains scoped to the three built-in scenario suites.
 
 See the [Task 14 execution record](../archive/reviews/2026-09-09-task-14-consuming-acceptance.md)
@@ -202,7 +206,7 @@ for actual commands, results, and open native/CI acceptance requirements.
 
 ## Alternate Vitest transition
 
-Stage one adds `examples/react-vitest` alongside the managed Jest fixture.
+`examples/react-vitest` replaces the removed managed Jest runner fixture.
 It reuses the split-consumer Vitest 4.1.12/Vite 6.4.5 selection and node-environment
 configuration, with Node 22.19.0/npm 10.9.4 and a `web/` component root.
 The SSR greeting and empty-name rejection preserve the alternate consumer intent.
@@ -222,7 +226,8 @@ Reports and requests/results stay local-untrusted; hosted success is separate.
 
 Vitest JSON supplies no retry history. The fixture config sets `retry: 0`, which
 does not establish parity with Jest's rejection of success after retry or enforce
-arbitrary user-owned test settings. The existing Jest jobs remain in this stage.
+arbitrary user-owned test settings. Jest native jobs no longer run; the
+project-owned frontend job retains its npm10/npm12 Vitest/Playwright phases.
 General contract tests use the Vitest profile; the legacy Jest profile remains
 an inert compatibility corpus beside the unchanged report-reader corpus.
 

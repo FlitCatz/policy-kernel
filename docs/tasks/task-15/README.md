@@ -91,3 +91,7 @@ Local fixture signatures or a directory outside a checkout do not satisfy these.
 - [Current status](../../status.md)
 - [Trust model](../../trust-model.md)
 - [Promotion protocol](../../promotion.md)
+
+Later support scope: [managed Jest execution ended](../../integrations/jest-transition.md);
+the reader/contracts remain compatible. The historical Task observations above
+retain their original scope and dates.

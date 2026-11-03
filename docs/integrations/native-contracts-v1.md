@@ -135,6 +135,9 @@ measured from observation start against the supplied evaluation time, including
 subsecond precision. The raw report start must fall within its observation interval.
 Source digests are compared, not recomputed from a checkout or authenticated.
 
+`jest_json` / `jest-json/v1` remains supported by the Rust importer for historical
+raw evidence, independently of ended managed Jest runner/CI guarantees.
+
 Parser IDs are `vitest_json`, `jest_json`, `playwright_json` and `trx`; versions must
 exactly equal the corresponding shared `ReportFormat::parser_version()` and the
 expected suite parser binding. The namespace is the observation ID. The shared

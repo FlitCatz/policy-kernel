@@ -27,3 +27,7 @@ original report digests and exact harness/consumer head bindings.
 - [2026-09-10-task14-remediation.md](../../archive/reviews/2026-09-10-task14-remediation.md)
 - [2026-09-10-final-codebase-verification.md](../../archive/reviews/2026-09-10-final-codebase-verification.md)
 - [acceptance.md](../../integrations/acceptance.md)
+
+Later support scope: [managed Jest execution ended](../../integrations/jest-transition.md);
+the reader/contracts remain compatible. The historical Task observations above
+retain their original scope and dates.

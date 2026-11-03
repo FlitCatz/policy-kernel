@@ -51,7 +51,7 @@ The [adequacy contract](../docs/integrations/adequacy.md) records preserved lega
 
 ## Report adapters
 
-The shared report-adapter crate owns strict TRX, Vitest, Jest and Playwright parsing. The compatibility runner re-exports the same types; parsing alone supplies no authentication or release authority.
+The shared report-adapter crate owns strict TRX, Vitest, compatibility-only Jest and Playwright parsing. The compatibility runner re-exports the same types; parsing alone supplies no authentication or release authority.
 
 Entry and bounds [[crates/policy-report-adapters/src/reports.rs#parse_report]];
 versions [[crates/policy-report-adapters/src/reports.rs#ReportFormat#parser_version]];
@@ -209,7 +209,7 @@ describes generation and verification separately.
 
 ## Alternate frontend conformance
 
-Alternate native coverage retains Node 22.19.0/npm 10.9.4, a `web/` SSR root, producer skip and nested dev-only audit rejection using Vitest while the first transition stage still retains Jest execution.
+Alternate native coverage uses Vitest for Node 22.19.0/npm 10.9.4, `web/` SSR, producer skip and nested dev-only audit rejection. Managed Jest execution and CI guarantees have ended; its reader remains compatible.
 
 The replacement [[acceptance/tests/native_vitest.rs#native_vitest_selected_paths_failures_corrections_and_prior_head_rejection]]
 asserts both exact runtime tokens before staging and reuses
@@ -220,3 +220,12 @@ The SSR producer tests use TypeScript. Compatibility checks isolate the schema-o
 Jest guard and the legacy capability ceiling from profile version requirements.
 Vitest JSON has no retry history: retry zero configuration is not success-after-retry rejection parity.
 See [native procedure](../docs/integrations/acceptance.md#alternate-vitest-transition).
+
+Managed Jest removal preserves [[acceptance/tests/native_project_versions.rs#native_project_versions]]
+with its npm10/npm12 Vitest/Playwright, audit and trust checks. Its final native
+phase executes [[acceptance/tests/native_project_versions.rs#migrated_vitest_profile]]:
+schema two upgraded to four, record acceptance, no provisioning and every sensor passing.
+Frozen bootstrap
+bytes and receipt recovery/uninstall are unchanged. The
+[support boundary](../docs/integrations/jest-transition.md) preserves generic
+profile execution and old wire contracts without a schema change.

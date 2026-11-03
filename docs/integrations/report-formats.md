@@ -9,26 +9,28 @@ audits to `npm-ci-audit/v1`. These names map to the parser versions below. The
 same required counters, execution times, identities, errors, retries and process
 statuses are checked. Additional irrelevant metadata is accepted; a semantic
 change that still emits success-shaped JSON is outside parser-only detection.
-Actual producer upgrades need the frozen [native acceptance](acceptance.md)
-cases before adoption.
+Maintained producer upgrades need the [native acceptance](acceptance.md) cases
+before adoption. Jest parsing remains compatibility-only; managed Jest producer
+upgrades and native CI guarantees have ended.
 
 These adapters normalize advisory local reports. Parsing does not authenticate a
 runner, establish complete discovery, or replace its recorded exit status. A
 successful report also requires successful command execution and profile count
 requirements in the collector. Empty or skipped-only reports never succeed.
 
-| Format | Supported producer | Parser version |
+| Format | Exercised producer / maintenance scope | Parser version |
 | --- | --- | --- |
-| `vitest_json` | Vitest 3.2.4 / 4.1.11 JSON reporter | `vitest-json-3.2.4/v1` |
+| `vitest_json` | Vitest 3.2.4 / 4.1.11 / 4.1.12 JSON reporter | `vitest-json-3.2.4/v1` |
 | `playwright_json` | Playwright 1.55.0 / 1.55.1 JSON reporter; 1.63.0 exercised through schema 4 | `playwright-json-1.55.0/v1` |
 | `trx` | VSTest 17.14.1 TRX logger, flat unit results | `vstest-trx-17.14.1/v1` |
-| `jest_json` | Jest 30.2.0 JSON output | `jest-json/v1` |
+| `jest_json` | Historical Jest 30.2.0 JSON; compatibility-only reader | `jest-json/v1` |
 
 Producer versions identify exercised combinations, not claims that untrusted input proves
 which executable produced it. Schema 2 separates adapter intervals from actual
-observations; see the [selection contract](tool-selection.md). Earlier fixtures in
+observations; see the [selection contract](tool-selection.md). Frozen preset 1.1.0
+retains Vitest 4.1.11; preset 1.1.1 and the alternate fixture use 4.1.12. Earlier fixtures in
 `crates/policy-report-adapters/tests/fixtures/project-reports/` are hand-authored minimal examples. `jest.json`
-was captured from the native Jest fixture, with path and timestamp normalized for
+was captured from the former native Jest fixture, with path and timestamp normalized for
 deterministic parsing tests; raw native runs retain the original reports.
 Parser identifiers retain their original names because the normalized field
 contract is unchanged. A `parser_version` names the reporter format baseline the
@@ -61,7 +63,9 @@ Suite counts include nested suites and cannot be equated with the file array.
 
 This reporter does not expose retry history and its `onFinished` ignores the
 unhandled-error argument. The adapter cannot reconstruct either. Projects needing
-first-attempt success must disable retries in their Vitest configuration. The
+first-attempt success must disable retries in their Vitest configuration.
+The managed fixture sets `retry: 0`; this does not establish Jest-equivalent
+success-after-retry rejection or certify arbitrary user-owned retry settings. The
 collector must retain nonzero runner exit status even if the JSON says success.
 Explicit skip reasons are not a dedicated field here; source statuses and any
 available failure messages are preserved.
@@ -97,7 +101,8 @@ nested data-driven result structures require a future explicit adapter version.
 Rust regression cases cover normal reports, count mismatches, missing fields,
 duplicate identities, skips, failures, empty reports, Playwright retry/expected
 failure/global errors, and TRX namespace/DTD rejection. The current native harness
-and its additional Jest test exercise real producers; see [acceptance](acceptance.md).
+and its alternate Vitest test exercise maintained producers; Jest reader/corpus
+regressions preserve compatibility without running Jest. See [acceptance](acceptance.md).
 These local observations do not authenticate hosted CI or authorize promotion.
 
 ## Jest
@@ -108,6 +113,8 @@ failures, runtime errors, interruptions, snapshots and open handles. Every execu
 test must report exactly one invocation; retry history, expected failures, skips,
 todo, snapshot updates/unmatched/unchecked snapshots, empty discovery and absent
 or malformed reports fail. Identities use the namespace, reported file and full
-test name; duplicates are rejected. The native fixture uses Node syntax checking
-and React server rendering, and explicitly exercises empty, missing, skipped and
-retried report cases as well as failing assertions, correction and head replay.
+test name; duplicates are rejected. Historical report/corpus and importer tests
+retain this reader's contract. The managed native Jest fixture and final
+project-owned Jest phase have been removed; alternate Vitest now carries Node
+syntax checking, React SSR, report/skip/head and nested audit regressions. The
+Vitest retry-history limitation above remains an explicit coverage gap.
