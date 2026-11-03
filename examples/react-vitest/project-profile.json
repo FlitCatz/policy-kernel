@@ -13,12 +13,8 @@
       "definition": {
         "id": "frontend:node",
         "required": true,
-        "required_when": [
-
-        ],
-        "not_applicable_when": [
-
-        ],
+        "required_when": [],
+        "not_applicable_when": [],
         "accepted_exit_codes": [
           0
         ],
@@ -43,21 +39,15 @@
         "package.json",
         "package-lock.json"
       ],
-      "pins": [
-
-      ],
+      "pins": [],
       "timeout_ms": 300000
     },
     {
       "definition": {
         "id": "frontend:syntax",
         "required": true,
-        "required_when": [
-
-        ],
-        "not_applicable_when": [
-
-        ],
+        "required_when": [],
+        "not_applicable_when": [],
         "accepted_exit_codes": [
           0
         ],
@@ -83,21 +73,15 @@
         "package.json",
         "package-lock.json"
       ],
-      "pins": [
-
-      ],
+      "pins": [],
       "timeout_ms": 300000
     },
     {
       "definition": {
         "id": "frontend:unit",
         "required": true,
-        "required_when": [
-
-        ],
-        "not_applicable_when": [
-
-        ],
+        "required_when": [],
+        "not_applicable_when": [],
         "accepted_exit_codes": [
           0
         ],
@@ -127,26 +111,20 @@
       "inputs": [
         "vitest.config.ts",
         "src/Greeting.cjs",
-        "tests/Greeting.test.mjs",
+        "tests/Greeting.test.ts",
         "package.json",
         "package-lock.json",
         "node_modules/vitest/package.json"
       ],
-      "pins": [
-
-      ],
+      "pins": [],
       "timeout_ms": 300000
     },
     {
       "definition": {
         "id": "frontend:audit",
         "required": true,
-        "required_when": [
-
-        ],
-        "not_applicable_when": [
-
-        ],
+        "required_when": [],
+        "not_applicable_when": [],
         "accepted_exit_codes": [
           0
         ],
@@ -174,9 +152,7 @@
         "package.json",
         "package-lock.json"
       ],
-      "pins": [
-
-      ],
+      "pins": [],
       "timeout_ms": 300000
     }
   ],
@@ -184,12 +160,8 @@
     "acceptance_criterion_ids": [
       "frontend:renders-selected-greeting"
     ],
-    "changed_behavior_ids": [
-
-    ],
-    "negative_case_ids": [
-
-    ]
+    "changed_behavior_ids": [],
+    "negative_case_ids": []
   },
   "selection": {
     "schema_version": 1,

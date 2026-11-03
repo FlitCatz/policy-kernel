@@ -216,5 +216,7 @@ asserts both exact runtime tokens before staging and reuses
 [[acceptance/tests/common/alternate.rs#nested_graph_audit]] and report/head checks.
 General profile tests use the Vitest fixture; compatibility decoding and migration
 remain in [[crates/project-verification/tests/report_compatibility.rs#legacy_jest_profile_keeps_wire_contracts_and_schema_four_migration]].
+The SSR producer tests use TypeScript. Compatibility checks isolate the schema-one
+Jest guard and the legacy capability ceiling from profile version requirements.
 Vitest JSON has no retry history: retry zero configuration is not success-after-retry rejection parity.
 See [native procedure](../docs/integrations/acceptance.md#alternate-vitest-transition).

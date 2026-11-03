@@ -33,7 +33,7 @@ fn native_vitest_selected_paths_failures_corrections_and_prior_head_rejection() 
         "web/.node-version",
         "web/vitest.config.ts",
         "web/src/Greeting.cjs",
-        "web/tests/Greeting.test.mjs",
+        "web/tests/Greeting.test.ts",
     ] {
         let target = root.join(path);
         fs::create_dir_all(target.parent().unwrap()).unwrap();
@@ -78,7 +78,7 @@ fn native_vitest_selected_paths_failures_corrections_and_prior_head_rejection() 
     git(&root, &["init", "--quiet"]);
     commit(&root, "baseline");
     let (baseline_request, baseline) = phase(&root, &output, "baseline", true);
-    let test_path = root.join("web/tests/Greeting.test.mjs");
+    let test_path = root.join("web/tests/Greeting.test.ts");
     let original = fs::read_to_string(&test_path).unwrap();
     fs::write(
         &test_path,
