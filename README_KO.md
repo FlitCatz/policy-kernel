@@ -156,6 +156,12 @@ manifest는 검토된 호환 의존성 범위를 사용하고, 체크인된 `Car
 해결 결과를 기록합니다. 재현 가능한 빌드와 검증에는 `--locked`를 사용하세요. 새로 해결
 가능해진 호환 버전이 자동으로 테스트된 버전이 되는 것은 아닙니다.
 
+엄격한 Clippy 검사는 워크스페이스 lint 설정과 `clippy.toml`을 사용해 함수 인자 5개,
+bool 인자 2개를 초과하면 실패합니다. `cargo run --locked -p xtask -- check-residue`는
+내부 크레이트 의존 방향의 명시적 허용 목록과 기존 런타임 검사를 적용합니다.
+측정 기준선, 허용된 간선, 실패 동작은
+[구조 검증 게이트](docs/integrations/structure-gates.md)를 참고하세요.
+
 ### 로컬 자문 평가 실행
 
 `policy-cli`는 JSON 파일 또는 표준 입력(`-`)을 읽습니다. 입력 JSON이 authoritative 모드를

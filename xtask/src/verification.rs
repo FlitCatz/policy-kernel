@@ -363,12 +363,113 @@ fn scan_runtime(path: &Path, skip_docs: bool) -> Result<()> {
     }
     Ok(())
 }
-fn check_dependencies(text: &str) -> Result<()> {
+// Declared workspace edges, including dev/build/optional/target dependencies.
+// Adding a crate does not grant it permission to depend on existing crates.
+const WORKSPACE_DEPENDENCIES: &[(&str, &[&str])] = &[
+    ("evidence-collector", &["policy-contracts", "policy-core"]),
+    ("github-adapter", &["policy-contracts"]),
+    (
+        "policy-acceptance",
+        &[
+            "policy-bootstrap",
+            "policy-contracts",
+            "policy-core",
+            "project-verification",
+        ],
+    ),
+    ("policy-bootstrap", &["project-verification"]),
+    (
+        "policy-ci",
+        &["github-adapter", "policy-contracts", "policy-core"],
+    ),
+    (
+        "policy-cli",
+        &[
+            "policy-contracts",
+            "policy-core",
+            "policy-native-contracts",
+            "policy-native-verifier",
+        ],
+    ),
+    ("policy-core", &["policy-contracts"]),
+    (
+        "policy-native-contracts",
+        &["policy-contracts", "policy-core"],
+    ),
+    (
+        "policy-native-importer",
+        &[
+            "evidence-collector",
+            "policy-cli",
+            "policy-contracts",
+            "policy-core",
+            "policy-native-contracts",
+            "policy-native-verifier",
+            "policy-report-adapters",
+            "project-verification",
+        ],
+    ),
+    (
+        "policy-native-verifier",
+        &["policy-contracts", "policy-core", "policy-native-contracts"],
+    ),
+    ("policy-report-adapters", &["policy-contracts"]),
+    (
+        "project-verification",
+        &[
+            "evidence-collector",
+            "policy-contracts",
+            "policy-core",
+            "policy-report-adapters",
+        ],
+    ),
+    ("xtask", &["policy-contracts"]),
+];
+
+fn check_dependencies(text: &str, metadata: &Value) -> Result<()> {
     if text
         .split_whitespace()
         .any(|s| ["reqwest", "octocrab", "clap", "tokio"].contains(&s))
     {
         return Err("forbidden policy-core dependency found".into());
+    }
+    let members = metadata["workspace_members"]
+        .as_array()
+        .ok_or("missing workspace members")?;
+    let packages = metadata["packages"]
+        .as_array()
+        .ok_or("missing workspace packages")?;
+    let mut workspace = BTreeMap::new();
+    for package in packages.iter().filter(|p| members.contains(&p["id"])) {
+        let name = package["name"].as_str().ok_or("missing package name")?;
+        let manifest = Path::new(
+            package["manifest_path"]
+                .as_str()
+                .ok_or("missing manifest path")?,
+        );
+        let directory = manifest.parent().ok_or("missing package directory")?;
+        workspace.insert(directory, (name, package));
+    }
+    for (name, package) in workspace.values() {
+        for dependency in package["dependencies"]
+            .as_array()
+            .ok_or("missing dependencies")?
+        {
+            let Some(path) = dependency["path"].as_str() else {
+                continue;
+            };
+            let Some((target, _)) = workspace.get(Path::new(path)) else {
+                continue;
+            };
+            if !WORKSPACE_DEPENDENCIES
+                .iter()
+                .any(|(source, targets)| source == name && targets.contains(target))
+            {
+                return Err(format!(
+                    "unapproved workspace dependency: {name} -> {target}"
+                ));
+            }
+        }
     }
     Ok(())
 }
@@ -424,7 +525,8 @@ pub fn residue(root: &Path) -> Result<()> {
     // Templates can contain executable/configuration assets, but their prose
     // and historical examples do not constitute a runtime dependency.
     scan_optional(&root.join("bootstrap/templates"), true)?;
-    scan_cargo_targets(root)?;
+    let metadata = cargo_metadata(root)?;
+    scan_cargo_targets(root, &metadata)?;
     let output = Command::new("cargo")
         .args(["tree", "--locked", "-p", "policy-core"])
         .current_dir(root)
@@ -436,7 +538,7 @@ pub fn residue(root: &Path) -> Result<()> {
             String::from_utf8_lossy(&output.stderr)
         ));
     }
-    check_dependencies(&String::from_utf8_lossy(&output.stdout))?;
+    check_dependencies(&String::from_utf8_lossy(&output.stdout), &metadata)?;
     println!("runtime residue scan passed");
     Ok(())
 }
@@ -449,7 +551,7 @@ fn scan_optional(path: &Path, skip_docs: bool) -> Result<()> {
     }
 }
 
-fn scan_cargo_targets(root: &Path) -> Result<()> {
+fn cargo_metadata(root: &Path) -> Result<Value> {
     // Cargo metadata is read-only: it discovers custom build/bin/lib paths and
     // additional workspace members without executing their build scripts.
     let output = Command::new("cargo")
@@ -470,8 +572,10 @@ fn scan_cargo_targets(root: &Path) -> Result<()> {
             String::from_utf8_lossy(&output.stderr)
         ));
     }
-    let metadata: serde_json::Value =
-        serde_json::from_slice(&output.stdout).map_err(|e| e.to_string())?;
+    serde_json::from_slice(&output.stdout).map_err(|e| e.to_string())
+}
+
+fn scan_cargo_targets(root: &Path, metadata: &Value) -> Result<()> {
     let members = metadata["workspace_members"]
         .as_array()
         .ok_or("missing workspace members")?;
@@ -580,11 +684,57 @@ pub fn public_api(docs: &Path, schema_dir: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn dependency_graph(edges: &[(&str, &str)]) -> Value {
+        let names: BTreeSet<_> = edges.iter().flat_map(|(a, b)| [*a, *b]).collect();
+        let packages: Vec<_> = names.iter().map(|name| {
+            let dependencies: Vec<_> = edges.iter().filter(|(source, _)| source == name)
+                .map(|(_, target)| json!({"name":target,"path":format!("/workspace/{target}")})).collect();
+            json!({"id":name,"name":name,"manifest_path":format!("/workspace/{name}/Cargo.toml"),"dependencies":dependencies})
+        }).collect();
+        json!({"workspace_members":names,"packages":packages})
+    }
+
+    #[test]
+    fn current_workspace_dependency_graph_passes() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap();
+        check_dependencies(
+            "policy-core v0.1.0\n└── serde v1.0.0",
+            &cargo_metadata(root).unwrap(),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn new_and_reversed_workspace_edges_are_rejected() {
+        for (source, target) in [
+            ("policy-cli", "github-adapter"),
+            ("policy-contracts", "policy-core"),
+            ("new-member", "policy-contracts"),
+        ] {
+            let error = check_dependencies("", &dependency_graph(&[(source, target)])).unwrap_err();
+            assert_eq!(
+                error,
+                format!("unapproved workspace dependency: {source} -> {target}")
+            );
+        }
+        check_dependencies(
+            "",
+            &dependency_graph(&[("policy-core", "policy-contracts")]),
+        )
+        .unwrap();
+    }
+
     #[test]
     fn forbidden_dependencies_are_rejected() {
+        let metadata = dependency_graph(&[("policy-core", "policy-contracts")]);
         for name in ["reqwest", "octocrab", "clap", "tokio"] {
-            assert!(check_dependencies(&format!("policy-core v0.1.0\n└── {name} v1.0.0")).is_err());
+            assert_eq!(
+                check_dependencies(&format!("policy-core v0.1.0\n└── {name} v1.0.0"), &metadata)
+                    .unwrap_err(),
+                "forbidden policy-core dependency found"
+            );
         }
-        assert!(check_dependencies("policy-core v0.1.0\n└── serde v1.0.0").is_ok());
+        assert!(check_dependencies("policy-core v0.1.0\n└── serde v1.0.0", &metadata).is_ok());
     }
 }

@@ -147,6 +147,13 @@ The manifests use reviewed compatible dependency ranges and the checked-in
 builds and checks; a newly resolvable compatible version is not automatically a
 tested version.
 
+Strict Clippy denies functions over 5 arguments or 2 bool parameters, using the
+workspace lint configuration and `clippy.toml`. Run
+`cargo run --locked -p xtask -- check-residue` to enforce the explicit allow-list
+of internal crate dependency directions and the existing runtime checks. See
+[structural verification gates](docs/integrations/structure-gates.md) for the
+measured baseline, allowed edges and failure behavior.
+
 ### Try local advisory evaluation
 
 `policy-cli` reads a JSON file or `-` for standard input. It always evaluates

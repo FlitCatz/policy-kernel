@@ -24,3 +24,6 @@ tempfile.workspace = true
 policy-cli = { path = "../policy-cli" }
 policy-core = { path = "../policy-core" }
 project-verification = { path = "../project-verification" }
+
+[lints]
+workspace = true
