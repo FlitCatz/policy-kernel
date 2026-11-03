@@ -160,6 +160,23 @@ npm 11.20.0 followed by npm 10.9.3 normalization and installation. See the
 [follow-up record](integrations/native-fixture-audit.md#split-consumer-follow-up).
 The separate Jest deepmerge failure remains unchanged.
 
+## Jest transition: replacement coverage
+
+Stage one adds `examples/react-vitest` and `native_vitest` alongside the existing
+Jest fixture/jobs. The replacement keeps Node 22.19.0/npm 10.9.4, `web/` SSR,
+producer skip, report/head regressions and the nested dev-only `omit=dev` audit
+scenario. General contract tests use Vitest; a legacy Jest profile-only corpus
+keeps decoding and schema-four migration exercised. No schemas or verdicts change.
+
+Vitest JSON exposes no retry history. `retry: 0` is configured, but success after
+retry rejection is not equivalent to Jest. Reader/enums, importer `jest_json`,
+frozen bootstrap releases and receipt recovery/uninstall are unchanged. The
+Jest jobs remain blocked until the second PR ends their managed execution scope.
+See [native commands](integrations/acceptance.md#alternate-vitest-transition).
+The [local replacement record](integrations/native-fixture-audit.md#alternate-vitest-replacement)
+records nine passing native cases and a zero-vulnerability selected low-level audit;
+hosted verification remains separate.
+
 ## P1 npm workspace shared lock
 
 The optional [P1 workspace extension](integrations/npm-workspaces.md) adds

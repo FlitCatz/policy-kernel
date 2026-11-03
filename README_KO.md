@@ -71,6 +71,12 @@ minimatch 11.0.4 및 glob 14.0.3 override를 적용합니다. 두 Jest job은 cl
 조건을 유지하며 수정판이 없는 deepmerge GHSA-gcqx-w48m-w2h4 때문에 실패합니다.
 자세한 내용은 [현재 상태](docs/status.md)를 참고하세요.
 
+[대체 Vitest fixture](examples/react-vitest/project-profile.json)는 Node 22.19.0/npm 10.9.4,
+`web/` 아래 React SSR, 실제 skip 및 중첩 `omit=dev` 감사 회귀를 추가합니다.
+일반 프로필 시험은 Vitest로 옮기며 프로필만 남긴 Jest corpus로 호환성을 검사합니다.
+이 첫 단계에서는 기존 Jest job을 유지합니다.
+[실행 명령과 한계](docs/integrations/acceptance.md#alternate-vitest-transition)를 참고하세요.
+
 이 워크스페이스에는 Task 1–14의 구성요소가 구현되어 있습니다. 근거와 남은 구현·통합·운영 조건은
 [현재 상태](docs/status.md)와 [Task 색인](docs/tasks/README.md)에서 확인할 수 있습니다.
 [Task 15](docs/tasks/task-15/README.md)는 호환 도구·버전 선택, 실행 독립성,

@@ -72,7 +72,7 @@ fn schema_four_custom_bootstrap_preserves_user_owned_profile_and_receipt() {
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().canonicalize().unwrap();
     let legacy = project_verification::parse_profile(include_str!(
-        "../../examples/react-jest/project-profile.json"
+        "../../examples/react-vitest/project-profile.json"
     ))
     .unwrap();
     let project = project_verification::selection::upgrade_frontend_profile(legacy).unwrap();

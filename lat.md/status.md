@@ -61,6 +61,10 @@ and locks source-map-js 1.2.2. Its selected npm 10.9.3 audit reports zero
 vulnerabilities; the separate Jest deepmerge failure remains unchanged.
 See the current-status authority and [[kernel#Split-consumer conformance]].
 
+Stage one adds [[kernel#Alternate frontend conformance]] with Vitest while
+retaining existing Jest jobs and a profile-only compatibility corpus. Retry zero
+configuration cannot recover Vitest's absent retry history. See the current-status authority.
+
 P1 adds explicit npm members under one root graph and audit. Native
 Node 26.12.0/npm 11.20.0 fixtures satisfy the local scope; evidence remains
 LocalUntrusted and does not establish TJERP adoption or promotion.

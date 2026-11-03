@@ -206,3 +206,17 @@ The frontend profile and manifest select Vite 6.4.5 / Vitest 4.1.12, with
 source-map-js 1.2.2 locked. Node 26.10.0/npm 10.9.3 selections remain unchanged.
 The [audit record](../docs/integrations/native-fixture-audit.md#split-consumer-follow-up)
 describes generation and verification separately.
+
+## Alternate frontend conformance
+
+Alternate native coverage retains Node 22.19.0/npm 10.9.4, a `web/` SSR root, producer skip and nested dev-only audit rejection using Vitest while the first transition stage still retains Jest execution.
+
+The replacement [[acceptance/tests/native_vitest.rs#native_vitest_selected_paths_failures_corrections_and_prior_head_rejection]]
+asserts both exact runtime tokens before staging and reuses
+[[acceptance/tests/common/alternate.rs#nested_graph_audit]] and report/head checks.
+General profile tests use the Vitest fixture; compatibility decoding and migration
+remain in [[crates/project-verification/tests/report_compatibility.rs#legacy_jest_profile_keeps_wire_contracts_and_schema_four_migration]].
+The SSR producer tests use TypeScript. Compatibility checks isolate the schema-one
+Jest guard and the legacy capability ceiling from profile version requirements.
+Vitest JSON has no retry history: retry zero configuration is not success-after-retry rejection parity.
+See [native procedure](../docs/integrations/acceptance.md#alternate-vitest-transition).

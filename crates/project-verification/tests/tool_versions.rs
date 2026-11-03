@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 
 fn legacy() -> Value {
     serde_json::from_str(include_str!(
-        "../../../examples/react-jest/project-profile.json"
+        "../../../examples/react-vitest/project-profile.json"
     ))
     .unwrap()
 }
@@ -31,7 +31,7 @@ fn project() -> Value {
     value["selection"]["packages"][0]["acceptance"] = json!({"kind":"record"});
     value["selection"]["contracts"] = json!({
         "node":["process/v1"], "npm":["process/v1","npm-ci-audit/v1"],
-        "jest":["jest-json/v1"]
+        "vitest":["vitest-json/v1"]
     });
     value
 }

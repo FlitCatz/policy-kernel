@@ -7,7 +7,7 @@ const FULL: &str = include_str!("../../../profiles/fullstack/profile.json");
 #[test]
 fn consumer_profiles_reject_empty_adequacy_without_changing_legacy_parsing() {
     let legacy = parse_profile(include_str!(
-        "../../../examples/react-jest/project-profile.json"
+        "../../../examples/react-vitest/project-profile.json"
     ))
     .unwrap();
     for mut profile in [
@@ -52,9 +52,9 @@ fn consumer_negative_ids_must_be_required_behaviors_and_map_to_report_tests() {
     profile.validate().unwrap();
     // Normalize a reporter fixture; use the adapter's IDs, never invented hashes.
     let report = parse_report(
-        ReportFormat::JestJson,
+        ReportFormat::VitestJson,
         "frontend:unit",
-        include_bytes!("../../policy-report-adapters/tests/fixtures/project-reports/jest.json"),
+        include_bytes!("../../policy-report-adapters/tests/fixtures/project-reports/vitest.json"),
     )
     .unwrap();
     let ids: Vec<_> = report.tests.iter().map(|t| t.id.clone()).collect();

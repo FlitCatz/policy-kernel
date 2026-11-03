@@ -7,7 +7,7 @@ use std::{fs, process::Command};
 
 fn legacy() -> project_verification::ProjectProfile {
     parse_profile(include_str!(
-        "../../../examples/react-jest/project-profile.json"
+        "../../../examples/react-vitest/project-profile.json"
     ))
     .unwrap()
 }
@@ -19,8 +19,8 @@ fn migration_preserves_requested_ranges_and_explicit_provisioning() {
     assert_eq!(value["schema_version"], json!(4));
     assert_eq!(value["version"], json!("1.1.0"));
     assert_eq!(
-        value["selection"]["tools"]["jest"]["version"]["acceptance"],
-        json!({"kind":"numeric_range","requirement":">=30.2.0, <31.0.0"})
+        value["selection"]["tools"]["vitest"]["version"]["acceptance"],
+        json!({"kind":"numeric_range","requirement":"=4.1.12"})
     );
     assert_eq!(value["selection"]["provisioning"]["npm"], json!("10.9.4"));
     assert_eq!(ci_inputs(&candidate).unwrap()["npm_version"], "10.9.4");
@@ -37,7 +37,7 @@ fn migration_preserves_requested_ranges_and_explicit_provisioning() {
 fn explicit_cli_migration_only_writes_stdout() {
     let root = tempfile::tempdir().unwrap();
     let file = root.path().join("profile.json");
-    let original = include_str!("../../../examples/react-jest/project-profile.json");
+    let original = include_str!("../../../examples/react-vitest/project-profile.json");
     fs::write(&file, original).unwrap();
     let output = Command::new(env!("CARGO_BIN_EXE_project-verification"))
         .args([

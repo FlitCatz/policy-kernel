@@ -108,6 +108,44 @@ jobs:
             ${{ runner.temp }}/task15-jest/*/original-report.json
             ${{ runner.temp }}/task15-jest/*.log
             ${{ runner.temp }}/task15-jest/previous-head-rejection.json
+  alternate-vitest:
+    name: React SSR / Vitest / alternate Node and npm
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - run: rustup toolchain install 1.95.0 --profile minimal
+      - name: Derive alternate consumer choices
+        id: selection
+        run: cargo run --locked -p project-verification -- ci-inputs examples/react-vitest/project-profile.json --github-output "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ steps.selection.outputs.node_version }}
+      - name: Provision the selected npm release
+        run: |
+          cargo run --locked -p project-verification -- provision-npm examples/react-vitest/project-profile.json --prefix '${{ runner.temp }}/selected-npm'
+          echo '${{ runner.temp }}/selected-npm/node_modules/.bin' >> "$GITHUB_PATH"
+      - name: Native Vitest baseline and negative cases
+        env:
+          POLICY_VITEST_OUTPUT: ${{ runner.temp }}/alternate-vitest
+        run: cargo test --locked -p policy-acceptance --test native_vitest -- --ignored --nocapture
+      - name: Retain observations and native reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: alternate-vitest-${{ github.sha }}
+          include-hidden-files: true
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/alternate-vitest/summary.json
+            ${{ runner.temp }}/alternate-vitest/*/request.json
+            ${{ runner.temp }}/alternate-vitest/*/result.json
+            ${{ runner.temp }}/alternate-vitest/*/original-report.json
+            ${{ runner.temp }}/alternate-vitest/*.log
+            ${{ runner.temp }}/alternate-vitest/previous-head-rejection.json
   project-owned-frontend:
     name: Project-owned frontend versions
     runs-on: ubuntu-24.04
