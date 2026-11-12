@@ -33,11 +33,17 @@ owner opt-in, behavior is exactly as before.
    `ci_observed` and `trusted_runner_attested`, and appears in the decision as an
    informational reason (`PK-PROV-LOCAL-ATTESTED`) that cannot be removed without
    changing the decision digest.
-2. **Per-signature owner presence.** The runner's signing key requires the owner's
-   physical touch or biometric confirmation for each signature (a hardware-backed
-   key). A key file readable by the owner's account is not accepted as the
-   intended custody level, because an agent running under that account could sign
-   fabricated results.
+2. **Per-signature owner presence.** The runner's signing key is required to need
+   the owner's physical touch or biometric confirmation for each signature (a
+   hardware-backed security key). A key file readable by the owner's account is not
+   accepted, because an agent running under that account could sign fabricated
+   results. The requirement is checked, not left to procedure: the statement is an
+   SSH signature verified with `ssh-keygen -Y verify` against an owner-controlled
+   `allowed_signers` file. The controller accepts only the security-key types
+   `sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com` and
+   rejects any `allowed_signers` entry that carries the `no-touch-required`
+   option. A signature made without user presence therefore fails verification,
+   and a plain software key is refused.
 3. **Verdict in the light hosted job.** The authoritative verdict is computed in
    the lightweight GitHub job that already runs for every PR, so head, base,
    changed paths and the clock come from GitHub observations rather than from the
@@ -67,7 +73,7 @@ Actors and goals:
 | Actor | Capability | Goal of this design |
 | --- | --- | --- |
 | Honest but error-prone worker | Runs another head, forgets a rerun, runs part of the checks, uses a dirty tree | Prevent |
-| Shortcut-taking agent | Same OS account and credentials as the owner; can edit or invent result files | Prevent, at a strength set by key custody (decision 2) |
+| Shortcut-taking agent | Same OS account and credentials as the owner; can edit or invent result files | Prevent: the controller accepts only security-key signatures made with the owner's per-signature presence (decision 2) |
 | Malicious code inside the PR under test | Runs with the runner's permissions during local execution; can read files the account can read | Prevent key theft; manipulating its own tests is equally possible in hosted CI and is handled by review and by the CI-required set |
 | Outsider with repository write access only | Can push branches, notes and comments; no access to the owner's machine | Prevent |
 | Out of scope | The owner, a fully compromised owner machine, the hosting platform | Treated as the root of trust |
@@ -108,8 +114,11 @@ Residual risks the design does not close:
   consuming project's responsibility.
 - **A PR manipulating its own tests.** Identical to hosted CI; addressed by review
   and the CI-required set, not by trust class.
-- **Weak key custody.** A key readable by the same account as an agent cannot stop
-  that agent. Decision 2 is what bounds this.
+- **Unproven key custody.** A key readable by the same account as an agent cannot
+  stop that agent; decision 2 refuses such keys and signatures made without the
+  owner's presence. Hardware security-key signing has not yet been exercised on
+  the owner's machine. If the check in decision 2 proves unworkable there, the
+  decision returns to the owner rather than being relaxed to a software key.
 
 ## Default-closed rules
 
@@ -132,6 +141,10 @@ Residual risks the design does not close:
    attestation is a separate, additional document.
 8. A ready decision that depends on local-class evidence cannot reach `SHIPPED`.
 9. Keys and expected values come only from owner-controlled configuration.
+10. A signature is rejected unless its key is a hardware-backed security-key type
+    (`sk-ssh-ed25519@openssh.com` or `sk-ecdsa-sha2-nistp256@openssh.com`), its
+    `allowed_signers` entry has no `no-touch-required` option, and
+    `ssh-keygen -Y verify` confirms the owner's presence for that signature.
 
 ## Supersession
 
@@ -164,7 +177,8 @@ a sequence of reviewed pull requests merged one at a time:
 5. A sibling native-contract document for the signed statement and an
    approved-scope-template digest.
 6. Controller support for registered runners, signature verification and
-   re-evaluation.
+   re-evaluation. Verification must enforce decision 2: only security-key types,
+   no `no-touch-required` entries, and a signature without user presence fails.
 7. An adapter-side attestor, end-to-end fixture tests and final documentation.
 
 Consuming-project work (runner output in the native run format, approved scope

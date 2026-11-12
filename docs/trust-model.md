@@ -118,8 +118,11 @@ The planned design adds a trust class, `local_runner_attested`, that is distinct
 from and weaker than `ci_observed` and `trusted_runner_attested`:
 
 - A registered local runner signs a statement binding repository, head, tree, base,
-  an approved scope template and the run and result digests. The signing key
-  should require the owner's touch or biometric confirmation for each signature.
+  an approved scope template and the run and result digests. The signing key is
+  required to need the owner's touch or biometric confirmation for each signature:
+  the controller verifies the SSH signature with `ssh-keygen -Y verify` against an
+  owner-controlled `allowed_signers` file and accepts only hardware-backed
+  security-key types.
 - The authenticated collection boundary verifies the signature against
   owner-installed keys, checks the bindings against GitHub observations,
   recomputes the scope verdict itself and promotes only the covered sensor and
@@ -144,12 +147,17 @@ through a new policy version:
 - Unregistered runners, unapproved scope templates, mismatched repository, head,
   tree or base, stale or future timestamps and an unsatisfied re-evaluation are
   rejected.
+- Signatures from key types other than `sk-ssh-ed25519@openssh.com` and
+  `sk-ecdsa-sha2-nistp256@openssh.com`, from `allowed_signers` entries with the
+  `no-touch-required` option, or made without the owner's presence are rejected.
 
 A signature fixes who vouched for what; it does not prove the run was honest.
 Residual risks accepted by the decision are environment divergence between the
 local and hosted platforms, ignored build output, selective submission of passing
 runs and a PR manipulating its own tests. The scheduled hosted check of the main
-branch is the compensating control. See the decision record for the threat model.
+branch is the compensating control. Hardware security-key signing has not yet been
+exercised on the owner's machine; if the presence check proves unworkable, the
+decision returns to the owner. See the decision record for the threat model.
 
 ## Pre-merge and post-merge
 
