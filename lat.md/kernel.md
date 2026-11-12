@@ -94,6 +94,10 @@ CI observations and trusted-runner attestations. Its exhaustive match requires a
 decision for every future trust class. Provenance, required knowledge, reviews,
 modifications and agent-ready observations share this predicate.
 
+Required knowledge delegates glob validation to
+[[crates/policy-core/src/sensors.rs#path_glob]], which rejects blank and
+NUL-containing patterns as well as unsupported glob syntax.
+
 ## Canonical digests
 
 All policy, evidence and decision digests hash canonical JSON with sorted keys and integral numbers; signed controller bytes use the same encoding.

@@ -53,11 +53,7 @@ pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> Va
                 .required_when
                 .iter()
                 .flat_map(|condition| &condition.path_globs)
-                .any(|pattern| {
-                    pattern.trim().is_empty()
-                        || pattern.contains('\0')
-                        || crate::sensors::path_glob(pattern).is_err()
-                });
+                .any(|pattern| crate::sensors::path_glob(pattern).is_err());
         if invalid {
             result.insert("PK-KNOWLEDGE-POLICY-INVALID", "knowledge requirements need unique kind/source identities and valid nonempty globs");
             continue;

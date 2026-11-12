@@ -202,26 +202,26 @@
           "span": {
             "end": {
               "column": 6,
-              "line": 159
+              "line": 155
             },
             "start": {
               "column": 5,
-              "line": 157
+              "line": 153
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:158:9: replace ValidationResult::reasons -> &[Reason] with Vec::leak(vec![Default::default()])",
+        "name": "crates/policy-core/src/provenance.rs:154:9: replace ValidationResult::reasons -> &[Reason] with Vec::leak(vec![Default::default()])",
         "package": "policy-core",
         "replacement": "Vec::leak(vec![Default::default()])",
         "span": {
           "end": {
             "column": 22,
-            "line": 158
+            "line": 154
           },
           "start": {
             "column": 9,
-            "line": 158
+            "line": 154
           }
         }
       },
@@ -230,11 +230,11 @@
       "span": {
         "end": {
           "column": 22,
-          "line": 158
+          "line": 154
         },
         "start": {
           "column": 9,
-          "line": 158
+          "line": 154
         }
       }
     },
@@ -249,26 +249,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 253
+              "line": 249
             },
             "start": {
               "column": 1,
-              "line": 241
+              "line": 237
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:242:5: replace child_digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
+        "name": "crates/policy-core/src/provenance.rs:238:5: replace child_digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
         "package": "policy-core",
         "replacement": "Some(Default::default())",
         "span": {
           "end": {
             "column": 6,
-            "line": 252
+            "line": 248
           },
           "start": {
             "column": 5,
-            "line": 242
+            "line": 238
           }
         }
       },
@@ -277,11 +277,11 @@
       "span": {
         "end": {
           "column": 6,
-          "line": 252
+          "line": 248
         },
         "start": {
           "column": 5,
-          "line": 242
+          "line": 238
         }
       }
     },
@@ -296,26 +296,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 257
+              "line": 253
             },
             "start": {
               "column": 1,
-              "line": 255
+              "line": 251
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:256:5: replace digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
+        "name": "crates/policy-core/src/provenance.rs:252:5: replace digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
         "package": "policy-core",
         "replacement": "Some(Default::default())",
         "span": {
           "end": {
             "column": 33,
-            "line": 256
+            "line": 252
           },
           "start": {
             "column": 5,
-            "line": 256
+            "line": 252
           }
         }
       },
@@ -324,11 +324,11 @@
       "span": {
         "end": {
           "column": 33,
-          "line": 256
+          "line": 252
         },
         "start": {
           "column": 5,
-          "line": 256
+          "line": 252
         }
       }
     },
@@ -343,26 +343,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 388
+              "line": 384
             },
             "start": {
               "column": 1,
-              "line": 376
+              "line": 372
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:377:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
+        "name": "crates/policy-core/src/provenance.rs:373:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
         "package": "policy-core",
         "replacement": "::std::iter::once(Box::leak(Box::new(Default::default())))",
         "span": {
           "end": {
             "column": 68,
-            "line": 387
+            "line": 383
           },
           "start": {
             "column": 5,
-            "line": 377
+            "line": 373
           }
         }
       },
@@ -371,11 +371,11 @@
       "span": {
         "end": {
           "column": 68,
-          "line": 387
+          "line": 383
         },
         "start": {
           "column": 5,
-          "line": 377
+          "line": 373
         }
       }
     },
@@ -810,7 +810,7 @@
     "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
     "crates/policy-core/src/post_merge.rs": "15906c3b1a35befaa06d89d63164f05b035a6a3f52d4acb58b96b47e7baa9e65",
     "crates/policy-core/src/pre_merge.rs": "a0fda3638f4eeb70f7e91ebbe92b3af4a4fecc1d0bbaa62055ca6e72e52ee281",
-    "crates/policy-core/src/provenance.rs": "859ff5a3716baead816fd5faae0275d4dc749c915b457e43a5ef94e94827f873",
+    "crates/policy-core/src/provenance.rs": "eeecb80efdf1f006a025d17778888a3f7592e404784e5c33d39f01f3143f857e",
     "crates/policy-core/src/reviews.rs": "732d4476d051991b350b234119f5f2f845825ba88c52b875fc25eabd2eb30886",
     "crates/policy-core/src/sensors.rs": "6369d6488f47af134b1afb8b5afd105cce243f9bfc7941dccfc683fa9acebc05"
   }
