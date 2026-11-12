@@ -218,7 +218,7 @@ fn validate_observations(input: &PreMergeEvaluationInput, gates: &mut Gates) {
             "agent-ready must be applied by a policy-authorized actor",
         );
     }
-    if input.mode == EvaluationMode::Authoritative && ready.trust == TrustClass::LocalUntrusted {
+    if input.mode == EvaluationMode::Authoritative && !ready.trust.is_ci_grade() {
         gates.unknown(
             "PK-PROV-UNTRUSTED",
             "authoritative evaluation requires a trusted agent-ready observation",

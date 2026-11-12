@@ -247,7 +247,8 @@ cargo test --locked -p xtask
 
 전체 실행은 core 권한 판정 모듈 다섯 개, controller, workflow-source를 포함합니다.
 실행 불가·미검출·시간 초과·불완전 결과를 거부하고, 필터 전 인벤토리를 모든 원본 및
-타입이 유효한 대체 변형의 실행과 대조합니다. 매번 새 출력 디렉터리를 사용하세요.
+타입이 유효한 대체 변형의 실행과 대조합니다. 변이 작업자 하나가 빌드와 시험을 순차 실행합니다.
+매번 새 출력 디렉터리를 사용하세요.
 개별 인벤토리용 `check-mutation-results OUTCOMES [--scope core|controller|workflow-source]`의
 기본 범위는 core이며, 이 검사만으로 전체 실행 완료를 판정할 수 없습니다.
 자세한 내용은 [mutation 계약과 명령](docs/promotion.md#mutation-generation-and-execution-contract)을 참고하세요.

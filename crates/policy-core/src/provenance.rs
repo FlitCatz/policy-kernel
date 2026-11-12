@@ -1,7 +1,7 @@
 use crate::canonical_sha256;
 use policy_contracts::{
     EvaluationMode, EvidenceBundle, ModificationEvidence, PreMergeEvaluationInput, Reason,
-    ReviewEvidence, TrustClass, UtcTimestamp,
+    ReviewEvidence, UtcTimestamp,
 };
 use serde::Serialize;
 use std::collections::BTreeSet;
@@ -127,7 +127,7 @@ pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> Va
                     &format!("{description} does not bind the evaluated source set"),
                 );
             }
-            if evidence.trust == TrustClass::LocalUntrusted {
+            if !evidence.trust.is_ci_grade() {
                 result.insert(
                     "PK-KNOWLEDGE-UNTRUSTED",
                     &format!("{description} requires CI observation or trusted-runner attestation"),
@@ -354,23 +354,23 @@ fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {
     bundle
         .modifications
         .iter()
-        .any(|value| value.trust == TrustClass::LocalUntrusted)
+        .any(|value| !value.trust.is_ci_grade())
         || bundle
             .executions
             .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
+            .any(|value| !value.trust.is_ci_grade())
         || bundle
             .reviews
             .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
+            .any(|value| !value.trust.is_ci_grade())
         || bundle
             .sensors
             .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
+            .any(|value| !value.trust.is_ci_grade())
         || bundle
             .knowledge
             .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
+            .any(|value| !value.trust.is_ci_grade())
 }
 
 fn timestamps(bundle: &EvidenceBundle) -> impl Iterator<Item = &UtcTimestamp> {

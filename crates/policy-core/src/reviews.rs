@@ -1,7 +1,6 @@
 use policy_contracts::{
     CommitSha, EvaluationMode, Finding, FindingSeverity, ModificationEvidence, PolicySnapshot,
-    Reason, RepositoryId, ReviewEvidence, ReviewStatus, Sha256Digest, TrustClass, UtcTimestamp,
-    WaiverEvidence,
+    Reason, RepositoryId, ReviewEvidence, ReviewStatus, Sha256Digest, UtcTimestamp, WaiverEvidence,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -271,14 +270,8 @@ pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
 
 fn validate_review_provenance(input: &ReviewEvaluationInput, reasons: &mut Vec<Reason>) {
     if input.mode == EvaluationMode::Authoritative
-        && (input
-            .reviews
-            .iter()
-            .any(|r| r.trust == TrustClass::LocalUntrusted)
-            || input
-                .modifications
-                .iter()
-                .any(|m| m.trust == TrustClass::LocalUntrusted))
+        && (input.reviews.iter().any(|r| !r.trust.is_ci_grade())
+            || input.modifications.iter().any(|m| !m.trust.is_ci_grade()))
     {
         insert_reason(
             reasons,
