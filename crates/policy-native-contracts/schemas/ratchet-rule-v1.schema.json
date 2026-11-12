@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RatchetRuleV1",
+  "description": "Caller supplies independently approved base allowances and proposed head\nallowances. Decoding checks wire types; evaluation checks entry invariants.",
+  "type": "object",
+  "properties": {
+    "approved_baseline": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RatchetEntryV1"
+      }
+    },
+    "head_baseline": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RatchetEntryV1"
+      }
+    },
+    "schema_version": {
+      "$ref": "#/$defs/VersionV1"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "approved_baseline",
+    "head_baseline"
+  ],
+  "$defs": {
+    "RatchetEntryV1": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "description": "Positive counts only; absence represents zero.",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 1
+        },
+        "key": {
+          "$ref": "#/$defs/RatchetKeyV1"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "count"
+      ]
+    },
+    "RatchetKeyV1": {
+      "description": "Identity is the entire tuple; allowances never transfer between contexts.",
+      "type": "object",
+      "properties": {
+        "context_hash": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "path": {
+          "type": "string"
+        },
+        "rule": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "symbol": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "tool": {
+          "$ref": "#/$defs/WorkItemId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "rule",
+        "path",
+        "symbol",
+        "context_hash"
+      ]
+    },
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "VersionV1": {
+      "description": "An unforgeable version value for each independently versioned v1 document.",
+      "type": "integer",
+      "format": "uint8",
+      "maximum": 1,
+      "minimum": 1
+    },
+    "WorkItemId": {
+      "type": "string",
+      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
+    }
+  }
+}

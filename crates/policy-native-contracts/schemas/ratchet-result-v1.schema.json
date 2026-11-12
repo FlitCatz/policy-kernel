@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RatchetResultV1",
+  "description": "A comparison result, never an approval, execution attestation or merge gate.",
+  "type": "object",
+  "properties": {
+    "observation_digest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RatchetDigest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "rule_digest": {
+      "description": "Absent if either input is malformed or structurally invalid.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RatchetDigest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema_version": {
+      "$ref": "#/$defs/VersionV1"
+    },
+    "status": {
+      "$ref": "#/$defs/RatchetStatus"
+    },
+    "violations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RatchetViolationV1"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "status",
+    "violations"
+  ],
+  "$defs": {
+    "CanonicalHashKind": {
+      "type": "string",
+      "enum": [
+        "canonical_sha256"
+      ]
+    },
+    "DigestSchema": {
+      "type": "string",
+      "enum": [
+        "policy_native_v1"
+      ]
+    },
+    "RatchetDigest": {
+      "description": "SHA-256 of the native canonical {schema, role, value} envelope.",
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/CanonicalHashKind"
+        },
+        "role": {
+          "$ref": "#/$defs/RatchetDigestRole"
+        },
+        "schema": {
+          "$ref": "#/$defs/DigestSchema"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256Digest"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "schema",
+        "role",
+        "sha256"
+      ]
+    },
+    "RatchetDigestRole": {
+      "description": "Canonical envelope roles for ratchet inputs, separate from scope roles.",
+      "type": "string",
+      "enum": [
+        "ratchet_rule",
+        "ratchet_observation"
+      ]
+    },
+    "RatchetInput": {
+      "description": "This declaration order defines the first component of violation sorting.",
+      "type": "string",
+      "enum": [
+        "rule",
+        "approved_baseline",
+        "head_baseline",
+        "observation"
+      ]
+    },
+    "RatchetKeyV1": {
+      "description": "Identity is the entire tuple; allowances never transfer between contexts.",
+      "type": "object",
+      "properties": {
+        "context_hash": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "path": {
+          "type": "string"
+        },
+        "rule": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "symbol": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "tool": {
+          "$ref": "#/$defs/WorkItemId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "tool",
+        "rule",
+        "path",
+        "symbol",
+        "context_hash"
+      ]
+    },
+    "RatchetReasonCode": {
+      "type": "string",
+      "enum": [
+        "ALLOWANCE_INCREASED",
+        "CONTEXT_REPLACEMENT",
+        "DEBT_INCREASED",
+        "DUPLICATE_KEY",
+        "INVALID_COUNT",
+        "INVALID_PATH",
+        "MALFORMED_INPUT",
+        "NEW_DEBT"
+      ]
+    },
+    "RatchetStatus": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail"
+      ]
+    },
+    "RatchetViolationV1": {
+      "description": "Sorted by input, then the full key tuple, then reason code. A duplicate key\nhas one violation regardless of how many times it occurs.",
+      "type": "object",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/RatchetReasonCode"
+        },
+        "input": {
+          "$ref": "#/$defs/RatchetInput"
+        },
+        "key": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RatchetKeyV1"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "input",
+        "code"
+      ]
+    },
+    "Sha256Digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "VersionV1": {
+      "description": "An unforgeable version value for each independently versioned v1 document.",
+      "type": "integer",
+      "format": "uint8",
+      "maximum": 1,
+      "minimum": 1
+    },
+    "WorkItemId": {
+      "type": "string",
+      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
+    }
+  }
+}

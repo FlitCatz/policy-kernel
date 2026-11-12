@@ -2,10 +2,12 @@
 //! Version 1 native-result records. Types and structural validation only.
 //! No execution, raw parsing, filesystem observation, evidence conversion or authorization.
 mod digest;
+mod ratchet;
 mod types;
 mod validation;
 
 pub use digest::*;
+pub use ratchet::*;
 pub use types::*;
 pub use validation::{validate_subject_binding, ContractError};
 

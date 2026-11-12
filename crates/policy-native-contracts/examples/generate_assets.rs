@@ -14,6 +14,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     for (name, schema) in [
         ("expected-scope-v1", schemars::schema_for!(ExpectedScopeV1)),
         ("native-run-v1", schemars::schema_for!(NativeRunV1)),
+        ("ratchet-rule-v1", schemars::schema_for!(RatchetRuleV1)),
+        (
+            "ratchet-observation-v1",
+            schemars::schema_for!(RatchetObservationV1),
+        ),
+        ("ratchet-result-v1", schemars::schema_for!(RatchetResultV1)),
         (
             "local-scope-result-v1",
             schemars::schema_for!(LocalScopeResultV1),

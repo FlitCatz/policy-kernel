@@ -35,7 +35,7 @@ fn exclusions(values: &[ExclusionV1]) -> Result {
     unique(values.iter().map(|v| v.id.as_str()))
 }
 // Lexical wire validation only. No filesystem observation or symlink guarantee.
-fn relative_path(path: &str, cwd: bool) -> Result {
+pub(crate) fn relative_path(path: &str, cwd: bool) -> Result {
     require(
         (cwd && path == ".")
             || (!path.is_empty()

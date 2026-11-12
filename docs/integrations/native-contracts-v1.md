@@ -1,5 +1,8 @@
 # Native contracts v1
 
+The additive [debt ratchet v1](debt-ratchet-v1.md) defines a separate standalone
+comparison API in these crates. It does not change scope evaluation or import.
+
 **v1 types, an adapter importer and a kernel-owned local scope verifier.**
 `policy-native-contracts` is the additive Rust contract crate for already-executed
 native runs. It neither executes commands nor reads files, Git, reports or the
@@ -82,7 +85,8 @@ hashes are never silently replaced by these new digests.
 
 ## Schemas and corpus
 
-The crate owns [three schemas](../../crates/policy-native-contracts/schemas/),
+The crate owns three scope [schemas](../../crates/policy-native-contracts/schemas/)
+alongside the [debt ratchet](debt-ratchet-v1.md) schemas,
 [document vectors](../../crates/policy-native-contracts/tests/corpus/v1.json) and
 [canonical vectors](../../crates/policy-native-contracts/tests/corpus/canonical-v1.json).
 Document vectors contain valid records and invalid pointer replacements with
