@@ -432,3 +432,9 @@ trust remains `local_untrusted` and review `unmet`. This JSON-only command check
 typed consistency, not raw artifact authenticity, and never produces a pre-merge
 or ReadyToMerge decision. Existing `evaluate-pre` exit codes remain 0/2/3/64.
 See the [native contract reference](docs/integrations/native-contracts-v1.md).
+
+The additive `LocalAttestationV1` statement and `SignedLocalAttestationV1`
+envelope define local-runner wire data and structural checks. Scope-template
+digests exclude the source subject and evaluation clock. These contracts do not
+sign, verify signatures or authorize readiness; existing scope documents and
+schemas remain unchanged.

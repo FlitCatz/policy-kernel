@@ -11,13 +11,14 @@ contracts, approved digests, five root schemas and TJERP execution are unchanged
 
 ## Planned local-runner attestation
 
-**Planned, not implemented.** The
+The
 [2026-11-12 decision record](../decisions/2026-11-12-local-runner-attestation-adr.md)
-plans a separate sibling document carrying a signed local-runner statement, plus a
-digest of the approved scope template. The three v1 documents below and
-`policy-cli evaluate-scope` would not change: results stay `local_untrusted` with
-an unmet review gate, and the attestation would be an additional document verified
-only at the authenticated collection boundary.
+plans authenticated acceptance of a signed local-runner statement and approved
+scope-template digest. The sibling [wire contracts below](#local-runner-attestation-contracts)
+are implemented; authenticated acceptance remains planned. The three original v1
+documents and `policy-cli evaluate-scope` remain unchanged: results stay
+`local_untrusted` with an unmet review gate. Signature verification belongs to
+the future authenticated collection boundary.
 
 ## Documents and validation
 
@@ -116,6 +117,75 @@ reject typed-invalid vectors and pin canonical hash values. The workspace CI
 runs these tests, including on Rust 1.85.0 and 1.95.0. It does not run a native
 consumer or establish promotion. See [Task 18](../tasks/task-18/README.md) and
 [Current status](../status.md).
+
+## Local-runner attestation contracts
+
+`LocalAttestationV1` is a sibling signed statement with `schema_version: 1` and
+the fixed domain `policy-kernel/local-runner-attestation/v1`. It binds a
+`SubjectV1`, head tree and comparison base (40-character lowercase Git SHAs),
+run/scope IDs, expected-scope/template/run/imported-observations/result digests,
+runner ID, OS, architecture, attestor version and ordered
+`started_at <= completed_at <= attested_at` timestamps. No PR number is required:
+the run may precede push and PR creation. Runner metadata is nonblank opaque data,
+not an allow-list or proof of platform identity.
+
+`SignedLocalAttestationV1` contains exactly `statement` and `signature`.
+The signature has format `sshsig`, the same runner ID as the statement and an
+opaque nonblank `value`. Unknown fields/versions, malformed IDs/digests, wrong
+digest roles, reversed timestamps and mismatched runner IDs fail typed decoding
+and `validate()`. JSON Schema checks shape; timestamp, role and runner equality
+checks require Rust validation. A structurally valid signature can be arbitrary
+text. This crate performs no cryptography, observation, trust promotion or policy
+evaluation. A result digest does not prove that its result was satisfied; the
+authenticating consumer must check all referenced documents and recompute scope.
+
+Signatures cover `policy_core::canonical_json(&statement)`, without a digest
+envelope. The statement's separate `digest()` is a document identity using the
+usual `{schema, role, value}` envelope. The new roles `scope_template`,
+`imported_observations` and `local_attestation` use `LocalDigestRole` / `LocalDigest`
+and `canonical_local_digest`, sharing the existing canonical envelope encoder.
+Like the standalone ratchet roles, these are separate from `DigestRole` so that
+every existing v1 schema, document and digest remains byte-identical. The
+observations helper accepts a serializable value; its caller must validate the
+typed `ImportedObservationsV1` before hashing it.
+
+`ExpectedScopeV1::template_digest()` hashes role `scope_template` with exactly
+this value projection (array order remains significant):
+
+```text
+{requirements, observations: bindings.observations,
+ maximum_age_seconds: bindings.maximum_age_seconds, mode: bindings.mode}
+```
+
+It includes the requirements-file digest, all requirements, observation rules,
+count bounds, exemptions, command/configuration/parser bindings and time/mode
+policy. It excludes the entire source subject, document version and
+`bindings.evaluated_at`; the enclosing digest retains `schema: policy_native_v1`.
+The full expected-scope digest still covers those excluded fields.
+
+The merged [ratchet contract](debt-ratchet-v1.md) stores approved/head allowances
+in standalone `RatchetRuleV1`, whose `digest()` covers both arrays. There is no
+ratchet baseline or rule digest in `ExpectedScopeV1`, its requirements or its
+bindings, and standalone ratchet results do not satisfy scope. Thus this template
+digest does **not** approve a ratchet baseline. Future scope integration must bind
+the independently approved baseline/rule into its approved template before it
+can rely on local attestation; no v1 field is added here to imply that guarantee.
+
+The two sibling [schemas](../../crates/policy-native-contracts/schemas/),
+[document corpus](../../crates/policy-native-contracts/tests/corpus/attestation-v1.json)
+and [canonical vectors](../../crates/policy-native-contracts/tests/corpus/canonical-attestation-v1.json)
+are generated separately:
+
+```console
+cargo run --locked -p policy-native-contracts --example generate_attestation_assets
+cargo test --locked -p policy-native-contracts
+```
+
+The corpus includes schema-valid relational failures. Canonical vectors pin new
+roles and the original three document digests; existing schema/corpus tests still
+compare their assets byte-for-byte. Fixture signatures and digests are synthetic;
+these tests do not establish actual runner execution, key possession,
+authoritative readiness or promotion.
 
 ## Adapter import library (PR 4)
 

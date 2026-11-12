@@ -1,0 +1,42 @@
+{
+  "expected": {
+    "kind": "canonical_sha256",
+    "role": "expected_scope",
+    "schema": "policy_native_v1",
+    "sha256": "76f8b73f8f8b72df9be15f4d55a12ac06c1048fc4802d736ba07446b24a115a4"
+  },
+  "observations": {
+    "kind": "canonical_sha256",
+    "role": "imported_observations",
+    "schema": "policy_native_v1",
+    "sha256": "06a7862a4d220ed6308a45cd62605cc95d5c2ef21500fe4b3c5f4a10059ab438"
+  },
+  "result": {
+    "kind": "canonical_sha256",
+    "role": "local_scope_result",
+    "schema": "policy_native_v1",
+    "sha256": "ea592357c23b16b9df5f079a5b81a269e4654ea274a2f50653989b65b3800209"
+  },
+  "run": {
+    "kind": "canonical_sha256",
+    "role": "native_run",
+    "schema": "policy_native_v1",
+    "sha256": "93f1f3c56bf9179e3f8e156a175a4f96edc230733c6a64c10a7122795791a591"
+  },
+  "statement": {
+    "kind": "canonical_sha256",
+    "role": "local_attestation",
+    "schema": "policy_native_v1",
+    "sha256": "d269604ad515a36d0b1c498d4b25d248824656043081b279b4c878b3a2850b9d"
+  },
+  "template": {
+    "kind": "canonical_sha256",
+    "role": "scope_template",
+    "schema": "policy_native_v1",
+    "sha256": "e2a064f944ef2bde47d79c24a896fd99eb25a36cc558b42e8d968d08eda188cf"
+  },
+  "value": {
+    "a": 2,
+    "z": 1
+  }
+}

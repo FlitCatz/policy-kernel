@@ -7,7 +7,7 @@ pub enum ContractError {
     Invalid(&'static str),
 }
 type Result = std::result::Result<(), ContractError>;
-fn require(condition: bool, message: &'static str) -> Result {
+pub(crate) fn require(condition: bool, message: &'static str) -> Result {
     if condition {
         Ok(())
     } else {
@@ -21,10 +21,10 @@ fn unique<'a>(ids: impl IntoIterator<Item = &'a str>) -> Result {
     }
     Ok(())
 }
-fn role(digest: &CanonicalDigest, expected: DigestRole) -> Result {
+pub(crate) fn role(digest: &CanonicalDigest, expected: DigestRole) -> Result {
     require(digest.role == expected, "canonical digest role mismatch")
 }
-fn subject(subject: &SubjectV1) -> Result {
+pub(crate) fn subject(subject: &SubjectV1) -> Result {
     role(&subject.source_set_digest, DigestRole::SourceSet)?;
     role(
         &subject.scope_definition_digest,

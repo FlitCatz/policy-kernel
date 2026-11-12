@@ -25,6 +25,7 @@ macro_rules! document {
         }
     };
 }
+pub(crate) use document;
 
 document!(ExpectedScopeV1 {
     schema_version: VersionV1,

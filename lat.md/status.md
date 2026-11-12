@@ -3,8 +3,9 @@
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
 A 2026-11-12 [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
-plans signed local-runner attestation as a weaker trust class; it is not
-implemented, see [[trust-boundaries#Planned local-runner attestation]].
+plans signed local-runner attestation as a weaker trust class. The class and
+authenticated acceptance remain unimplemented; sibling structural contracts are
+described below. See [[trust-boundaries#Planned local-runner attestation]].
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
 New exact native combinations/presets stop. Parser extraction merged in PR 23;
@@ -19,6 +20,10 @@ This does not assert that the PR has merged.
 Profiles, bootstrap and required environment checks are preserved;
 TJERP is unchanged. Adapter support and compatibility end conditions remain open.
 See [[kernel#Scope boundary]]. No adoption or promotion is established by this decision.
+
+[[native-contracts#Local-runner attestations]] adds structural statement/envelope
+contracts and scope-template digests. It does not establish signature verification,
+authenticated local-runner acceptance or promotion; existing scope v1 stays unchanged.
 
 Policy v3 binds approving-review quorum and allowed providers. Legacy policy
 digests remain valid, but readiness and shipping require explicit v3 reapproval.

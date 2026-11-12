@@ -1,0 +1,440 @@
+{
+  "invalid": [
+    {
+      "document": "statement",
+      "name": "unknown-version",
+      "pointer": "/schema_version",
+      "schema_valid": false,
+      "value": 2
+    },
+    {
+      "document": "signed",
+      "name": "unknown-version",
+      "pointer": "/statement/schema_version",
+      "schema_valid": false,
+      "value": 2
+    },
+    {
+      "document": "statement",
+      "name": "wrong-domain",
+      "pointer": "/domain",
+      "schema_valid": false,
+      "value": "other/v1"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-domain",
+      "pointer": "/statement/domain",
+      "schema_valid": false,
+      "value": "other/v1"
+    },
+    {
+      "document": "statement",
+      "name": "unknown-field",
+      "pointer": "/trusted",
+      "schema_valid": false,
+      "value": true
+    },
+    {
+      "document": "signed",
+      "name": "unknown-field",
+      "pointer": "/statement/trusted",
+      "schema_valid": false,
+      "value": true
+    },
+    {
+      "document": "statement",
+      "name": "wrong-subject-role",
+      "pointer": "/subject/source_set_digest/role",
+      "schema_valid": true,
+      "value": "command"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-subject-role",
+      "pointer": "/statement/subject/source_set_digest/role",
+      "schema_valid": true,
+      "value": "command"
+    },
+    {
+      "document": "statement",
+      "name": "invalid-tree",
+      "pointer": "/head_tree",
+      "schema_valid": false,
+      "value": "not-a-tree"
+    },
+    {
+      "document": "signed",
+      "name": "invalid-tree",
+      "pointer": "/statement/head_tree",
+      "schema_valid": false,
+      "value": "not-a-tree"
+    },
+    {
+      "document": "statement",
+      "name": "invalid-base",
+      "pointer": "/base",
+      "schema_valid": false,
+      "value": "short"
+    },
+    {
+      "document": "signed",
+      "name": "invalid-base",
+      "pointer": "/statement/base",
+      "schema_valid": false,
+      "value": "short"
+    },
+    {
+      "document": "statement",
+      "name": "empty-run",
+      "pointer": "/run_id",
+      "schema_valid": false,
+      "value": ""
+    },
+    {
+      "document": "signed",
+      "name": "empty-run",
+      "pointer": "/statement/run_id",
+      "schema_valid": false,
+      "value": ""
+    },
+    {
+      "document": "statement",
+      "name": "wrong-expected-role",
+      "pointer": "/expected_scope_digest/role",
+      "schema_valid": true,
+      "value": "native_run"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-expected-role",
+      "pointer": "/statement/expected_scope_digest/role",
+      "schema_valid": true,
+      "value": "native_run"
+    },
+    {
+      "document": "statement",
+      "name": "wrong-run-role",
+      "pointer": "/native_run_digest/role",
+      "schema_valid": true,
+      "value": "expected_scope"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-run-role",
+      "pointer": "/statement/native_run_digest/role",
+      "schema_valid": true,
+      "value": "expected_scope"
+    },
+    {
+      "document": "statement",
+      "name": "wrong-result-role",
+      "pointer": "/result_digest/role",
+      "schema_valid": true,
+      "value": "native_run"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-result-role",
+      "pointer": "/statement/result_digest/role",
+      "schema_valid": true,
+      "value": "native_run"
+    },
+    {
+      "document": "statement",
+      "name": "wrong-template-role",
+      "pointer": "/scope_template_digest/role",
+      "schema_valid": true,
+      "value": "imported_observations"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-template-role",
+      "pointer": "/statement/scope_template_digest/role",
+      "schema_valid": true,
+      "value": "imported_observations"
+    },
+    {
+      "document": "statement",
+      "name": "wrong-observations-role",
+      "pointer": "/observations_digest/role",
+      "schema_valid": true,
+      "value": "scope_template"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-observations-role",
+      "pointer": "/statement/observations_digest/role",
+      "schema_valid": true,
+      "value": "scope_template"
+    },
+    {
+      "document": "statement",
+      "name": "raw-in-canonical-slot",
+      "pointer": "/observations_digest",
+      "schema_valid": false,
+      "value": {
+        "kind": "raw_byte_sha256",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "document": "signed",
+      "name": "raw-in-canonical-slot",
+      "pointer": "/statement/observations_digest",
+      "schema_valid": false,
+      "value": {
+        "kind": "raw_byte_sha256",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    {
+      "document": "statement",
+      "name": "wrong-digest-schema",
+      "pointer": "/observations_digest/schema",
+      "schema_valid": false,
+      "value": "other"
+    },
+    {
+      "document": "signed",
+      "name": "wrong-digest-schema",
+      "pointer": "/statement/observations_digest/schema",
+      "schema_valid": false,
+      "value": "other"
+    },
+    {
+      "document": "statement",
+      "name": "empty-runner",
+      "pointer": "/runner/runner_id",
+      "schema_valid": false,
+      "value": ""
+    },
+    {
+      "document": "signed",
+      "name": "empty-runner",
+      "pointer": "/statement/runner/runner_id",
+      "schema_valid": false,
+      "value": ""
+    },
+    {
+      "document": "statement",
+      "name": "nested-unknown",
+      "pointer": "/runner/trusted",
+      "schema_valid": false,
+      "value": true
+    },
+    {
+      "document": "signed",
+      "name": "nested-unknown",
+      "pointer": "/statement/runner/trusted",
+      "schema_valid": false,
+      "value": true
+    },
+    {
+      "document": "statement",
+      "name": "reversed-run-times",
+      "pointer": "/started_at",
+      "schema_valid": true,
+      "value": "2026-10-19T01:00:03Z"
+    },
+    {
+      "document": "signed",
+      "name": "reversed-run-times",
+      "pointer": "/statement/started_at",
+      "schema_valid": true,
+      "value": "2026-10-19T01:00:03Z"
+    },
+    {
+      "document": "statement",
+      "name": "early-attestation",
+      "pointer": "/attested_at",
+      "schema_valid": true,
+      "value": "2026-10-19T01:00:01Z"
+    },
+    {
+      "document": "signed",
+      "name": "early-attestation",
+      "pointer": "/statement/attested_at",
+      "schema_valid": true,
+      "value": "2026-10-19T01:00:01Z"
+    },
+    {
+      "document": "signed",
+      "name": "runner-mismatch",
+      "pointer": "/signature/runner_id",
+      "schema_valid": true,
+      "value": "runner-2"
+    },
+    {
+      "document": "signed",
+      "name": "empty-signature",
+      "pointer": "/signature/value",
+      "schema_valid": false,
+      "value": ""
+    },
+    {
+      "document": "signed",
+      "name": "unknown-format",
+      "pointer": "/signature/format",
+      "schema_valid": false,
+      "value": "other"
+    },
+    {
+      "document": "signed",
+      "name": "signature-unknown-field",
+      "pointer": "/signature/trusted",
+      "schema_valid": false,
+      "value": true
+    },
+    {
+      "document": "signed",
+      "name": "envelope-unknown-field",
+      "pointer": "/trusted",
+      "schema_valid": false,
+      "value": true
+    }
+  ],
+  "valid": {
+    "signed": {
+      "signature": {
+        "format": "sshsig",
+        "runner_id": "runner-1",
+        "value": "example-signature"
+      },
+      "statement": {
+        "attested_at": "2026-10-19T01:01:00Z",
+        "base": "3333333333333333333333333333333333333333",
+        "completed_at": "2026-10-19T01:00:02Z",
+        "domain": "policy-kernel/local-runner-attestation/v1",
+        "expected_scope_digest": {
+          "kind": "canonical_sha256",
+          "role": "expected_scope",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "head_tree": "2222222222222222222222222222222222222222",
+        "native_run_digest": {
+          "kind": "canonical_sha256",
+          "role": "native_run",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "observations_digest": {
+          "kind": "canonical_sha256",
+          "role": "imported_observations",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "result_digest": {
+          "kind": "canonical_sha256",
+          "role": "local_scope_result",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "run_id": "run-1",
+        "runner": {
+          "arch": "arm64",
+          "attestor_version": "example-attestor/1",
+          "os": "macos",
+          "runner_id": "runner-1"
+        },
+        "schema_version": 1,
+        "scope_id": "scope-1",
+        "scope_template_digest": {
+          "kind": "canonical_sha256",
+          "role": "scope_template",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "started_at": "2026-10-19T01:00:00Z",
+        "subject": {
+          "head": "1111111111111111111111111111111111111111",
+          "repository": "example/project",
+          "scope_definition_digest": {
+            "kind": "canonical_sha256",
+            "role": "scope_definition",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "source_inventory_digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "source_set_digest": {
+            "kind": "canonical_sha256",
+            "role": "source_set",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      }
+    },
+    "statement": {
+      "attested_at": "2026-10-19T01:01:00Z",
+      "base": "3333333333333333333333333333333333333333",
+      "completed_at": "2026-10-19T01:00:02Z",
+      "domain": "policy-kernel/local-runner-attestation/v1",
+      "expected_scope_digest": {
+        "kind": "canonical_sha256",
+        "role": "expected_scope",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "head_tree": "2222222222222222222222222222222222222222",
+      "native_run_digest": {
+        "kind": "canonical_sha256",
+        "role": "native_run",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "observations_digest": {
+        "kind": "canonical_sha256",
+        "role": "imported_observations",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "result_digest": {
+        "kind": "canonical_sha256",
+        "role": "local_scope_result",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "run_id": "run-1",
+      "runner": {
+        "arch": "arm64",
+        "attestor_version": "example-attestor/1",
+        "os": "macos",
+        "runner_id": "runner-1"
+      },
+      "schema_version": 1,
+      "scope_id": "scope-1",
+      "scope_template_digest": {
+        "kind": "canonical_sha256",
+        "role": "scope_template",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "started_at": "2026-10-19T01:00:00Z",
+      "subject": {
+        "head": "1111111111111111111111111111111111111111",
+        "repository": "example/project",
+        "scope_definition_digest": {
+          "kind": "canonical_sha256",
+          "role": "scope_definition",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "source_inventory_digest": {
+          "kind": "raw_byte_sha256",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source_set_digest": {
+          "kind": "canonical_sha256",
+          "role": "source_set",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    }
+  }
+}
