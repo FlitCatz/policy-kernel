@@ -160,9 +160,10 @@ branch is the compensating control. An open residual risk remains: a touch prove
 presence, not which statement was approved, so an agent under the owner's account
 can get a fabricated statement signed during a touch the owner expected; a
 mitigation such as showing the owner the statement digest before signing is an
-owner decision still open before the attestor lands. Hardware security-key signing has not yet been
-exercised on the owner's machine; if the presence check proves unworkable, the
-decision returns to the owner. See the decision record for the threat model.
+owner decision still open before the attestor lands. Hardware security-key
+signing has not yet been exercised on the owner's machine; if the presence check
+proves unworkable, the decision returns to the owner. See the decision record for
+the threat model.
 
 ## Pre-merge and post-merge
 
