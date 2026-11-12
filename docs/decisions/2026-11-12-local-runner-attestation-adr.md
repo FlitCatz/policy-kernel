@@ -40,10 +40,12 @@ owner opt-in, behavior is exactly as before.
    results. The requirement is checked, not left to procedure: the statement is an
    SSH signature verified with `ssh-keygen -Y verify` against an owner-controlled
    `allowed_signers` file. The controller accepts only the security-key types
-   `sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com` and
-   rejects any `allowed_signers` entry that carries the `no-touch-required`
-   option. A signature made without user presence therefore fails verification,
-   and a plain software key is refused.
+   `sk-ssh-ed25519@openssh.com` and `sk-ecdsa-sha2-nistp256@openssh.com`, so a
+   plain software key is refused. `ssh-keygen -Y verify` does not itself enforce
+   user presence, so after a successful verification the controller parses the
+   SSHSIG signature blob and rejects it unless the security-key flags byte has
+   the user-presence bit (`0x01`) set. A touch proves presence, not which
+   statement the owner meant to approve; see the residual risks.
 3. **Verdict in the light hosted job.** The authoritative verdict is computed in
    the lightweight GitHub job that already runs for every PR, so head, base,
    changed paths and the clock come from GitHub observations rather than from the
@@ -73,7 +75,7 @@ Actors and goals:
 | Actor | Capability | Goal of this design |
 | --- | --- | --- |
 | Honest but error-prone worker | Runs another head, forgets a rerun, runs part of the checks, uses a dirty tree | Prevent |
-| Shortcut-taking agent | Same OS account and credentials as the owner; can edit or invent result files | Prevent: the controller accepts only security-key signatures made with the owner's per-signature presence (decision 2) |
+| Shortcut-taking agent | Same OS account and credentials as the owner; can edit or invent result files | Prevent unattended signing: the controller accepts only security-key signatures with the user-presence flag set (decision 2). Signing a fabricated statement during a touch the owner expected is an open residual risk |
 | Malicious code inside the PR under test | Runs with the runner's permissions during local execution; can read files the account can read | Prevent key theft; manipulating its own tests is equally possible in hosted CI and is handled by review and by the CI-required set |
 | Outsider with repository write access only | Can push branches, notes and comments; no access to the owner's machine | Prevent |
 | Out of scope | The owner, a fully compromised owner machine, the hosting platform | Treated as the root of trust |
@@ -115,10 +117,16 @@ Residual risks the design does not close:
 - **A PR manipulating its own tests.** Identical to hosted CI; addressed by review
   and the CI-required set, not by trust class.
 - **Unproven key custody.** A key readable by the same account as an agent cannot
-  stop that agent; decision 2 refuses such keys and signatures made without the
-  owner's presence. Hardware security-key signing has not yet been exercised on
+  stop that agent; decision 2 refuses such keys and signatures without the
+  user-presence flag. Hardware security-key signing has not yet been exercised on
   the owner's machine. If the check in decision 2 proves unworkable there, the
   decision returns to the owner rather than being relaxed to a software key.
+- **Touch does not bind the statement (open).** A security key does not show what
+  it signs. An agent under the owner's account can start its own signing of a
+  fabricated statement while the owner expects to touch for a real run, and that
+  touch produces a signature every rule above accepts. A mitigation, for example
+  an attestor that shows the owner the statement digest before signing, is an
+  owner decision that stays open and must be recorded before step 7.
 
 ## Default-closed rules
 
@@ -143,8 +151,9 @@ Residual risks the design does not close:
 9. Keys and expected values come only from owner-controlled configuration.
 10. A signature is rejected unless its key is a hardware-backed security-key type
     (`sk-ssh-ed25519@openssh.com` or `sk-ecdsa-sha2-nistp256@openssh.com`), its
-    `allowed_signers` entry has no `no-touch-required` option, and
-    `ssh-keygen -Y verify` confirms the owner's presence for that signature.
+    `ssh-keygen -Y verify` succeeds against the owner-controlled
+    `allowed_signers` file, and the parsed SSHSIG security-key flags byte has the
+    user-presence bit (`0x01`) set.
 
 ## Supersession
 
@@ -178,7 +187,8 @@ a sequence of reviewed pull requests merged one at a time:
    approved-scope-template digest.
 6. Controller support for registered runners, signature verification and
    re-evaluation. Verification must enforce decision 2: only security-key types,
-   no `no-touch-required` entries, and a signature without user presence fails.
+   and a signature whose parsed SSHSIG flags byte lacks the user-presence bit
+   (`0x01`) fails.
 7. An adapter-side attestor, end-to-end fixture tests and final documentation.
 
 Consuming-project work (runner output in the native run format, approved scope

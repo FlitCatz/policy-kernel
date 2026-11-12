@@ -25,3 +25,8 @@ them. The authenticated collection boundary would be the only place that raises
 the class. Reviews, modifications, agent-ready and required knowledge never accept
 it, and changes to the checking system stay CI-required. Today local evidence
 remains untrusted.
+
+Signatures must come from a hardware security key with the user-presence flag set.
+That flag proves a touch, not which statement the owner approved, so an agent under
+the owner's account could get a fabricated statement signed during an expected
+touch. This residual risk is open; its mitigation is an owner decision.

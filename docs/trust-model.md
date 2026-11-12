@@ -121,8 +121,9 @@ from and weaker than `ci_observed` and `trusted_runner_attested`:
   an approved scope template and the run and result digests. The signing key is
   required to need the owner's touch or biometric confirmation for each signature:
   the controller verifies the SSH signature with `ssh-keygen -Y verify` against an
-  owner-controlled `allowed_signers` file and accepts only hardware-backed
-  security-key types.
+  owner-controlled `allowed_signers` file, accepts only hardware-backed
+  security-key types, and then parses the SSHSIG signature blob to require the
+  user-presence flag (`0x01`), which `ssh-keygen -Y verify` does not enforce.
 - The authenticated collection boundary verifies the signature against
   owner-installed keys, checks the bindings against GitHub observations,
   recomputes the scope verdict itself and promotes only the covered sensor and
@@ -148,14 +149,18 @@ through a new policy version:
   tree or base, stale or future timestamps and an unsatisfied re-evaluation are
   rejected.
 - Signatures from key types other than `sk-ssh-ed25519@openssh.com` and
-  `sk-ecdsa-sha2-nistp256@openssh.com`, from `allowed_signers` entries with the
-  `no-touch-required` option, or made without the owner's presence are rejected.
+  `sk-ecdsa-sha2-nistp256@openssh.com`, or whose security-key flags lack the
+  user-presence bit, are rejected.
 
 A signature fixes who vouched for what; it does not prove the run was honest.
 Residual risks accepted by the decision are environment divergence between the
 local and hosted platforms, ignored build output, selective submission of passing
 runs and a PR manipulating its own tests. The scheduled hosted check of the main
-branch is the compensating control. Hardware security-key signing has not yet been
+branch is the compensating control. An open residual risk remains: a touch proves
+presence, not which statement was approved, so an agent under the owner's account
+can get a fabricated statement signed during a touch the owner expected; a
+mitigation such as showing the owner the statement digest before signing is an
+owner decision still open before the attestor lands. Hardware security-key signing has not yet been
 exercised on the owner's machine; if the presence check proves unworkable, the
 decision returns to the owner. See the decision record for the threat model.
 
