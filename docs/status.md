@@ -112,6 +112,18 @@ bundled dependencies remain `bundled, not individually audited`. It establishes
 no Trusted evidence, authoritative decision, protected merge or production
 promotion. Earlier dated records retain their contemporaneous scope and status.
 
+## Local-runner attestation decision
+
+On 2026-11-12 the [decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
+accepted a design for signed local-runner evidence for ordinary pull-request
+readiness, with a new weaker trust class `local_runner_attested`. This is a
+documentation-only change: the class, policy version, controller support and
+attestor are **planned and not implemented**. Local evidence remains
+`local_untrusted` and cannot authorize readiness; the
+[trust model](trust-model.md#planned-local-runner-attestation) lists the
+default-closed rules. The record supersedes the archived scope-reduction ADR's
+local-evidence guardrail only for the future attestation path.
+
 ## P2 bounded MSBuild generated output
 
 The [P2 contract](integrations/consumer-schema3.md#compiler-generated-files-p2)
@@ -394,6 +406,7 @@ shadow window, independent-provider reviews, and a live rollback observation.
 - [Task index](tasks/README.md)
 - [Task 15 consolidated follow-up](tasks/task-15/README.md)
 - [Trust model](trust-model.md)
+- [Local-runner attestation decision](decisions/2026-11-12-local-runner-attestation-adr.md)
 - [Promotion and rollback protocol](promotion.md)
 - [Project verification integration](integrations/project-verification.md)
 - [Bootstrap integration](integrations/bootstrap.md)

@@ -33,7 +33,10 @@ Every code-modifying execution belongs in modification evidence. Reviewers must 
 independent of every contributor by both provider and execution identity. Calling
 multiple agents from the same model provider is not provider independence. Model
 prose naming a provider, a local signature, and a structurally valid CI-shaped JSON
-object do not establish trusted provenance.
+object do not establish trusted provenance. (A planned, owner-enabled exception for
+signed local-runner attestations is described under
+[Planned local-runner attestation](#planned-local-runner-attestation); it is not
+implemented.)
 
 Policy schema v3 requires a digest-bound `required_reviews` object:
 `minimum_reviewers` is a positive integer (1–4294967295),
@@ -103,9 +106,56 @@ review; any unwaived, expired or low-only blocked report still does. A gate that
 withholds readiness without a reason fails closed with `PK-PRE-GATE-UNEXPLAINED`.
 Authoritative execution and test adequacy evidence must name the manifest head.
 
+## Planned local-runner attestation
+
+**Planned, not yet implemented.** The
+[2026-11-12 decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
+accepts a design for letting a single-owner repository use signed local-runner
+evidence for ordinary pull-request readiness. Today every statement above still
+holds: local evidence is `local_untrusted` and cannot authorize readiness.
+
+The planned design adds a trust class, `local_runner_attested`, that is distinct
+from and weaker than `ci_observed` and `trusted_runner_attested`:
+
+- A registered local runner signs a statement binding repository, head, tree, base,
+  an approved scope template and the run and result digests. The signing key
+  should require the owner's touch or biometric confirmation for each signature.
+- The authenticated collection boundary verifies the signature against
+  owner-installed keys, checks the bindings against GitHub observations,
+  recomputes the scope verdict itself and promotes only the covered sensor and
+  execution evidence to the new class. Core evaluation performs no cryptography.
+- The authoritative verdict is computed in the lightweight GitHub job that already
+  runs for each pull request. A local command can never issue it.
+- A decision that relies on the class carries the informational reason
+  `PK-PROV-LOCAL-ATTESTED`; such a decision cannot reach `SHIPPED` or promotion.
+
+Default-closed rules, all of which keep today's behavior unless the owner opts in
+through a new policy version:
+
+- Without a local-evidence block in the approved policy, the class is rejected.
+- `local_untrusted` never counts in authoritative evaluation.
+- Reviews, modifications, agent-ready observations and required knowledge are
+  never accepted at the local class.
+- Changes matching the policy's CI-required conditions need CI-grade evidence.
+  Beyond security and dependency updates, static-analysis policy transitions,
+  changes resolved only by hosted review records, and the scheduled main-branch
+  check, this includes changes to the checking system itself (runner, check
+  tooling, workflows, toolchain pins).
+- Unregistered runners, unapproved scope templates, mismatched repository, head,
+  tree or base, stale or future timestamps and an unsatisfied re-evaluation are
+  rejected.
+
+A signature fixes who vouched for what; it does not prove the run was honest.
+Residual risks accepted by the decision are environment divergence between the
+local and hosted platforms, ignored build output, selective submission of passing
+runs and a PR manipulating its own tests. The scheduled hosted check of the main
+branch is the compensating control. See the decision record for the threat model.
+
 ## Pre-merge and post-merge
 
 Local evaluation always sets advisory mode before computing the decision digest.
+This remains true under the planned local-runner attestation: only the hosted
+authoritative path can use the new class.
 `inspect` validates typed decisions and bundle integrity, but cannot recompute or
 authenticate a decision without its original evaluation input and trusted source.
 
@@ -115,6 +165,8 @@ a protected merge of the same PR head. Check completion must precede the merge.
 The receipt's protection claim must match GitHub's current branch observation.
 The merge commit is distinct from the PR head, so squash is allowed. Direct,
 unprotected and unsupported merge-queue observations cannot authorize shipping.
+Under the planned local-runner attestation, a ready decision that relies on
+`local_runner_attested` evidence also cannot authorize shipping.
 Raw API authentication and check provenance must be established by Task 10;
 core-only unit tests do not prove that boundary operates against live GitHub.
 

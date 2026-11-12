@@ -7,6 +7,15 @@ tests generate fixture RSA keys and simulate GitHub. They demonstrate signature,
 inventory and binding enforcement; they do not establish real provider identity,
 live execution, deployment, publication, protected merge or promotion.
 
+**Planned, not implemented:** the
+[local-runner attestation decision](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
+would add a second statement type to this boundary. The controller would verify a
+signed statement from an owner-registered local runner, check it against GitHub
+observations, recompute the scope verdict and promote only the covered sensor and
+execution evidence to the weaker `local_runner_attested` class. Today the
+controller promotes only to `trusted_runner_attested`, and local signatures do not
+establish trusted provenance.
+
 ## Ownership and isolation
 
 The repository owner operates the controller on a separate service or isolated

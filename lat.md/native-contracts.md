@@ -15,6 +15,8 @@ Validation [[crates/policy-native-contracts/src/validation.rs#ExpectedScopeV1#va
 [[crates/policy-native-contracts/src/validation.rs#LocalScopeResultV1#validate]].
 Subject comparison [[crates/policy-native-contracts/src/validation.rs#validate_subject_binding]]
 checks consistency, not authenticity. Results remain local-untrusted with unmet review.
+A planned sibling attestation document is not implemented and would not change these
+records; see [[trust-boundaries#Planned local-runner attestation]].
 
 ## Digest domains
 
