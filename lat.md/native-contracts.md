@@ -87,3 +87,34 @@ command [[crates/policy-cli/tests/scope.rs#local_scope_command_exit_codes_and_in
 comparison [[crates/policy-native-importer/tests/import.rs#importer_verifier_command_and_project_normalization_agree_on_failed_fixture]];
 parser failure [[crates/policy-native-importer/tests/import.rs#parser_level_failure_survives_even_when_all_tests_pass]];
 failed imports [[crates/policy-native-importer/tests/import.rs#rejected_imports_never_export_verified_observations]].
+
+## Debt ratchet
+
+The standalone ratchet compares approved and proposed per-context allowances with observed head counts. Increases and context replacement fail; parsing languages and detecting suppressions stay with producers.
+
+Contract [[crates/policy-native-contracts/src/ratchet.rs#RatchetRuleV1]] and
+[[crates/policy-native-contracts/src/ratchet.rs#RatchetObservationV1]] keep head
+allowances separate from actual counts to reject unused allowance growth.
+[[crates/policy-native-verifier/src/ratchet.rs#evaluate_ratchet]] enforces the
+minimum of base and head per complete key, collecting sorted violations.
+[[crates/policy-native-verifier/src/ratchet.rs#evaluate_ratchet_json]] rejects
+malformed wire inputs. The [contract reference](../docs/integrations/debt-ratchet-v1.md)
+defines all reason codes and canonical domains. This comparison does not
+establish trust, approval, review satisfaction or scope satisfaction; wiring
+independent ratchet requirements into scope remains follow-up work.
+
+## Debt ratchet conformance
+
+Ratchet tests cover reductions, equality, increases, new and removed entries, replacement contexts, duplicate keys, malformed inputs, unused allowance growth, ordering and canonical digests.
+
+Behavior [[crates/policy-native-verifier/tests/ratchet.rs#ratchet_decrease_equal_increase_new_and_removed_entries]];
+allowances [[crates/policy-native-verifier/tests/ratchet.rs#head_allowance_cannot_grow_even_when_unused_and_lower_allowance_is_enforced]];
+contexts [[crates/policy-native-verifier/tests/ratchet.rs#context_replacement_cannot_spend_another_contexts_allowance]];
+duplicates [[crates/policy-native-verifier/tests/ratchet.rs#duplicate_keys_in_every_input_fail_without_picking_an_allowance]];
+wire errors [[crates/policy-native-verifier/tests/ratchet.rs#malformed_json_negative_counts_unknown_fields_and_versions_fail_closed]];
+paths [[crates/policy-native-verifier/tests/ratchet.rs#invalid_entries_are_all_reported_for_direct_rust_callers]];
+identity [[crates/policy-native-verifier/tests/ratchet.rs#tuple_identity_prevents_cross_tool_rule_path_symbol_and_context_allowances]];
+maximum counts [[crates/policy-native-verifier/tests/ratchet.rs#maximum_counts_do_not_overflow_and_removed_entries_cannot_offset_growth]];
+ordering [[crates/policy-native-verifier/tests/ratchet.rs#ordering_determinism_and_domain_separated_digests_preserve_wire_array_order]];
+schemas [[crates/policy-native-contracts/tests/ratchet.rs#ratchet_schemas_match_committed_assets_and_reject_invalid_wire_shapes]];
+digest vector [[crates/policy-native-contracts/tests/ratchet.rs#ratchet_digest_domains_pin_canonical_preimages_without_changing_native_vectors]].

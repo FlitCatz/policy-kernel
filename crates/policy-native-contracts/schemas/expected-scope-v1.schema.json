@@ -96,7 +96,10 @@
         "command",
         "configuration",
         "policy",
-        "evidence"
+        "evidence",
+        "ratchet_rule",
+        "ratchet_observation",
+        "ratchet_result"
       ]
     },
     "DigestSchema": {

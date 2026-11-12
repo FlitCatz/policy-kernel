@@ -30,6 +30,11 @@ combinations and bootstrap presets have stopped. The [native contract](docs/inte
 provides v1 types, an adapter-side artifact/subject importer and a kernel-owned local scope verifier. Existing profiles, CLI paths, bootstrap recovery and
 required environment checks are preserved. TJERP execution is unchanged.
 
+The standalone [debt ratchet v1](docs/integrations/debt-ratchet-v1.md) compares
+approved and proposed allowances with observed counts. It rejects increases and
+context replacement; language analysis stays with the producer. It does not
+grant execution trust or satisfy a scope or merge gate.
+
 Stage-1 scope reduction is complete in implementation with plan PR 8: TJERP owns
 its harness at `tools/policy-adoption` on main `3c62b9e`, pinned over public HTTPS
 to policy-kernel `4df10fa`. This repository no longer ships its product module,
@@ -198,8 +203,8 @@ supplied decision.
 | Package | Purpose |
 | --- | --- |
 | `policy-contracts` | Strict, versioned wire types and schema source types. |
-| `policy-native-contracts` | Native v1 wire types, structural validation, schemas and conformance corpus; no importer. |
-| `policy-native-verifier` | Typed local scope assembly and core evaluation; no adapter dependency or authorization. |
+| `policy-native-contracts` | Native and debt ratchet v1 wire types, structural validation, schemas and conformance corpus; no importer. |
+| `policy-native-verifier` | Typed local scope assembly, core evaluation and standalone debt ratchet; no adapter dependency or authorization. |
 | `policy-core` | Deterministic policy, provenance, review, sensor, and merge evaluation. |
 | `policy-cli` | Local advisory scope/pre-merge evaluation and typed-object inspection. |
 | `policy-ci` | Authoritative GitHub Actions evaluation and dedicated check publication. |

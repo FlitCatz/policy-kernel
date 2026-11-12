@@ -30,6 +30,9 @@ pub enum DigestRole {
     Configuration,
     Policy,
     Evidence,
+    RatchetRule,
+    RatchetObservation,
+    RatchetResult,
 }
 
 /// An externally computed SHA-256 of exact file bytes, never typed JSON.

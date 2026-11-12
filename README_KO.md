@@ -52,6 +52,11 @@ bootstrap preset 추가는 중단했습니다. [Native 계약](docs/integrations
 v1 타입, adapter 측 원본·subject importer와 kernel 소유 로컬 scope verifier를 제공합니다. 기존 profile·CLI 경로·bootstrap 복구와 필수 환경 검사는
 유지하고, TJERP 실행은 변경하지 않습니다.
 
+독립형 [debt ratchet v1](docs/integrations/debt-ratchet-v1.md)은 승인된 기준선과
+제안된 허용량을 실제 관측 개수와 비교하여 증가와 문맥 교체를 거부합니다.
+언어 분석은 생산자가 담당하며, 이 판정은 실행 신뢰를 부여하거나 scope·merge
+gate를 충족하지 않습니다.
+
 계획 PR 8로 stage 1 구현을 완료했습니다. TJERP main `3c62b9e`의
 `tools/policy-adoption`이 harness를 소유하며 공개 HTTPS로 policy-kernel
 `4df10fa`를 고정합니다. 이 저장소의 제품 module·example·catalog 시험은 제거했고,
@@ -204,8 +209,8 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 | 패키지 | 역할 |
 | --- | --- |
 | `policy-contracts` | 엄격하고 버전이 관리되는 전송 타입 및 스키마 원본 타입 |
-| `policy-native-contracts` | Native v1 전송 타입·구조 검증·스키마·적합성 corpus; importer 없음 |
-| `policy-native-verifier` | Typed 로컬 scope 조립과 core 판정; adapter 의존 및 권한 부여 없음 |
+| `policy-native-contracts` | Native·debt ratchet v1 전송 타입·구조 검증·스키마·적합성 corpus; importer 없음 |
+| `policy-native-verifier` | Typed 로컬 scope 조립·core 판정·독립형 debt ratchet; adapter 의존 및 권한 부여 없음 |
 | `policy-core` | 결정론적 정책·출처·검토·센서·병합 평가 |
 | `policy-cli` | 로컬 자문 scope·병합 전 평가와 타입 객체 검사 |
 | `policy-ci` | 권한 있는 GitHub Actions 평가 및 전용 검사 게시 |

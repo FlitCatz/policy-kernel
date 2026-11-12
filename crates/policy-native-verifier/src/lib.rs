@@ -1,5 +1,9 @@
 #![forbid(unsafe_code)]
-//! Kernel-owned local scope assembly. No filesystem, report parser or authorization.
+//! Kernel-owned local scope assembly and debt comparison.
+//! No filesystem, report parser or authorization.
+mod ratchet;
+pub use ratchet::{evaluate_ratchet, evaluate_ratchet_json};
+
 use policy_contracts::*;
 use policy_core::{canonical_sha256, evaluate_sensor_evidence, SensorEvaluationStatus};
 use policy_native_contracts::*;
