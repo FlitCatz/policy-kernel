@@ -23,6 +23,9 @@ Raw byte hashes cannot substitute for canonical typed hashes. Canonical preimage
 Encoding [[crates/policy-native-contracts/src/digest.rs#canonical_digest]] delegates
 to [[crates/policy-core/src/canonical.rs#canonical_sha256]]. Existing contracts and
 approved legacy digests remain unchanged. Required-set array order is preserved.
+Ratchet input digests reuse the same envelope through
+[[crates/policy-native-contracts/src/ratchet.rs#RatchetDigest]] with separate
+ratchet roles, leaving scope `DigestRole` and schemas unchanged.
 
 ## Conformance
 

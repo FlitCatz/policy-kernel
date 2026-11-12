@@ -1,5 +1,6 @@
 //! Language-independent debt identities and comparison records.
-use crate::{canonical_digest, CanonicalDigest, DigestRole, RecordId, VersionV1};
+use crate::digest::canonical_envelope_sha256;
+use crate::{CanonicalHashKind, DigestSchema, RecordId, VersionV1};
 use policy_contracts::Sha256Digest;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -88,6 +89,38 @@ pub struct RatchetViolationV1 {
     pub code: RatchetReasonCode,
 }
 
+/// Canonical envelope roles for ratchet inputs, separate from scope roles.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum RatchetDigestRole {
+    RatchetRule,
+    RatchetObservation,
+}
+
+/// SHA-256 of the native canonical {schema, role, value} envelope.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct RatchetDigest {
+    pub kind: CanonicalHashKind,
+    pub schema: DigestSchema,
+    pub role: RatchetDigestRole,
+    pub sha256: Sha256Digest,
+}
+
+impl RatchetDigest {
+    fn new<T: Serialize>(
+        role: RatchetDigestRole,
+        value: &T,
+    ) -> Result<Self, policy_core::CanonicalError> {
+        Ok(Self {
+            kind: CanonicalHashKind::CanonicalSha256,
+            schema: DigestSchema::PolicyNativeV1,
+            role,
+            sha256: canonical_envelope_sha256(role, value)?,
+        })
+    }
+}
+
 /// A comparison result, never an approval, execution attestation or merge gate.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -96,8 +129,8 @@ pub struct RatchetResultV1 {
     pub status: RatchetStatus,
     pub violations: Vec<RatchetViolationV1>,
     /// Absent if either input is malformed or structurally invalid.
-    pub rule_digest: Option<CanonicalDigest>,
-    pub observation_digest: Option<CanonicalDigest>,
+    pub rule_digest: Option<RatchetDigest>,
+    pub observation_digest: Option<RatchetDigest>,
 }
 
 /// Collect every invalid entry and duplicate key without choosing a winner.
@@ -144,8 +177,8 @@ impl RatchetRuleV1 {
         violations
     }
 
-    pub fn digest(&self) -> Result<CanonicalDigest, policy_core::CanonicalError> {
-        canonical_digest(DigestRole::RatchetRule, self)
+    pub fn digest(&self) -> Result<RatchetDigest, policy_core::CanonicalError> {
+        RatchetDigest::new(RatchetDigestRole::RatchetRule, self)
     }
 }
 
@@ -154,13 +187,7 @@ impl RatchetObservationV1 {
         validate_ratchet_entries(RatchetInput::Observation, &self.entries)
     }
 
-    pub fn digest(&self) -> Result<CanonicalDigest, policy_core::CanonicalError> {
-        canonical_digest(DigestRole::RatchetObservation, self)
-    }
-}
-
-impl RatchetResultV1 {
-    pub fn digest(&self) -> Result<CanonicalDigest, policy_core::CanonicalError> {
-        canonical_digest(DigestRole::RatchetResult, self)
+    pub fn digest(&self) -> Result<RatchetDigest, policy_core::CanonicalError> {
+        RatchetDigest::new(RatchetDigestRole::RatchetObservation, self)
     }
 }

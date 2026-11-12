@@ -30,9 +30,6 @@ pub enum DigestRole {
     Configuration,
     Policy,
     Evidence,
-    RatchetRule,
-    RatchetObservation,
-    RatchetResult,
 }
 
 /// An externally computed SHA-256 of exact file bytes, never typed JSON.
@@ -57,21 +54,28 @@ pub fn canonical_digest<T: Serialize>(
     role: DigestRole,
     value: &T,
 ) -> Result<CanonicalDigest, CanonicalError> {
-    #[derive(Serialize)]
-    struct Preimage<'a, T> {
-        schema: DigestSchema,
-        role: DigestRole,
-        value: &'a T,
-    }
-    let schema = DigestSchema::PolicyNativeV1;
     Ok(CanonicalDigest {
         kind: CanonicalHashKind::CanonicalSha256,
-        schema,
+        schema: DigestSchema::PolicyNativeV1,
         role,
-        sha256: canonical_sha256(&Preimage {
-            schema,
-            role,
-            value,
-        })?,
+        sha256: canonical_envelope_sha256(role, value)?,
+    })
+}
+
+/// SHA-256 of the canonical {schema, role, value} envelope for any role domain.
+pub(crate) fn canonical_envelope_sha256<R: Serialize, T: Serialize>(
+    role: R,
+    value: &T,
+) -> Result<Sha256Digest, CanonicalError> {
+    #[derive(Serialize)]
+    struct Preimage<'a, R, T> {
+        schema: DigestSchema,
+        role: R,
+        value: &'a T,
+    }
+    canonical_sha256(&Preimage {
+        schema: DigestSchema::PolicyNativeV1,
+        role,
+        value,
     })
 }

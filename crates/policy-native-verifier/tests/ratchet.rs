@@ -310,11 +310,15 @@ fn ordering_determinism_and_domain_separated_digests_preserve_wire_array_order()
     )
     .unwrap();
     assert_eq!(a.rule_digest.as_ref().unwrap().sha256, expected);
-    assert_ne!(
-        first.digest().unwrap(),
-        canonical_digest(DigestRole::RatchetObservation, &first).unwrap()
+    assert_eq!(
+        a.rule_digest.as_ref().unwrap().role,
+        RatchetDigestRole::RatchetRule
+    );
+    assert_eq!(
+        a.observation_digest.as_ref().unwrap().role,
+        RatchetDigestRole::RatchetObservation
     );
     let roundtrip: RatchetResultV1 =
         serde_json::from_slice(&serde_json::to_vec(&a).unwrap()).unwrap();
-    assert_eq!(a.digest().unwrap(), roundtrip.digest().unwrap());
+    assert_eq!(a, roundtrip);
 }

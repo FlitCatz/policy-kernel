@@ -7,7 +7,7 @@
     "observation_digest": {
       "anyOf": [
         {
-          "$ref": "#/$defs/CanonicalDigest"
+          "$ref": "#/$defs/RatchetDigest"
         },
         {
           "type": "null"
@@ -18,7 +18,7 @@
       "description": "Absent if either input is malformed or structurally invalid.",
       "anyOf": [
         {
-          "$ref": "#/$defs/CanonicalDigest"
+          "$ref": "#/$defs/RatchetDigest"
         },
         {
           "type": "null"
@@ -45,15 +45,27 @@
     "violations"
   ],
   "$defs": {
-    "CanonicalDigest": {
-      "description": "SHA-256 of the canonical {schema, role, value} envelope.",
+    "CanonicalHashKind": {
+      "type": "string",
+      "enum": [
+        "canonical_sha256"
+      ]
+    },
+    "DigestSchema": {
+      "type": "string",
+      "enum": [
+        "policy_native_v1"
+      ]
+    },
+    "RatchetDigest": {
+      "description": "SHA-256 of the native canonical {schema, role, value} envelope.",
       "type": "object",
       "properties": {
         "kind": {
           "$ref": "#/$defs/CanonicalHashKind"
         },
         "role": {
-          "$ref": "#/$defs/DigestRole"
+          "$ref": "#/$defs/RatchetDigestRole"
         },
         "schema": {
           "$ref": "#/$defs/DigestSchema"
@@ -70,33 +82,12 @@
         "sha256"
       ]
     },
-    "CanonicalHashKind": {
+    "RatchetDigestRole": {
+      "description": "Canonical envelope roles for ratchet inputs, separate from scope roles.",
       "type": "string",
       "enum": [
-        "canonical_sha256"
-      ]
-    },
-    "DigestRole": {
-      "type": "string",
-      "enum": [
-        "expected_scope",
-        "native_run",
-        "local_scope_result",
-        "source_set",
-        "scope_definition",
-        "command",
-        "configuration",
-        "policy",
-        "evidence",
         "ratchet_rule",
-        "ratchet_observation",
-        "ratchet_result"
-      ]
-    },
-    "DigestSchema": {
-      "type": "string",
-      "enum": [
-        "policy_native_v1"
+        "ratchet_observation"
       ]
     },
     "RatchetInput": {

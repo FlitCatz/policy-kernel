@@ -97,13 +97,16 @@ has a null key. Entry-array reordering preserves the verdict and violation list.
 
 Validly structured comparisons include `rule_digest` and `observation_digest`;
 both are null on structural or parse failure. Comparison failures still include
-the digests of their valid inputs. `digest()` is also available on rule,
-observation and result records; hashing alone does not validate or authenticate
-a record.
+the digests of their valid inputs. `digest()` is also available on rule and
+observation records; hashing alone does not validate or authenticate a record.
+The result record itself has no digest.
 
-The existing native canonical envelope is reused:
+Each digest is a `RatchetDigest`:
+`{kind: "canonical_sha256", schema: "policy_native_v1", role, sha256}`. The
+existing native canonical envelope is reused:
 `{"schema":"policy_native_v1","role":ROLE,"value":RECORD}`. Roles are
-`ratchet_rule`, `ratchet_observation`, and `ratchet_result`. Object keys are sorted
+`ratchet_rule` and `ratchet_observation`, defined by `RatchetDigestRole` apart
+from the scope `DigestRole`, so the scope schemas and roles are unchanged. Object keys are sorted
 and only integral numbers are allowed. Arrays retain wire order, so reordering
 entries changes input digests even when the verdict and violation order agree.
 Existing native canonical vectors remain unchanged.
