@@ -16,7 +16,7 @@ production provider or deployment. See [[status]] for what has and has not been 
 
 ## Planned local-runner attestation
 
-A planned, not implemented, owner-enabled trust class `local_runner_attested` would let signed local-runner evidence support ordinary PR readiness, never shipping.
+A planned owner-enabled trust class `local_runner_attested` would let signed local-runner evidence support ordinary PR readiness, never shipping. Only its wire value and policy v4 contract exist.
 
 The [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 holds the threat model and the default-closed rules; the

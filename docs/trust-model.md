@@ -108,7 +108,8 @@ Authoritative execution and test adequacy evidence must name the manifest head.
 
 ## Planned local-runner attestation
 
-**Planned, not yet implemented.** The
+**Planned, not yet implemented.** Only the trust-class wire value and the
+[policy v4 contract](status.md#policy-v4-local-runner-contract) exist. The
 [2026-11-12 decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepts a design for letting a single-owner repository use signed local-runner
 evidence for ordinary pull-request readiness. Today every statement above still

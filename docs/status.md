@@ -164,9 +164,10 @@ promotion. Earlier dated records retain their contemporaneous scope and status.
 On 2026-11-12 the [decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepted a design for signed local-runner evidence for ordinary pull-request
 readiness, with a new weaker trust class `local_runner_attested`. That decision
-changed documentation only. Sibling structural contracts are now implemented as
-described above; the class, policy version, controller support and attestor remain
-**planned and not implemented**. Local evidence remains
+changed documentation only. Sibling structural contracts, the class's wire value
+and the policy v4 contract are now implemented as described above; authenticated
+acceptance, controller support and attestor remain **planned and not
+implemented**. Local evidence remains
 `local_untrusted` and cannot authorize readiness; the
 [trust model](trust-model.md#planned-local-runner-attestation) lists the
 default-closed rules. The record supersedes the archived scope-reduction ADR's
