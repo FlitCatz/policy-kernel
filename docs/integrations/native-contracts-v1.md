@@ -398,9 +398,9 @@ install -m 755 "policy-cli-$target" "$install_dir/policy-cli"
 install -m 755 "policy-native-importer-$target" "$install_dir/policy-native-importer"
 ```
 
-Check `SOURCE_COMMIT` against the reviewed tag's commit. Pin the exact tag and
-the two platform-specific SHA-256 values from the reviewed manifest in consumer
-configuration. For recurring CI installs, verify against those committed checksum
+Check `SOURCE_COMMIT` against the reviewed tag's commit. Pin the exact tag and,
+for each target used, the SHA-256 values of both executables from the reviewed
+manifest in consumer configuration. For recurring CI installs, verify against those committed checksum
 entries; do not use `latest` or build from source on every run. Downloaded
 checksums detect byte corruption but do not independently authenticate the release
 publisher. Binary distribution does not promote observations or grant readiness.

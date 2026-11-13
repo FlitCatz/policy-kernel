@@ -500,8 +500,8 @@ install -m 755 "policy-cli-$target" "$install_dir/policy-cli"
 install -m 755 "policy-native-importer-$target" "$install_dir/policy-native-importer"
 ```
 
-Check `SOURCE_COMMIT` against the reviewed tag commit and pin that tag plus both
-platform SHA-256 values in consumer configuration. For recurring CI installs,
+Check `SOURCE_COMMIT` against the reviewed tag commit and pin that tag plus the
+SHA-256 of both executables for each target in consumer configuration. For recurring CI installs,
 verify against those committed checksum entries. Avoid `latest` and per-run
 source builds. A downloaded checksum verifies bytes, not publisher authenticity.
 See the [release contract](docs/integrations/native-contracts-v1.md#pinned-binary-releases).
