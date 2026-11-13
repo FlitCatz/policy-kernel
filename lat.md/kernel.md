@@ -120,7 +120,7 @@ Schema and Rust parity tests
 [[xtask/tests/local_runner_contract.rs#local_runner_policy_shapes_match_rust_and_json_schema]],
 [[xtask/tests/local_runner_contract.rs#direct_construction_obeys_local_runner_and_review_boundaries]]
 and [[xtask/tests/local_runner_contract.rs#local_runner_trust_round_trips_in_v1_evidence]]
-cover version, shape and wire boundaries. Authoritative rejection is pinned by
+cover version, shape and wire boundaries. Context-free CI-grade rejection is pinned by
 [[crates/policy-core/tests/provenance.rs#local_runner_attestation_is_not_ci_grade]].
 
 Core shares [[crates/policy-core/src/sensors.rs#validate_conditions]] and

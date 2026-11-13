@@ -41,8 +41,8 @@ See [[kernel#Review consensus and waivers]].
 
 Policy v4 optionally declares local-runner evidence settings, with the v3 review
 block still required. V1–v3 bytes and digests stay unchanged. Evidence v1 accepts
-the new wire value; core evaluates v4 under v3 rules, ignores the local-runner
-block and rejects the class, which is not CI-grade.
+the new wire value, which is not CI-grade. Core accepts it only for fresh sensors
+and executions under v4 opt-in with no matching CI condition; such readiness cannot ship.
 See [[kernel#Local-runner policy contract]].
 
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
