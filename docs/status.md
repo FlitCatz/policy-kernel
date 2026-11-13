@@ -45,6 +45,12 @@ The Unix `policy-native-importer` command delegates to the existing adapter
 library and exports `ImportedObservationsV1` only on verified imports. Its exits
 are 0 (verified), 2 (persisted rejection) and 64 (invalid input/output error).
 The separate binary preserves the JSON-only `policy-cli` dependency boundary.
+Repeated `--report OBSERVATION=ARTIFACT` selections fill empty producer test claims
+with the same report parser/projection before import; `--map REQUIREMENT=SUITE`
+explicitly claims coverage by executed tests without inferring it. One TRX maps
+to one observation and independently approved project suite, preserving all v1
+wire contracts. [Claim preparation](integrations/native-contracts-v1.md#claim-preparation-from-raw-reports)
+removes the need for consumer Rust or duplicated report parsers.
 The [version-tag workflow](../.github/workflows/release-binaries.yml) builds both
 commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
 `x86_64-unknown-linux-gnu`, packaging four executables, `SHA256SUMS` and

@@ -27,6 +27,9 @@ authenticated local-runner acceptance or promotion; existing scope v1 stays unch
 
 Native distribution adds a Unix importer command and a version-tag workflow for
 both commands on macOS arm64 and Linux x64, with SHA-256 and source-commit assets.
+Explicit report selections populate empty test claims with shared parsers before
+import; explicit suite mappings claim coverage. Each TRX has a separate observation
+and approved suite, with no v1 wire-contract change or consumer Rust requirement.
 The owner must cut the first release after merge; no published release or consumer
 adoption is established. See [[native-contracts#Native command distribution]].
 

@@ -92,6 +92,29 @@ locked builds and SHA-pinned actions. The
 [consumer contract](../docs/integrations/native-contracts-v1.md#pinned-binary-releases)
 defines assets, install commands and checksum pins; [[status]] bounds current claims.
 
+## Claim preparation
+
+Explicit report selections populate empty producer test claims through the shared parser projection before import. Each TRX has its own observation and approved suite; explicit mappings claim coverage without inferring test adequacy.
+
+Entry [[crates/policy-native-importer/src/claims.rs#populate_claims]] reuses bounded,
+descriptor-relative artifact reads and [[crates/policy-native-importer/src/reports.rs#recompute]]
+for counts, normalized/raw identities, outcomes and attempts. The CLI then invokes
+the unchanged [[crates/policy-native-importer/src/importer.rs#import_run]] checks.
+[[crates/policy-native-importer/src/claims.rs#populate_mappings]] maps all executed
+tests, including failures, only for explicitly selected approved requirement/suite
+pairs. No mappings are inferred and no v1 schema or canonical vector changes.
+
+Conformance [[crates/policy-native-importer/tests/import.rs#claim_preparation_uses_shared_parsers_and_explicit_mappings]]
+checks TRX, Vitest and Playwright against existing native fixtures;
+[[crates/policy-native-importer/tests/import.rs#multiple_trx_reports_use_distinct_observations_and_approved_suites]]
+checks per-project TRX namespaces and evaluation;
+[[crates/policy-native-importer/tests/import.rs#claim_preparation_rejects_ambiguous_unsafe_or_unapproved_inputs_without_output]]
+rejects ambiguity, unapproved selections, bad hashes and symlinks;
+[[crates/policy-native-importer/tests/import.rs#prepared_claims_preserve_native_and_parser_failures_without_inventing_coverage]]
+preserves failed tests, parser failures and missing mappings as non-pass scope.
+The [consumer contract](../docs/integrations/native-contracts-v1.md#claim-preparation-from-raw-reports)
+defines selections and the one-report-per-observation rule.
+
 ## Local scope verifier
 
 The kernel assembles imported observations into core evidence and evaluates independently approved scope. It enforces required sets, mappings, exclusions and bindings; local trust and unmet review cannot authorize a merge.

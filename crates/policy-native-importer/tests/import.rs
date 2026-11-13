@@ -147,6 +147,240 @@ impl Fixture {
     fn raw(&self) -> Value {
         serde_json::from_slice(&fs::read(self.input.join("raw.json")).unwrap()).unwrap()
     }
+    fn command(&self) -> assert_cmd::Command {
+        let root = self.temp.path().canonicalize().unwrap();
+        let expected = root.join("approved.json");
+        let run = root.join("native-run.json");
+        fs::write(&expected, serde_json::to_vec(&self.expected).unwrap()).unwrap();
+        fs::write(&run, serde_json::to_vec(&self.run).unwrap()).unwrap();
+        let mut command =
+            assert_cmd::Command::new(assert_cmd::cargo::cargo_bin!("policy-native-importer"));
+        command
+            .arg("--run-directory")
+            .arg(&self.input)
+            .arg("--output")
+            .arg(self.output())
+            .arg("--expected")
+            .arg(expected)
+            .arg("--run")
+            .arg(run)
+            .arg("--run-id")
+            .arg(self.identity.run_id.as_str())
+            .arg("--scope-id")
+            .arg(self.identity.scope_id.as_str());
+        command
+    }
+}
+
+#[test]
+fn claim_preparation_uses_shared_parsers_and_explicit_mappings() {
+    for format in [
+        ReportFormat::Trx,
+        ReportFormat::VitestJson,
+        ReportFormat::PlaywrightJson,
+    ] {
+        let mut f = Fixture::new(format);
+        let claims = f.run.test_observations.clone();
+        let report = format!("unit={}", f.run.artifacts[0].id.as_str());
+        f.run.test_observations.clear();
+        f.run.mappings.clear();
+        let mut command = f.command();
+        command.args(["--report", &report]);
+        for requirement in f.expected.requirements.requirements.as_slice() {
+            command
+                .arg("--map")
+                .arg(format!("{}=unit", requirement.id.as_str()));
+        }
+        command.assert().success();
+        let imported: NativeRunV1 =
+            serde_json::from_slice(&fs::read(f.output().join("run.json")).unwrap()).unwrap();
+        assert_eq!(imported.test_observations, claims);
+        let observations = fs::read(f.output().join("observations.json")).unwrap();
+        let (result, code) = policy_cli::evaluate_scope_json(
+            &serde_json::to_vec(&f.expected).unwrap(),
+            &observations,
+        )
+        .unwrap();
+        assert_eq!(code, 0);
+        assert_eq!(result.trust, LocalTrust::LocalUntrusted);
+        assert_eq!(result.review, ReviewGate::Unmet);
+    }
+}
+
+#[test]
+fn multiple_trx_reports_use_distinct_observations_and_approved_suites() {
+    let mut f = Fixture::new(ReportFormat::Trx);
+    let mut observation = f.run.observations[0].clone();
+    observation.id = policy_contracts::SensorId::parse("unit-second").unwrap();
+    observation.execution_id = ExecutionId::parse("project-second-execution").unwrap();
+    f.run.observations.push(observation.clone());
+    let mut artifact = f.run.artifacts[0].clone();
+    artifact.id = RecordId::parse("second-report").unwrap();
+    artifact.path = "second.trx".into();
+    fs::write(
+        f.input.join(&artifact.path),
+        fs::read(f.input.join("raw.json")).unwrap(),
+    )
+    .unwrap();
+    f.run.artifacts.push(artifact);
+    let mut rules = f.expected.requirements.observations.as_slice().to_vec();
+    let mut rule = rules[0].clone();
+    rule.id = observation.id.clone();
+    rules.push(rule);
+    f.expected.requirements.observations = RequiredSet::new(rules).unwrap();
+    let mut bindings = f.expected.bindings.observations.as_slice().to_vec();
+    let mut binding = bindings[0].clone();
+    binding.id = observation.id.clone();
+    bindings.push(binding);
+    f.expected.bindings.observations = RequiredSet::new(bindings).unwrap();
+    let mut requirements = f.expected.requirements.requirements.as_slice().to_vec();
+    for requirement in &mut requirements {
+        requirement.suites = RequiredSet::new(vec![
+            f.run.observations[0].id.clone(),
+            observation.id.clone(),
+        ])
+        .unwrap();
+    }
+    f.expected.requirements.requirements = RequiredSet::new(requirements).unwrap();
+    f.run.test_observations.clear();
+    f.run.mappings.clear();
+    let mut command = f.command();
+    command
+        .arg("--report")
+        .arg(format!("unit={}", f.run.artifacts[0].id.as_str()))
+        .args(["--report", "unit-second=second-report"]);
+    for requirement in f.expected.requirements.requirements.as_slice() {
+        for suite in ["unit", "unit-second"] {
+            command
+                .arg("--map")
+                .arg(format!("{}={suite}", requirement.id.as_str()));
+        }
+    }
+    command.assert().success();
+    let imported: NativeRunV1 =
+        serde_json::from_slice(&fs::read(f.output().join("run.json")).unwrap()).unwrap();
+    assert_eq!(imported.test_observations.len(), 2);
+    assert_ne!(
+        imported.test_observations[0].observation_id,
+        imported.test_observations[1].observation_id
+    );
+    assert_ne!(
+        imported.test_observations[0].tests[0].id,
+        imported.test_observations[1].tests[0].id
+    );
+    let (_, code) = policy_cli::evaluate_scope_json(
+        &serde_json::to_vec(&f.expected).unwrap(),
+        &fs::read(f.output().join("observations.json")).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(code, 0);
+}
+
+#[test]
+fn claim_preparation_rejects_ambiguous_unsafe_or_unapproved_inputs_without_output() {
+    for case in 0..9 {
+        let mut f = Fixture::new(ReportFormat::VitestJson);
+        let mut report = format!("unit={}", f.run.artifacts[0].id.as_str());
+        if case != 0 {
+            f.run.test_observations.clear();
+            f.run.mappings.clear();
+        }
+        match case {
+            1 => report = "unit=missing-artifact".into(),
+            3 => fs::write(f.input.join("raw.json"), b"tampered report").unwrap(),
+            4 => {
+                let original = f.temp.path().canonicalize().unwrap().join("original.json");
+                fs::rename(f.input.join("raw.json"), &original).unwrap();
+                std::os::unix::fs::symlink(&original, f.input.join("raw.json")).unwrap();
+            }
+            5 => {
+                let mut bindings = f.expected.bindings.observations.as_slice().to_vec();
+                bindings[0].parser.as_mut().unwrap().version =
+                    RecordId::parse("unsupported/v9").unwrap();
+                f.expected.bindings.observations = RequiredSet::new(bindings).unwrap();
+            }
+            8 => report = "missing-equals".into(),
+            _ => (),
+        }
+        let mut command = f.command();
+        command.args(["--report", &report]);
+        match case {
+            2 => {
+                command.args(["--report", &report]);
+            }
+            6 => {
+                command.args(["--map", "unknown-requirement=unit"]);
+            }
+            7 => {
+                let mapping = format!(
+                    "{}=unit",
+                    f.expected.requirements.requirements.as_slice()[0]
+                        .id
+                        .as_str()
+                );
+                command.args(["--map", &mapping, "--map", &mapping]);
+            }
+            _ => (),
+        }
+        command.assert().code(64);
+        assert!(!f.output().exists(), "case {case}");
+        assert!(f.input.join("raw.json").exists());
+    }
+}
+
+#[test]
+fn prepared_claims_preserve_native_and_parser_failures_without_inventing_coverage() {
+    for case in 0..3 {
+        let mut f = Fixture::new(ReportFormat::VitestJson);
+        if case < 2 {
+            let mut raw = f.raw();
+            if case == 0 {
+                raw["numPassedTests"] = json!(0);
+                raw["numFailedTests"] = json!(1);
+                raw["success"] = json!(false);
+                raw["testResults"][0]["assertionResults"][0]["status"] = json!("failed");
+                f.run.observations[0].completion = CompletionV1::Exited { code: 1 };
+            } else {
+                raw["testResults"][0]["message"] = json!("suite teardown failed");
+            }
+            f.replace_raw(raw);
+        }
+        f.run.test_observations.clear();
+        f.run.mappings.clear();
+        let mut command = f.command();
+        command
+            .arg("--report")
+            .arg(format!("unit={}", f.run.artifacts[0].id.as_str()));
+        if case < 2 {
+            for requirement in f.expected.requirements.requirements.as_slice() {
+                command
+                    .arg("--map")
+                    .arg(format!("{}=unit", requirement.id.as_str()));
+            }
+        }
+        command.assert().success();
+        let observations = fs::read(f.output().join("observations.json")).unwrap();
+        let imported: policy_native_verifier::ImportedObservationsV1 =
+            serde_json::from_slice(&observations).unwrap();
+        if case == 0 {
+            assert_eq!(
+                imported.run.test_observations[0].tests[0].outcome,
+                TestOutcome::Failed
+            );
+        }
+        if case == 1 {
+            assert_eq!(imported.unsuccessful_reports.len(), 1);
+        }
+        if case == 2 {
+            assert!(imported.run.mappings.is_empty());
+        }
+        let (_, code) = policy_cli::evaluate_scope_json(
+            &serde_json::to_vec(&f.expected).unwrap(),
+            &observations,
+        )
+        .unwrap();
+        assert_eq!(code, 2, "case {case}");
+    }
 }
 
 #[test]

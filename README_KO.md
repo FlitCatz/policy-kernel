@@ -416,6 +416,32 @@ CLI의 의존성 경계를 유지합니다. 종료 코드는 **0** 검증된 imp
 symlink 없는 부모 아래에 새로 만들며 입력과 겹치지 않아야 합니다.
 [명령 계약](docs/integrations/native-contracts-v1.md#native-import-command)을 참고하세요.
 
+`test_observations`와 `mappings`가 빈 envelope에는 반복 가능한
+`--report OBSERVATION=ARTIFACT` 옵션으로 importer와 같은 TRX·Vitest·Playwright
+parser를 사용해 typed claim을 생성할 수 있습니다. Artifact와 원본 바이트 digest는
+미리 선언해야 합니다. `--map REQUIREMENT=SUITE`는 해당 suite의 실행된 모든 테스트가
+요구사항을 다룬다는 명시적 주장입니다. 같은 요구사항에 여러 suite를 연결하려면
+반복해서 지정합니다. Mapping을 자동 추론하지 않습니다. 생성한 claim은
+`imported-run/run.json`에 보존하고 정상 import 검증을 거칩니다.
+소비 프로젝트에 Rust 코드나 별도 report parser가 필요하지 않습니다.
+
+원본 report 하나는 observation 하나에 대응합니다. 여러 프로젝트를 실행한
+`dotnet test`는 TRX마다 별도 observation을 만들고, 프로젝트별 observation/execution
+ID와 `ExpectedScopeV1`의 독립적으로 승인한 suite/parser binding을 사용합니다:
+
+```sh
+policy-native-importer --run-directory native-artifacts --output imported-run \
+  --expected approved-scope.json --run native-run.json \
+  --run-id independently-expected-run --scope-id independently-expected-scope \
+  --report backend-domain=domain-trx --report backend-api=api-trx \
+  --map AC-1=backend-domain --map AC-1=backend-api
+```
+
+Report/observation 중복 선택, 안전하지 않은 경로, hash 불일치, 잘못된 report는
+출력을 만들기 전에 종료 64로 거절합니다. 실패 테스트와 parser 수준 실패는
+scope 평가에서도 non-pass로 유지합니다.
+[Claim 생성 안내](docs/integrations/native-contracts-v1.md#claim-preparation-from-raw-reports)를 참고하세요.
+
 추가된 `LocalAttestationV1` 진술과 `SignedLocalAttestationV1` 봉투는 로컬 실행기의
 전송 데이터와 구조 검증을 정의합니다. Scope-template digest는 source subject와
 평가 시각을 제외합니다. 이 계약은 서명·서명 검증·readiness 권한 부여를 수행하지

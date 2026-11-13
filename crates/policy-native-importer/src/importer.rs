@@ -312,7 +312,12 @@ fn verify(
             );
             continue;
         }
-        match reports::recompute(claim, data) {
+        match reports::recompute(
+            &claim.observation_id,
+            &claim.parser,
+            &claim.raw_report,
+            data,
+        ) {
             Err(error) => record.issue(IssueCode::Report, claim.observation_id.as_str(), error),
             Ok((parsed, recomputed)) => {
                 if parsed.started_at < observation.started_at

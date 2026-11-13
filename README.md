@@ -444,6 +444,30 @@ arguments/documents or filesystem errors. Only verified imports export
 files stay outside the artifact directory; output must be fresh and disjoint,
 with an existing symlink-free parent. See the [command contract](docs/integrations/native-contracts-v1.md#native-import-command).
 
+For an envelope with empty `test_observations` and `mappings`, add repeated
+`--report OBSERVATION=ARTIFACT` options to generate typed claims with the same
+TRX, Vitest or Playwright parser used by the importer. Artifacts and their byte
+digests must already be declared. Add `--map REQUIREMENT=SUITE` to explicitly
+claim coverage by all executed tests in that suite; repeat it to combine suites.
+Mappings are not inferred. Generated claims are persisted in `imported-run/run.json`
+and then verified normally; no consumer Rust or parser implementation is needed.
+
+One raw report belongs to one observation. Multi-project `dotnet test` runs
+produce one observation per TRX, with separate observation/execution IDs and
+independently approved suites/parser bindings per project in `ExpectedScopeV1`:
+
+```sh
+policy-native-importer --run-directory native-artifacts --output imported-run \
+  --expected approved-scope.json --run native-run.json \
+  --run-id independently-expected-run --scope-id independently-expected-scope \
+  --report backend-domain=domain-trx --report backend-api=api-trx \
+  --map AC-1=backend-domain --map AC-1=backend-api
+```
+
+Duplicate report/observation selections, unsafe paths, bad hashes or malformed
+reports exit 64 before output creation. Failed tests and parser-level failures
+remain non-pass at scope evaluation. See [claim preparation](docs/integrations/native-contracts-v1.md#claim-preparation-from-raw-reports).
+
 The additive `LocalAttestationV1` statement and `SignedLocalAttestationV1`
 envelope define local-runner wire data and structural checks. Scope-template
 digests exclude the source subject and evaluation clock. These contracts do not
