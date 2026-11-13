@@ -18,7 +18,7 @@ Local scope [[crates/policy-native-verifier/src/lib.rs#evaluate_scope]] enforces
 approved bindings and delegates sensor/adequacy decisions to core. Assembly
 [[crates/policy-native-verifier/src/lib.rs#assemble]] uses local recorder identity,
 local-untrusted executions/sensors and no reviews. It never calls pre-merge evaluation.
-A planned local-runner attestation class, not implemented, would not change this
+The local-runner attestation wire class does not change this
 assembly; see [[trust-boundaries#Planned local-runner attestation]].
 
 ## Pre-merge gates
@@ -97,6 +97,28 @@ modifications and agent-ready observations share this predicate.
 Required knowledge delegates glob validation to
 [[crates/policy-core/src/sensors.rs#path_glob]], which rejects blank and
 NUL-containing patterns as well as unsupported glob syntax.
+
+## Local-runner policy contract
+
+Policy v4 optionally declares local-runner settings and requires the v3 review block; earlier versions reject the field. Core evaluates v4 under v3 rules without enforcing the block, and the new evidence class is not CI-grade.
+
+Version validation [[crates/policy-contracts/src/policy.rs#PolicySnapshot#validate_version]]
+keeps each optional v4 extension independent; legacy serialization and digests
+stay unchanged. Structural validation
+[[crates/policy-contracts/src/policy.rs#LocalRunnerEvidencePolicy#validate]] requires
+nonempty unique nonblank runner IDs without NUL, nonempty scope-template digests
+and a positive age. The required conditions list reuses
+[[crates/policy-contracts/src/policy.rs#SensorCondition]] and may be empty.
+[[crates/policy-contracts/src/evidence.rs#TrustClass]] adds the wire value without
+changing evidence version 1; the existing CI-grade predicate explicitly rejects it.
+
+Schema and Rust parity tests
+[[xtask/tests/local_runner_contract.rs#v4_local_runner_block_is_optional_and_legacy_versions_reject_its_presence]],
+[[xtask/tests/local_runner_contract.rs#local_runner_policy_shapes_match_rust_and_json_schema]],
+[[xtask/tests/local_runner_contract.rs#direct_construction_obeys_local_runner_and_review_boundaries]]
+and [[xtask/tests/local_runner_contract.rs#local_runner_trust_round_trips_in_v1_evidence]]
+cover version, shape and wire boundaries. Authoritative rejection is pinned by
+[[crates/policy-core/tests/provenance.rs#local_runner_attestation_is_not_ci_grade]].
 
 ## Canonical digests
 

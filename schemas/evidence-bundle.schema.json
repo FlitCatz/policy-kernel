@@ -555,7 +555,8 @@
       "enum": [
         "local_untrusted",
         "ci_observed",
-        "trusted_runner_attested"
+        "trusted_runner_attested",
+        "local_runner_attested"
       ],
       "type": "string"
     },

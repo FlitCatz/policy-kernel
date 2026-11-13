@@ -60,6 +60,26 @@ path, not a published release: the owner must cut the first tag after merge.
 No hosted release execution, TJERPS adoption, authoritative decision or production
 promotion is established by this change.
 
+## Policy v4 local-runner contract
+
+The [policy schema](../schemas/policy.schema.json) accepts versions 1–4. V4
+requires `required_reviews` as v3 does and optionally declares
+`local_runner_evidence`; absence keeps local-runner acceptance closed. V1–v3
+reject that field, including explicit `null`, and retain their serialization and
+digests. A present block requires nonempty, unique, nonblank `allowed_runner_ids`
+without NUL, nonempty `approved_scope_template_digests`, positive
+`maximum_age_seconds`, and `ci_required_when` (a list of sensor conditions, empty
+allowed). Explicit `null` is invalid in v4 too.
+
+The [evidence schema](../schemas/evidence-bundle.schema.json) adds
+`local_runner_attested` while retaining evidence schema version 1 and existing
+document digests. This class is explicitly not CI-grade. These additions validate
+contract structure only: the core evaluates a valid v4 policy under the existing
+v3 readiness and shipping rules, does not yet enforce `local_runner_evidence`, and
+still rejects `local_runner_attested` evidence in authoritative evaluation.
+Authentication and opt-in acceptance are later work; no authoritative decision,
+protected merge or production promotion is established here.
+
 ## Policy v3 review quorum
 
 The [review contract](trust-model.md) binds approving-review quorum and allowed
@@ -144,9 +164,10 @@ promotion. Earlier dated records retain their contemporaneous scope and status.
 On 2026-11-12 the [decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepted a design for signed local-runner evidence for ordinary pull-request
 readiness, with a new weaker trust class `local_runner_attested`. That decision
-changed documentation only. Sibling structural contracts are now implemented as
-described above; the class, policy version, controller support and attestor remain
-**planned and not implemented**. Local evidence remains
+changed documentation only. Sibling structural contracts, the class's wire value
+and the policy v4 contract are now implemented as described above; authenticated
+acceptance, controller support and attestor remain **planned and not
+implemented**. Local evidence remains
 `local_untrusted` and cannot authorize readiness; the
 [trust model](trust-model.md#planned-local-runner-attestation) lists the
 default-closed rules. The record supersedes the archived scope-reduction ADR's

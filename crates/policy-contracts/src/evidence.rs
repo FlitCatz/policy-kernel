@@ -11,6 +11,7 @@ pub enum TrustClass {
     LocalUntrusted,
     CiObserved,
     TrustedRunnerAttested,
+    LocalRunnerAttested,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
