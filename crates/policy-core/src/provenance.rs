@@ -53,11 +53,7 @@ pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> Va
                 .required_when
                 .iter()
                 .flat_map(|condition| &condition.path_globs)
-                .any(|pattern| {
-                    pattern.trim().is_empty()
-                        || pattern.contains('\0')
-                        || crate::sensors::path_glob(pattern).is_err()
-                });
+                .any(|pattern| crate::sensors::path_glob(pattern).is_err());
         if invalid {
             result.insert("PK-KNOWLEDGE-POLICY-INVALID", "knowledge requirements need unique kind/source identities and valid nonempty globs");
             continue;
@@ -127,7 +123,7 @@ pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> Va
                     &format!("{description} does not bind the evaluated source set"),
                 );
             }
-            if evidence.trust == TrustClass::LocalUntrusted {
+            if !is_ci_grade(evidence.trust) {
                 result.insert(
                     "PK-KNOWLEDGE-UNTRUSTED",
                     &format!("{description} requires CI observation or trusted-runner attestation"),
@@ -354,23 +350,17 @@ fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {
     bundle
         .modifications
         .iter()
-        .any(|value| value.trust == TrustClass::LocalUntrusted)
+        .any(|value| !is_ci_grade(value.trust))
         || bundle
             .executions
             .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
-        || bundle
-            .reviews
-            .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
-        || bundle
-            .sensors
-            .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
+            .any(|value| !is_ci_grade(value.trust))
+        || bundle.reviews.iter().any(|value| !is_ci_grade(value.trust))
+        || bundle.sensors.iter().any(|value| !is_ci_grade(value.trust))
         || bundle
             .knowledge
             .iter()
-            .any(|value| value.trust == TrustClass::LocalUntrusted)
+            .any(|value| !is_ci_grade(value.trust))
 }
 
 fn timestamps(bundle: &EvidenceBundle) -> impl Iterator<Item = &UtcTimestamp> {
@@ -385,4 +375,11 @@ fn timestamps(bundle: &EvidenceBundle) -> impl Iterator<Item = &UtcTimestamp> {
         .chain(bundle.reviews.iter().map(|value| &value.observed_at))
         .chain(bundle.sensors.iter().map(|value| &value.observed_at))
         .chain(bundle.waivers.iter().map(|value| &value.issued_at))
+}
+
+pub(crate) fn is_ci_grade(trust: TrustClass) -> bool {
+    match trust {
+        TrustClass::LocalUntrusted => false,
+        TrustClass::CiObserved | TrustClass::TrustedRunnerAttested => true,
+    }
 }
