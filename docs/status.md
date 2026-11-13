@@ -19,6 +19,12 @@ This path is local advisory only: trust is `local_untrusted`, review is `unmet`,
 and no pre-merge decision or `ReadyToMerge` is produced. JSON-only evaluation
 checks consistency; it does not authenticate raw artifacts.
 
+Additive [local-runner attestation contracts](integrations/native-contracts-v1.md#local-runner-attestation-contracts)
+define statements, signature envelopes and stable scope-template digests with
+schemas and synthetic conformance vectors. This is a structural contract only;
+signature verification, authenticated local-runner acceptance and promotion are
+not established by it. Existing native v1 scope documents remain unchanged.
+
 Plan PRs 6–7 transferred and adopted the TJERP-owned harness. Plan PR 8
 completes stage 1 in implementation: TJERP main `3c62b9e` owns
 `tools/policy-adoption`, pinned to policy-kernel `rev = 4df10fa` over public HTTPS.
@@ -116,9 +122,10 @@ promotion. Earlier dated records retain their contemporaneous scope and status.
 
 On 2026-11-12 the [decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepted a design for signed local-runner evidence for ordinary pull-request
-readiness, with a new weaker trust class `local_runner_attested`. This is a
-documentation-only change: the class, policy version, controller support and
-attestor are **planned and not implemented**. Local evidence remains
+readiness, with a new weaker trust class `local_runner_attested`. That decision
+changed documentation only. Sibling structural contracts are now implemented as
+described above; the class, policy version, controller support and attestor remain
+**planned and not implemented**. Local evidence remains
 `local_untrusted` and cannot authorize readiness; the
 [trust model](trust-model.md#planned-local-runner-attestation) lists the
 default-closed rules. The record supersedes the archived scope-reduction ADR's

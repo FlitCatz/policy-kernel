@@ -1,11 +1,13 @@
 #![forbid(unsafe_code)]
 //! Version 1 native-result records. Types and structural validation only.
 //! No execution, raw parsing, filesystem observation, evidence conversion or authorization.
+mod attestation;
 mod digest;
 mod ratchet;
 mod types;
 mod validation;
 
+pub use attestation::*;
 pub use digest::*;
 pub use ratchet::*;
 pub use types::*;

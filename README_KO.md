@@ -404,3 +404,8 @@ cargo run --locked -p policy-cli -- evaluate-scope \
 JSON 전용 명령은 typed 일관성을 검사하며 원본 진위를 인증하지 않습니다.
 Pre-merge 또는 ReadyToMerge 판정을 만들지 않으며 기존 `evaluate-pre`의
 0/2/3/64 종료 코드는 유지합니다. [Native 계약 안내](docs/integrations/native-contracts-v1.md)를 참고하세요.
+
+추가된 `LocalAttestationV1` 진술과 `SignedLocalAttestationV1` 봉투는 로컬 실행기의
+전송 데이터와 구조 검증을 정의합니다. Scope-template digest는 source subject와
+평가 시각을 제외합니다. 이 계약은 서명·서명 검증·readiness 권한 부여를 수행하지
+않으며 기존 scope 문서와 스키마는 유지합니다.

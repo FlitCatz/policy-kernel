@@ -15,8 +15,8 @@ Validation [[crates/policy-native-contracts/src/validation.rs#ExpectedScopeV1#va
 [[crates/policy-native-contracts/src/validation.rs#LocalScopeResultV1#validate]].
 Subject comparison [[crates/policy-native-contracts/src/validation.rs#validate_subject_binding]]
 checks consistency, not authenticity. Results remain local-untrusted with unmet review.
-A planned sibling attestation document is not implemented and would not change these
-records; see [[trust-boundaries#Planned local-runner attestation]].
+The sibling [[native-contracts#Local-runner attestations]] preserves these records;
+authenticated acceptance remains planned, see [[trust-boundaries#Planned local-runner attestation]].
 
 ## Digest domains
 
@@ -107,6 +107,33 @@ malformed wire inputs. The [contract reference](../docs/integrations/debt-ratche
 defines all reason codes and canonical domains. This comparison does not
 establish trust, approval, review satisfaction or scope satisfaction; wiring
 independent ratchet requirements into scope remains follow-up work.
+
+## Local-runner attestations
+
+Sibling local-runner statements bind source/run identity, template and input/result digests, runner metadata and ordered times. Signature envelopes enforce structural consistency without cryptography or trust promotion.
+
+[[crates/policy-native-contracts/src/attestation.rs#LocalAttestationV1#validate]]
+checks source/digest roles and timestamp order;
+[[crates/policy-native-contracts/src/attestation.rs#SignedLocalAttestationV1#validate]]
+also requires matching runner IDs. Signatures cover canonical statement JSON.
+[[crates/policy-native-contracts/src/attestation.rs#canonical_local_digest]]
+reuses the native envelope encoder with separate local roles, preserving all
+existing schemas and digests.
+[[crates/policy-native-contracts/src/attestation.rs#ExpectedScopeV1#template_digest]]
+covers requirements, observation bindings, maximum age and mode, excluding
+subject and evaluation time. Standalone ratchet baselines remain outside scope;
+future scope integration must bind them into the approval template.
+The [contract reference](../docs/integrations/native-contracts-v1.md#local-runner-attestation-contracts)
+defines the projection and authentication boundary.
+
+## Attestation conformance
+
+Synthetic vectors pin local and existing document digests, preserve original schemas, reject malformed statements/envelopes and check the template approval boundary without claiming authenticated execution.
+
+Schemas/corpus [[crates/policy-native-contracts/tests/attestation.rs#attestation_schemas_and_corpus_enforce_wire_and_relational_contracts]];
+template [[crates/policy-native-contracts/tests/attestation.rs#template_digest_excludes_subject_and_clock_but_binds_all_approval_fields]];
+digests [[crates/policy-native-contracts/tests/attestation.rs#canonical_vectors_pin_new_and_existing_document_digests]];
+direct callers/signing bytes [[crates/policy-native-contracts/tests/attestation.rs#direct_call_validation_and_canonical_signing_bytes_preserve_the_boundary]].
 
 ## Debt ratchet conformance
 
