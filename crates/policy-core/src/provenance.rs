@@ -380,6 +380,7 @@ fn timestamps(bundle: &EvidenceBundle) -> impl Iterator<Item = &UtcTimestamp> {
 pub(crate) fn is_ci_grade(trust: TrustClass) -> bool {
     match trust {
         TrustClass::LocalUntrusted => false,
+        TrustClass::LocalRunnerAttested => false,
         TrustClass::CiObserved | TrustClass::TrustedRunnerAttested => true,
     }
 }

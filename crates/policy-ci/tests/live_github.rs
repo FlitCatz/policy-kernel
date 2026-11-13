@@ -76,6 +76,7 @@ fn real_actions_run_publishes_and_reads_back_blocked_decision() {
         required_sensor_ids: vec![],
         sensor_profile_digest: Some(canonical_sha256(&profile).unwrap()),
         required_knowledge: vec![],
+        local_runner_evidence: None,
         required_reviews: Some(policy_contracts::RequiredReviewPolicy {
             minimum_reviewers: 2,
             require_provider_independence: true,

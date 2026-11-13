@@ -3,8 +3,8 @@
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
 A 2026-11-12 [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
-plans signed local-runner attestation as a weaker trust class. The class and
-authenticated acceptance remain unimplemented; sibling structural contracts are
+plans signed local-runner attestation as a weaker trust class. Its wire class and
+policy v4 contract exist; authenticated acceptance remains unimplemented. Sibling structural contracts are
 described below. See [[trust-boundaries#Planned local-runner attestation]].
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
@@ -37,6 +37,11 @@ Policy v3 binds approving-review quorum and allowed providers. Legacy policy
 digests remain valid, but readiness and shipping require explicit v3 reapproval.
 Consumer profiles are unchanged; reapproval and promotion are not established.
 See [[kernel#Review consensus and waivers]].
+
+Policy v4 optionally declares local-runner evidence settings, with the v3 review
+block still required. V1–v3 bytes and digests stay unchanged. Evidence v1 accepts
+the new wire value, but core acceptance is closed and the class is not CI-grade.
+See [[kernel#Local-runner policy contract]].
 
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
 and records `bundled, not individually audited`, including absent optional

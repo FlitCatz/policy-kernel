@@ -32,9 +32,12 @@ pub struct PolicySnapshot {
     /// Policy v2 obligations; absent from the serialized legacy v1 projection.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub required_knowledge: Vec<KnowledgeRequirement>,
-    /// Mandatory in v3; omitted from legacy digest preimages.
+    /// Mandatory in v3/v4; omitted from legacy digest preimages.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub required_reviews: Option<RequiredReviewPolicy>,
+    /// Optional in v4; absence keeps local-runner evidence disabled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub local_runner_evidence: Option<LocalRunnerEvidencePolicy>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -93,6 +96,15 @@ struct PolicySnapshotWire {
     #[serde(default, deserialize_with = "deserialize_required_reviews")]
     #[schemars(with = "RequiredReviewPolicy")]
     required_reviews: Option<RequiredReviewPolicy>,
+    #[serde(default, deserialize_with = "deserialize_local_runner_evidence")]
+    #[schemars(with = "LocalRunnerEvidencePolicy")]
+    local_runner_evidence: Option<LocalRunnerEvidencePolicy>,
+}
+
+fn deserialize_local_runner_evidence<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<LocalRunnerEvidencePolicy>, D::Error> {
+    LocalRunnerEvidencePolicy::deserialize(deserializer).map(Some)
 }
 
 fn deserialize_required_reviews<'de, D: serde::Deserializer<'de>>(
@@ -102,7 +114,7 @@ fn deserialize_required_reviews<'de, D: serde::Deserializer<'de>>(
 }
 
 fn policy_schema_version_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({"type": "integer", "enum": [1, 2, 3]})
+    schemars::json_schema!({"type": "integer", "enum": [1, 2, 3, 4]})
 }
 
 fn deserialize_knowledge_requirements<'de, D: serde::Deserializer<'de>>(
@@ -114,20 +126,26 @@ fn deserialize_knowledge_requirements<'de, D: serde::Deserializer<'de>>(
 impl PolicySnapshot {
     /// Direct Rust construction must obey the same version boundary as JSON.
     pub fn validate_version(&self) -> Result<(), &'static str> {
+        if let Some(local) = &self.local_runner_evidence {
+            if self.schema_version < 4 {
+                return Err("policy v1/v2/v3 cannot declare local_runner_evidence");
+            }
+            local.validate()?;
+        }
         match (self.schema_version, &self.required_reviews) {
             (1 | 2, Some(_)) => return Err("policy v1/v2 cannot declare required_reviews"),
-            (3, None) => return Err("policy v3 requires required_reviews"),
-            (3, Some(rules)) if rules.minimum_reviewers == 0 => {
+            (3 | 4, None) => return Err("policy v3/v4 requires required_reviews"),
+            (3 | 4, Some(rules)) if rules.minimum_reviewers == 0 => {
                 return Err("required_reviews minimum_reviewers must be positive");
             }
-            (3, Some(rules)) if !rules.require_provider_independence => {
-                return Err("policy v3 requires provider independence");
+            (3 | 4, Some(rules)) if !rules.require_provider_independence => {
+                return Err("policy v3/v4 requires provider independence");
             }
             _ => {}
         }
         match self.schema_version {
             1 if self.required_knowledge.is_empty() => Ok(()),
-            2 | 3 => Ok(()),
+            2..=4 => Ok(()),
             1 => Err("policy v1 cannot declare required_knowledge"),
             _ => Err("unsupported policy schema version"),
         }
@@ -155,6 +173,7 @@ impl<'de> Deserialize<'de> for PolicySnapshot {
             allowed_merge_methods: wire.allowed_merge_methods,
             required_knowledge: wire.required_knowledge.unwrap_or_default(),
             required_reviews: wire.required_reviews,
+            local_runner_evidence: wire.local_runner_evidence,
         };
         policy
             .validate_version()
@@ -173,9 +192,12 @@ impl JsonSchema for PolicySnapshot {
         schema.insert(
             "allOf".into(),
             schemars::json_schema!({"allOf": [{
-                "if": {"properties": {"schema_version": {"const": 3}}},
+                "if": {"properties": {"schema_version": {"enum": [3, 4]}}},
                 "then": {"required": ["required_reviews"]},
                 "else": {"not": {"required": ["required_reviews"]}}
+            }, {
+                "if": {"properties": {"schema_version": {"enum": [1, 2, 3]}}},
+                "then": {"not": {"required": ["local_runner_evidence"]}}
             }]})
             .get("allOf")
             .unwrap()
@@ -191,6 +213,70 @@ impl JsonSchema for PolicySnapshot {
         );
         schema
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct LocalRunnerEvidencePolicy {
+    #[schemars(schema_with = "runner_ids_schema")]
+    pub allowed_runner_ids: Vec<String>,
+    #[schemars(length(min = 1))]
+    pub approved_scope_template_digests: Vec<Sha256Digest>,
+    #[schemars(range(min = 1))]
+    pub maximum_age_seconds: u64,
+    /// Empty allows any change; otherwise any matching condition requires CI.
+    pub ci_required_when: Vec<SensorCondition>,
+}
+
+impl LocalRunnerEvidencePolicy {
+    /// Structural checks only; authenticating and enforcing this policy is separate.
+    pub fn validate(&self) -> Result<(), &'static str> {
+        let mut runners = std::collections::BTreeSet::new();
+        if self.allowed_runner_ids.is_empty()
+            || self
+                .allowed_runner_ids
+                .iter()
+                .any(|id| id.trim().is_empty() || id.contains('\0') || !runners.insert(id))
+        {
+            return Err("allowed_runner_ids must be nonempty, unique and nonblank without NUL");
+        }
+        if self.approved_scope_template_digests.is_empty() {
+            return Err("approved_scope_template_digests must be nonempty");
+        }
+        if self.maximum_age_seconds == 0 {
+            return Err("maximum_age_seconds must be positive");
+        }
+        Ok(())
+    }
+}
+
+impl<'de> Deserialize<'de> for LocalRunnerEvidencePolicy {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(deny_unknown_fields)]
+        struct Wire {
+            allowed_runner_ids: Vec<String>,
+            approved_scope_template_digests: Vec<Sha256Digest>,
+            maximum_age_seconds: u64,
+            ci_required_when: Vec<SensorCondition>,
+        }
+        let wire = Wire::deserialize(deserializer)?;
+        let policy = Self {
+            allowed_runner_ids: wire.allowed_runner_ids,
+            approved_scope_template_digests: wire.approved_scope_template_digests,
+            maximum_age_seconds: wire.maximum_age_seconds,
+            ci_required_when: wire.ci_required_when,
+        };
+        policy.validate().map_err(serde::de::Error::custom)?;
+        Ok(policy)
+    }
+}
+
+fn runner_ids_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "array", "minItems": 1, "uniqueItems": true,
+        "items": binding_nonblank_string_schema(generator)
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

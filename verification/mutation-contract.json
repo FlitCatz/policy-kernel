@@ -802,15 +802,15 @@
   "sources": {
     "crates/policy-ci/src/controller.rs": "2c073130f5ed661c79719e5186616840a8a979b810906ba085c37c02d769e0f9",
     "crates/policy-contracts/src/decision.rs": "513a58a2f4458d63cdea95802bdac2c140c2073de67a7b5bbd98a7f45bb0bcbd",
-    "crates/policy-contracts/src/evidence.rs": "32420efe5224ca15b69b71c6ba8dc67230fa65aea3dd57baca487b73c043c495",
+    "crates/policy-contracts/src/evidence.rs": "68c9b35bdbbb2b34156613da255343ffc0715f1795739acaa983426b4465a826",
     "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
     "crates/policy-contracts/src/identity.rs": "c72a1f4062a92250c0cb14cf18f47c1904149b1375b5329f2de56b42fa43a851",
     "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
-    "crates/policy-contracts/src/policy.rs": "9017c6b45429d7a705ff95da7e4a98d656114bfb8a4bb434772212ee137b9afb",
+    "crates/policy-contracts/src/policy.rs": "1e1f586432be28858f3be0a4f8f42526088b69aa504bfdc5c18d1339c320f484",
     "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
     "crates/policy-core/src/post_merge.rs": "15906c3b1a35befaa06d89d63164f05b035a6a3f52d4acb58b96b47e7baa9e65",
     "crates/policy-core/src/pre_merge.rs": "5bac72e97db4c2a7533f30a3ee69b62ee7cf5836b2648dd141250ef2c267e038",
-    "crates/policy-core/src/provenance.rs": "28be667db81426dcaa8231d486608bb13a07007ffcdc0a454b094334495fd38a",
+    "crates/policy-core/src/provenance.rs": "06651587f98ea8280484cbabb144587d24d2b3d29b76a8603c510d54b3f078f3",
     "crates/policy-core/src/reviews.rs": "0d273bf15f716b7cbcd2aef08fd8c884fbd12d4e7335782f4f052b955a8d65e0",
     "crates/policy-core/src/sensors.rs": "6369d6488f47af134b1afb8b5afd105cce243f9bfc7941dccfc683fa9acebc05"
   }

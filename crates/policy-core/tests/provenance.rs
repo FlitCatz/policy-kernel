@@ -81,6 +81,32 @@ fn local_evidence_cannot_satisfy_authoritative_mode() {
 }
 
 #[test]
+fn local_runner_attestation_is_not_ci_grade() {
+    let mut input: policy_contracts::PreMergeEvaluationInput =
+        serde_json::from_str(include_str!("../../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    assert!(validate_provenance(
+        EvaluationMode::Authoritative,
+        &input.evidence,
+        &input.evaluation_time,
+        input.policy.max_evidence_age_seconds,
+    )
+    .is_valid());
+    input.evidence.sensors[0].trust = policy_contracts::TrustClass::LocalRunnerAttested;
+    for child in &mut input.evidence.manifest.child_digests {
+        if child.path == "sensors" {
+            child.digest = canonical_sha256(&input.evidence.sensors).unwrap();
+        }
+    }
+    let result = validate_provenance(
+        EvaluationMode::Authoritative,
+        &input.evidence,
+        &input.evaluation_time,
+        input.policy.max_evidence_age_seconds,
+    );
+    assert_eq!(result.reason_codes(), ["PK-PROV-UNTRUSTED"]);
+}
+
+#[test]
 fn stale_evidence_fails_closed() {
     let result = validate_provenance(
         EvaluationMode::Authoritative,

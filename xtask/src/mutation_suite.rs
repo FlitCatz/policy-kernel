@@ -463,7 +463,7 @@ pub fn run(root: &Path, output: &Path, only_repairs: bool) -> Result<()> {
                 "--test-workspace",
                 "false",
                 "--jobs",
-                "2",
+                "1",
                 "--timeout",
                 "120",
                 "--build-timeout",

@@ -59,6 +59,50 @@
       ],
       "type": "object"
     },
+    "LocalRunnerEvidencePolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_runner_ids": {
+          "items": {
+            "not": {
+              "pattern": "\u0000"
+            },
+            "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "approved_scope_template_digests": {
+          "items": {
+            "$ref": "#/$defs/Sha256Digest"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "ci_required_when": {
+          "description": "Empty allows any change; otherwise any matching condition requires CI.",
+          "items": {
+            "$ref": "#/$defs/SensorCondition"
+          },
+          "type": "array"
+        },
+        "maximum_age_seconds": {
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "allowed_runner_ids",
+        "approved_scope_template_digests",
+        "maximum_age_seconds",
+        "ci_required_when"
+      ],
+      "type": "object"
+    },
     "MergeMethod": {
       "enum": [
         "merge",
@@ -109,6 +153,32 @@
       ],
       "type": "string"
     },
+    "SensorCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "path_globs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "risks": {
+          "items": {
+            "$ref": "#/$defs/Risk"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "risks",
+        "path_globs"
+      ],
+      "type": "object"
+    },
     "SensorId": {
       "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
       "type": "string"
@@ -132,7 +202,10 @@
       "if": {
         "properties": {
           "schema_version": {
-            "const": 3
+            "enum": [
+              3,
+              4
+            ]
           }
         }
       },
@@ -140,6 +213,26 @@
         "required": [
           "required_reviews"
         ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "local_runner_evidence"
+          ]
+        }
       }
     }
   ],
@@ -170,6 +263,10 @@
         "type": "string"
       },
       "type": "array"
+    },
+    "local_runner_evidence": {
+      "$ref": "#/$defs/LocalRunnerEvidencePolicy",
+      "default": null
     },
     "max_evidence_age_seconds": {
       "format": "uint64",
@@ -211,7 +308,8 @@
       "enum": [
         1,
         2,
-        3
+        3,
+        4
       ],
       "type": "integer"
     },

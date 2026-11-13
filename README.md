@@ -406,6 +406,12 @@ controller's `minimum_reviewers` must equal `max(2, policy minimum_reviewers)`.
 This does not migrate consumer project profiles or establish production approval.
 See the [review requirements and migration](docs/trust-model.md).
 
+The additive [policy v4 contract](docs/status.md#policy-v4-local-runner-contract)
+requires the same review block and optionally declares `local_runner_evidence`.
+V1–v3 reject this field and preserve their bytes and digests. Evidence schema 1
+now represents `local_runner_attested`, explicitly outside the CI-grade allowlist.
+Core acceptance of policy v4 and local-runner evidence remains future work.
+
 ## Further reading
 
 - [Architecture specification](docs/archive/specs/2026-09-04-policy-kernel-extraction-design.md)

@@ -60,6 +60,25 @@ path, not a published release: the owner must cut the first tag after merge.
 No hosted release execution, TJERPS adoption, authoritative decision or production
 promotion is established by this change.
 
+## Policy v4 local-runner contract
+
+The [policy schema](../schemas/policy.schema.json) accepts versions 1–4. V4
+requires `required_reviews` as v3 does and optionally declares
+`local_runner_evidence`; absence keeps local-runner acceptance closed. V1–v3
+reject that field, including explicit `null`, and retain their serialization and
+digests. A present block requires nonempty, unique, nonblank `allowed_runner_ids`
+without NUL, nonempty `approved_scope_template_digests`, positive
+`maximum_age_seconds`, and `ci_required_when` (a list of sensor conditions, empty
+allowed). Explicit `null` is invalid in v4 too.
+
+The [evidence schema](../schemas/evidence-bundle.schema.json) adds
+`local_runner_attested` while retaining evidence schema version 1 and existing
+document digests. This class is explicitly not CI-grade. These additions validate
+contract structure only: the core still requires policy v3 for readiness and
+shipping and rejects local-runner evidence in authoritative evaluation.
+Authentication and opt-in acceptance are later work; no authoritative decision,
+protected merge or production promotion is established here.
+
 ## Policy v3 review quorum
 
 The [review contract](trust-model.md) binds approving-review quorum and allowed
