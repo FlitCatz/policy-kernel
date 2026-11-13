@@ -224,9 +224,6 @@ Authorization modules, including sensor evaluation, must have every selected mut
 
 Scope and result validation [[xtask/src/verification.rs#mutation_scope]]; the contract is [verification/mutation-contract.json](../verification/mutation-contract.json).
 
-The suite [[xtask/src/mutation_suite.rs#run]] executes one Cargo mutation job at a
-time to bound local build and test load.
-
 ## Split-consumer conformance
 
 The synthetic split-consumer fixture preserves report, audit and tool-version regressions. Product catalogs, parent requirements and split-scope assertions now belong to the consumer-owned harness described in [[tjerp]].
