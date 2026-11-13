@@ -1,8 +1,24 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SignedLocalAttestationV1",
+  "type": "object",
+  "properties": {
+    "signature": {
+      "$ref": "#/$defs/LocalSignatureV1"
+    },
+    "statement": {
+      "$ref": "#/$defs/LocalAttestationV1"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "statement",
+    "signature"
+  ],
   "$defs": {
     "CanonicalDigest": {
-      "additionalProperties": false,
       "description": "SHA-256 of the canonical {schema, role, value} envelope.",
+      "type": "object",
       "properties": {
         "kind": {
           "$ref": "#/$defs/CanonicalHashKind"
@@ -17,25 +33,26 @@
           "$ref": "#/$defs/Sha256Digest"
         }
       },
+      "additionalProperties": false,
       "required": [
         "kind",
         "schema",
         "role",
         "sha256"
-      ],
-      "type": "object"
+      ]
     },
     "CanonicalHashKind": {
+      "type": "string",
       "enum": [
         "canonical_sha256"
-      ],
-      "type": "string"
+      ]
     },
     "CommitSha": {
-      "pattern": "^[0-9a-f]{40}$",
-      "type": "string"
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
     },
     "DigestRole": {
+      "type": "string",
       "enum": [
         "expected_scope",
         "native_run",
@@ -46,27 +63,26 @@
         "configuration",
         "policy",
         "evidence"
-      ],
-      "type": "string"
+      ]
     },
     "DigestSchema": {
+      "type": "string",
       "enum": [
         "policy_native_v1"
-      ],
-      "type": "string"
+      ]
     },
     "ExecutionId": {
-      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
-      "type": "string"
+      "type": "string",
+      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
     },
     "LocalAttestationDomain": {
+      "type": "string",
       "enum": [
         "policy-kernel/local-runner-attestation/v1"
-      ],
-      "type": "string"
+      ]
     },
     "LocalAttestationV1": {
-      "additionalProperties": false,
+      "type": "object",
       "properties": {
         "attested_at": {
           "$ref": "#/$defs/UtcTimestamp"
@@ -117,6 +133,7 @@
           "$ref": "#/$defs/SubjectV1"
         }
       },
+      "additionalProperties": false,
       "required": [
         "schema_version",
         "domain",
@@ -134,11 +151,10 @@
         "started_at",
         "completed_at",
         "attested_at"
-      ],
-      "type": "object"
+      ]
     },
     "LocalDigest": {
-      "additionalProperties": false,
+      "type": "object",
       "properties": {
         "kind": {
           "$ref": "#/$defs/CanonicalHashKind"
@@ -153,25 +169,25 @@
           "$ref": "#/$defs/Sha256Digest"
         }
       },
+      "additionalProperties": false,
       "required": [
         "kind",
         "schema",
         "role",
         "sha256"
-      ],
-      "type": "object"
+      ]
     },
     "LocalDigestRole": {
       "description": "Separate roles preserve every existing scope and ratchet schema byte.",
+      "type": "string",
       "enum": [
         "scope_template",
         "imported_observations",
         "local_attestation"
-      ],
-      "type": "string"
+      ]
     },
     "LocalRunnerV1": {
-      "additionalProperties": false,
+      "type": "object",
       "properties": {
         "arch": {
           "$ref": "#/$defs/WorkItemId"
@@ -186,22 +202,22 @@
           "$ref": "#/$defs/WorkItemId"
         }
       },
+      "additionalProperties": false,
       "required": [
         "runner_id",
         "os",
         "arch",
         "attestor_version"
-      ],
-      "type": "object"
+      ]
     },
     "LocalSignatureFormat": {
+      "type": "string",
       "enum": [
         "sshsig"
-      ],
-      "type": "string"
+      ]
     },
     "LocalSignatureV1": {
-      "additionalProperties": false,
+      "type": "object",
       "properties": {
         "format": {
           "$ref": "#/$defs/LocalSignatureFormat"
@@ -210,20 +226,20 @@
           "$ref": "#/$defs/WorkItemId"
         },
         "value": {
-          "$ref": "#/$defs/WorkItemId",
-          "description": "Opaque nonblank signature. Cryptographic verification belongs to consumers."
+          "description": "Opaque nonblank signature. Cryptographic verification belongs to consumers.",
+          "$ref": "#/$defs/WorkItemId"
         }
       },
+      "additionalProperties": false,
       "required": [
         "format",
         "runner_id",
         "value"
-      ],
-      "type": "object"
+      ]
     },
     "RawByteDigest": {
-      "additionalProperties": false,
       "description": "An externally computed SHA-256 of exact file bytes, never typed JSON.",
+      "type": "object",
       "properties": {
         "kind": {
           "$ref": "#/$defs/RawHashKind"
@@ -232,28 +248,28 @@
           "$ref": "#/$defs/Sha256Digest"
         }
       },
+      "additionalProperties": false,
       "required": [
         "kind",
         "sha256"
-      ],
-      "type": "object"
+      ]
     },
     "RawHashKind": {
+      "type": "string",
       "enum": [
         "raw_byte_sha256"
-      ],
-      "type": "string"
+      ]
     },
     "RepositoryId": {
-      "pattern": "^[^/]+/[^/]+$",
-      "type": "string"
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$"
     },
     "Sha256Digest": {
-      "pattern": "^[0-9a-f]{64}$",
-      "type": "string"
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
     },
     "SubjectV1": {
-      "additionalProperties": false,
+      "type": "object",
       "properties": {
         "head": {
           "$ref": "#/$defs/CommitSha"
@@ -271,45 +287,29 @@
           "$ref": "#/$defs/CanonicalDigest"
         }
       },
+      "additionalProperties": false,
       "required": [
         "repository",
         "head",
         "source_set_digest",
         "source_inventory_digest",
         "scope_definition_digest"
-      ],
-      "type": "object"
+      ]
     },
     "UtcTimestamp": {
-      "format": "date-time",
-      "type": "string"
+      "type": "string",
+      "format": "date-time"
     },
     "VersionV1": {
       "description": "An unforgeable version value for each independently versioned v1 document.",
+      "type": "integer",
       "format": "uint8",
       "maximum": 1,
-      "minimum": 1,
-      "type": "integer"
+      "minimum": 1
     },
     "WorkItemId": {
-      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
-      "type": "string"
+      "type": "string",
+      "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]"
     }
-  },
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "additionalProperties": false,
-  "properties": {
-    "signature": {
-      "$ref": "#/$defs/LocalSignatureV1"
-    },
-    "statement": {
-      "$ref": "#/$defs/LocalAttestationV1"
-    }
-  },
-  "required": [
-    "statement",
-    "signature"
-  ],
-  "title": "SignedLocalAttestationV1",
-  "type": "object"
+  }
 }

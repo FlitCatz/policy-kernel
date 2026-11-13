@@ -2,6 +2,8 @@
 use policy_native_contracts::*;
 use serde_json::json;
 use std::{error::Error, fs, path::Path};
+#[path = "../tests/support/attestation.rs"]
+mod attestation;
 #[path = "../tests/support/mod.rs"]
 mod support;
 
@@ -24,6 +26,14 @@ fn main() -> Result<(), Box<dyn Error>> {
             "local-scope-result-v1",
             schemars::schema_for!(LocalScopeResultV1),
         ),
+        (
+            "local-attestation-v1",
+            schemars::schema_for!(LocalAttestationV1),
+        ),
+        (
+            "signed-local-attestation-v1",
+            schemars::schema_for!(SignedLocalAttestationV1),
+        ),
     ] {
         write(&root.join(format!("schemas/{name}.schema.json")), &schema)?;
     }
@@ -33,5 +43,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         "command":canonical_digest(DigestRole::Command, &input)?,
         "configuration":canonical_digest(DigestRole::Configuration, &input)?});
     write(&root.join("tests/corpus/canonical-v1.json"), &vectors)?;
+    write(
+        &root.join("tests/corpus/attestation-v1.json"),
+        &attestation::corpus(),
+    )?;
+    write(
+        &root.join("tests/corpus/canonical-attestation-v1.json"),
+        &attestation::canonical_vectors(),
+    )?;
     Ok(())
 }

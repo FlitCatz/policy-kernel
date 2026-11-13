@@ -21,10 +21,7 @@ fn attestation_schemas_and_corpus_enforce_wire_and_relational_contracts() {
         ),
     ] {
         assert_eq!(
-            format!(
-                "{}\n",
-                serde_json::to_string_pretty(&serde_json::to_value(schema).unwrap()).unwrap()
-            ),
+            format!("{}\n", serde_json::to_string_pretty(&schema).unwrap()),
             committed
         );
         let schema: Value = serde_json::from_str(committed).unwrap();

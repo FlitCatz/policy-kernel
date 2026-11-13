@@ -174,10 +174,10 @@ can rely on local attestation; no v1 field is added here to imply that guarantee
 The two sibling [schemas](../../crates/policy-native-contracts/schemas/),
 [document corpus](../../crates/policy-native-contracts/tests/corpus/attestation-v1.json)
 and [canonical vectors](../../crates/policy-native-contracts/tests/corpus/canonical-attestation-v1.json)
-are generated separately:
+are generated with the other native assets:
 
 ```console
-cargo run --locked -p policy-native-contracts --example generate_attestation_assets
+cargo run --locked -p policy-native-contracts --example generate_assets
 cargo test --locked -p policy-native-contracts
 ```
 
