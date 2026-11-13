@@ -2,6 +2,10 @@
 
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
+A 2026-11-12 [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
+plans signed local-runner attestation as a weaker trust class; it is not
+implemented, see [[trust-boundaries#Planned local-runner attestation]].
+
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
 New exact native combinations/presets stop. Parser extraction merged in PR 23;
 [[native-contracts]] supplies v1 types and the importer merged in PR 25.

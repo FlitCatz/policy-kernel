@@ -9,6 +9,16 @@ native runs. It neither executes commands nor reads files, Git, reports or the
 network. It does not construct core evidence or evaluate policy. Existing core
 contracts, approved digests, five root schemas and TJERP execution are unchanged.
 
+## Planned local-runner attestation
+
+**Planned, not implemented.** The
+[2026-11-12 decision record](../decisions/2026-11-12-local-runner-attestation-adr.md)
+plans a separate sibling document carrying a signed local-runner statement, plus a
+digest of the approved scope template. The three v1 documents below and
+`policy-cli evaluate-scope` would not change: results stay `local_untrusted` with
+an unmet review gate, and the attestation would be an additional document verified
+only at the authenticated collection boundary.
+
 ## Documents and validation
 
 Each document has its own `schema_version: 1`, independent of core policy v3,
