@@ -16,15 +16,15 @@ production provider or deployment. See [[status]] for what has and has not been 
 
 ## Planned local-runner attestation
 
-A planned owner-enabled trust class `local_runner_attested` would let signed local-runner evidence support ordinary PR readiness, never shipping. Only its wire value and policy v4 contract exist.
+Core accepts `local_runner_attested` for fresh sensors and executions under explicit v4 opt-in and no CI requirement. It never permits shipping; authenticated collection and issuance remain planned.
 
 The [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 holds the threat model and the default-closed rules; the
 [trust model](../docs/trust-model.md#planned-local-runner-attestation) summarizes
 them. The authenticated collection boundary would be the only place that raises
 the class. Reviews, modifications, agent-ready and required knowledge never accept
-it, and changes to the checking system stay CI-required. Today local evidence
-remains untrusted.
+it, and changes to the checking system stay CI-required. Current local collection
+remains untrusted; core acceptance does not authenticate a submitted label.
 
 Signatures must come from a hardware security key with the user-presence flag set.
 That flag proves a touch, not which statement the owner approved, so an agent under

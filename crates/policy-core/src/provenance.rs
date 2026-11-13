@@ -258,14 +258,160 @@ pub fn validate_provenance(
     evaluation_time: &UtcTimestamp,
     max_evidence_age_seconds: u64,
 ) -> ValidationResult {
-    let mut result = validate_bundle(bundle);
-
+    // Without policy opt-in, every timestamp retains the global age limit.
+    let mut result = validate_provenance_common(
+        mode,
+        bundle,
+        evaluation_time,
+        max_evidence_age_seconds,
+        EvaluationMode::Advisory,
+    );
     if mode == EvaluationMode::Authoritative && contains_untrusted_evidence(bundle) {
         result.insert(
             "PK-PROV-UNTRUSTED",
             "authoritative evaluation requires CI-observed or trusted-runner evidence",
         );
     }
+    result
+}
+
+/// The context-free public validator stays CI-grade only. Policy opt-in is an
+/// evaluation rule, not a way to authenticate a trust assertion.
+pub(crate) fn validate_pre_merge_provenance(
+    input: &PreMergeEvaluationInput,
+) -> (ValidationResult, bool) {
+    let mut result = validate_provenance_common(
+        input.mode,
+        &input.evidence,
+        &input.evaluation_time,
+        input.policy.max_evidence_age_seconds,
+        input.mode,
+    );
+    if input.mode == EvaluationMode::Advisory {
+        return (result, false);
+    }
+    let mut local = false;
+    for (trust, local_allowed) in evidence_trusts(&input.evidence) {
+        match trust {
+            TrustClass::CiObserved | TrustClass::TrustedRunnerAttested => {}
+            TrustClass::LocalUntrusted => result.insert(
+                "PK-PROV-UNTRUSTED",
+                "authoritative evaluation requires CI-observed or trusted-runner evidence",
+            ),
+            TrustClass::LocalRunnerAttested if local_allowed => local = true,
+            TrustClass::LocalRunnerAttested => result.insert(
+                "PK-PROV-LOCAL-CLASS-INVALID",
+                "local-runner evidence is only valid for sensors and executions",
+            ),
+        }
+    }
+    if !local {
+        return (result, false);
+    }
+    let eligibility = validate_local_runner(input);
+    let accepted = eligibility.is_valid();
+    for reason in eligibility.reasons() {
+        result.insert(&reason.code, &reason.message);
+    }
+    (result, accepted)
+}
+
+fn validate_local_runner(input: &PreMergeEvaluationInput) -> ValidationResult {
+    let mut result = ValidationResult::default();
+    let Some(policy) = input
+        .policy
+        .local_runner_evidence
+        .as_ref()
+        .filter(|_| input.policy.schema_version == 4)
+    else {
+        result.insert(
+            "PK-PROV-LOCAL-NOT-ACCEPTED",
+            "local-runner evidence requires policy v4 opt-in",
+        );
+        return result;
+    };
+    let paths = input.context.as_ref().and_then(|context| {
+        context
+            .changed_paths
+            .iter()
+            .map(|path| crate::sensors::normalize_path(path))
+            .collect::<Result<Vec<_>, _>>()
+            .ok()
+    });
+    // Validate before matching: an invalid glob must never turn a CI requirement
+    // into a non-match, even when its risk restriction would not apply.
+    let ci_required = crate::sensors::validate_conditions(policy.ci_required_when.iter()).is_err()
+        || paths
+            .as_ref()
+            .zip(input.context.as_ref())
+            .is_none_or(|(paths, context)| {
+                policy.ci_required_when.iter().any(|condition| {
+                    crate::sensors::condition_matches(condition, paths, context.risk)
+                })
+            });
+    if policy.validate().is_err() || ci_required {
+        result.insert(
+            "PK-PROV-CI-REQUIRED",
+            "local-runner evidence requires valid policy conditions and a change exempt from CI",
+        );
+        return result;
+    }
+    let mut times: Vec<_> = input
+        .evidence
+        .executions
+        .iter()
+        .filter(|e| e.trust == TrustClass::LocalRunnerAttested)
+        .flat_map(|e| [&e.started_at, &e.completed_at])
+        .collect();
+    for sensor in input
+        .evidence
+        .sensors
+        .iter()
+        .filter(|sensor| sensor.trust == TrustClass::LocalRunnerAttested)
+    {
+        // Sensors have no start field. Their command digest binds the supplied
+        // execution records; checking every matching start avoids choosing a
+        // newer duplicate to conceal an expired execution.
+        let starts: Vec<_> = input
+            .evidence
+            .executions
+            .iter()
+            .filter(|execution| execution.command_digest == sensor.command_digest)
+            .map(|execution| &execution.started_at)
+            .collect();
+        if starts.is_empty() {
+            result.insert(
+                "PK-PROV-BINDING-MISSING",
+                "local-runner sensors require execution-start evidence for their command",
+            );
+        }
+        times.extend(starts);
+        times.push(&sensor.observed_at);
+    }
+    if times.into_iter().any(|timestamp| {
+        let age = input
+            .evaluation_time
+            .as_datetime()
+            .signed_duration_since(timestamp.as_datetime());
+        !age.to_std()
+            .is_ok_and(|age| age <= std::time::Duration::from_secs(policy.maximum_age_seconds))
+    }) {
+        result.insert(
+            "PK-PROV-STALE",
+            "local-runner evidence falls outside the local policy freshness window",
+        );
+    }
+    result
+}
+
+fn validate_provenance_common(
+    mode: EvaluationMode,
+    bundle: &EvidenceBundle,
+    evaluation_time: &UtcTimestamp,
+    max_evidence_age_seconds: u64,
+    freshness_mode: EvaluationMode,
+) -> ValidationResult {
+    let mut result = validate_bundle(bundle);
     if mode == EvaluationMode::Authoritative
         && (bundle.executions.iter().any(|e| e.head_sha.is_none())
             || bundle
@@ -279,7 +425,7 @@ pub fn validate_provenance(
         );
     }
 
-    if timestamps(bundle).any(|timestamp| {
+    if timestamps(bundle, freshness_mode).any(|timestamp| {
         let age = evaluation_time
             .as_datetime()
             .signed_duration_since(timestamp.as_datetime());
@@ -347,33 +493,45 @@ pub fn verifier_is_independent(
 }
 
 fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {
+    evidence_trusts(bundle).any(|(trust, _)| !is_ci_grade(trust))
+}
+
+fn evidence_trusts(bundle: &EvidenceBundle) -> impl Iterator<Item = (TrustClass, bool)> + '_ {
     bundle
         .modifications
         .iter()
-        .any(|value| !is_ci_grade(value.trust))
-        || bundle
-            .executions
-            .iter()
-            .any(|value| !is_ci_grade(value.trust))
-        || bundle.reviews.iter().any(|value| !is_ci_grade(value.trust))
-        || bundle.sensors.iter().any(|value| !is_ci_grade(value.trust))
-        || bundle
-            .knowledge
-            .iter()
-            .any(|value| !is_ci_grade(value.trust))
+        .map(|value| (value.trust, false))
+        .chain(bundle.executions.iter().map(|value| (value.trust, true)))
+        .chain(bundle.reviews.iter().map(|value| (value.trust, false)))
+        .chain(bundle.sensors.iter().map(|value| (value.trust, true)))
+        .chain(bundle.knowledge.iter().map(|value| (value.trust, false)))
 }
 
-fn timestamps(bundle: &EvidenceBundle) -> impl Iterator<Item = &UtcTimestamp> {
+pub(crate) fn uses_local_freshness(mode: EvaluationMode, trust: TrustClass) -> bool {
+    mode == EvaluationMode::Authoritative && trust == TrustClass::LocalRunnerAttested
+}
+
+fn timestamps(
+    bundle: &EvidenceBundle,
+    mode: EvaluationMode,
+) -> impl Iterator<Item = &UtcTimestamp> {
     std::iter::once(&bundle.manifest.created_at)
         .chain(bundle.modifications.iter().map(|value| &value.observed_at))
         .chain(
             bundle
                 .executions
                 .iter()
+                .filter(move |value| !uses_local_freshness(mode, value.trust))
                 .flat_map(|value| [&value.started_at, &value.completed_at]),
         )
         .chain(bundle.reviews.iter().map(|value| &value.observed_at))
-        .chain(bundle.sensors.iter().map(|value| &value.observed_at))
+        .chain(
+            bundle
+                .sensors
+                .iter()
+                .filter(move |value| !uses_local_freshness(mode, value.trust))
+                .map(|value| &value.observed_at),
+        )
         .chain(bundle.waivers.iter().map(|value| &value.issued_at))
 }
 

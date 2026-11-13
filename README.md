@@ -410,9 +410,16 @@ The additive [policy v4 contract](docs/status.md#policy-v4-local-runner-contract
 requires the same review block and optionally declares `local_runner_evidence`.
 V1–v3 reject this field and preserve their bytes and digests. Evidence schema 1
 now represents `local_runner_attested`, explicitly outside the CI-grade allowlist.
-Core evaluates valid v4 policies under the v3 readiness and shipping rules,
-does not yet enforce `local_runner_evidence`, and still rejects local-runner
-evidence; opt-in acceptance remains future work.
+Core accepts this class only for sensor and execution evidence when v4 opts in,
+no `ci_required_when` condition matches, and the local freshness window holds.
+Execution start is measured against the evaluator clock; sensor observations and
+their command-bound execution starts must be fresh. A longer local window does
+not extend the global limit for CI evidence. Invalid conditions fail closed.
+Reviews, modifications, agent-ready and knowledge never accept this class.
+The informational, digest-bound `PK-PROV-LOCAL-ATTESTED` preserves readiness but
+prevents `SHIPPED`. Advisory and `local_untrusted` behavior is unchanged.
+Attestation authentication and issuance remain follow-up work; these core rules
+do not establish real runner execution, an authoritative CI decision or promotion.
 
 ## Further reading
 
