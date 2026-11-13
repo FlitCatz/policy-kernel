@@ -13,16 +13,6 @@ pub enum TrustClass {
     TrustedRunnerAttested,
 }
 
-impl TrustClass {
-    /// Whether this class meets the kernel's CI-grade evidence requirement.
-    pub fn is_ci_grade(self) -> bool {
-        match self {
-            Self::LocalUntrusted => false,
-            Self::CiObserved | Self::TrustedRunnerAttested => true,
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecutionStatus {

@@ -1,7 +1,7 @@
 use crate::canonical_sha256;
 use policy_contracts::{
     EvaluationMode, EvidenceBundle, ModificationEvidence, PreMergeEvaluationInput, Reason,
-    ReviewEvidence, UtcTimestamp,
+    ReviewEvidence, TrustClass, UtcTimestamp,
 };
 use serde::Serialize;
 use std::collections::BTreeSet;
@@ -123,7 +123,7 @@ pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> Va
                     &format!("{description} does not bind the evaluated source set"),
                 );
             }
-            if !evidence.trust.is_ci_grade() {
+            if !is_ci_grade(evidence.trust) {
                 result.insert(
                     "PK-KNOWLEDGE-UNTRUSTED",
                     &format!("{description} requires CI observation or trusted-runner attestation"),
@@ -350,23 +350,17 @@ fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {
     bundle
         .modifications
         .iter()
-        .any(|value| !value.trust.is_ci_grade())
+        .any(|value| !is_ci_grade(value.trust))
         || bundle
             .executions
             .iter()
-            .any(|value| !value.trust.is_ci_grade())
-        || bundle
-            .reviews
-            .iter()
-            .any(|value| !value.trust.is_ci_grade())
-        || bundle
-            .sensors
-            .iter()
-            .any(|value| !value.trust.is_ci_grade())
+            .any(|value| !is_ci_grade(value.trust))
+        || bundle.reviews.iter().any(|value| !is_ci_grade(value.trust))
+        || bundle.sensors.iter().any(|value| !is_ci_grade(value.trust))
         || bundle
             .knowledge
             .iter()
-            .any(|value| !value.trust.is_ci_grade())
+            .any(|value| !is_ci_grade(value.trust))
 }
 
 fn timestamps(bundle: &EvidenceBundle) -> impl Iterator<Item = &UtcTimestamp> {
@@ -381,4 +375,11 @@ fn timestamps(bundle: &EvidenceBundle) -> impl Iterator<Item = &UtcTimestamp> {
         .chain(bundle.reviews.iter().map(|value| &value.observed_at))
         .chain(bundle.sensors.iter().map(|value| &value.observed_at))
         .chain(bundle.waivers.iter().map(|value| &value.issued_at))
+}
+
+pub(crate) fn is_ci_grade(trust: TrustClass) -> bool {
+    match trust {
+        TrustClass::LocalUntrusted => false,
+        TrustClass::CiObserved | TrustClass::TrustedRunnerAttested => true,
+    }
 }

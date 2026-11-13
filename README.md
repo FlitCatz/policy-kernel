@@ -260,8 +260,7 @@ cargo test --locked -p xtask
 The suite covers all five core authorization modules, controller and
 workflow-source. It rejects unviable, missed, timed-out or incomplete results and
 checks the unfiltered inventory against every native and typed replacement
-execution. Builds and tests use one mutation worker at a time. Use a new output
-directory each time. The per-inventory
+execution. Use a new output directory each time. The per-inventory
 `check-mutation-results OUTCOMES [--scope core|controller|workflow-source]` command
 defaults to core; it cannot establish full-suite completion on its own. See the
 [mutation contract and commands](docs/promotion.md#mutation-generation-and-execution-contract).

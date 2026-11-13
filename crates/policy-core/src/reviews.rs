@@ -270,8 +270,14 @@ pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
 
 fn validate_review_provenance(input: &ReviewEvaluationInput, reasons: &mut Vec<Reason>) {
     if input.mode == EvaluationMode::Authoritative
-        && (input.reviews.iter().any(|r| !r.trust.is_ci_grade())
-            || input.modifications.iter().any(|m| !m.trust.is_ci_grade()))
+        && (input
+            .reviews
+            .iter()
+            .any(|r| !crate::provenance::is_ci_grade(r.trust))
+            || input
+                .modifications
+                .iter()
+                .any(|m| !crate::provenance::is_ci_grade(m.trust)))
     {
         insert_reason(
             reasons,

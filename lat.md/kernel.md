@@ -89,7 +89,7 @@ Evidence children must match their manifest digests and head; authoritative eval
 
 Bundle integrity [[crates/policy-core/src/provenance.rs#validate_bundle]]; trust, freshness and head presence [[crates/policy-core/src/provenance.rs#validate_provenance]]; required knowledge [[crates/policy-core/src/provenance.rs#validate_required_knowledge]].
 
-[[crates/policy-contracts/src/evidence.rs#TrustClass#is_ci_grade]] explicitly allows
+[[crates/policy-core/src/provenance.rs#is_ci_grade]] explicitly allows
 CI observations and trusted-runner attestations. Its exhaustive match requires a
 decision for every future trust class. Provenance, required knowledge, reviews,
 modifications and agent-ready observations share this predicate.
@@ -202,8 +202,6 @@ See [contract and limits](../docs/integrations/consumer-schema3.md#compiler-gene
 Authorization modules, including sensor evaluation, must have every selected mutant built and caught; typed replacements stand in for uncompilable generator forms.
 
 Scope and result validation [[xtask/src/verification.rs#mutation_scope]]; the contract is [verification/mutation-contract.json](../verification/mutation-contract.json).
-
-The mutation runner executes one worker at a time so builds and tests remain sequential.
 
 ## Split-consumer conformance
 
