@@ -282,21 +282,28 @@ fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError
                 sensor.id.to_string(),
             ));
         }
-        let mut conditions = BTreeSet::new();
-        for condition in sensor
-            .required_when
-            .iter()
-            .chain(&sensor.not_applicable_when)
-        {
-            if condition.id.trim().is_empty() || !conditions.insert(condition.id.as_str()) {
-                return Err(SensorResolutionError::InvalidCondition(
-                    condition.id.clone(),
-                ));
-            }
-            for pattern in &condition.path_globs {
-                path_glob(pattern)
-                    .map_err(|_| SensorResolutionError::InvalidGlob(pattern.clone()))?;
-            }
+        validate_conditions(
+            sensor
+                .required_when
+                .iter()
+                .chain(&sensor.not_applicable_when),
+        )?;
+    }
+    Ok(())
+}
+
+pub(crate) fn validate_conditions<'a>(
+    conditions: impl Iterator<Item = &'a SensorCondition>,
+) -> Result<(), SensorResolutionError> {
+    let mut ids = BTreeSet::new();
+    for condition in conditions {
+        if condition.id.trim().is_empty() || !ids.insert(condition.id.as_str()) {
+            return Err(SensorResolutionError::InvalidCondition(
+                condition.id.clone(),
+            ));
+        }
+        for pattern in &condition.path_globs {
+            path_glob(pattern)?;
         }
     }
     Ok(())
@@ -314,7 +321,7 @@ pub(crate) fn normalize_path(path: &str) -> Result<String, SensorResolutionError
         .join("/"))
 }
 
-fn condition_matches(condition: &SensorCondition, paths: &[String], risk: Risk) -> bool {
+pub(crate) fn condition_matches(condition: &SensorCondition, paths: &[String], risk: Risk) -> bool {
     let risk_matches = condition.risks.is_empty() || condition.risks.contains(&risk);
     let path_matches = condition.path_globs.is_empty()
         || condition.path_globs.iter().any(|pattern| {

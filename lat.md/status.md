@@ -4,7 +4,8 @@ The current-state authority is [docs/status.md](../docs/status.md); this page on
 
 A 2026-11-12 [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 plans signed local-runner attestation as a weaker trust class. Its wire class and
-policy v4 contract exist; authenticated acceptance remains unimplemented. Sibling structural contracts are
+policy v4 contract and core opt-in acceptance exist; authenticated collection and
+issuance remain unimplemented. Local-class readiness cannot ship. Sibling structural contracts are
 described below. See [[trust-boundaries#Planned local-runner attestation]].
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
