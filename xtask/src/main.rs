@@ -7,11 +7,13 @@ use schemars::JsonSchema;
 use serde_json::{Map, Value};
 use std::{env, fs, io::Write, path::Path};
 mod mutation_suite;
+mod release;
 mod verification;
 
 fn main() -> std::process::ExitCode {
     let args: Vec<String> = env::args().skip(1).collect();
     let result = match args.as_slice() {
+        [command, input, output, commit] if command == "release-assets" => release::assets(Path::new(input), Path::new(output), commit),
         [command] if command == "schema" => generate_schemas().map_err(|e| e.to_string()),
         [command, path] if command == "run-mutation-suite" => mutation_suite::run(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap(), Path::new(path), false),
         [command, path] if command == "run-mutation-repairs" => mutation_suite::run(Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap(), Path::new(path), true),
@@ -22,7 +24,7 @@ fn main() -> std::process::ExitCode {
         [command] if command == "check-residue" => verification::residue(Path::new(env!("CARGO_MANIFEST_DIR")).join("..").as_path()),
         [command, docs, schemas] if command == "check-public-api" => verification::public_api(Path::new(docs), Path::new(schemas)),
         [command, rest @ ..] if command == "rollback-drill" => verification::rollback(rest),
-        _ => Err("usage: xtask schema | run-mutation-suite NEW_OUTPUT | run-mutation-repairs NEW_OUTPUT | check-mutation-suite OUTPUT | check-mutation-results OUTCOMES [--scope core|controller|workflow-source] | check-residue [REPO] | check-public-api DOCS SCHEMAS | rollback-drill --baseline FILE --promoted FILE --restored FILE --evidence-before FILE --evidence-after FILE".into()),
+        _ => Err("usage: xtask release-assets INPUT OUTPUT COMMIT | schema | run-mutation-suite NEW_OUTPUT | run-mutation-repairs NEW_OUTPUT | check-mutation-suite OUTPUT | check-mutation-results OUTCOMES [--scope core|controller|workflow-source] | check-residue [REPO] | check-public-api DOCS SCHEMAS | rollback-drill --baseline FILE --promoted FILE --restored FILE --evidence-before FILE --evidence-after FILE".into()),
     };
     match result {
         Ok(()) => std::process::ExitCode::SUCCESS,

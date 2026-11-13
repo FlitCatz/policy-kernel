@@ -836,6 +836,8 @@ dependencies = [
 name = "policy-native-importer"
 version = "0.1.0"
 dependencies = [
+ "assert_cmd",
+ "clap",
  "evidence-collector",
  "hex",
  "policy-cli",

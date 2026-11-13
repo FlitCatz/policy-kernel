@@ -39,6 +39,21 @@ are preserved. Adapter repository ownership/support and PR 14 compatibility
 end conditions remain open. No new native adoption, authoritative decision,
 protected merge or production promotion is established.
 
+## Native binary distribution
+
+The Unix `policy-native-importer` command delegates to the existing adapter
+library and exports `ImportedObservationsV1` only on verified imports. Its exits
+are 0 (verified), 2 (persisted rejection) and 64 (invalid input/output error).
+The separate binary preserves the JSON-only `policy-cli` dependency boundary.
+The [version-tag workflow](../.github/workflows/release-binaries.yml) builds both
+commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
+`x86_64-unknown-linux-gnu`, packaging four executables, `SHA256SUMS` and
+`SOURCE_COMMIT`. [Consumer instructions](integrations/native-contracts-v1.md#pinned-binary-releases)
+describe version and checksum pins. This is implementation of the distribution
+path, not a published release: the owner must cut the first tag after merge.
+No hosted release execution, TJERPS adoption, authoritative decision or production
+promotion is established by this change.
+
 ## Policy v3 review quorum
 
 The [review contract](trust-model.md) binds approving-review quorum and allowed

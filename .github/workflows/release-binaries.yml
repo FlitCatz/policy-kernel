@@ -1,0 +1,89 @@
+name: Pinned native binaries
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/release-binaries.yml'
+      - 'crates/policy-cli/**'
+      - 'crates/policy-native-importer/**'
+      - 'xtask/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'rust-toolchain.toml'
+  push:
+    tags: ['v[0-9]*']
+permissions:
+  contents: read
+concurrency:
+  group: native-release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            target: aarch64-apple-darwin
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Pinned release compiler
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal --target '${{ matrix.target }}' --no-self-update
+          echo "RUSTC=$(rustup which --toolchain 1.95.0 rustc)" >> "$GITHUB_ENV"
+          echo "RUSTDOC=$(rustup which --toolchain 1.95.0 rustdoc)" >> "$GITHUB_ENV"
+      - name: Build locked native commands
+        run: rustup run 1.95.0 cargo build --locked --release --target '${{ matrix.target }}' -p policy-cli -p policy-native-importer --bins
+      - name: Smoke test native commands
+        run: |
+          target/${{ matrix.target }}/release/policy-cli --version
+          target/${{ matrix.target }}/release/policy-native-importer --help
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.target }}
+          path: |
+            target/${{ matrix.target }}/release/policy-cli
+            target/${{ matrix.target }}/release/policy-native-importer
+          if-no-files-found: error
+          retention-days: 7
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          path: native-artifacts
+          pattern: '*-*-*'
+      - name: Pinned packaging compiler
+        run: |
+          rustup toolchain install 1.95.0 --profile minimal --no-self-update
+          echo "RUSTC=$(rustup which --toolchain 1.95.0 rustc)" >> "$GITHUB_ENV"
+          echo "RUSTDOC=$(rustup which --toolchain 1.95.0 rustdoc)" >> "$GITHUB_ENV"
+      - name: Package binaries, source commit and SHA-256 manifest
+        run: rustup run 1.95.0 cargo run --locked -p xtask -- release-assets native-artifacts dist "$GITHUB_SHA"
+      - name: Publish complete versioned release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" dist/* --verify-tag --target "$GITHUB_SHA" --title "$RELEASE_TAG" --notes-file dist/SOURCE_COMMIT --draft
+          gh release edit "$RELEASE_TAG" --draft=false

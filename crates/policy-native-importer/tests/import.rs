@@ -150,6 +150,90 @@ impl Fixture {
 }
 
 #[test]
+fn native_import_command_exports_only_verified_observations() {
+    for rejected in [false, true] {
+        let f = Fixture::new(ReportFormat::VitestJson);
+        let root = f.temp.path().canonicalize().unwrap();
+        let expected = root.join("approved.json");
+        let run = root.join("native-run.json");
+        fs::write(&expected, serde_json::to_vec(&f.expected).unwrap()).unwrap();
+        fs::write(&run, serde_json::to_vec(&f.run).unwrap()).unwrap();
+        if rejected {
+            fs::write(f.input.join("raw.json"), b"changed raw bytes").unwrap();
+        }
+        let mut command =
+            assert_cmd::Command::new(assert_cmd::cargo::cargo_bin!("policy-native-importer"));
+        command
+            .arg("--run-directory")
+            .arg(&f.input)
+            .arg("--output")
+            .arg(f.output())
+            .arg("--expected")
+            .arg(&expected)
+            .arg("--run")
+            .arg(&run)
+            .arg("--run-id")
+            .arg(f.identity.run_id.as_str())
+            .arg("--scope-id")
+            .arg(f.identity.scope_id.as_str());
+        command.assert().code(if rejected { 2 } else { 0 });
+        assert!(f.output().join("complete").is_file());
+        assert!(f.output().join("import.json").is_file());
+        assert_eq!(f.output().join("observations.json").exists(), !rejected);
+        if !rejected {
+            let observations = fs::read(f.output().join("observations.json")).unwrap();
+            let (result, code) =
+                policy_cli::evaluate_scope_json(&fs::read(&expected).unwrap(), &observations)
+                    .unwrap();
+            assert_eq!(code, 0);
+            assert_eq!(result.trust, LocalTrust::LocalUntrusted);
+            assert_eq!(result.review, ReviewGate::Unmet);
+        }
+        let record = fs::read(f.output().join("import.json")).unwrap();
+        command.assert().code(64);
+        assert_eq!(fs::read(f.output().join("import.json")).unwrap(), record);
+    }
+}
+
+#[test]
+fn native_import_command_requires_independent_identity_and_valid_documents() {
+    let f = Fixture::new(ReportFormat::VitestJson);
+    let root = f.temp.path().canonicalize().unwrap();
+    let expected = root.join("approved.json");
+    let run = root.join("native-run.json");
+    fs::write(&expected, serde_json::to_vec(&f.expected).unwrap()).unwrap();
+    fs::write(&run, serde_json::to_vec(&f.run).unwrap()).unwrap();
+    let mut command =
+        assert_cmd::Command::new(assert_cmd::cargo::cargo_bin!("policy-native-importer"));
+    command
+        .arg("--run-directory")
+        .arg(&f.input)
+        .arg("--output")
+        .arg(f.output())
+        .arg("--expected")
+        .arg(&expected)
+        .arg("--run")
+        .arg(&run);
+    command.assert().code(64);
+    assert!(!f.output().exists());
+    command
+        .args(["--run-id", "independently-wrong-run", "--scope-id"])
+        .arg(f.identity.scope_id.as_str());
+    command.assert().code(2);
+    assert!(!f.output().join("observations.json").exists());
+    let mut value = serde_json::to_value(&f.run).unwrap();
+    value["unknown"] = json!(true);
+    fs::write(&run, serde_json::to_vec(&value).unwrap()).unwrap();
+    command.assert().code(64);
+    for arg in ["--help", "--version"] {
+        assert_cmd::Command::new(assert_cmd::cargo::cargo_bin!("policy-native-importer"))
+            .arg(arg)
+            .assert()
+            .success();
+    }
+}
+
+#[test]
 fn shared_corpus_imports_all_formats_and_preserves_exact_bytes() {
     for format in [
         ReportFormat::VitestJson,

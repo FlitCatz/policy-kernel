@@ -191,7 +191,8 @@ authoritative readiness or promotion.
 ## Adapter import library (PR 4)
 
 `policy-native-importer::import_run(run_directory, output_directory, expected,
-identity, run)` is a Unix library, with no CLI or exit-code contract. It never
+identity, run)` is a Unix library, also exposed by the `policy-native-importer`
+command described below. It never
 executes argv, selects tools, reads Git, downloads artifacts, converts evidence or
 constructs `LocalScopeResultV1`. Kernel crates do not depend on it. The existing
 runner, core contracts, schemas, mutation pins and TJERP paths are unchanged.
@@ -277,6 +278,83 @@ does not establish native adoption, authoritative CI or promotion.
 ```console
 cargo test --locked -p policy-native-importer
 ```
+
+## Native import command
+
+The Unix `policy-native-importer` binary calls `import_run` directly; it does not
+implement a second validator. It is separate from `policy-cli` to preserve the
+existing dependency direction: the JSON-only CLI and kernel verifier do not
+depend on the importer or report adapters. Both binaries ship in the release.
+
+Keep the typed input documents outside the artifact-only run directory. Obtain
+the approved scope, run ID, scope ID and evaluation time independently of the
+producer's run document; copying those expectations from the run defeats replay
+checking. Quiesce the artifact directory before importing. The output parent
+must exist, its path components must be symlink-free, and the output must be a
+fresh directory disjoint from the run directory.
+
+```sh
+policy-native-importer --run-directory native-artifacts --output imported-run \
+  --expected approved-scope.json --run native-run.json \
+  --run-id independently-expected-run --scope-id independently-expected-scope
+policy-cli evaluate-scope --expected approved-scope.json \
+  --observations imported-run/observations.json
+```
+
+Importer exits are **0** for a persisted verified import, **2** for a persisted
+rejected import with issues, and **64** for arguments, typed JSON, identity or
+filesystem/output errors. Help/version exit 0. JSON inputs are file paths only;
+stdin is not supported. The importer writes no stdout; inspect `import.json` for
+issues. Only exit 0 exports `observations.json`. A completed rejected import still
+has `complete`; a filesystem error may leave a partial output directory. No
+existing output is overwritten. A verified import can contain valid failed tests:
+exit 0 is not a satisfied scope, and scope evaluation remains a separate step.
+
+## Pinned binary releases
+
+The [release workflow](../../.github/workflows/release-binaries.yml) builds both
+commands with Rust **1.95.0**, `--locked` and `--release` on native macOS arm64 and
+Linux x64 runners. An owner-created `v[0-9]*` tag triggers publication. No initial
+release is claimed here; the owner cuts it after merge. Linux binaries are built
+on Ubuntu 22.04 (glibc 2.35); they are GNU/glibc binaries, not musl binaries.
+macOS binaries are built on macOS 15 arm64. CI smoke tests each native command.
+
+Each version has four raw executable assets:
+`policy-cli-<target>` and `policy-native-importer-<target>`, for targets
+`aarch64-apple-darwin` and `x86_64-unknown-linux-gnu`. `SOURCE_COMMIT` records the
+full source commit; `SHA256SUMS` covers all four executables and that record.
+The Rust packager `xtask release-assets INPUT OUTPUT COMMIT` requires both targets,
+copies exact bytes into a fresh output directory, and hashes those bytes. Its
+input layout is `INPUT/<target>/<command>`. The workflow creates a draft only
+after both builds succeed, uploads all assets, then makes the release public.
+
+After a release exists, replace `vX.Y.Z` with the reviewed exact tag and select
+the target explicitly. The URL pattern is
+`https://github.com/FlitCatz/policy-kernel/releases/download/<tag>/<asset>`.
+Run in a fresh download directory:
+
+```sh
+set -eu
+tag=vX.Y.Z
+target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
+base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
+for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
+  curl --fail --location --output "$file" "$base/$file"
+done
+shasum -a 256 --check --strict --ignore-missing SHA256SUMS
+# Linux alternative: sha256sum --check --strict --ignore-missing SHA256SUMS
+install_dir="$HOME/.local/bin"
+mkdir -p "$install_dir"
+install -m 755 "policy-cli-$target" "$install_dir/policy-cli"
+install -m 755 "policy-native-importer-$target" "$install_dir/policy-native-importer"
+```
+
+Check `SOURCE_COMMIT` against the reviewed tag's commit. Pin the exact tag and
+the two platform-specific SHA-256 values from the reviewed manifest in consumer
+configuration. For recurring CI installs, verify against those committed checksum
+entries; do not use `latest` or build from source on every run. Downloaded
+checksums detect byte corruption but do not independently authenticate the release
+publisher. Binary distribution does not promote observations or grant readiness.
 
 ## Kernel verifier and local command
 

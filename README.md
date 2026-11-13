@@ -211,7 +211,7 @@ supplied decision.
 | `evidence-collector` | Bounded explicit-argv execution with artifact digests. |
 | `github-adapter` | GitHub observation and process adapter used by CI integration. |
 | `project-verification` | Profile validation, preparation, execution, and report normalization. |
-| `policy-native-importer` | Unix adapter library: raw artifact/subject verification, shared-parser recomputation and failure retention; no scope decision. |
+| `policy-native-importer` | Unix adapter library and command: raw artifact/subject verification, shared-parser recomputation and failure retention; no scope decision. |
 | `policy-report-adapters` | Shared TRX, Vitest, Jest, and Playwright readers; re-exported by `project_verification::reports`. |
 | `policy-bootstrap` | Transactional profile installation, recovery, and uninstall. |
 | `policy-acceptance` | Rust harness that stages and exercises native consumer fixtures. |
@@ -418,11 +418,14 @@ See the [review requirements and migration](docs/trust-model.md).
 
 ## Native local scope
 
-After an adapter calls `policy-native-importer::import_run` successfully, evaluate
-its exported observations against the independently approved expectation:
+Import a quiescent artifact-only run directory with independently approved scope
+and run/scope IDs, then evaluate the exported observations:
 
 ```sh
-cargo run --locked -p policy-cli -- evaluate-scope \
+policy-native-importer --run-directory native-artifacts --output imported-run \
+  --expected approved-scope.json --run native-run.json \
+  --run-id independently-expected-run --scope-id independently-expected-scope
+policy-cli evaluate-scope \
   --expected approved-scope.json --observations imported-run/observations.json
 ```
 
@@ -433,8 +436,48 @@ typed consistency, not raw artifact authenticity, and never produces a pre-merge
 or ReadyToMerge decision. Existing `evaluate-pre` exit codes remain 0/2/3/64.
 See the [native contract reference](docs/integrations/native-contracts-v1.md).
 
+The importer command delegates to the Unix library. Its separate binary preserves
+the JSON-only CLI's dependency boundary. It exits **0** for a verified import,
+**2** for a persisted rejection with `import.json` issues, and **64** for invalid
+arguments/documents or filesystem errors. Only verified imports export
+`observations.json`; exit 0 does not itself mean scope satisfaction. Input JSON
+files stay outside the artifact directory; output must be fresh and disjoint,
+with an existing symlink-free parent. See the [command contract](docs/integrations/native-contracts-v1.md#native-import-command).
+
 The additive `LocalAttestationV1` statement and `SignedLocalAttestationV1`
 envelope define local-runner wire data and structural checks. Scope-template
 digests exclude the source subject and evaluation clock. These contracts do not
 sign, verify signatures or authorize readiness; existing scope documents and
 schemas remain unchanged.
+
+### Install pinned native binaries
+
+The [release workflow](.github/workflows/release-binaries.yml) builds both commands
+with Rust 1.95.0 and `--locked` for macOS arm64 and Linux x64. The owner will cut
+the first version tag after merge; this change does not claim a published release.
+Assets include both executables per target, `SHA256SUMS` and `SOURCE_COMMIT`.
+Linux builds use Ubuntu 22.04/glibc 2.35; macOS builds use macOS 15.
+
+After publication, replace `vX.Y.Z` with a reviewed exact tag. In a fresh directory:
+
+```sh
+set -eu
+tag=vX.Y.Z
+target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
+base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
+for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
+  curl --fail --location --output "$file" "$base/$file"
+done
+shasum -a 256 --check --strict --ignore-missing SHA256SUMS
+# Linux alternative: sha256sum --check --strict --ignore-missing SHA256SUMS
+install_dir="$HOME/.local/bin"
+mkdir -p "$install_dir"
+install -m 755 "policy-cli-$target" "$install_dir/policy-cli"
+install -m 755 "policy-native-importer-$target" "$install_dir/policy-native-importer"
+```
+
+Check `SOURCE_COMMIT` against the reviewed tag commit and pin that tag plus both
+platform SHA-256 values in consumer configuration. For recurring CI installs,
+verify against those committed checksum entries. Avoid `latest` and per-run
+source builds. A downloaded checksum verifies bytes, not publisher authenticity.
+See the [release contract](docs/integrations/native-contracts-v1.md#pinned-binary-releases).
