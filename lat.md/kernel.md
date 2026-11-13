@@ -100,10 +100,11 @@ NUL-containing patterns as well as unsupported glob syntax.
 
 ## Local-runner policy contract
 
-Policy v4 optionally declares local-runner settings and requires the v3 review block. Earlier versions reject the new field; legacy serialization and digests stay unchanged. The new evidence class is not CI-grade and has no acceptance path yet.
+Policy v4 optionally declares local-runner settings and requires the v3 review block; earlier versions reject the field. Core evaluates v4 under v3 rules without enforcing the block, and the new evidence class is not CI-grade.
 
 Version validation [[crates/policy-contracts/src/policy.rs#PolicySnapshot#validate_version]]
-keeps each optional v4 extension independent. Structural validation
+keeps each optional v4 extension independent; legacy serialization and digests
+stay unchanged. Structural validation
 [[crates/policy-contracts/src/policy.rs#LocalRunnerEvidencePolicy#validate]] requires
 nonempty unique nonblank runner IDs without NUL, nonempty scope-template digests
 and a positive age. The required conditions list reuses

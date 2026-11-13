@@ -382,7 +382,8 @@ digest는 유지되지만, 새 digest 및 결합된 증거를 갖춘 v3로 명�
 필수로 유지하고 `local_runner_evidence`를 선택 필드로 선언합니다. V1–v3는 이 필드를
 거부하며 기존 바이트와 digest를 유지합니다. 증거 schema 1은 이제
 `local_runner_attested`를 표현하지만, 이 등급은 CI급 허용 목록에 포함되지 않습니다.
-Core의 정책 v4 및 로컬 실행기 증거 수용은 후속 작업입니다.
+Core는 유효한 정책 v4를 v3의 준비 및 배포 규칙으로 평가하고, `local_runner_evidence`는
+아직 적용하지 않으며, 로컬 실행기 증거는 계속 거부합니다. 옵트인 수용은 후속 작업입니다.
 
 ## 추가 문서
 

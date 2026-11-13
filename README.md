@@ -410,7 +410,9 @@ The additive [policy v4 contract](docs/status.md#policy-v4-local-runner-contract
 requires the same review block and optionally declares `local_runner_evidence`.
 V1–v3 reject this field and preserve their bytes and digests. Evidence schema 1
 now represents `local_runner_attested`, explicitly outside the CI-grade allowlist.
-Core acceptance of policy v4 and local-runner evidence remains future work.
+Core evaluates valid v4 policies under the v3 readiness and shipping rules,
+does not yet enforce `local_runner_evidence`, and still rejects local-runner
+evidence; opt-in acceptance remains future work.
 
 ## Further reading
 

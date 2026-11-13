@@ -74,8 +74,9 @@ allowed). Explicit `null` is invalid in v4 too.
 The [evidence schema](../schemas/evidence-bundle.schema.json) adds
 `local_runner_attested` while retaining evidence schema version 1 and existing
 document digests. This class is explicitly not CI-grade. These additions validate
-contract structure only: the core still requires policy v3 for readiness and
-shipping and rejects local-runner evidence in authoritative evaluation.
+contract structure only: the core evaluates a valid v4 policy under the existing
+v3 readiness and shipping rules, does not yet enforce `local_runner_evidence`, and
+still rejects `local_runner_attested` evidence in authoritative evaluation.
 Authentication and opt-in acceptance are later work; no authoritative decision,
 protected merge or production promotion is established here.
 
