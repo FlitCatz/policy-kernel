@@ -1,5 +1,6 @@
 //! Identity/attempt projection supplements the shared parser's normalized output.
 //! Outcomes, counts, normalized IDs and report validity come only from that parser.
+use policy_contracts::SensorId;
 use policy_native_contracts::*;
 use policy_report_adapters::{parse_report, ParsedReport, ReportFormat};
 use serde_json::Value;
@@ -35,12 +36,13 @@ fn identity(a: &str, b: &str) -> RecordId {
 }
 
 pub(crate) fn recompute(
-    claim: &TestObservationV1,
+    observation_id: &SensorId,
+    parser: &ParserBindingV1,
+    raw_report: &ArtifactRefV1,
     bytes: &[u8],
 ) -> Result<(ParsedReport, TestObservationV1)> {
-    let format = format(&claim.parser)?;
-    let parsed =
-        parse_report(format, claim.observation_id.as_str(), bytes).map_err(|e| e.to_string())?;
+    let format = format(parser)?;
+    let parsed = parse_report(format, observation_id.as_str(), bytes).map_err(|e| e.to_string())?;
     let mut identities = Vec::new();
     if format == ReportFormat::Trx {
         let text = std::str::from_utf8(bytes).map_err(|e| e.to_string())?;
@@ -139,9 +141,9 @@ pub(crate) fn recompute(
         })
         .collect();
     let recomputed = TestObservationV1 {
-        observation_id: claim.observation_id.clone(),
-        parser: claim.parser.clone(),
-        raw_report: claim.raw_report.clone(),
+        observation_id: observation_id.clone(),
+        parser: parser.clone(),
+        raw_report: raw_report.clone(),
         counts: TestCountsV1 {
             discovered: parsed.discovered,
             executed: parsed.executed,

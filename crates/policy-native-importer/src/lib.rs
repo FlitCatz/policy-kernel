@@ -7,6 +7,10 @@ mod fs;
 mod reports;
 
 #[cfg(unix)]
+mod claims;
+#[cfg(unix)]
 mod importer;
+#[cfg(unix)]
+pub use claims::*;
 #[cfg(unix)]
 pub use importer::*;

@@ -217,7 +217,7 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 | `evidence-collector` | 명시된 argv 실행을 제한하고 아티팩트 digest를 수집 |
 | `github-adapter` | CI 통합에 사용하는 GitHub 관측 및 프로세스 어댑터 |
 | `project-verification` | 프로젝트 프로필 검증·준비·실행·보고서 정규화 |
-| `policy-native-importer` | Unix adapter 라이브러리: 원본·subject 검증, 공용 parser 재계산과 실패 자료 보존; scope 판정 없음 |
+| `policy-native-importer` | Unix adapter 라이브러리와 명령: 원본·subject 검증, 공용 parser 재계산과 실패 자료 보존; scope 판정 없음 |
 | `policy-report-adapters` | 공용 TRX·Vitest·Jest·Playwright reader; `project_verification::reports`에서 재노출 |
 | `policy-bootstrap` | 프로필의 트랜잭션 설치·복구·제거 |
 | `policy-acceptance` | 네이티브 소비 프로젝트 fixture를 stage하고 실행하는 Rust harness |
@@ -390,11 +390,14 @@ digest는 유지되지만, 새 digest 및 결합된 증거를 갖춘 v3로 명�
 
 ## Native 로컬 scope
 
-Adapter가 `policy-native-importer::import_run`을 성공적으로 수행한 뒤,
-내보낸 관찰을 독립적으로 승인한 기대값과 비교합니다.
+독립적으로 승인한 scope와 run/scope ID를 사용하여 쓰기가 끝난 artifact 전용
+디렉터리를 import한 뒤, 내보낸 관찰을 평가합니다.
 
 ```sh
-cargo run --locked -p policy-cli -- evaluate-scope \
+policy-native-importer --run-directory native-artifacts --output imported-run \
+  --expected approved-scope.json --run native-run.json \
+  --run-id independently-expected-run --scope-id independently-expected-scope
+policy-cli evaluate-scope \
   --expected approved-scope.json --observations imported-run/observations.json
 ```
 
@@ -405,7 +408,75 @@ JSON 전용 명령은 typed 일관성을 검사하며 원본 진위를 인증하
 Pre-merge 또는 ReadyToMerge 판정을 만들지 않으며 기존 `evaluate-pre`의
 0/2/3/64 종료 코드는 유지합니다. [Native 계약 안내](docs/integrations/native-contracts-v1.md)를 참고하세요.
 
+Importer 명령은 Unix 라이브러리에 위임합니다. 별도 바이너리를 사용하여 JSON 전용
+CLI의 의존성 경계를 유지합니다. 종료 코드는 **0** 검증된 import, **2** issue를
+`import.json`에 보존한 거절, **64** 잘못된 인자·문서 또는 파일시스템 오류입니다.
+검증된 import만 `observations.json`을 내보내며, 종료 0 자체가 scope 충족을
+뜻하지는 않습니다. 입력 JSON은 artifact 디렉터리 밖에 두고, output은 기존
+symlink 없는 부모 아래에 새로 만들며 입력과 겹치지 않아야 합니다.
+[명령 계약](docs/integrations/native-contracts-v1.md#native-import-command)을 참고하세요.
+
+`test_observations`와 `mappings`가 빈 envelope에는 반복 가능한
+`--report OBSERVATION=ARTIFACT` 옵션으로 importer와 같은 TRX·Vitest·Playwright
+parser를 사용해 typed claim을 생성할 수 있습니다. Artifact와 원본 바이트 digest는
+미리 선언해야 합니다. `--map REQUIREMENT=SUITE`는 해당 suite의 실행된 모든 테스트가
+요구사항을 다룬다는 명시적 주장입니다. 같은 요구사항에 여러 suite를 연결하려면
+반복해서 지정합니다. Mapping을 자동 추론하지 않습니다. 생성한 claim은
+`imported-run/run.json`에 보존하고 정상 import 검증을 거칩니다.
+소비 프로젝트에 Rust 코드나 별도 report parser가 필요하지 않습니다.
+
+원본 report 하나는 observation 하나에 대응합니다. 여러 프로젝트를 실행한
+`dotnet test`는 TRX마다 별도 observation을 만들고, 프로젝트별 observation/execution
+ID와 `ExpectedScopeV1`의 독립적으로 승인한 suite/parser binding을 사용합니다:
+
+```sh
+policy-native-importer --run-directory native-artifacts --output imported-run \
+  --expected approved-scope.json --run native-run.json \
+  --run-id independently-expected-run --scope-id independently-expected-scope \
+  --report backend-domain=domain-trx --report backend-api=api-trx \
+  --map AC-1=backend-domain --map AC-1=backend-api
+```
+
+Report/observation 중복 선택, 안전하지 않은 경로, hash 불일치, 잘못된 report는
+출력을 만들기 전에 종료 64로 거절합니다. 실패 테스트와 parser 수준 실패는
+scope 평가에서도 non-pass로 유지합니다.
+[Claim 생성 안내](docs/integrations/native-contracts-v1.md#claim-preparation-from-raw-reports)를 참고하세요.
+
 추가된 `LocalAttestationV1` 진술과 `SignedLocalAttestationV1` 봉투는 로컬 실행기의
 전송 데이터와 구조 검증을 정의합니다. Scope-template digest는 source subject와
 평가 시각을 제외합니다. 이 계약은 서명·서명 검증·readiness 권한 부여를 수행하지
 않으며 기존 scope 문서와 스키마는 유지합니다.
+
+### 고정된 native 바이너리 설치
+
+[Release workflow](.github/workflows/release-binaries.yml)는 Rust 1.95.0과
+`--locked`로 macOS arm64와 Linux x64용 두 명령을 빌드합니다. 소유자가 merge
+후 첫 버전 태그를 만들 예정이며, 이 변경은 릴리스가 이미 게시되었다고 주장하지
+않습니다. 각 target의 실행 파일 두 개와 `SHA256SUMS`, `SOURCE_COMMIT`를
+게시합니다. Linux 빌드는 Ubuntu 22.04/glibc 2.35, macOS 빌드는 macOS 15를
+사용합니다.
+
+게시 후 `vX.Y.Z`를 검토한 정확한 태그로 바꾸고 빈 다운로드 디렉터리에서 실행합니다:
+
+```sh
+set -eu
+tag=vX.Y.Z
+target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
+base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
+for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
+  curl --fail --location --output "$file" "$base/$file"
+done
+shasum -a 256 --check --strict --ignore-missing SHA256SUMS
+# Linux alternative: sha256sum --check --strict --ignore-missing SHA256SUMS
+install_dir="$HOME/.local/bin"
+mkdir -p "$install_dir"
+install -m 755 "policy-cli-$target" "$install_dir/policy-cli"
+install -m 755 "policy-native-importer-$target" "$install_dir/policy-native-importer"
+```
+
+`SOURCE_COMMIT`가 검토한 태그의 커밋과 같은지 확인하고, 소비 프로젝트 설정에
+태그와 해당 플랫폼 실행 파일 두 개의 SHA-256을 고정하세요. 반복 CI 설치에서는
+버전 관리에 저장한 checksum 항목으로 검증하세요. `latest`나 실행마다
+소스 빌드하는 방식은 사용하지 않습니다. 다운로드한 checksum은 바이트를 검증하며
+게시자의 진위를 독립적으로 인증하지는 않습니다.
+[릴리스 계약](docs/integrations/native-contracts-v1.md#pinned-binary-releases)을 참고하세요.

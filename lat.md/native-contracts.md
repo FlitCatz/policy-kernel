@@ -69,6 +69,52 @@ Nested roots [[crates/policy-native-importer/tests/import.rs#nested_artifacts_an
 and missing-report process errors [[crates/policy-native-importer/tests/import.rs#failed_process_logs_survive_even_when_no_raw_report_was_produced]]
 retain diagnostics without a weaker symlink path or empty success record.
 
+## Native command distribution
+
+The Unix importer command delegates raw verification to the adapter library. Tagged native releases package it with the JSON-only scope CLI, SHA-256 checksums and the source commit; publication awaits an owner-created tag.
+
+Command [[crates/policy-native-importer/src/main.rs#main]] calls
+[[crates/policy-native-importer/src/importer.rs#import_run]] without a second
+validator. It exits 0 for verified imports, 2 for persisted rejected imports and
+64 for input/output errors; only verified imports export observations. The
+separate binary preserves existing internal dependency directions.
+Command conformance
+[[crates/policy-native-importer/tests/import.rs#native_import_command_exports_only_verified_observations]]
+and [[crates/policy-native-importer/tests/import.rs#native_import_command_requires_independent_identity_and_valid_documents]]
+check export, evaluation, rejection, immutable output and independent expectations.
+
+Packaging [[xtask/src/release.rs#assets]] requires both commands for macOS arm64
+and Linux x64, hashes exact bytes and records the source commit. Its
+[conformance test](../xtask/src/release.rs) rejects missing targets and existing
+output and pins a known SHA-256 vector.
+The [workflow](../.github/workflows/release-binaries.yml) uses Rust 1.95.0,
+locked builds and SHA-pinned actions. The
+[consumer contract](../docs/integrations/native-contracts-v1.md#pinned-binary-releases)
+defines assets, install commands and checksum pins; [[status]] bounds current claims.
+
+## Claim preparation
+
+Explicit report selections populate empty producer test claims through the shared parser projection before import. Each TRX has its own observation and approved suite; explicit mappings claim coverage without inferring test adequacy.
+
+Entry [[crates/policy-native-importer/src/claims.rs#populate_claims]] reuses bounded,
+descriptor-relative artifact reads and [[crates/policy-native-importer/src/reports.rs#recompute]]
+for counts, normalized/raw identities, outcomes and attempts. The CLI then invokes
+the unchanged [[crates/policy-native-importer/src/importer.rs#import_run]] checks.
+[[crates/policy-native-importer/src/claims.rs#populate_mappings]] maps all executed
+tests, including failures, only for explicitly selected approved requirement/suite
+pairs. No mappings are inferred and no v1 schema or canonical vector changes.
+
+Conformance [[crates/policy-native-importer/tests/import.rs#claim_preparation_uses_shared_parsers_and_explicit_mappings]]
+checks TRX, Vitest and Playwright against existing native fixtures;
+[[crates/policy-native-importer/tests/import.rs#multiple_trx_reports_use_distinct_observations_and_approved_suites]]
+checks per-project TRX namespaces and evaluation;
+[[crates/policy-native-importer/tests/import.rs#claim_preparation_rejects_ambiguous_unsafe_or_unapproved_inputs_without_output]]
+rejects ambiguity, unapproved selections, bad hashes and symlinks;
+[[crates/policy-native-importer/tests/import.rs#prepared_claims_preserve_native_and_parser_failures_without_inventing_coverage]]
+preserves failed tests, parser failures and missing mappings as non-pass scope.
+The [consumer contract](../docs/integrations/native-contracts-v1.md#claim-preparation-from-raw-reports)
+defines selections and the one-report-per-observation rule.
+
 ## Local scope verifier
 
 The kernel assembles imported observations into core evidence and evaluates independently approved scope. It enforces required sets, mappings, exclusions and bindings; local trust and unmet review cannot authorize a merge.

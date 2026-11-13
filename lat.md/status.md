@@ -25,6 +25,14 @@ See [[kernel#Scope boundary]]. No adoption or promotion is established by this d
 contracts and scope-template digests. It does not establish signature verification,
 authenticated local-runner acceptance or promotion; existing scope v1 stays unchanged.
 
+Native distribution adds a Unix importer command and a version-tag workflow for
+both commands on macOS arm64 and Linux x64, with SHA-256 and source-commit assets.
+Explicit report selections populate empty test claims with shared parsers before
+import; explicit suite mappings claim coverage. Each TRX has a separate observation
+and approved suite, with no v1 wire-contract change or consumer Rust requirement.
+The owner must cut the first release after merge; no published release or consumer
+adoption is established. See [[native-contracts#Native command distribution]].
+
 Policy v3 binds approving-review quorum and allowed providers. Legacy policy
 digests remain valid, but readiness and shipping require explicit v3 reapproval.
 Consumer profiles are unchanged; reapproval and promotion are not established.
