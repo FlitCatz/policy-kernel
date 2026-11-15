@@ -73,12 +73,27 @@ allowed). Explicit `null` is invalid in v4 too.
 
 The [evidence schema](../schemas/evidence-bundle.schema.json) adds
 `local_runner_attested` while retaining evidence schema version 1 and existing
-document digests. This class is explicitly not CI-grade. These additions validate
-contract structure only: the core evaluates a valid v4 policy under the existing
-v3 readiness and shipping rules, does not yet enforce `local_runner_evidence`, and
-still rejects `local_runner_attested` evidence in authoritative evaluation.
-Authentication and opt-in acceptance are later work; no authoritative decision,
-protected merge or production promotion is established here.
+document digests. This class is explicitly not CI-grade. Core acceptance rules
+now allow it for sensors and executions only under a valid v4 opt-in block, a
+change exempt from CI, and the local freshness window. The evaluator clock measures
+age from execution start; local sensors also require fresh observations and
+command-bound execution starts. The local window can exceed the global window
+without extending CI evidence freshness. Future local completions are rejected.
+CI conditions reuse sensor validation (nonblank,
+unique IDs and valid globs); malformed conditions reject local evidence.
+Modification, review, agent-ready and knowledge evidence at this class is always
+rejected in authoritative mode. `local_untrusted` and advisory behavior are unchanged.
+
+The informational `PK-PROV-LOCAL-ATTESTED` enters the decision digest without
+lowering readiness; any decision carrying it cannot authorize `SHIPPED`.
+Missing opt-in, CI-required changes and invalid evidence kinds have dedicated
+`PK-PROV-LOCAL-NOT-ACCEPTED`, `PK-PROV-CI-REQUIRED` and
+`PK-PROV-LOCAL-CLASS-INVALID` reasons; expired or future evidence uses `PK-PROV-STALE`.
+The context-free provenance API remains CI-grade only. Attestation authentication,
+controller promotion and attestor issuance remain later work (K6–K7); the sibling
+K5 contracts are structural only. These core tests cannot establish real key
+custody, honest runner execution, an authoritative CI decision, a protected merge
+or production promotion.
 
 ## Policy v3 review quorum
 
@@ -164,11 +179,11 @@ promotion. Earlier dated records retain their contemporaneous scope and status.
 On 2026-11-12 the [decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepted a design for signed local-runner evidence for ordinary pull-request
 readiness, with a new weaker trust class `local_runner_attested`. That decision
-changed documentation only. Sibling structural contracts, the class's wire value
-and the policy v4 contract are now implemented as described above; authenticated
-acceptance, controller support and attestor remain **planned and not
-implemented**. Local evidence remains
-`local_untrusted` and cannot authorize readiness; the
+changed documentation only. Sibling structural contracts, the class's wire value,
+the policy v4 contract and core opt-in acceptance are now implemented as described
+above; authenticated collection, controller support and attestor remain **planned
+and not implemented**. The current local collection path still produces
+`local_untrusted`, which cannot authorize readiness; the
 [trust model](trust-model.md#planned-local-runner-attestation) lists the
 default-closed rules. The record supersedes the archived scope-reduction ADR's
 local-evidence guardrail only for the future attestation path.

@@ -61,7 +61,7 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 37
+              "line": 49
             },
             "start": {
               "column": 1,
@@ -76,7 +76,7 @@
         "span": {
           "end": {
             "column": 13,
-            "line": 36
+            "line": 48
           },
           "start": {
             "column": 5,
@@ -85,11 +85,11 @@
         }
       },
       "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
-      "replacement": "let mut gates = Gates::default();\n    validate_policy_and_versions(input, &mut gates);\n    validate_authorization_chain(input, &mut gates);\n    validate_merge_policy(input, &mut gates);\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n\n    let pre_merge = input.pre_merge.as_decision();\n    let mut decision = PostMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        status: PostMergeStatus::Shipped,\n        binding: DecisionBinding {\n            repository: pre_merge.binding.repository.clone(),\n            pull_request_number: pre_merge.binding.pull_request_number,\n            head_sha: pre_merge.binding.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: pre_merge.binding.evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        merge_commit_sha: Some(input.merge.merge_commit_sha.clone()),\n        reasons: gates.reasons,\n        // The field is excluded from its own preimage.\n        decision_digest: pre_merge.decision_digest.clone(),\n    };\n    decision.decision_digest = post_merge_decision_digest(input, &decision);\n    decision",
+      "replacement": "let mut gates = Gates::default();\n    if input\n        .pre_merge\n        .as_decision()\n        .reasons\n        .iter()\n        .any(|reason| reason.code == \"PK-PROV-LOCAL-ATTESTED\")\n    {\n        gates.unknown(\n            \"PK-PROV-LOCAL-ATTESTED\",\n            \"local-runner readiness cannot authorize shipping; CI-grade evidence is required\",\n        );\n    }\n    validate_policy_and_versions(input, &mut gates);\n    validate_authorization_chain(input, &mut gates);\n    validate_merge_policy(input, &mut gates);\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n\n    let pre_merge = input.pre_merge.as_decision();\n    let mut decision = PostMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        status: PostMergeStatus::Shipped,\n        binding: DecisionBinding {\n            repository: pre_merge.binding.repository.clone(),\n            pull_request_number: pre_merge.binding.pull_request_number,\n            head_sha: pre_merge.binding.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: pre_merge.binding.evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        merge_commit_sha: Some(input.merge.merge_commit_sha.clone()),\n        reasons: gates.reasons,\n        // The field is excluded from its own preimage.\n        decision_digest: pre_merge.decision_digest.clone(),\n    };\n    decision.decision_digest = post_merge_decision_digest(input, &decision);\n    decision",
       "span": {
         "end": {
           "column": 13,
-          "line": 36
+          "line": 48
         },
         "start": {
           "column": 5,
@@ -108,26 +108,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 322
+              "line": 334
             },
             "start": {
               "column": 1,
-              "line": 306
+              "line": 318
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/post_merge.rs:310:5: replace post_merge_decision_digest -> Sha256Digest with Default::default()",
+        "name": "crates/policy-core/src/post_merge.rs:322:5: replace post_merge_decision_digest -> Sha256Digest with Default::default()",
         "package": "policy-core",
         "replacement": "Default::default()",
         "span": {
           "end": {
             "column": 74,
-            "line": 321
+            "line": 333
           },
           "start": {
             "column": 5,
-            "line": 310
+            "line": 322
           }
         }
       },
@@ -136,11 +136,11 @@
       "span": {
         "end": {
           "column": 74,
-          "line": 321
+          "line": 333
         },
         "start": {
           "column": 5,
-          "line": 310
+          "line": 322
         }
       }
     },
@@ -155,7 +155,7 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 75
+              "line": 76
             },
             "start": {
               "column": 1,
@@ -170,7 +170,7 @@
         "span": {
           "end": {
             "column": 13,
-            "line": 74
+            "line": 75
           },
           "start": {
             "column": 5,
@@ -179,11 +179,11 @@
         }
       },
       "reason": "E0277: return type does not implement Default; use an explicit typed wrong value or force an accepting status instead",
-      "replacement": "let mut gates = Gates::default();\n    validate_policy_and_bindings(input, &mut gates);\n    validate_observations(input, &mut gates);\n\n    let provenance = validate_provenance(\n        input.mode,\n        &input.evidence,\n        &input.evaluation_time,\n        input.policy.max_evidence_age_seconds,\n    );\n    gates.validation(provenance.reasons());\n    let knowledge = crate::provenance::validate_required_knowledge(input);\n    gates.validation(knowledge.reasons());\n    validate_execution(input, &mut gates);\n    validate_sensors(input, &mut gates);\n\n    // All fields in these typed contracts serialize to integral JSON data.\n    let evidence_digest = pre_merge_evidence_digest(&input.evidence)\n        .expect(\"typed evidence has a canonical JSON representation\");\n    let reviews = evaluate_reviews(ReviewEvaluationInput {\n        mode: input.mode,\n        policy: input.policy.clone(),\n        repository: input.pull_request.repository.clone(),\n        head_sha: input.pull_request.head_sha.clone(),\n        evidence_digest: evidence_digest.clone(),\n        evaluation_time: input.evaluation_time.clone(),\n        modifications: input.evidence.modifications.clone(),\n        reviews: input.evidence.reviews.clone(),\n        findings: input.evidence.findings.clone(),\n        waivers: input.evidence.waivers.clone(),\n    });\n    gates.extend(\n        match reviews.status {\n            ReviewStatus::Approved => PreMergeStatus::ReadyToMerge,\n            ReviewStatus::Blocked => PreMergeStatus::Blocked,\n            ReviewStatus::Inconclusive => PreMergeStatus::Inconclusive,\n        },\n        reviews.reasons,\n    );\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n    let mut decision = PreMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        mode: input.mode,\n        advisory: input.mode == EvaluationMode::Advisory,\n        status: PreMergeStatus::ReadyToMerge,\n        binding: DecisionBinding {\n            repository: input.pull_request.repository.clone(),\n            pull_request_number: input.pull_request.pull_request_number,\n            head_sha: input.pull_request.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        reasons: gates.reasons,\n        // Excluded from the hash preimage; initialized with a valid typed digest.\n        decision_digest: evidence_digest,\n    };\n    decision.decision_digest = decision_digest(input, &decision)\n        .expect(\"typed pre-merge input has a canonical JSON representation\");\n    decision",
+      "replacement": "let mut gates = Gates::default();\n    validate_policy_and_bindings(input, &mut gates);\n    validate_observations(input, &mut gates);\n\n    let (provenance, local_attested) = crate::provenance::validate_pre_merge_provenance(input);\n    gates.validation(provenance.reasons());\n    if local_attested {\n        gates.extend(PreMergeStatus::ReadyToMerge, vec![Reason {\n            code: \"PK-PROV-LOCAL-ATTESTED\".into(),\n            message: \"readiness relies on policy-enabled local-runner evidence; shipping requires CI-grade evidence\".into(),\n        }]);\n    }\n    let knowledge = crate::provenance::validate_required_knowledge(input);\n    gates.validation(knowledge.reasons());\n    validate_execution(input, &mut gates);\n    validate_sensors(input, &mut gates);\n\n    // All fields in these typed contracts serialize to integral JSON data.\n    let evidence_digest = pre_merge_evidence_digest(&input.evidence)\n        .expect(\"typed evidence has a canonical JSON representation\");\n    let reviews = evaluate_reviews(ReviewEvaluationInput {\n        mode: input.mode,\n        policy: input.policy.clone(),\n        repository: input.pull_request.repository.clone(),\n        head_sha: input.pull_request.head_sha.clone(),\n        evidence_digest: evidence_digest.clone(),\n        evaluation_time: input.evaluation_time.clone(),\n        modifications: input.evidence.modifications.clone(),\n        reviews: input.evidence.reviews.clone(),\n        findings: input.evidence.findings.clone(),\n        waivers: input.evidence.waivers.clone(),\n    });\n    gates.extend(\n        match reviews.status {\n            ReviewStatus::Approved => PreMergeStatus::ReadyToMerge,\n            ReviewStatus::Blocked => PreMergeStatus::Blocked,\n            ReviewStatus::Inconclusive => PreMergeStatus::Inconclusive,\n        },\n        reviews.reasons,\n    );\n\n    gates\n        .reasons\n        .sort_by(|left, right| (&left.code, &left.message).cmp(&(&right.code, &right.message)));\n    gates.reasons.dedup();\n    let mut decision = PreMergeDecision {\n        schema_version: SCHEMA_VERSION,\n        mode: input.mode,\n        advisory: input.mode == EvaluationMode::Advisory,\n        status: PreMergeStatus::ReadyToMerge,\n        binding: DecisionBinding {\n            repository: input.pull_request.repository.clone(),\n            pull_request_number: input.pull_request.pull_request_number,\n            head_sha: input.pull_request.head_sha.clone(),\n            policy_digest: input.policy.policy_digest.clone(),\n            evidence_digest: evidence_digest.clone(),\n            evaluated_at: input.evaluation_time.clone(),\n        },\n        reasons: gates.reasons,\n        // Excluded from the hash preimage; initialized with a valid typed digest.\n        decision_digest: evidence_digest,\n    };\n    decision.decision_digest = decision_digest(input, &decision)\n        .expect(\"typed pre-merge input has a canonical JSON representation\");\n    decision",
       "span": {
         "end": {
           "column": 13,
-          "line": 74
+          "line": 75
         },
         "start": {
           "column": 5,
@@ -343,26 +343,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 378
+              "line": 536
             },
             "start": {
               "column": 1,
-              "line": 366
+              "line": 514
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:367:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
+        "name": "crates/policy-core/src/provenance.rs:518:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
         "package": "policy-core",
         "replacement": "::std::iter::once(Box::leak(Box::new(Default::default())))",
         "span": {
           "end": {
             "column": 68,
-            "line": 377
+            "line": 535
           },
           "start": {
             "column": 5,
-            "line": 367
+            "line": 518
           }
         }
       },
@@ -371,11 +371,11 @@
       "span": {
         "end": {
           "column": 68,
-          "line": 377
+          "line": 535
         },
         "start": {
           "column": 5,
-          "line": 367
+          "line": 518
         }
       }
     },
@@ -612,7 +612,7 @@
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())\n@@ -579,24 +579,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// GitHub Actions subset: ASCII alphanumerics, `.`, `_`, `-`, `/`, segment-local\n /// `*`, and whole-segment `**`. Reject other syntax before compiling with globset.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, SensorResolutionError> {\n-    let invalid = || SensorResolutionError::InvalidGlob(pattern.to_owned());\n-    if !pattern\n-        .bytes()\n-        .all(|byte| byte.is_ascii_alphanumeric() || b\"._-/*\".contains(&byte))\n-        || pattern.split('/').any(|segment| {\n-            matches!(segment, \"\" | \".\" | \"..\") || (segment.contains(\"**\") && segment != \"**\")\n-        })\n-    {\n-        return Err(invalid());\n-    }\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n-        .map_err(|_| invalid())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())\n@@ -586,24 +586,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// GitHub Actions subset: ASCII alphanumerics, `.`, `_`, `-`, `/`, segment-local\n /// `*`, and whole-segment `**`. Reject other syntax before compiling with globset.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, SensorResolutionError> {\n-    let invalid = || SensorResolutionError::InvalidGlob(pattern.to_owned());\n-    if !pattern\n-        .bytes()\n-        .all(|byte| byte.is_ascii_alphanumeric() || b\"._-/*\".contains(&byte))\n-        || pattern.split('/').any(|segment| {\n-            matches!(segment, \"\" | \".\" | \"..\") || (segment.contains(\"**\") && segment != \"**\")\n-        })\n-    {\n-        return Err(invalid());\n-    }\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n-        .map_err(|_| invalid())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "path_glob",
@@ -620,26 +620,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 602
+              "line": 609
             },
             "start": {
               "column": 1,
-              "line": 584
+              "line": 591
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/sensors.rs:587:5: replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())",
+        "name": "crates/policy-core/src/sensors.rs:594:5: replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())",
         "package": "policy-core",
         "replacement": "Ok(Default::default())",
         "span": {
           "end": {
             "column": 32,
-            "line": 601
+            "line": 608
           },
           "start": {
             "column": 5,
-            "line": 587
+            "line": 594
           }
         }
       },
@@ -648,11 +648,11 @@
       "span": {
         "end": {
           "column": 32,
-          "line": 601
+          "line": 608
         },
         "start": {
           "column": 5,
-          "line": 587
+          "line": 594
         }
       }
     },
@@ -796,6 +796,98 @@
           "line": 222
         }
       }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-core/src/provenance.rs\n+++ replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))\n@@ -492,24 +492,17 @@\n     })\n }\n \n fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {\n     evidence_trusts(bundle).any(|(trust, _)| !is_ci_grade(trust))\n }\n \n fn evidence_trusts(bundle: &EvidenceBundle) -> impl Iterator<Item = (TrustClass, bool)> + '_ {\n-    bundle\n-        .modifications\n-        .iter()\n-        .map(|value| (value.trust, false))\n-        .chain(bundle.executions.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.reviews.iter().map(|value| (value.trust, false)))\n-        .chain(bundle.sensors.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.knowledge.iter().map(|value| (value.trust, false)))\n+    ::std::iter::once((Default::default(), true)) /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn uses_local_freshness(mode: EvaluationMode, trust: TrustClass) -> bool {\n     mode == EvaluationMode::Authoritative && trust == TrustClass::LocalRunnerAttested\n }\n \n fn timestamps(\n     bundle: &EvidenceBundle,\n",
+        "file": "crates/policy-core/src/provenance.rs",
+        "function": {
+          "function_name": "evidence_trusts",
+          "return_type": "-> impl Iterator<Item =(TrustClass, bool)>+'_",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 508
+            },
+            "start": {
+              "column": 1,
+              "line": 499
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/provenance.rs:500:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))",
+        "package": "policy-core",
+        "replacement": "::std::iter::once((Default::default(), true))",
+        "span": {
+          "end": {
+            "column": 74,
+            "line": 507
+          },
+          "start": {
+            "column": 5,
+            "line": 500
+          }
+        }
+      },
+      "reason": "E0277: TrustClass has no Default; use an explicit CI-grade class to bypass every supplied trust assertion without adding a product Default",
+      "replacement": "std::iter::once((TrustClass::CiObserved, true))",
+      "span": {
+        "end": {
+          "column": 74,
+          "line": 507
+        },
+        "start": {
+          "column": 5,
+          "line": 500
+        }
+      }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-core/src/provenance.rs\n+++ replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))\n@@ -492,24 +492,17 @@\n     })\n }\n \n fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {\n     evidence_trusts(bundle).any(|(trust, _)| !is_ci_grade(trust))\n }\n \n fn evidence_trusts(bundle: &EvidenceBundle) -> impl Iterator<Item = (TrustClass, bool)> + '_ {\n-    bundle\n-        .modifications\n-        .iter()\n-        .map(|value| (value.trust, false))\n-        .chain(bundle.executions.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.reviews.iter().map(|value| (value.trust, false)))\n-        .chain(bundle.sensors.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.knowledge.iter().map(|value| (value.trust, false)))\n+    ::std::iter::once((Default::default(), false)) /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn uses_local_freshness(mode: EvaluationMode, trust: TrustClass) -> bool {\n     mode == EvaluationMode::Authoritative && trust == TrustClass::LocalRunnerAttested\n }\n \n fn timestamps(\n     bundle: &EvidenceBundle,\n",
+        "file": "crates/policy-core/src/provenance.rs",
+        "function": {
+          "function_name": "evidence_trusts",
+          "return_type": "-> impl Iterator<Item =(TrustClass, bool)>+'_",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 508
+            },
+            "start": {
+              "column": 1,
+              "line": 499
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-core/src/provenance.rs:500:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))",
+        "package": "policy-core",
+        "replacement": "::std::iter::once((Default::default(), false))",
+        "span": {
+          "end": {
+            "column": 74,
+            "line": 507
+          },
+          "start": {
+            "column": 5,
+            "line": 500
+          }
+        }
+      },
+      "reason": "E0277: TrustClass has no Default; use an explicit CI-grade class to bypass every supplied trust assertion without adding a product Default",
+      "replacement": "std::iter::once((TrustClass::CiObserved, false))",
+      "span": {
+        "end": {
+          "column": 74,
+          "line": 507
+        },
+        "start": {
+          "column": 5,
+          "line": 500
+        }
+      }
     }
   ],
   "schema_version": 1,
@@ -808,10 +900,10 @@
     "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
     "crates/policy-contracts/src/policy.rs": "1e1f586432be28858f3be0a4f8f42526088b69aa504bfdc5c18d1339c320f484",
     "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
-    "crates/policy-core/src/post_merge.rs": "15906c3b1a35befaa06d89d63164f05b035a6a3f52d4acb58b96b47e7baa9e65",
-    "crates/policy-core/src/pre_merge.rs": "5bac72e97db4c2a7533f30a3ee69b62ee7cf5836b2648dd141250ef2c267e038",
-    "crates/policy-core/src/provenance.rs": "06651587f98ea8280484cbabb144587d24d2b3d29b76a8603c510d54b3f078f3",
-    "crates/policy-core/src/reviews.rs": "0d273bf15f716b7cbcd2aef08fd8c884fbd12d4e7335782f4f052b955a8d65e0",
-    "crates/policy-core/src/sensors.rs": "6369d6488f47af134b1afb8b5afd105cce243f9bfc7941dccfc683fa9acebc05"
+    "crates/policy-core/src/post_merge.rs": "e0d5bb219e6df5e0d7e0dfca292de2f0ffb856dd741789ee2f16df5aa514e4d0",
+    "crates/policy-core/src/pre_merge.rs": "a860b2a0921552adec7b094bcd7ca4e86e164af7014761cece38f2554c3b5903",
+    "crates/policy-core/src/provenance.rs": "2ba942b896cfc022bb81c1e73d7e4c8deea03253decf481260436f9dd748e2da",
+    "crates/policy-core/src/reviews.rs": "6baf146369616e07997d9d659eb71d7ea930a2fe3749d43021fe96bbf3829638",
+    "crates/policy-core/src/sensors.rs": "40fecb0550b5eb6d8340ee28565c2e74519732bb95ad29e3a80aa43c3611a619"
   }
 }

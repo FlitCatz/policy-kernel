@@ -14,7 +14,10 @@ signed statement from an owner-registered local runner, check it against GitHub
 observations, recompute the scope verdict and promote only the covered sensor and
 execution evidence to the weaker `local_runner_attested` class. Today the
 controller promotes only to `trusted_runner_attested`, and local signatures do not
-establish trusted provenance.
+establish trusted provenance. Core now accepts the weaker class for fresh sensors
+and executions under explicit policy v4 opt-in, rejects CI-required changes and
+invalid conditions, and prevents such readiness from shipping. Those core rules
+do not authenticate a local statement or change this controller boundary.
 
 ## Ownership and isolation
 

@@ -92,7 +92,10 @@ Bundle integrity [[crates/policy-core/src/provenance.rs#validate_bundle]]; trust
 [[crates/policy-core/src/provenance.rs#is_ci_grade]] explicitly allows
 CI observations and trusted-runner attestations. Its exhaustive match requires a
 decision for every future trust class. Provenance, required knowledge, reviews,
-modifications and agent-ready observations share this predicate.
+modifications and agent-ready observations retain this CI-grade requirement.
+Pre-merge sensor and execution acceptance additionally uses
+[[crates/policy-core/src/provenance.rs#validate_pre_merge_provenance]] and
+[[crates/policy-core/src/provenance.rs#validate_local_runner]].
 
 Required knowledge delegates glob validation to
 [[crates/policy-core/src/sensors.rs#path_glob]], which rejects blank and
@@ -100,7 +103,7 @@ NUL-containing patterns as well as unsupported glob syntax.
 
 ## Local-runner policy contract
 
-Policy v4 optionally declares local-runner settings and requires the v3 review block; earlier versions reject the field. Core evaluates v4 under v3 rules without enforcing the block, and the new evidence class is not CI-grade.
+Policy v4 optionally enables fresh local-class sensors and executions for changes exempt from CI. Other evidence stays CI-grade; local readiness carries a digest-bound marker that prevents shipping.
 
 Version validation [[crates/policy-contracts/src/policy.rs#PolicySnapshot#validate_version]]
 keeps each optional v4 extension independent; legacy serialization and digests
@@ -117,8 +120,31 @@ Schema and Rust parity tests
 [[xtask/tests/local_runner_contract.rs#local_runner_policy_shapes_match_rust_and_json_schema]],
 [[xtask/tests/local_runner_contract.rs#direct_construction_obeys_local_runner_and_review_boundaries]]
 and [[xtask/tests/local_runner_contract.rs#local_runner_trust_round_trips_in_v1_evidence]]
-cover version, shape and wire boundaries. Authoritative rejection is pinned by
+cover version, shape and wire boundaries. Context-free CI-grade rejection is pinned by
 [[crates/policy-core/tests/provenance.rs#local_runner_attestation_is_not_ci_grade]].
+
+Core shares [[crates/policy-core/src/sensors.rs#validate_conditions]] and
+[[crates/policy-core/src/sensors.rs#condition_matches]] with sensor profiles:
+invalid or matching CI conditions reject local evidence. Local execution starts,
+sensor observations and command-bound execution starts use the inclusive local age
+window on the evaluator clock; local completions cannot be in the future. Other
+evidence retains global freshness, and head/digest binding still applies.
+Both freshness call sites share
+[[crates/policy-core/src/provenance.rs#uses_local_freshness]] for mode and class selection.
+[[crates/policy-core/tests/local_runner.rs#exhaustive_trust_kind_mode_and_policy_matrix]]
+exercises all 192 trust/kind/mode/block/CI combinations.
+[[crates/policy-core/tests/local_runner.rs#local_execution_age_uses_start_and_exact_subsecond_boundaries]],
+[[crates/policy-core/tests/local_runner.rs#local_sensor_window_is_measured_from_execution_start_even_with_ci_execution]]
+and [[crates/policy-core/tests/local_runner.rs#invalid_ci_conditions_are_rejected_even_when_other_conditions_do_not_match]]
+pin freshness and fail-closed conditions.
+[[crates/policy-core/tests/local_runner.rs#local_freshness_can_outlive_global_freshness_without_relaxing_ci_or_advisory]]
+keeps local and global age limits independent without relaxing CI or advisory checks;
+[[crates/policy-core/tests/local_runner.rs#local_execution_completion_cannot_be_in_the_future]]
+rejects future completions under the local window.
+[[crates/policy-core/tests/local_runner.rs#mixed_ci_and_local_evidence_preserves_the_local_marker_and_digest_binding]]
+checks informational reason hashing without lowering readiness;
+[[crates/policy-core/tests/local_runner.rs#local_ready_decision_can_never_ship_even_with_a_successful_bound_check]]
+pins the shipping guard. Authentication remains outside core.
 
 ## Canonical digests
 
@@ -224,6 +250,9 @@ See [contract and limits](../docs/integrations/consumer-schema3.md#compiler-gene
 Authorization modules, including sensor evaluation, must have every selected mutant built and caught; typed replacements stand in for uncompilable generator forms.
 
 Scope and result validation [[xtask/src/verification.rs#mutation_scope]]; the contract is [verification/mutation-contract.json](../verification/mutation-contract.json).
+The trust iterator's generated `Default` forms cannot construct `TrustClass`;
+explicit CI-grade replacements test bypassing supplied trust assertions instead.
+Ordinary viable iterator mutations stay in the generated selection.
 
 ## Split-consumer conformance
 

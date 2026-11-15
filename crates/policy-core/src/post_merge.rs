@@ -6,6 +6,18 @@ use std::collections::BTreeSet;
 /// Evaluate explicitly supplied required-check and protected-merge observations.
 pub fn evaluate_post_merge(input: &PostMergeEvaluationInput) -> PostMergeDecision {
     let mut gates = Gates::default();
+    if input
+        .pre_merge
+        .as_decision()
+        .reasons
+        .iter()
+        .any(|reason| reason.code == "PK-PROV-LOCAL-ATTESTED")
+    {
+        gates.unknown(
+            "PK-PROV-LOCAL-ATTESTED",
+            "local-runner readiness cannot authorize shipping; CI-grade evidence is required",
+        );
+    }
     validate_policy_and_versions(input, &mut gates);
     validate_authorization_chain(input, &mut gates);
     validate_merge_policy(input, &mut gates);

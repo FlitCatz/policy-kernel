@@ -270,6 +270,20 @@ pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
 
 fn validate_review_provenance(input: &ReviewEvaluationInput, reasons: &mut Vec<Reason>) {
     if input.mode == EvaluationMode::Authoritative
+        && input
+            .reviews
+            .iter()
+            .map(|r| r.trust)
+            .chain(input.modifications.iter().map(|m| m.trust))
+            .any(|trust| trust == policy_contracts::TrustClass::LocalRunnerAttested)
+    {
+        insert_reason(
+            reasons,
+            "PK-PROV-LOCAL-CLASS-INVALID",
+            "local-runner evidence cannot authorize reviews or modifications",
+        );
+    }
+    if input.mode == EvaluationMode::Authoritative
         && (input
             .reviews
             .iter()

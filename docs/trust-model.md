@@ -33,10 +33,10 @@ Every code-modifying execution belongs in modification evidence. Reviewers must 
 independent of every contributor by both provider and execution identity. Calling
 multiple agents from the same model provider is not provider independence. Model
 prose naming a provider, a local signature, and a structurally valid CI-shaped JSON
-object do not establish trusted provenance. (A planned, owner-enabled exception for
-signed local-runner attestations is described under
-[Planned local-runner attestation](#planned-local-runner-attestation); it is not
-implemented.)
+object do not establish trusted provenance. Core rules for an owner-enabled
+local-runner class are described under
+[Planned local-runner attestation](#planned-local-runner-attestation); authenticating
+and issuing that class remains follow-up work at the collection boundary.
 
 Policy schema v3 requires a digest-bound `required_reviews` object:
 `minimum_reviewers` is a positive integer (1–4294967295),
@@ -108,14 +108,15 @@ Authoritative execution and test adequacy evidence must name the manifest head.
 
 ## Planned local-runner attestation
 
-**Planned, not yet implemented.** Only the trust-class wire value and the
-[policy v4 contract](status.md#policy-v4-local-runner-contract) exist. The
+**Core acceptance implemented; authenticated collection remains planned.** The
+[policy v4 contract and current status](status.md#policy-v4-local-runner-contract)
+distinguish the implemented core rules from later controller/attestor work. The
 [2026-11-12 decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepts a design for letting a single-owner repository use signed local-runner
-evidence for ordinary pull-request readiness. Today every statement above still
-holds: local evidence is `local_untrusted` and cannot authorize readiness.
+evidence for ordinary pull-request readiness. The current collection path still
+produces `local_untrusted`; a caller-supplied class is not authentication.
 
-The planned design adds a trust class, `local_runner_attested`, that is distinct
+The design adds a trust class, `local_runner_attested`, that is distinct
 from and weaker than `ci_observed` and `trusted_runner_attested`:
 
 - A registered local runner signs a statement binding repository, head, tree, base,
@@ -134,8 +135,37 @@ from and weaker than `ci_observed` and `trusted_runner_attested`:
 - A decision that relies on the class carries the informational reason
   `PK-PROV-LOCAL-ATTESTED`; such a decision cannot reach `SHIPPED` or promotion.
 
-Default-closed rules, all of which keep today's behavior unless the owner opts in
-through a new policy version:
+The core now enforces these default-closed rules in authoritative pre-merge
+evaluation; advisory behavior is unchanged:
+
+| Local-class evidence or policy condition | Result / reason |
+| --- | --- |
+| Sensor or execution, v4 block absent | Inconclusive / `PK-PROV-LOCAL-NOT-ACCEPTED` |
+| Sensor or execution, CI condition matches or is invalid | Inconclusive / `PK-PROV-CI-REQUIRED` |
+| Sensor or execution outside the local age window, including future times | Inconclusive / `PK-PROV-STALE` |
+| Modification, review, agent-ready or knowledge | Inconclusive / `PK-PROV-LOCAL-CLASS-INVALID` |
+| Valid, fresh sensor or execution with opt-in and no CI condition | Accepted / informational `PK-PROV-LOCAL-ATTESTED` |
+
+CI conditions share sensor-profile validation: IDs must be nonblank and unique,
+and every glob must be valid even if another dimension does not match. Conditions
+are ORed; within a condition, risk and any-path restrictions are ANDed, with empty
+dimensions matching everything. Missing context or invalid changed paths cannot
+enable local acceptance. An empty condition list requires no CI cases.
+
+The inclusive local age limit is measured from execution start against the
+explicit evaluator clock, preserving sub-second precision. Local sensors require
+a matching execution command digest; every matching start and the sensor's
+observation must be fresh. Missing execution-start evidence fails closed with
+`PK-PROV-BINDING-MISSING`. Local execution completions must also be fresh and
+cannot be in the future. These local sensors and executions use the opt-in window;
+other evidence and observations retain the global freshness limit. A longer local
+window does not relax CI evidence freshness or advisory evaluation.
+The context-free `validate_provenance` API retains its CI-grade-only behavior.
+The local marker is informational in pre-merge, enters the decision digest, and
+prevents shipping even with a successful bound required check.
+
+The full authenticated path additionally requires the following (authentication
+and issuance remain controller/attestor work):
 
 - Without a local-evidence block in the approved policy, the class is rejected.
 - `local_untrusted` never counts in authoritative evaluation.
@@ -180,7 +210,7 @@ a protected merge of the same PR head. Check completion must precede the merge.
 The receipt's protection claim must match GitHub's current branch observation.
 The merge commit is distinct from the PR head, so squash is allowed. Direct,
 unprotected and unsupported merge-queue observations cannot authorize shipping.
-Under the planned local-runner attestation, a ready decision that relies on
+Under the local-runner core rules, a ready decision that relies on
 `local_runner_attested` evidence also cannot authorize shipping.
 Raw API authentication and check provenance must be established by Task 10;
 core-only unit tests do not prove that boundary operates against live GitHub.

@@ -4,7 +4,8 @@ The current-state authority is [docs/status.md](../docs/status.md); this page on
 
 A 2026-11-12 [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 plans signed local-runner attestation as a weaker trust class. Its wire class and
-policy v4 contract exist; authenticated acceptance remains unimplemented. Sibling structural contracts are
+policy v4 contract and core opt-in acceptance exist; authenticated collection and
+issuance remain unimplemented. Local-class readiness cannot ship. Sibling structural contracts are
 described below. See [[trust-boundaries#Planned local-runner attestation]].
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
@@ -40,8 +41,8 @@ See [[kernel#Review consensus and waivers]].
 
 Policy v4 optionally declares local-runner evidence settings, with the v3 review
 block still required. V1–v3 bytes and digests stay unchanged. Evidence v1 accepts
-the new wire value; core evaluates v4 under v3 rules, ignores the local-runner
-block and rejects the class, which is not CI-grade.
+the new wire value, which is not CI-grade. Core accepts it only for fresh sensors
+and executions under v4 opt-in with no matching CI condition; such readiness cannot ship.
 See [[kernel#Local-runner policy contract]].
 
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents

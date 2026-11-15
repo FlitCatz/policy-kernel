@@ -1,7 +1,7 @@
 use crate::{
     canonical_sha256, evaluate_reviews, evaluate_sensor_evidence_for_change,
     pre_merge_digest::{decision_digest, pre_merge_evidence_digest, pre_merge_policy_digest},
-    validate_provenance, ReviewEvaluationInput, SensorEvaluationStatus,
+    ReviewEvaluationInput, SensorEvaluationStatus,
 };
 use policy_contracts::*;
 use std::collections::BTreeSet;
@@ -12,13 +12,14 @@ pub fn evaluate_pre_merge(input: &PreMergeEvaluationInput) -> PreMergeDecision {
     validate_policy_and_bindings(input, &mut gates);
     validate_observations(input, &mut gates);
 
-    let provenance = validate_provenance(
-        input.mode,
-        &input.evidence,
-        &input.evaluation_time,
-        input.policy.max_evidence_age_seconds,
-    );
+    let (provenance, local_attested) = crate::provenance::validate_pre_merge_provenance(input);
     gates.validation(provenance.reasons());
+    if local_attested {
+        gates.extend(PreMergeStatus::ReadyToMerge, vec![Reason {
+            code: "PK-PROV-LOCAL-ATTESTED".into(),
+            message: "readiness relies on policy-enabled local-runner evidence; shipping requires CI-grade evidence".into(),
+        }]);
+    }
     let knowledge = crate::provenance::validate_required_knowledge(input);
     gates.validation(knowledge.reasons());
     validate_execution(input, &mut gates);
@@ -218,6 +219,13 @@ fn validate_observations(input: &PreMergeEvaluationInput, gates: &mut Gates) {
             "agent-ready must be applied by a policy-authorized actor",
         );
     }
+    if input.mode == EvaluationMode::Authoritative && ready.trust == TrustClass::LocalRunnerAttested
+    {
+        gates.unknown(
+            "PK-PROV-LOCAL-CLASS-INVALID",
+            "local-runner evidence cannot authorize agent-ready",
+        );
+    }
     if input.mode == EvaluationMode::Authoritative && !crate::provenance::is_ci_grade(ready.trust) {
         gates.unknown(
             "PK-PROV-UNTRUSTED",
@@ -241,7 +249,13 @@ fn validate_execution(input: &PreMergeEvaluationInput, gates: &mut Gates) {
         .iter()
         .map(|item| &item.observed_at)
         .chain(bundle.reviews.iter().map(|item| &item.observed_at))
-        .chain(bundle.sensors.iter().map(|item| &item.observed_at))
+        .chain(
+            bundle
+                .sensors
+                .iter()
+                .filter(|item| !crate::provenance::uses_local_freshness(input.mode, item.trust))
+                .map(|item| &item.observed_at),
+        )
         .chain(bundle.waivers.iter().map(|item| &item.issued_at))
     {
         check_freshness(input, timestamp, gates);
@@ -250,8 +264,11 @@ fn validate_execution(input: &PreMergeEvaluationInput, gates: &mut Gates) {
         gates.unknown("PK-EXEC-MISSING", "execution evidence is required");
     }
     for execution in &bundle.executions {
-        check_freshness(input, &execution.started_at, gates);
-        check_freshness(input, &execution.completed_at, gates);
+        // Policy-aware provenance validates local runs with their own age limit.
+        if !crate::provenance::uses_local_freshness(input.mode, execution.trust) {
+            check_freshness(input, &execution.started_at, gates);
+            check_freshness(input, &execution.completed_at, gates);
+        }
         if execution.started_at > execution.completed_at {
             gates.unknown(
                 "PK-EXEC-TIME-INVALID",

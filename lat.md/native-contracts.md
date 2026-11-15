@@ -16,7 +16,8 @@ Validation [[crates/policy-native-contracts/src/validation.rs#ExpectedScopeV1#va
 Subject comparison [[crates/policy-native-contracts/src/validation.rs#validate_subject_binding]]
 checks consistency, not authenticity. Results remain local-untrusted with unmet review.
 The sibling [[native-contracts#Local-runner attestations]] preserves these records;
-authenticated acceptance remains planned, see [[trust-boundaries#Planned local-runner attestation]].
+core opt-in acceptance exists, while authenticated collection and issuance remain
+planned; see [[trust-boundaries#Planned local-runner attestation]].
 
 ## Digest domains
 
