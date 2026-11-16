@@ -153,6 +153,7 @@ fn original_producer_cannot_review_after_an_independent_one_line_repair() {
     input
         .modifications
         .push(policy_contracts::ModificationEvidence {
+            actor: None,
             provider: policy_contracts::ProviderId::parse("repair-provider").unwrap(),
             model: policy_contracts::ModelId::parse("repair-model").unwrap(),
             execution_id: policy_contracts::ExecutionId::parse("repair-execution").unwrap(),

@@ -63,7 +63,24 @@ The reference controller retains its floor of two approving providers. Its
 `minimum_reviewers` configuration must equal
 `max(2, policy.required_reviews.minimum_reviewers)`; the field is a consistency
 assertion, not an independent policy knob. Policy-core enforces the declared
-quorum for every caller, including local advisory evaluation and other adapters.
+quorum by default for every caller, including local advisory evaluation and other adapters.
+
+Policy v4 can independently opt into
+[`owner_with_independent_agent_review`](integrations/owner-review-policy-v4.md).
+For an authenticated owner-authored PR, a separate owner approval or authorizing
+comment plus one independent approving automated review replaces the numerical
+quorum. All providers remain independent of every modifier. Explicit actor fields
+must also prove the reviewer is neither the PR author nor any modifier; names and
+model prose do not prove independence. Other authors retain the declared quorum.
+Missing or inconsistent identity evidence fails closed.
+
+Owner and agent records must bind the current head and be fresh under both age
+limits. Owner records also bind the repository. Owner authorization, agent reviews
+and modifier identities require CI-grade observations even in advisory mode under
+this option. Local-runner opt-in cannot satisfy these requirements. The observer
+must authenticate actor identities and the explicit authorization in a comment;
+core only validates supplied evidence. Absent new fields preserve existing policy
+and evidence bytes/digests. The reference controller's floor is unchanged.
 
 All identities bind the exact repository, PR number, PR head, policy and evidence
 content, workflow run and explicit evaluation time. Unknown versions/fields,

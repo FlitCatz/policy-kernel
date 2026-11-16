@@ -368,7 +368,7 @@ receipt를 발행합니다. 로컬 암호 테스트가 실제 제공자 서비�
 정책 schema 2는 필수 knowledge를 명시할 수 있으며, 선언이 없는 정책은 계속 빈 knowledge를
 허용합니다.
 
-이제 readiness에는 digest에 결합된 `required_reviews`를 갖춘 정책 schema 3이 필요합니다:
+readiness에는 digest에 결합된 `required_reviews`를 갖춘 정책 schema 3 또는 4가 필요합니다:
 양수인 `minimum_reviewers`, `require_provider_independence: true`,
 `allowed_providers`(빈 배열이면 모든 제공자 허용)를 명시합니다. Core는 서로 다른 승인
 리뷰 실행만 정족수로 계산하며 waiver는 승인으로 계산하지 않습니다. V1/v2 문서의 바이트와
@@ -391,6 +391,13 @@ Core는 v4가 명시적으로 허용하고 `ci_required_when`에 일치하지 �
 `SHIPPED`를 금지합니다. 권고 모드와 `local_untrusted` 동작은 유지됩니다.
 증명 인증과 발급은 후속 작업입니다. 코어 규칙만으로 실제 실행기 실행, 권위 CI 판정이나
 운영 승격이 입증되지는 않습니다.
+
+정책 v4는 단일 소유자 저장소를 위한 독립 선택 규칙
+[`owner_with_independent_agent_review`](docs/integrations/owner-review-policy-v4.md)도
+지원합니다. 유효 기간 안의 소유자 승인 또는 명시적 승인 코멘트와 같은 head에 대한
+독립 자동 승인 리뷰로 core 리뷰 판정을 충족할 수 있습니다. 명시적인 actor 신원과
+CI급 증거가 필요하며 로컬 실행기 증거는 리뷰를 충족하지 못합니다. 이 옵션이 없으면
+기존 정족수를 유지합니다. 참조 컨트롤러의 리뷰 하한과 배포된 통합은 바뀌지 않습니다.
 
 ## 추가 문서
 

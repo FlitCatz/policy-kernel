@@ -48,6 +48,7 @@ pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
             "reapprove the policy as v3 with explicit required_reviews before readiness",
         );
     }
+    let owner_quorum = owner_review_quorum(&input, &mut reasons);
     if let Some(rules) = &input.policy.required_reviews {
         let approvals = input
             .reviews
@@ -55,7 +56,12 @@ pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
             .filter(|review| review.status == ReviewStatus::Approved)
             .map(|review| &review.execution_id)
             .collect::<BTreeSet<_>>();
-        if (approvals.len() as u64) < u64::from(rules.minimum_reviewers) {
+        let minimum = if owner_quorum {
+            1
+        } else {
+            rules.minimum_reviewers
+        };
+        if (approvals.len() as u64) < u64::from(minimum) {
             insert_reason(&mut reasons, "PK-REVIEW-QUORUM", "distinct approving review executions do not meet the policy quorum; waivers are not approvals");
         }
         if !rules.allowed_providers.is_empty()
@@ -266,6 +272,250 @@ pub fn evaluate_reviews(input: ReviewEvaluationInput) -> ReviewEvaluation {
         ReviewStatus::Approved
     };
     ReviewEvaluation { status, reasons }
+}
+
+/// The owner record is authorization, not an independent provider approval.
+/// Only an explicitly observed owner-authored PR can use the alternative quorum.
+fn owner_review_quorum(input: &ReviewEvaluationInput, reasons: &mut Vec<Reason>) -> bool {
+    let Some(policy) = &input.policy.owner_with_independent_agent_review else {
+        return false;
+    };
+    if input.reviews.is_empty() {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-MISSING",
+            "an independent automated review is required",
+        );
+        return false;
+    }
+    let authors = input
+        .reviews
+        .iter()
+        .filter_map(|review| {
+            review
+                .identity
+                .as_ref()
+                .map(|identity| identity.pull_request_author.as_str())
+        })
+        .collect::<BTreeSet<_>>();
+    if authors.len() != 1
+        || input.reviews.iter().any(|review| {
+            review
+                .identity
+                .as_ref()
+                .is_none_or(|identity| !valid_actor(&identity.pull_request_author))
+        })
+    {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AUTHOR-MISSING",
+            "every review must identify the same authenticated PR author",
+        );
+        return false;
+    }
+    if !authors.contains(policy.owner_actor.as_str()) {
+        return false;
+    }
+    let owners = input
+        .reviews
+        .iter()
+        .filter_map(|review| review.owner_approval.as_ref())
+        .collect::<Vec<_>>();
+    match owners.as_slice() {
+        [] => insert_reason(
+            reasons,
+            "PK-REVIEW-OWNER-MISSING",
+            "a separate owner approval or authorizing comment is required",
+        ),
+        [owner] => validate_owner_approval(input, owner, reasons),
+        _ => insert_reason(
+            reasons,
+            "PK-REVIEW-OWNER-AMBIGUOUS",
+            "exactly one owner authorization record is required",
+        ),
+    }
+    if input.modifications.is_empty()
+        || input.modifications.iter().any(|modification| {
+            modification
+                .actor
+                .as_deref()
+                .is_none_or(|actor| !valid_actor(actor))
+        })
+    {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-MODIFIER-IDENTITY-MISSING",
+            "every modifier must have an authenticated actor identity",
+        );
+    }
+    if input
+        .modifications
+        .iter()
+        .any(|modification| !crate::provenance::is_ci_grade(modification.trust))
+    {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-MODIFIER-UNTRUSTED",
+            "modifier identities require CI-grade observation",
+        );
+    }
+    if !input
+        .reviews
+        .iter()
+        .any(|review| review.status == ReviewStatus::Approved)
+    {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-MISSING",
+            "an approving automated review is required",
+        );
+    }
+    for review in &input.reviews {
+        validate_agent_review(input, review, reasons);
+    }
+    true
+}
+
+fn valid_actor(actor: &str) -> bool {
+    !actor.trim().is_empty() && !actor.contains('\0')
+}
+
+fn owner_review_is_fresh(input: &ReviewEvaluationInput, timestamp: &UtcTimestamp) -> bool {
+    let maximum = input
+        .policy
+        .owner_with_independent_agent_review
+        .as_ref()
+        .expect("owner rule is enabled")
+        .maximum_age_seconds
+        .min(input.policy.max_evidence_age_seconds);
+    input
+        .evaluation_time
+        .as_datetime()
+        .signed_duration_since(*timestamp.as_datetime())
+        .to_std()
+        .is_ok_and(|age| age <= std::time::Duration::from_secs(maximum))
+}
+
+fn validate_owner_approval(
+    input: &ReviewEvaluationInput,
+    owner: &policy_contracts::OwnerApprovalEvidence,
+    reasons: &mut Vec<Reason>,
+) {
+    let policy = input
+        .policy
+        .owner_with_independent_agent_review
+        .as_ref()
+        .expect("owner rule is enabled");
+    if owner.actor != policy.owner_actor || !valid_actor(&owner.actor) {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-OWNER-IDENTITY",
+            "authorization must be authored by the policy-pinned repository owner",
+        );
+    }
+    if owner.repository != input.repository || owner.head_sha != input.head_sha {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-OWNER-BINDING",
+            "owner authorization must bind this repository and head",
+        );
+    }
+    if input
+        .reviews
+        .iter()
+        .any(|review| review.report_digest == owner.record_digest)
+    {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-OWNER-RECORD-NOT-SEPARATE",
+            "owner authorization and agent report must be separate records",
+        );
+    }
+    if !owner_review_is_fresh(input, &owner.observed_at) {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-OWNER-STALE",
+            "owner authorization is stale or future-dated",
+        );
+    }
+    if !crate::provenance::is_ci_grade(owner.trust) {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-OWNER-UNTRUSTED",
+            "owner authorization requires CI-grade observation",
+        );
+    }
+}
+
+fn validate_agent_review(
+    input: &ReviewEvaluationInput,
+    review: &ReviewEvidence,
+    reasons: &mut Vec<Reason>,
+) {
+    let identity = review
+        .identity
+        .as_ref()
+        .expect("owner quorum checked every review identity");
+    if identity.kind != policy_contracts::ReviewActorKind::Automated {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-NOT-AUTOMATED",
+            "review evidence must explicitly identify an automated reviewer",
+        );
+    }
+    if !valid_actor(&identity.actor) {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-IDENTITY-MISSING",
+            "the automated review must identify its authenticated actor",
+        );
+    }
+    if identity.actor == identity.pull_request_author {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-SELF-AUTHOR",
+            "the automated reviewer cannot be the PR author",
+        );
+    }
+    if input
+        .modifications
+        .iter()
+        .any(|modification| modification.actor.as_ref() == Some(&identity.actor))
+    {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-SELF-MODIFIER",
+            "the automated reviewer cannot be any code modifier",
+        );
+    }
+    if !crate::verifier_is_independent(review, &input.modifications) {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-NOT-INDEPENDENT",
+            "the automated reviewer must use a separate provider and execution from every modifier",
+        );
+    }
+    if review.head_sha != input.head_sha {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-BINDING",
+            "the automated review must bind this head",
+        );
+    }
+    if !owner_review_is_fresh(input, &review.observed_at) {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-STALE",
+            "the automated review is stale or future-dated",
+        );
+    }
+    if !crate::provenance::is_ci_grade(review.trust) {
+        insert_reason(
+            reasons,
+            "PK-REVIEW-AGENT-UNTRUSTED",
+            "the automated review requires CI-grade observation",
+        );
+    }
 }
 
 fn validate_review_provenance(input: &ReviewEvaluationInput, reasons: &mut Vec<Reason>) {
