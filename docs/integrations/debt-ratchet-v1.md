@@ -127,6 +127,33 @@ cargo fetch --locked
 cargo test --locked -p policy-native-contracts -p policy-native-verifier
 ```
 
+## CLI
+
+`policy-cli evaluate-ratchet` exposes the existing JSON verifier to binary-only
+consumers without a Rust integration or language parsing in the kernel:
+
+```console
+policy-cli evaluate-ratchet --rule rule.json --observation observation.json
+```
+
+The files contain `RatchetRuleV1` and `RatchetObservationV1` respectively, as
+specified above. Either path may be `-` for stdin; selecting stdin for both is
+invalid. The command calls `evaluate_ratchet_json` and prints its unmodified
+`RatchetResultV1` as one compact JSON object followed by a newline. Identical
+inputs produce identical output bytes.
+
+| Exit code | Meaning | Output |
+| --- | --- | --- |
+| 0 | `pass` | Result JSON on stdout |
+| 2 | `fail` with comparison violations (`ALLOWANCE_INCREASED`, `DEBT_INCREASED`, `CONTEXT_REPLACEMENT`, `NEW_DEBT`) | Result JSON on stdout |
+| 64 | Malformed or structurally invalid input (`MALFORMED_INPUT`, `INVALID_COUNT`, `INVALID_PATH`, `DUPLICATE_KEY`) | Result JSON on stdout, including all verifier diagnostics |
+| 64 | Missing/unreadable file, invalid arguments, both inputs using stdin, or I/O/canonicalization error | Diagnostic on stderr; no result for input/argument errors |
+
+Help (`policy-cli --help` or `policy-cli evaluate-ratchet --help`) exits 0.
+No schema or comparison rule changes accompany this command. The CLI addition
+is intended for the next binary release; it does not change already published
+v0.1.0 assets or establish consumer adoption.
+
 ## Trust and integration boundary
 
 This API makes a mathematical comparison only. A passing result cannot establish
@@ -134,7 +161,8 @@ trusted execution, satisfy review, authorize a merge, or promote a baseline.
 Digests identify content and do not attest the producer. See the
 [trust model](../trust-model.md).
 
-The existing scope evaluator, importer, CLI and pre-merge contracts are unchanged.
+The existing scope evaluator, importer and pre-merge contracts are unchanged;
+the CLI adds only the standalone ratchet entry point above.
 Scope integration is follow-up work: it needs an independently approved ratchet
 requirement and source/run bindings before a result can satisfy any scope gate.
-No consuming-project behavior is changed by this library addition.
+No consuming-project behavior is changed by this addition.

@@ -34,6 +34,11 @@ and approved suite, with no v1 wire-contract change or consumer Rust requirement
 The owner must cut the first release after merge; no published release or consumer
 adoption is established. See [[native-contracts#Native command distribution]].
 
+`policy-cli evaluate-ratchet --rule FILE --observation FILE` exposes the existing
+standalone JSON comparison with 0/2/64 exits. It is source implementation for the
+next binary release; no release, TJERPS adoption or scope authorization is claimed.
+See [[native-contracts#Debt ratchet]].
+
 Policy v3 binds approving-review quorum and allowed providers. Legacy policy
 digests remain valid, but readiness and shipping require explicit v3 reapproval.
 Consumer profiles are unchanged; reapproval and promotion are not established.

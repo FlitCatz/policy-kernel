@@ -41,6 +41,12 @@ protected merge or production promotion is established.
 
 ## Native binary distribution
 
+The CLI also implements `evaluate-ratchet --rule FILE --observation FILE` using
+the existing [debt ratchet JSON verifier](integrations/debt-ratchet-v1.md#cli).
+It prints `RatchetResultV1` with exit 0 for pass, 2 for comparison failures and
+64 for invalid input. This is source implementation for the next binary release;
+no new release, TJERPS adoption or scope authorization is established here.
+
 The Unix `policy-native-importer` command delegates to the existing adapter
 library and exports `ImportedObservationsV1` only on verified imports. Its exits
 are 0 (verified), 2 (persisted rejection) and 64 (invalid input/output error).

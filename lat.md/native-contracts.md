@@ -155,6 +155,24 @@ defines all reason codes and canonical domains. This comparison does not
 establish trust, approval, review satisfaction or scope satisfaction; wiring
 independent ratchet requirements into scope remains follow-up work.
 
+`policy-cli evaluate-ratchet --rule FILE --observation FILE` delegates to that
+JSON boundary and emits the unchanged result. Exits are 0 for pass, 2 for
+comparison failures and 64 for invalid input; either file may use stdin, but
+not both. Existing CLI commands retain their behavior.
+CLI conformance covers deterministic pass output
+[[crates/policy-cli/tests/ratchet.rs#ratchet_pass_prints_the_verifier_result_deterministically]],
+every comparison reason
+[[crates/policy-cli/tests/ratchet.rs#ratchet_comparison_failures_preserve_each_reason_and_digests]],
+structural violations
+[[crates/policy-cli/tests/ratchet.rs#ratchet_structural_failures_are_invalid_input_with_json_reasons]],
+malformed inputs
+[[crates/policy-cli/tests/ratchet.rs#ratchet_malformed_documents_preserve_stable_verifier_diagnostics]],
+stdin boundaries
+[[crates/policy-cli/tests/ratchet.rs#ratchet_accepts_either_input_from_stdin_but_rejects_two_stdin_inputs]],
+file/argument errors
+[[crates/policy-cli/tests/ratchet.rs#ratchet_missing_files_and_options_are_invalid_input_without_stdout]]
+and help [[crates/policy-cli/tests/ratchet.rs#ratchet_is_discoverable_in_command_help]].
+
 ## Local-runner attestations
 
 Sibling local-runner statements bind source/run identity, template and input/result digests, runner metadata and ordered times. Signature envelopes enforce structural consistency without cryptography or trust promotion.

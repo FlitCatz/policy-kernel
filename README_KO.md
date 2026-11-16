@@ -204,6 +204,21 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 `Inconclusive`이면 3, 잘못된 입력이면 64입니다. `inspect`는 타입이 정해진 병합 전/후
 결정 또는 증거 묶음을 검증해 출력하지만, 제공된 결정을 재계산하거나 인증하지는 않습니다.
 
+`evaluate-scope --expected FILE --observations FILE`은 native 로컬 scope를 평가합니다.
+`evaluate-ratchet --rule FILE --observation FILE`은 기존 ratchet 검증기로
+승인된 baseline·head baseline과 관측된 부채 개수를 비교합니다.
+
+```console
+cargo run --locked -p policy-cli -- evaluate-ratchet --rule rule.json --observation observation.json
+```
+
+두 명령 모두 통과는 0, 비통과는 2, 잘못된 입력은 64로 종료합니다.
+`evaluate-ratchet`은 결정론적인 `RatchetResultV1` JSON 객체 하나를 출력하며,
+파싱 또는 구조 검증에 실패한 JSON 입력도 위반 사유를 포함해 출력합니다.
+파일 누락이나 잘못된 명령 인수는 stderr 진단만 출력하며 JSON 결과는 없습니다.
+한 입력에는 표준 입력(`-`)을 사용할 수 있지만 두 입력에 동시에 사용할 수는 없습니다.
+자세한 내용은 [ratchet 입력·결과 계약](docs/integrations/debt-ratchet-v1.md#cli)을 참고하세요.
+
 ## 워크스페이스 구성
 
 | 패키지 | 역할 |
@@ -212,7 +227,7 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 | `policy-native-contracts` | Native·debt ratchet v1 전송 타입·구조 검증·스키마·적합성 corpus; importer 없음 |
 | `policy-native-verifier` | Typed 로컬 scope 조립·core 판정·독립형 debt ratchet; adapter 의존 및 권한 부여 없음 |
 | `policy-core` | 결정론적 정책·출처·검토·센서·병합 평가 |
-| `policy-cli` | 로컬 자문 scope·병합 전 평가와 타입 객체 검사 |
+| `policy-cli` | 로컬 자문 scope·병합 전 평가, 부채 ratchet 비교와 타입 객체 검사 |
 | `policy-ci` | 권한 있는 GitHub Actions 평가 및 전용 검사 게시 |
 | `evidence-collector` | 명시된 argv 실행을 제한하고 아티팩트 digest를 수집 |
 | `github-adapter` | CI 통합에 사용하는 GitHub 관측 및 프로세스 어댑터 |
