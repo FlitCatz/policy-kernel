@@ -198,6 +198,21 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 typed decision or evidence bundle; it does not recompute or authenticate a
 supplied decision.
 
+`evaluate-scope --expected FILE --observations FILE` evaluates native local scope.
+`evaluate-ratchet --rule FILE --observation FILE` compares approved/head debt
+baselines with observed counts through the existing ratchet verifier:
+
+```console
+cargo run --locked -p policy-cli -- evaluate-ratchet --rule rule.json --observation observation.json
+```
+
+Both commands exit 0 for pass, 2 for non-pass, and 64 for invalid input.
+`evaluate-ratchet` prints one deterministic `RatchetResultV1` JSON object,
+including violation reasons on malformed or structurally invalid JSON inputs.
+Missing files or invalid command arguments produce stderr diagnostics and no
+JSON result. Either input may use `-` for stdin, but both cannot use it together.
+See the [ratchet input and result contract](docs/integrations/debt-ratchet-v1.md#cli).
+
 ## Workspace map
 
 | Package | Purpose |
@@ -206,7 +221,7 @@ supplied decision.
 | `policy-native-contracts` | Native and debt ratchet v1 wire types, structural validation, schemas and conformance corpus; no importer. |
 | `policy-native-verifier` | Typed local scope assembly, core evaluation and standalone debt ratchet; no adapter dependency or authorization. |
 | `policy-core` | Deterministic policy, provenance, review, sensor, and merge evaluation. |
-| `policy-cli` | Local advisory scope/pre-merge evaluation and typed-object inspection. |
+| `policy-cli` | Local advisory scope/pre-merge evaluation, debt ratchet comparison and typed-object inspection. |
 | `policy-ci` | Authoritative GitHub Actions evaluation and dedicated check publication. |
 | `evidence-collector` | Bounded explicit-argv execution with artifact digests. |
 | `github-adapter` | GitHub observation and process adapter used by CI integration. |

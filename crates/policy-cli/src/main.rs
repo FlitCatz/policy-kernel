@@ -6,6 +6,7 @@ use policy_contracts::{
     PreMergeStatus,
 };
 use policy_core::{evaluate_pre_merge, validate_bundle};
+use policy_native_contracts::{RatchetReasonCode, RatchetStatus};
 use serde_json::Value;
 use std::{
     fs,
@@ -36,6 +37,13 @@ enum Command {
         expected: String,
         #[arg(long)]
         observations: String,
+    },
+    /// Compare debt baselines and observed counts (typed JSON only).
+    EvaluateRatchet {
+        #[arg(long)]
+        rule: String,
+        #[arg(long)]
+        observation: String,
     },
     /// Evaluate complete pre-merge input in advisory mode.
     EvaluatePre { input: String },
@@ -86,6 +94,34 @@ fn run(cli: Cli) -> Result<u8, String> {
             Ok(exit)
         }
         Command::EvaluatePre { input } => evaluate_pre(&input),
+        Command::EvaluateRatchet { rule, observation } => {
+            if rule == "-" && observation == "-" {
+                return Err("rule and observation cannot both use stdin".into());
+            }
+            let result = policy_native_verifier::evaluate_ratchet_json(
+                &read_input(&rule)?,
+                &read_input(&observation)?,
+            )
+            .map_err(|error| error.to_string())?;
+            let exit = if result.violations.iter().any(|violation| {
+                matches!(
+                    violation.code,
+                    RatchetReasonCode::MalformedInput
+                        | RatchetReasonCode::InvalidCount
+                        | RatchetReasonCode::InvalidPath
+                        | RatchetReasonCode::DuplicateKey
+                )
+            }) {
+                EXIT_INVALID_INPUT
+            } else {
+                match result.status {
+                    RatchetStatus::Pass => 0,
+                    RatchetStatus::Fail => EXIT_BLOCKED,
+                }
+            };
+            write_json(&result)?;
+            Ok(exit)
+        }
         Command::Inspect { input } => inspect(&input),
     }
 }
