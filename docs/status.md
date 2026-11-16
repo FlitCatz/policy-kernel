@@ -95,6 +95,17 @@ K5 contracts are structural only. These core tests cannot establish real key
 custody, honest runner execution, an authoritative CI decision, a protected merge
 or production promotion.
 
+## Policy v4 single-owner review contract
+
+The core also implements the optional v4
+[single-owner review rule](integrations/owner-review-policy-v4.md): an authenticated
+owner-authored PR can use a separate fresh owner authorization and an independent
+automated approval of the same head. Without this field the existing quorum is
+unchanged. New actor metadata and CI-grade evidence are required; local-runner
+evidence cannot authorize reviews. Controller authentication/adoption of these
+observations is separate, and its existing provider floor remains unchanged.
+This contract does not establish an authoritative live decision or promotion.
+
 ## Policy v3 review quorum
 
 The [review contract](trust-model.md) binds approving-review quorum and allowed

@@ -38,6 +38,9 @@ pub struct PolicySnapshot {
     /// Optional in v4; absence keeps local-runner evidence disabled.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub local_runner_evidence: Option<LocalRunnerEvidencePolicy>,
+    /// V4 opt-in for an owner authorization plus an independent automated review.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner_with_independent_agent_review: Option<OwnerWithIndependentAgentReviewPolicy>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -99,6 +102,15 @@ struct PolicySnapshotWire {
     #[serde(default, deserialize_with = "deserialize_local_runner_evidence")]
     #[schemars(with = "LocalRunnerEvidencePolicy")]
     local_runner_evidence: Option<LocalRunnerEvidencePolicy>,
+    #[serde(default, deserialize_with = "deserialize_owner_review_policy")]
+    #[schemars(with = "OwnerWithIndependentAgentReviewPolicy")]
+    owner_with_independent_agent_review: Option<OwnerWithIndependentAgentReviewPolicy>,
+}
+
+fn deserialize_owner_review_policy<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<OwnerWithIndependentAgentReviewPolicy>, D::Error> {
+    OwnerWithIndependentAgentReviewPolicy::deserialize(deserializer).map(Some)
 }
 
 fn deserialize_local_runner_evidence<'de, D: serde::Deserializer<'de>>(
@@ -126,6 +138,19 @@ fn deserialize_knowledge_requirements<'de, D: serde::Deserializer<'de>>(
 impl PolicySnapshot {
     /// Direct Rust construction must obey the same version boundary as JSON.
     pub fn validate_version(&self) -> Result<(), &'static str> {
+        if let Some(owner) = &self.owner_with_independent_agent_review {
+            if self.schema_version != 4 {
+                return Err("only policy v4 can declare owner_with_independent_agent_review");
+            }
+            if owner.owner_actor.trim().is_empty()
+                || owner.owner_actor.contains('\0')
+                || owner.maximum_age_seconds == 0
+            {
+                return Err(
+                    "owner review policy requires a nonblank owner and positive maximum age",
+                );
+            }
+        }
         if let Some(local) = &self.local_runner_evidence {
             if self.schema_version < 4 {
                 return Err("policy v1/v2/v3 cannot declare local_runner_evidence");
@@ -174,6 +199,7 @@ impl<'de> Deserialize<'de> for PolicySnapshot {
             required_knowledge: wire.required_knowledge.unwrap_or_default(),
             required_reviews: wire.required_reviews,
             local_runner_evidence: wire.local_runner_evidence,
+            owner_with_independent_agent_review: wire.owner_with_independent_agent_review,
         };
         policy
             .validate_version()
@@ -198,6 +224,9 @@ impl JsonSchema for PolicySnapshot {
             }, {
                 "if": {"properties": {"schema_version": {"enum": [1, 2, 3]}}},
                 "then": {"not": {"required": ["local_runner_evidence"]}}
+            }, {
+                "if": {"properties": {"schema_version": {"enum": [1, 2, 3]}}},
+                "then": {"not": {"required": ["owner_with_independent_agent_review"]}}
             }]})
             .get("allOf")
             .unwrap()
@@ -289,6 +318,15 @@ pub struct RequiredReviewPolicy {
     pub require_provider_independence: bool,
     /// Empty permits any provider; otherwise every review must use a listed one.
     pub allowed_providers: Vec<ProviderId>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct OwnerWithIndependentAgentReviewPolicy {
+    #[schemars(schema_with = "binding_nonblank_string_schema")]
+    pub owner_actor: String,
+    #[schemars(range(min = 1))]
+    pub maximum_age_seconds: u64,
 }
 
 fn required_independence_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {

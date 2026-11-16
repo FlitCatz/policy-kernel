@@ -101,6 +101,27 @@ Required knowledge delegates glob validation to
 [[crates/policy-core/src/sensors.rs#path_glob]], which rejects blank and
 NUL-containing patterns as well as unsupported glob syntax.
 
+## Single-owner review policy
+
+V4 can opt into fresh owner authorization plus an independent automated approval of the same head. Explicit actor identities and CI-grade trust are mandatory; absent opt-in preserves the default quorum.
+
+Declaration [[crates/policy-contracts/src/policy.rs#OwnerWithIndependentAgentReviewPolicy]];
+identity [[crates/policy-contracts/src/evidence.rs#ReviewIdentity]];
+authorization [[crates/policy-contracts/src/evidence.rs#OwnerApprovalEvidence]].
+Rule [[crates/policy-core/src/reviews.rs#owner_review_quorum]] preserves provider,
+execution, finding and conflict gates. [[crates/policy-core/src/reviews.rs#validate_agent_review]]
+checks explicit actor independence; [[crates/policy-core/src/reviews.rs#validate_owner_approval]]
+checks owner identity, repository/head binding and CI-grade provenance.
+[[crates/policy-core/src/reviews.rs#owner_review_is_fresh]] uses the stricter age limit.
+
+Tests [[crates/policy-core/tests/owner_reviews.rs#owner_rule_fails_closed_for_each_evidence_boundary]],
+[[crates/policy-core/tests/owner_reviews.rs#freshness_uses_the_stricter_window_with_exact_fractional_boundaries]],
+[[crates/policy-core/tests/owner_reviews.rs#full_pre_merge_uses_the_owner_rule_and_binds_all_new_evidence]]
+and [[crates/policy-contracts/tests/owner_reviews.rs#owner_review_option_is_v4_only_nonnull_and_omitted_when_absent]]
+cover failures, exact time boundaries, digest binding and legacy compatibility.
+The [wire contract](../docs/integrations/owner-review-policy-v4.md) records reason
+codes and the unchanged controller floor; collection authentication is separate.
+
 ## Local-runner policy contract
 
 Policy v4 optionally enables fresh local-class sensors and executions for changes exempt from CI. Other evidence stays CI-grade; local readiness carries a digest-bound marker that prevents shipping.

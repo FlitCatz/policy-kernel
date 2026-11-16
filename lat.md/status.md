@@ -45,6 +45,11 @@ the new wire value, which is not CI-grade. Core accepts it only for fresh sensor
 and executions under v4 opt-in with no matching CI condition; such readiness cannot ship.
 See [[kernel#Local-runner policy contract]].
 
+V4 also offers an independent optional owner review rule: fresh owner authorization
+plus an independent automated approval, explicit actor identities and CI-grade
+trust. Default quorum and controller floor remain unchanged; live authentication,
+adoption and promotion are separate. See [[kernel#Single-owner review policy]].
+
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
 and records `bundled, not individually audited`, including absent optional
 platform parents. The native oxide fixture satisfies local scope; TJERP P8

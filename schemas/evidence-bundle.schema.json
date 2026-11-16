@@ -234,6 +234,13 @@
     "ModificationEvidence": {
       "additionalProperties": false,
       "properties": {
+        "actor": {
+          "description": "Authenticated actor identity; required by the optional owner review rule.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "execution_id": {
           "$ref": "#/$defs/ExecutionId"
         },
@@ -263,12 +270,62 @@
       ],
       "type": "object"
     },
+    "OwnerApprovalEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "type": "string"
+        },
+        "head_sha": {
+          "$ref": "#/$defs/CommitSha"
+        },
+        "kind": {
+          "$ref": "#/$defs/OwnerApprovalKind"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/UtcTimestamp"
+        },
+        "record_digest": {
+          "$ref": "#/$defs/Sha256Digest"
+        },
+        "repository": {
+          "$ref": "#/$defs/RepositoryId"
+        },
+        "trust": {
+          "$ref": "#/$defs/TrustClass"
+        }
+      },
+      "required": [
+        "actor",
+        "kind",
+        "repository",
+        "head_sha",
+        "record_digest",
+        "observed_at",
+        "trust"
+      ],
+      "type": "object"
+    },
+    "OwnerApprovalKind": {
+      "enum": [
+        "approval",
+        "comment"
+      ],
+      "type": "string"
+    },
     "ProviderId": {
       "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
       "type": "string"
     },
     "RepositoryId": {
       "pattern": "^[^/]+/[^/]+$",
+      "type": "string"
+    },
+    "ReviewActorKind": {
+      "enum": [
+        "human",
+        "automated"
+      ],
       "type": "string"
     },
     "ReviewEvidence": {
@@ -280,11 +337,33 @@
         "head_sha": {
           "$ref": "#/$defs/CommitSha"
         },
+        "identity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewIdentity"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Observed identities, never inferred from provider or model names."
+        },
         "model": {
           "$ref": "#/$defs/ModelId"
         },
         "observed_at": {
           "$ref": "#/$defs/UtcTimestamp"
+        },
+        "owner_approval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OwnerApprovalEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Separate owner authorization record; it never counts as a review provider."
         },
         "provider": {
           "$ref": "#/$defs/ProviderId"
@@ -308,6 +387,26 @@
         "report_digest",
         "observed_at",
         "trust"
+      ],
+      "type": "object"
+    },
+    "ReviewIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "actor": {
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/ReviewActorKind"
+        },
+        "pull_request_author": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "actor",
+        "kind",
+        "pull_request_author"
       ],
       "type": "object"
     },

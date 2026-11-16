@@ -14,6 +14,16 @@ attestations with owner-installed keys; local signing tests do not establish a
 production provider or deployment. See [[status]] for what has and has not been demonstrated, and
 [[tasks]] for the implementation map.
 
+## Single-owner authorization
+
+The optional v4 owner rule requires a separate owner authorization and an independent automated approval, with explicit actors and CI-grade trust. Local-runner evidence cannot supply review authorization.
+
+See [[kernel#Single-owner review policy]] and the
+[wire contract](../docs/integrations/owner-review-policy-v4.md). The trusted observer
+must authenticate the PR author, all modifiers, reviewer identities, and the
+authorizing content of owner comments. Typed fields and digests do not authenticate
+these observations. The reference controller's existing review floor is unchanged.
+
 ## Planned local-runner attestation
 
 Core accepts `local_runner_attested` for fresh sensors and executions under explicit v4 opt-in and no CI requirement. It never permits shipping; authenticated collection and issuance remain planned.

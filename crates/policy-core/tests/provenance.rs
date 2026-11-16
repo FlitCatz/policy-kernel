@@ -212,6 +212,7 @@ fn execution_ids_must_be_unique_across_all_evidence_kinds() {
     let mut bundle = fixture("local-authoritative.json");
     bundle.executions[0].trust = policy_contracts::TrustClass::TrustedRunnerAttested;
     bundle.modifications.push(ModificationEvidence {
+        actor: None,
         provider: policy_contracts::ProviderId::parse("producer").unwrap(),
         model: policy_contracts::ModelId::parse("model").unwrap(),
         execution_id: policy_contracts::ExecutionId::parse("local-run").unwrap(),

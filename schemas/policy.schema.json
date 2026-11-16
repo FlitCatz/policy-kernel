@@ -111,6 +111,29 @@
       ],
       "type": "string"
     },
+    "OwnerWithIndependentAgentReviewPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "maximum_age_seconds": {
+          "format": "uint64",
+          "maximum": 18446744073709551615,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "owner_actor": {
+          "not": {
+            "pattern": "\u0000"
+          },
+          "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+          "type": "string"
+        }
+      },
+      "required": [
+        "owner_actor",
+        "maximum_age_seconds"
+      ],
+      "type": "object"
+    },
     "ProviderId": {
       "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
       "type": "string"
@@ -234,6 +257,26 @@
           ]
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "enum": [
+              1,
+              2,
+              3
+            ]
+          }
+        }
+      },
+      "then": {
+        "not": {
+          "required": [
+            "owner_with_independent_agent_review"
+          ]
+        }
+      }
     }
   ],
   "if": {
@@ -273,6 +316,10 @@
       "maximum": 18446744073709551615,
       "minimum": 0,
       "type": "integer"
+    },
+    "owner_with_independent_agent_review": {
+      "$ref": "#/$defs/OwnerWithIndependentAgentReviewPolicy",
+      "default": null
     },
     "policy_digest": {
       "$ref": "#/$defs/Sha256Digest"

@@ -70,6 +70,9 @@ pub struct EvidenceManifest {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ModificationEvidence {
+    /// Authenticated actor identity; required by the optional owner review rule.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actor: Option<String>,
     pub provider: ProviderId,
     pub model: ModelId,
     pub execution_id: ExecutionId,
@@ -105,6 +108,46 @@ pub struct ReviewEvidence {
     pub status: ReviewStatus,
     pub head_sha: CommitSha,
     pub report_digest: Sha256Digest,
+    pub observed_at: UtcTimestamp,
+    pub trust: TrustClass,
+    /// Observed identities, never inferred from provider or model names.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub identity: Option<ReviewIdentity>,
+    /// Separate owner authorization record; it never counts as a review provider.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner_approval: Option<OwnerApprovalEvidence>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ReviewActorKind {
+    Human,
+    Automated,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ReviewIdentity {
+    pub actor: String,
+    pub kind: ReviewActorKind,
+    pub pull_request_author: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OwnerApprovalKind {
+    Approval,
+    Comment,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct OwnerApprovalEvidence {
+    pub actor: String,
+    pub kind: OwnerApprovalKind,
+    pub repository: RepositoryId,
+    pub head_sha: CommitSha,
+    pub record_digest: Sha256Digest,
     pub observed_at: UtcTimestamp,
     pub trust: TrustClass,
 }

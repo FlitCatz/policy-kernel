@@ -396,7 +396,7 @@ its local cryptographic tests do not establish deployed provider services.
 Policy schema 2 can require explicit knowledge evidence. Policies with no such
 requirement continue to allow an empty knowledge collection.
 
-Readiness now requires policy schema 3 with digest-bound `required_reviews`:
+Readiness requires policy schema 3 or 4 with digest-bound `required_reviews`:
 a positive `minimum_reviewers`, `require_provider_independence: true`, and
 `allowed_providers` (empty permits any provider). Core counts distinct approving
 review executions; waivers do not count as approvals. V1/v2 documents retain
@@ -420,6 +420,14 @@ The informational, digest-bound `PK-PROV-LOCAL-ATTESTED` preserves readiness but
 prevents `SHIPPED`. Advisory and `local_untrusted` behavior is unchanged.
 Attestation authentication and issuance remain follow-up work; these core rules
 do not establish real runner execution, an authoritative CI decision or promotion.
+
+Policy v4 also supports an independent optional
+[`owner_with_independent_agent_review`](docs/integrations/owner-review-policy-v4.md)
+rule for a single-owner repository. A fresh owner approval or authorizing comment
+plus an independent automated approval of the same head can satisfy core review
+evaluation. Explicit actor identities and CI-grade evidence are required; local
+runner evidence cannot supply reviews. Without the option the quorum is unchanged.
+The reference controller's review floor and deployed integration are unchanged.
 
 ## Further reading
 
