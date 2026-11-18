@@ -525,16 +525,17 @@ schemas remain unchanged.
 ### Install pinned native binaries
 
 The [release workflow](.github/workflows/release-binaries.yml) builds both commands
-with Rust 1.95.0 and `--locked` for macOS arm64 and Linux x64. The owner will cut
-the first version tag after merge; this change does not claim a published release.
+with Rust 1.95.0 and `--locked` for macOS arm64 and Linux x64.
 Assets include both executables per target, `SHA256SUMS` and `SOURCE_COMMIT`.
 Linux builds use Ubuntu 22.04/glibc 2.35; macOS builds use macOS 15.
+Windows x64 users can run the Linux x64 binaries under WSL2.
 
-After publication, replace `vX.Y.Z` with a reviewed exact tag. In a fresh directory:
+Use the example below in a fresh directory after `v0.1.1` is published. To install
+the previous release, set `tag=v0.1.0`.
 
 ```sh
 set -eu
-tag=vX.Y.Z
+tag=v0.1.1
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do

@@ -82,7 +82,7 @@ checks the diagnostic and source retention one byte over the limit.
 
 ## Native command distribution
 
-The Unix importer command delegates raw verification to the adapter library. Tagged native releases package it with the JSON-only scope CLI, SHA-256 checksums and the source commit; publication awaits an owner-created tag.
+The Unix importer command delegates raw verification to the adapter library. An owner-created version tag triggers packaging with the JSON-only scope CLI, SHA-256 checksums and the source commit.
 
 Command [[crates/policy-native-importer/src/main.rs#main]] calls
 [[crates/policy-native-importer/src/importer.rs#import_run]] without a second
@@ -101,7 +101,8 @@ output and pins a known SHA-256 vector.
 The [workflow](../.github/workflows/release-binaries.yml) uses Rust 1.95.0,
 locked builds and SHA-pinned actions. The
 [consumer contract](../docs/integrations/native-contracts-v1.md#pinned-binary-releases)
-defines assets, install commands and checksum pins; [[status]] bounds current claims.
+defines assets, install commands and checksum pins. Windows x64 users can run
+the Linux x64 binaries under WSL2. See [[status]] for publication status.
 
 ## Claim preparation
 

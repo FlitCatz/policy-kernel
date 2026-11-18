@@ -61,10 +61,12 @@ The [version-tag workflow](../.github/workflows/release-binaries.yml) builds bot
 commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
 `x86_64-unknown-linux-gnu`, packaging four executables, `SHA256SUMS` and
 `SOURCE_COMMIT`. [Consumer instructions](integrations/native-contracts-v1.md#pinned-binary-releases)
-describe version and checksum pins. This is implementation of the distribution
-path, not a published release: the owner must cut the first tag after merge.
-No hosted release execution, TJERPS adoption, authoritative decision or production
-promotion is established by this change.
+describe version and checksum pins. The
+[`v0.1.0` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/43784765825)
+published the first [binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.0)
+from `e7d24be0c9d28a597addd237f5c1e79d1605c15a`. The `v0.1.1` workspace
+version prepares the next native release, whose publication requires a tag.
+Consumer adoption, authoritative decisions and production promotion are tracked separately.
 
 ## Policy v4 local-runner contract
 
