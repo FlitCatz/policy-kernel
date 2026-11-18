@@ -9,7 +9,7 @@ native runs. It neither executes commands nor reads files, Git, reports or the
 network. It does not construct core evidence or evaluate policy. Existing core
 contracts, approved digests, five root schemas and TJERP execution are unchanged.
 
-## Planned local-runner attestation
+## Local-runner attestation
 
 The
 [2026-11-12 decision record](../decisions/2026-11-12-local-runner-attestation-adr.md)
@@ -18,7 +18,11 @@ scope-template digest. The sibling [wire contracts below](#local-runner-attestat
 are implemented. Core also implements policy v4 opt-in acceptance for fresh sensor
 and execution evidence at the weaker class, with a shipping prohibition;
 the [schema-2 controller](../../action/controller.md#local-runner-verification)
-authenticates signatures and recomputes scope, while attestor issuance remains planned. The three original v1
+authenticates signatures and recomputes scope. The
+[attester](../../action/controller.md#issuing-a-local-attestation) verifies the
+raw run, sets the evaluation timestamp on the expected scope, and signs only
+after the owner confirms the satisfied result and signing-byte hash. The
+observer forwards the attester's exact output scope and observations. The three original v1
 documents and `policy-cli evaluate-scope` remain unchanged: results stay
 `local_untrusted` with an unmet review gate. Signature verification belongs to
 the authenticated controller boundary, outside this contract crate.

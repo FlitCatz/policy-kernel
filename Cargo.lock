@@ -828,6 +828,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "policy-local-attest"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "policy-contracts",
+ "policy-core",
+ "policy-native-importer",
+ "policy-native-verifier",
+ "rustix",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "policy-native-contracts"
 version = "0.1.0"
 dependencies = [

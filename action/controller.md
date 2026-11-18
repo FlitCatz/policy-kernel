@@ -14,8 +14,8 @@ owner-registered local runners, binds their statements to signed GitHub
 observations, recomputes scope and issues only the covered sensors and executions
 as `local_runner_attested`. Core separately requires policy v4 opt-in, freshness
 and a change exempt from CI, and prevents such readiness from shipping. The
-attester executable and its end-to-end integration remain later work. Synthetic
-cryptographic tests do not establish production key custody or honest execution.
+[local attester](#issuing-a-local-attestation) prepares the three local inputs
+and requests owner approval before invoking a signer.
 
 ## Ownership and isolation
 
@@ -186,6 +186,50 @@ and the SSH verifier receive the same checkout-isolation checks as RSA anchors.
 The controller does not parse raw test reports, execute contributor commands,
 sign statements, or change review evaluation.
 
+## Issuing a local attestation
+
+Build the owner-operated Unix adapter from an approved revision. Pass the clean
+worktree root, the intended base ref, an independently prepared expected scope,
+and the expected run and scope IDs. The runner writes a fresh native manifest
+outside its raw-artifact directory. Keep runner and attester outputs outside the
+checkout. The output directory must be new, its parent must exist, and its path
+and the raw-artifact path must be symlink-free. Attester option paths resolve
+from the invocation directory. The runner starts in the checkout.
+
+```console
+cargo run --locked -p policy-local-attest -- \
+  --repo /work/checkout --base origin/main --expected /work/input/expected.json \
+  --run /work/run/run.json --artifacts /work/run/reports --output /work/attested \
+  --run-id run-42 --scope-id full-check --runner-id owner-runner \
+  --signer /usr/bin/ssh-keygen --signer-arg=-Y --signer-arg=sign \
+  --signer-arg=-f --signer-arg=/owner/keys/runner \
+  --signer-arg=-n --signer-arg=policy-kernel/local-runner-attestation/v1 \
+  -- /owner/bin/local-check /work/run/run.json /work/run/reports
+```
+
+The attester starts one argv in the checkout with stdin closed. It checks that the
+worktree is clean before and after the command, that head and tree are unchanged,
+and that all observation times fall inside the measured run. It imports the raw
+artifacts and sets the scope evaluation clock to runner completion. When the
+result is `Satisfied`, the attester shows the result summary and SHA-256 of the
+canonical statement signing bytes on the owner's terminal. The statement and its
+timestamp are fixed before confirmation. Keep stdin and stderr
+attached to the terminal and type `yes` at the prompt to authorize signing.
+The signer reads the exact statement from stdin and emits an
+armored SSHSIG to stdout. Use an owner-controlled signer and the registered
+hardware security key. Key material is handled by the signer.
+
+Exit 0 means `attestation.json` was published. Exit 3 means the confirmation was
+declined or the terminal was unavailable. Exit 2 covers invalid input, runner or
+scope failure, signer failure, and output errors. Import audit files may remain
+after a failure. An existing output directory or envelope is preserved.
+
+For a successful run, the observer uses `attestation.json`, `expected.json` and
+`observations.json` from the output directory as the local input tuple. The
+observer independently supplies GitHub's head tree, the current PR binding, and
+its complete inventory. Transport and deployment are owned by the consuming
+project.
+
 ## Invocation and output
 
 Build and install both Rust binaries from the approved revision:
@@ -222,16 +266,19 @@ steps may run in the publication process's security context.
 
 ```console
 cargo test --locked --offline -p policy-ci
+cargo test --locked --offline -p policy-local-attest
 ```
 
 Cryptographic controller tests require OpenSSL (optionally set the absolute
 `POLICY_TEST_OPENSSL`) and `/usr/bin/ssh-keygen`. They generate local test keys,
 including software-only synthetic FIDO-format signatures with and without user
-presence, exercise valid collection
-through the real controller CLI and CI consumer with simulated GitHub, and reject
-tampering, replay, policy/provider changes and incomplete inventories. Existing
-live GitHub smoke remains ignored by default. Local signing does not prove who
-owns a production key or that an attester honestly performed an execution.
+presence. The attester fixture uses a pseudo-terminal from `script`, verifies
+the displayed hash against the actual signer input, and passes the resulting
+envelope through both CLI boundaries with simulated GitHub. The fixtures cover
+ordinary readiness, CI-required changed paths, tampering, replay, policy/provider
+changes and incomplete inventories. Existing live GitHub smoke remains ignored
+by default. Fixture evidence cannot establish production key custody, honest
+execution on an owner's machine or a live GitHub decision.
 Key registration/rotation, independently authenticated provider services,
 complete ledger ingestion and isolated runner deployment must be established by
 the consuming project. Post-merge authenticated storage and protected-merge

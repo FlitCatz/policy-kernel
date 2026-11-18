@@ -32,12 +32,10 @@ actual `success` observation for `SHIPPED`.
 Every code-modifying execution belongs in modification evidence. Reviewers must be
 independent of every contributor by both provider and execution identity. Calling
 multiple agents from the same model provider is not provider independence. Model
-prose naming a provider, a local signature, and a structurally valid CI-shaped JSON
-object do not establish trusted provenance. Core rules for an owner-enabled
-local-runner class are described under
-[Local-runner attestation](#planned-local-runner-attestation). Configuration schema 2
-authenticates that class at the [controller boundary](../action/controller.md);
-the local attester executable remains follow-up work.
+prose naming a provider, a signature by itself, and a structurally valid CI-shaped
+JSON object do not establish trusted provenance. The schema-2 controller
+authenticates the opt-in [local-runner class](#local-runner-attestation)
+using the signed statement, the approved scope and independent GitHub observations.
 
 Policy schema v3 requires a digest-bound `required_reviews` object:
 `minimum_reviewers` is a positive integer (1–4294967295),
@@ -124,11 +122,10 @@ review; any unwaived, expired or low-only blocked report still does. A gate that
 withholds readiness without a reason fails closed with `PK-PRE-GATE-UNEXPLAINED`.
 Authoritative execution and test adequacy evidence must name the manifest head.
 
-## Planned local-runner attestation
+## Local-runner attestation
 
-**Core acceptance and controller authentication implemented; attester issuance remains planned.** The
-[policy v4 contract and current status](status.md#policy-v4-local-runner-contract)
-distinguish implemented verification from later attester/integration work. The
+The [policy v4 contract and current status](status.md#policy-v4-local-runner-contract)
+describe the kernel's evaluation rules and reference implementation. The
 [2026-11-12 decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepts a design for letting a single-owner repository use signed local-runner
 evidence for ordinary pull-request readiness. Native scope output remains
@@ -138,7 +135,11 @@ The design adds a trust class, `local_runner_attested`, that is distinct
 from and weaker than `ci_observed` and `trusted_runner_attested`:
 
 - A registered local runner signs a statement binding repository, head, tree, base,
-  an approved scope template and the run and result digests. The signing key is
+  an approved scope template and the run and result digests. The attester runs
+  one explicit command in a clean worktree, checks the Git state and observation
+  times, and verifies the raw evidence against the scope. When the scope is
+  satisfied, it shows the owner a result summary and the SHA-256 of the exact
+  signing bytes and waits for an explicit confirmation. The signing key is
   required to need the owner's touch or biometric confirmation for each signature:
   the controller verifies the SSH signature with `ssh-keygen -Y verify` against an
   owner-controlled `allowed_signers` file, accepts only hardware-backed
@@ -184,8 +185,7 @@ The context-free `validate_provenance` API retains its CI-grade-only behavior.
 The local marker is informational in pre-merge, enters the decision digest, and
 prevents shipping even with a successful bound required check.
 
-The controller's authenticated path additionally enforces the following; the
-attester that produces signed statements remains later work:
+The authenticated path enforces the following boundaries:
 
 - Without a local-evidence block in the approved policy, the class is rejected.
 - `local_untrusted` never counts in authoritative evaluation.
@@ -203,18 +203,16 @@ attester that produces signed statements remains later work:
   `sk-ecdsa-sha2-nistp256@openssh.com`, or whose security-key flags lack the
   user-presence bit, are rejected.
 
-A signature fixes who vouched for what; it does not prove the run was honest.
-Residual risks accepted by the decision are environment divergence between the
-local and hosted platforms, ignored build output, selective submission of passing
-runs and a PR manipulating its own tests. The scheduled hosted check of the main
-branch is the compensating control. An open residual risk remains: a touch proves
-presence, not which statement was approved, so an agent under the owner's account
-can get a fabricated statement signed during a touch the owner expected; a
-mitigation such as showing the owner the statement digest before signing is an
-owner decision still open before the attestor lands. Hardware security-key
-signing has not yet been exercised on the owner's machine; if the presence check
-proves unworkable, the decision returns to the owner. See the decision record for
-the threat model.
+Residual risks accepted by the decision include environment divergence between
+the local and hosted platforms, ignored build output, selective submission of
+passing runs and a PR manipulating its own tests. The scheduled hosted check of
+the main branch is the compensating control. The owner chose explicit approval
+of the displayed summary and statement hash on 2026-11-13. This binds the approval
+to the bytes prepared by the trusted attester. The hardware touch itself proves
+presence, and software running under the owner's account can still impersonate
+the prompt or start a separate signing request. See the decision record for the
+threat model and [current status](status.md#local-runner-attester) for validation
+limits.
 
 ## Pre-merge and post-merge
 

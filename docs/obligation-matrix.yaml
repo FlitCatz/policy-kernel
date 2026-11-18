@@ -1,4 +1,9 @@
 schema_version: 1
+# The frozen obligations below track the predecessor's behavior. The signed
+# local-runner extension is exercised separately by
+# crates/policy-ci/tests/support/attester_e2e.rs: ordinary opted-in changes may
+# reach READY_TO_MERGE with PK-PROV-LOCAL-ATTESTED, while matching CI-required
+# paths with only local evidence for a required sensor get PK-PROV-CI-REQUIRED.
 source_repository: FlitCatz/agent-dev-kit
 source_commit: e5f6ec8584cc91fdeca3aab40687c6cdcd303b43
 obligations:

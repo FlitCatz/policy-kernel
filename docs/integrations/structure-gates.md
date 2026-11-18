@@ -79,6 +79,7 @@ allow-list; the existing cargo-deny/advisory checks retain their own roles.
 | `policy-cli` | `policy-contracts`, `policy-core`, `policy-native-contracts`, `policy-native-verifier` |
 | `policy-contracts` | none |
 | `policy-core` | `policy-contracts` |
+| `policy-local-attest` | `policy-contracts`, `policy-core`, `policy-native-importer`, `policy-native-verifier` |
 | `policy-native-contracts` | `policy-contracts`, `policy-core` |
 | `policy-native-importer` | `policy-contracts`, `policy-native-contracts`, `policy-native-verifier`, `policy-report-adapters`; dev: `evidence-collector`, `policy-cli`, `policy-core`, `project-verification` |
 | `policy-native-verifier` | `policy-contracts`, `policy-core`, `policy-native-contracts` |

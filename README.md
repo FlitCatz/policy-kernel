@@ -436,9 +436,12 @@ prevents `SHIPPED`. Advisory and `local_untrusted` behavior is unchanged.
 The [schema-2 controller](action/controller.md#local-runner-verification)
 authenticates registered hardware-key signatures, checks signed GitHub bindings
 and approved templates, and recomputes scope before issuing this class. Schema 1
-and signing bytes without local attestations are unchanged. The attester and
-end-to-end integration remain follow-up work; synthetic tests do not establish
-real runner execution, an authoritative CI decision or promotion.
+and signing bytes without local attestations are unchanged. The Unix
+[`policy-local-attest` adapter](action/controller.md#issuing-a-local-attestation)
+signs a satisfied result only after the owner confirms the summary and SHA-256
+of the statement signing bytes. End-to-end fixtures exercise the full reference
+path with simulated GitHub. Live consumer operation and promotion require
+separate [deployment evidence](docs/promotion.md).
 
 Policy v4 also supports an independent optional
 [`owner_with_independent_agent_review`](docs/integrations/owner-review-policy-v4.md)

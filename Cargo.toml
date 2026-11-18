@@ -12,6 +12,7 @@ members = [
     "crates/project-verification",
     "crates/policy-report-adapters",
     "crates/policy-native-importer",
+    "crates/policy-local-attest",
     "bootstrap",
     "acceptance",
     "xtask",

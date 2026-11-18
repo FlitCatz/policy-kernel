@@ -15,9 +15,9 @@ Validation [[crates/policy-native-contracts/src/validation.rs#ExpectedScopeV1#va
 [[crates/policy-native-contracts/src/validation.rs#LocalScopeResultV1#validate]].
 Subject comparison [[crates/policy-native-contracts/src/validation.rs#validate_subject_binding]]
 checks consistency, not authenticity. Results remain local-untrusted with unmet review.
-The sibling [[native-contracts#Local-runner attestations]] preserves these records;
-core opt-in acceptance and controller authentication exist, while attester issuance
-remains planned; see [[trust-boundaries#Planned local-runner attestation]].
+The sibling [[native-contracts#Local-runner attestations]] preserves these records
+and supports issuance and opt-in verification through
+[[trust-boundaries#Local-runner attestation]].
 
 ## Digest domains
 
@@ -200,6 +200,25 @@ Schemas/corpus [[crates/policy-native-contracts/tests/attestation.rs#attestation
 template [[crates/policy-native-contracts/tests/attestation.rs#template_digest_excludes_subject_and_clock_but_binds_all_approval_fields]];
 digests [[crates/policy-native-contracts/tests/attestation.rs#canonical_vectors_pin_new_and_existing_document_digests]];
 direct callers/signing bytes [[crates/policy-native-contracts/tests/attestation.rs#direct_call_validation_and_canonical_signing_bytes_preserve_the_boundary]].
+
+## Local attester
+
+The Unix adapter observes a single explicit runner argv in a clean worktree, verifies run artifacts and issues a signed statement only after the owner approves the displayed result and statement hash.
+
+[[crates/policy-local-attest/src/attest.rs#attest]] pairs Git snapshots and runner
+timestamps before passing the manifest and artifacts to the importer. It binds
+the scope to the actual head and preserves the scope with the completion clock.
+[[crates/policy-local-attest/src/attest.rs#sign_and_publish]] presents the hash of
+the canonical statement bytes and publishes the envelope atomically after the
+external signer succeeds. The [CLI reference](../action/controller.md#issuing-a-local-attestation)
+documents arguments, outputs and exit codes.
+
+### Attester rejection tests
+
+Attester tests exercise Git and native artifact checks, owner rejection and signer failure, including preservation of existing output.
+
+See the [attester tests](../crates/policy-local-attest/src/tests.rs) and
+[[kernel#Controller authentication#Local-runner controller tests]].
 
 ## Debt ratchet conformance
 

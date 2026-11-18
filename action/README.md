@@ -105,7 +105,10 @@ scope output remains untrusted. The schema-2
 [controller](controller.md#local-runner-verification) may issue the weaker
 `local_runner_attested` class for covered sensors/executions after authenticating
 a registered hardware-key signature and recomputing approved scope. Core accepts
-it only under explicit v4 rules; the attester remains later work.
+it only under explicit v4 rules. The
+[local attester](controller.md#issuing-a-local-attestation) prepares the signed
+envelope and both scope inputs for the authenticated observer. The owner confirms
+the displayed result and statement hash before the signer starts.
 The CLI checks receipt bindings against
 Actions environment fields and a fetched workflow-run response. It separately
 compares the actual Git checkout and fetched PR head to `head_sha`.

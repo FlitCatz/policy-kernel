@@ -11,7 +11,10 @@ mod authenticated_controller {
 
     impl SignedFixture {
         fn new() -> Self {
-            let ci = Fixture::new("ready");
+            Self::for_ci(Fixture::new("ready"))
+        }
+
+        fn for_ci(ci: Fixture) -> Self {
             let openssl = std::env::var_os("POLICY_TEST_OPENSSL").map(PathBuf::from)
                 .unwrap_or_else(|| {
                     std::env::split_paths(&std::env::var_os("PATH").unwrap())

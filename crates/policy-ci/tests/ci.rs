@@ -92,51 +92,50 @@ mod integration {
     // built for this integration test. It is not a production binary target.
     fn fake_gh() -> &'static PathBuf {
         static EXE: OnceLock<PathBuf> = OnceLock::new();
-        EXE.get_or_init(|| {
-            let deps = std::env::current_exe()
+        EXE.get_or_init(|| compile_process_fixture("fake_gh", &["serde_json", "chrono"]))
+    }
+
+    fn compile_process_fixture(name: &str, dependencies: &[&str]) -> PathBuf {
+        let deps = std::env::current_exe()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        let artifact = |name: &str| {
+            let mut paths: Vec<_> = fs::read_dir(&deps)
                 .unwrap()
-                .parent()
-                .unwrap()
-                .to_path_buf();
-            let artifact = |name: &str| {
-                let mut paths: Vec<_> = fs::read_dir(&deps)
-                    .unwrap()
-                    .map(|e| e.unwrap().path())
-                    .filter(|p| {
-                        p.file_name()
-                            .unwrap()
-                            .to_string_lossy()
-                            .starts_with(&format!("lib{name}-"))
-                            && p.extension().is_some_and(|e| e == "rlib")
-                    })
-                    .collect();
-                paths.sort_by_key(|p| fs::metadata(p).unwrap().modified().unwrap());
-                paths.pop().expect("Cargo must build fixture dependencies")
-            };
-            let output =
-                std::env::temp_dir().join(format!("policy-ci-fake-gh-{}", std::process::id()));
-            let result = std::process::Command::new(
-                std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()),
-            )
-            .args(["--edition=2021", "--crate-name", "policy_ci_fake_gh"])
-            .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/support/fake_gh.rs"))
+                .map(|e| e.unwrap().path())
+                .filter(|p| {
+                    p.file_name()
+                        .unwrap()
+                        .to_string_lossy()
+                        .starts_with(&format!("lib{name}-"))
+                        && p.extension().is_some_and(|e| e == "rlib")
+                })
+                .collect();
+            paths.sort_by_key(|p| fs::metadata(p).unwrap().modified().unwrap());
+            paths.pop().expect("Cargo must build fixture dependencies")
+        };
+        let output = std::env::temp_dir().join(format!("policy-ci-{name}-{}", std::process::id()));
+        let mut rustc =
+            std::process::Command::new(std::env::var_os("RUSTC").unwrap_or_else(|| "rustc".into()));
+        rustc
+            .args(["--edition=2021", "--crate-name", name])
+            .arg(PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(format!("tests/support/{name}.rs")))
             .arg("-L")
-            .arg(format!("dependency={}", deps.display()))
-            .arg("--extern")
-            .arg(format!("serde_json={}", artifact("serde_json").display()))
-            .arg("--extern")
-            .arg(format!("chrono={}", artifact("chrono").display()))
-            .arg("-o")
-            .arg(&output)
-            .output()
-            .unwrap();
-            assert!(
-                result.status.success(),
-                "{}",
-                String::from_utf8_lossy(&result.stderr)
-            );
-            output
-        })
+            .arg(format!("dependency={}", deps.display()));
+        for dependency in dependencies {
+            rustc
+                .arg("--extern")
+                .arg(format!("{dependency}={}", artifact(dependency).display()));
+        }
+        let result = rustc.arg("-o").arg(&output).output().unwrap();
+        assert!(
+            result.status.success(),
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+        output
     }
 
     struct Fixture {
@@ -148,6 +147,10 @@ mod integration {
     }
     impl Fixture {
         fn new(status: &str) -> Self {
+            Self::with_change(status, None)
+        }
+
+        fn with_change(status: &str, changed_path: Option<&str>) -> Self {
             let root = std::env::temp_dir().join(format!(
                 "policy-ci-test-{}-{}",
                 std::process::id(),
@@ -158,38 +161,46 @@ mod integration {
             let artifacts = root.join("artifacts");
             fs::create_dir_all(&checkout).unwrap();
             fs::create_dir_all(&trusted).unwrap();
-            for args in [
-                vec!["init", "--quiet"],
-                vec![
+            let git = |args: &[&str]| {
+                let output = std::process::Command::new("git")
+                    .args(args)
+                    .current_dir(&checkout)
+                    .output()
+                    .unwrap();
+                assert!(
+                    output.status.success(),
+                    "{}",
+                    String::from_utf8_lossy(&output.stderr)
+                );
+                String::from_utf8(output.stdout).unwrap().trim().to_owned()
+            };
+            let commit = || {
+                git(&[
                     "-c",
                     "user.name=Test",
                     "-c",
                     "user.email=test@example.invalid",
+                    "-c",
+                    "commit.gpgsign=false",
                     "commit",
                     "--quiet",
                     "--allow-empty",
                     "-m",
                     "fixture",
-                ],
-            ] {
-                assert!(std::process::Command::new("git")
-                    .args(args)
-                    .current_dir(&checkout)
-                    .status()
-                    .unwrap()
-                    .success());
-            }
-            let head = String::from_utf8(
-                std::process::Command::new("git")
-                    .args(["rev-parse", "HEAD"])
-                    .current_dir(&checkout)
-                    .output()
-                    .unwrap()
-                    .stdout,
-            )
-            .unwrap()
-            .trim()
-            .to_string();
+                ]);
+            };
+            git(&["init", "--quiet"]);
+            commit();
+            let base = changed_path.map(|path| {
+                let base = git(&["rev-parse", "HEAD"]);
+                let file = checkout.join(path);
+                fs::create_dir_all(file.parent().unwrap()).unwrap();
+                fs::write(file, "fixture change\n").unwrap();
+                git(&["add", "--", path]);
+                commit();
+                base
+            });
+            let head = git(&["rev-parse", "HEAD"]);
             let now: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
             let observed = (now - chrono::Duration::seconds(20)).to_rfc3339();
             let raw = include_str!("../../../tests/fixtures/pre-merge/ready.json")
@@ -202,6 +213,15 @@ mod integration {
                 .replace("2026-09-07T09:00:00Z", &now.to_rfc3339())
                 .replace("run-6", "9001");
             let mut input: PreMergeEvaluationInput = serde_json::from_str(&raw).unwrap();
+            if let Some(base) = &base {
+                input.pull_request.base_sha = CommitSha::parse(base).unwrap();
+                input.evidence.manifest.base_sha = input.pull_request.base_sha.clone();
+                input.context.as_mut().unwrap().changed_paths =
+                    git(&["diff", "--name-only", base, &head])
+                        .lines()
+                        .map(str::to_owned)
+                        .collect();
+            }
             input.policy.required_check_name = "policy-kernel/pre-merge".into();
             input.policy.protected_target_branches = vec!["main".into()];
             input.policy.allowed_merge_methods = vec![MergeMethod::Merge, MergeMethod::Squash];
@@ -254,6 +274,9 @@ mod integration {
                     .unwrap();
             pr["number"] = json!(6);
             pr["head"]["sha"] = json!(head);
+            if let Some(base) = base {
+                pr["base"]["sha"] = json!(base);
+            }
             pr["updated_at"] = json!(observed);
             write(root.join("pr.json"), pr);
             let mut workflow: Value = serde_json::from_str(include_str!(
