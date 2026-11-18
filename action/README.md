@@ -100,12 +100,13 @@ SHA-256 digests of the typed `PreMergeContext` and `WorkItemObservation` files;
 pre-merge verifies all four digests against the receipt. These two fields and
 `evidence_digest` are retained but not consumed for the current post-merge run.
 The trusted collector issues this receipt only for
-current-run evidence it observed or independently authenticated. Local evidence
-retains its untrusted classification. (The owner-enabled
-`local_runner_attested` class for signed local-runner evidence is recorded in the
-[decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md); it is
-accepted by core under explicit v4 rules, but controller authentication and
-issuance remain planned; this paragraph describes current collection behavior.) The CLI checks receipt bindings against
+current-run evidence it observed or independently authenticated. Native local
+scope output remains untrusted. The schema-2
+[controller](controller.md#local-runner-verification) may issue the weaker
+`local_runner_attested` class for covered sensors/executions after authenticating
+a registered hardware-key signature and recomputing approved scope. Core accepts
+it only under explicit v4 rules; the attester remains later work.
+The CLI checks receipt bindings against
 Actions environment fields and a fetched workflow-run response. It separately
 compares the actual Git checkout and fetched PR head to `head_sha`.
 

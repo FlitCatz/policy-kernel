@@ -75,7 +75,7 @@ allow-list; the existing cargo-deny/advisory checks retain their own roles.
 | `github-adapter` | `policy-contracts` |
 | `policy-acceptance` | `policy-bootstrap`, `policy-contracts`, `policy-core`, `project-verification` |
 | `policy-bootstrap` | `project-verification` |
-| `policy-ci` | `github-adapter`, `policy-contracts`, `policy-core` |
+| `policy-ci` | `github-adapter`, `policy-contracts`, `policy-core`, `policy-native-verifier` |
 | `policy-cli` | `policy-contracts`, `policy-core`, `policy-native-contracts`, `policy-native-verifier` |
 | `policy-contracts` | none |
 | `policy-core` | `policy-contracts` |

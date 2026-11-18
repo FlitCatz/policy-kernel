@@ -13,6 +13,8 @@ path = "src/main.rs"
 [dependencies]
 policy-contracts = { path = "../policy-contracts" }
 policy-core = { path = "../policy-core" }
+policy-native-verifier = { path = "../policy-native-verifier" }
+base64 = "0.22.1"
 github-adapter = { path = "../github-adapter" }
 serde.workspace = true
 serde_json.workspace = true

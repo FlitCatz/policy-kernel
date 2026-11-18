@@ -4,8 +4,8 @@ The current-state authority is [docs/status.md](../docs/status.md); this page on
 
 A 2026-11-12 [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 plans signed local-runner attestation as a weaker trust class. Its wire class and
-policy v4 contract and core opt-in acceptance exist; authenticated collection and
-issuance remain unimplemented. Local-class readiness cannot ship. Sibling structural contracts are
+policy v4 contract, core opt-in acceptance and controller authentication exist;
+attester issuance and end-to-end integration remain unimplemented. Local-class readiness cannot ship. Sibling structural contracts are
 described below. See [[trust-boundaries#Planned local-runner attestation]].
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
@@ -54,6 +54,12 @@ V4 also offers an independent optional owner review rule: fresh owner authorizat
 plus an independent automated approval, explicit actor identities and CI-grade
 trust. Default quorum and controller floor remain unchanged; live authentication,
 adoption and promotion are separate. See [[kernel#Single-owner review policy]].
+
+The schema-2 controller verifies registered security-key signatures, signed user
+presence, GitHub bindings, approved templates and recomputed scope/freshness.
+Only covered sensors/executions receive the weaker class; adequacy is rebuilt.
+Schema-1 signing bytes are preserved. Synthetic fixtures do not establish real
+hardware custody, live execution or promotion. See [[kernel#Controller authentication]].
 
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
 and records `bundled, not individually audited`, including absent optional

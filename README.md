@@ -272,7 +272,7 @@ cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-m
 cargo test --locked -p xtask
 ```
 
-The suite covers all five core authorization modules, controller and
+The suite covers all six core authorization modules, controller and
 workflow-source. It rejects unviable, missed, timed-out or incomplete results and
 checks the unfiltered inventory against every native and typed replacement
 execution. Use a new output directory each time. The per-inventory
@@ -433,8 +433,12 @@ not extend the global limit for CI evidence. Invalid conditions fail closed.
 Reviews, modifications, agent-ready and knowledge never accept this class.
 The informational, digest-bound `PK-PROV-LOCAL-ATTESTED` preserves readiness but
 prevents `SHIPPED`. Advisory and `local_untrusted` behavior is unchanged.
-Attestation authentication and issuance remain follow-up work; these core rules
-do not establish real runner execution, an authoritative CI decision or promotion.
+The [schema-2 controller](action/controller.md#local-runner-verification)
+authenticates registered hardware-key signatures, checks signed GitHub bindings
+and approved templates, and recomputes scope before issuing this class. Schema 1
+and signing bytes without local attestations are unchanged. The attester and
+end-to-end integration remain follow-up work; synthetic tests do not establish
+real runner execution, an authoritative CI decision or promotion.
 
 Policy v4 also supports an independent optional
 [`owner_with_independent_agent_review`](docs/integrations/owner-review-policy-v4.md)

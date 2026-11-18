@@ -66,8 +66,8 @@ mod authenticated_controller {
                 }
             }
             Self::key(&openssl, &ci.root, "observer");
-            let config = ControllerConfig { schema_version: 1, expected: binding.clone(), observer_public_key: ci.root.join("observer.pub"), producer_keys: keys, openssl, minimum_reviewers: 2 };
-            let observation = Observation { domain: "policy-kernel/controller-observation/v1".into(), binding, policy, context, work_item: read_json(&ci.trusted.join("work-item.json")).unwrap(), evidence, inventory };
+            let config = ControllerConfig { schema_version: 1, expected: binding.clone(), observer_public_key: ci.root.join("observer.pub"), producer_keys: keys, openssl, minimum_reviewers: 2, local_runners: vec![], ssh_keygen: None };
+            let observation = Observation { domain: "policy-kernel/controller-observation/v1".into(), binding, policy, context, work_item: read_json(&ci.trusted.join("work-item.json")).unwrap(), evidence, inventory, github_head_tree: None, local_attestations: vec![] };
             let mut fixture = Self { ci, config, signed: SignedObservation { observation, observer_signature: String::new(), producers: Vec::new() } };
             fixture.sign();
             fixture
@@ -97,6 +97,8 @@ mod authenticated_controller {
             self.signed.producers = evidence.modifications.iter().map(|v| (&v.execution_id, &v.provider, &v.model))
                 .chain(evidence.executions.iter().map(|v| (&v.execution_id, &v.provider, &v.model)))
                 .chain(evidence.reviews.iter().map(|v| (&v.execution_id, &v.provider, &v.model)))
+                .filter(|(_, provider, _)| provider.as_str() != "local-recorder")
+                .filter(|(id, _, _)| !self.signed.observation.local_attestations.iter().any(|input| input.observations.run.observations.iter().any(|run| &run.execution_id == *id)))
                 .map(|(execution_id, provider, model)| {
                     let key = self.config.producer_keys.iter().find(|v| &v.provider == provider && &v.model == model).unwrap();
                     // Construct the signing specification independently of the verifier helper.
@@ -118,6 +120,32 @@ mod authenticated_controller {
             let error = self.produce().expect_err(message).to_string();
             assert!(error.contains(message), "expected {message}, got {error}");
             assert!(!self.ci.root.join("authenticated/identity.json").exists());
+        }
+    }
+
+    #[test]
+    fn v2_without_local_evidence_preserves_v1_signed_bytes_and_outputs() {
+        let fixture = SignedFixture::new();
+        let raw = &fixture.signed.observation;
+        // Independent v1 wire projection, fixed before local fields existed.
+        let legacy = canonical(&json!({"domain":raw.domain,"binding":raw.binding,
+            "policy":raw.policy,"context":raw.context,"work_item":raw.work_item,
+            "evidence":raw.evidence,"inventory":raw.inventory})).unwrap();
+        assert_eq!(canonical(raw).unwrap(), legacy);
+        let mut wire = serde_json::to_value(&fixture.signed.observation).unwrap();
+        wire["local_attestations"] = json!([]);
+        let observation: Observation = serde_json::from_value(wire).unwrap();
+        assert_eq!(canonical(&observation).unwrap(), legacy);
+        fixture.produce().unwrap();
+        let mut config = serde_json::to_value(&fixture.config).unwrap();
+        config["schema_version"] = json!(2);
+        config["local_runners"] = json!([]);
+        config["ssh_keygen"] = json!("/usr/bin/ssh-keygen");
+        let config: ControllerConfig = serde_json::from_value(config).unwrap();
+        let output = fixture.ci.root.join("v2");
+        produce(&config, &fixture.signed, &output).unwrap();
+        for name in ["policy.json", "evidence.json", "context.json", "work-item.json", "authentication.json", "identity.json"] {
+            assert_eq!(fs::read(fixture.ci.root.join("authenticated").join(name)).unwrap(), fs::read(output.join(name)).unwrap(), "{name}");
         }
     }
 
@@ -266,7 +294,7 @@ mod authenticated_controller {
         let original = fixture.config.clone();
         let signed = fixture.signed.clone();
         for (pointer, value) in [
-            ("/schema_version", json!(2)), ("/expected/workflow_run_attempt", json!(0)),
+            ("/schema_version", json!(3)), ("/expected/workflow_run_attempt", json!(0)),
             ("/expected/workflow_id", json!(0)), ("/expected/check_app_id", json!(0)),
             ("/expected/check_app_slug", json!(" ")), ("/expected/workflow_path", json!("other.yml")),
             ("/expected/workflow_ref", json!("other/repo/.github/workflows/a.yml@main")),
@@ -398,4 +426,5 @@ mod authenticated_controller {
         fixture.signed.observer_signature = fixture.signature("observer", &canonical(&fixture.signed.observation).unwrap());
         fixture.reject("policy/profile/head/content binding mismatch");
     }
+    include!("local_controller.rs");
 }

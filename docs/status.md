@@ -95,9 +95,9 @@ lowering readiness; any decision carrying it cannot authorize `SHIPPED`.
 Missing opt-in, CI-required changes and invalid evidence kinds have dedicated
 `PK-PROV-LOCAL-NOT-ACCEPTED`, `PK-PROV-CI-REQUIRED` and
 `PK-PROV-LOCAL-CLASS-INVALID` reasons; expired or future evidence uses `PK-PROV-STALE`.
-The context-free provenance API remains CI-grade only. Attestation authentication,
-controller promotion and attestor issuance remain later work (K6–K7); the sibling
-K5 contracts are structural only. These core tests cannot establish real key
+The context-free provenance API remains CI-grade only. Controller authentication
+is implemented as described below; attestor issuance remains later work (K7).
+The sibling K5 contracts are structural only. These core tests cannot establish real key
 custody, honest runner execution, an authoritative CI decision, a protected merge
 or production promotion.
 
@@ -111,6 +111,32 @@ unchanged. New actor metadata and CI-grade evidence are required; local-runner
 evidence cannot authorize reviews. Controller authentication/adoption of these
 observations is separate, and its existing provider floor remains unchanged.
 This contract does not establish an authoritative live decision or promotion.
+
+## Local-runner controller authentication
+
+The [controller reference](../action/controller.md#local-runner-verification)
+implements K6 with configuration schema 2, owner-installed runner key files and an
+absolute SSH verifier executable. Only the two OpenSSH security-key algorithms
+are accepted. `no-touch-required` options and signatures lacking the signed
+user-presence flag receive separate rejections. Schema 1, absent/empty local
+observations and their signing bytes retain existing behavior.
+
+The observer authenticates local inputs and a separately observed GitHub head
+tree. The controller verifies runner registration and policy permission,
+repository/head/tree/base/source/run bindings, approved scope-template identity,
+all input/result digests, satisfied scope recomputation and freshness at its own
+clock. Only covered sensors/executions use `local_runner_attested`; their
+adequacy is reconstructed from verified scopes. Other evidence retains the
+existing producer/observer authentication and class. The new internal dependency
+is `policy-ci` to `policy-native-verifier`, which exposes its typed contracts.
+No report parser or contributor command execution enters the controller.
+
+Local cryptographic fixtures use temporary software keys to create synthetic
+FIDO-format SSHSIG signatures, including valid signatures lacking user presence;
+no physical key is used. They verify controller behavior, not hardware custody,
+actual runner execution or deployment. K7's attester and end-to-end integration
+remain pending, along with real hardware-key measurement. No authoritative CI
+decision, protected merge, consumer adoption or production promotion is established.
 
 ## Policy v3 review quorum
 
@@ -198,12 +224,12 @@ accepted a design for signed local-runner evidence for ordinary pull-request
 readiness, with a new weaker trust class `local_runner_attested`. That decision
 changed documentation only. Sibling structural contracts, the class's wire value,
 the policy v4 contract and core opt-in acceptance are now implemented as described
-above; authenticated collection, controller support and attestor remain **planned
-and not implemented**. The current local collection path still produces
-`local_untrusted`, which cannot authorize readiness; the
+above. Schema 2 controller authentication is now implemented; signed statement
+issuance by the attester remains **planned and not implemented**. The unsigned
+local collection path still produces `local_untrusted`, which cannot authorize readiness; the
 [trust model](trust-model.md#planned-local-runner-attestation) lists the
 default-closed rules. The record supersedes the archived scope-reduction ADR's
-local-evidence guardrail only for the future attestation path.
+local-evidence guardrail only for the authenticated attestation path.
 
 ## P2 bounded MSBuild generated output
 

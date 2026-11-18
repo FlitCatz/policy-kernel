@@ -260,7 +260,7 @@ cargo run --locked --offline -p xtask -- check-mutation-suite target/promotion-m
 cargo test --locked -p xtask
 ```
 
-전체 실행은 core 권한 판정 모듈 다섯 개, controller, workflow-source를 포함합니다.
+전체 실행은 core 권한 판정 모듈 여섯 개, controller, workflow-source를 포함합니다.
 실행 불가·미검출·시간 초과·불완전 결과를 거부하고, 필터 전 인벤토리를 모든 원본 및
 타입이 유효한 대체 변형의 실행과 대조합니다. 매번 새 출력 디렉터리를 사용하세요.
 개별 인벤토리용 `check-mutation-results OUTCOMES [--scope core|controller|workflow-source]`의
@@ -404,8 +404,11 @@ Core는 v4가 명시적으로 허용하고 `ci_required_when`에 일치하지 �
 잘못된 조건은 기본 닫힘으로 거부합니다. 리뷰·수정·agent-ready·지식에는 수용하지 않습니다.
 정보성 사유 `PK-PROV-LOCAL-ATTESTED`는 digest에 포함되며 준비 판정을 낮추지 않지만
 `SHIPPED`를 금지합니다. 권고 모드와 `local_untrusted` 동작은 유지됩니다.
-증명 인증과 발급은 후속 작업입니다. 코어 규칙만으로 실제 실행기 실행, 권위 CI 판정이나
-운영 승격이 입증되지는 않습니다.
+[Schema-2 controller](action/controller.md#local-runner-verification)는 등록한 하드웨어
+키 서명, 서명된 GitHub 관찰값과 승인된 template을 검증하고 scope를 재계산한 뒤
+이 등급을 부여합니다. Schema 1과 로컬 증명이 없는 기존 서명 바이트는 유지됩니다.
+증명기와 종단 간 통합은 후속 작업입니다. 합성 시험만으로 실제 실행기 실행,
+권위 CI 판정이나 운영 승격이 입증되지는 않습니다.
 
 정책 v4는 단일 소유자 저장소를 위한 독립 선택 규칙
 [`owner_with_independent_agent_review`](docs/integrations/owner-review-policy-v4.md)도

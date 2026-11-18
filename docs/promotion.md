@@ -78,7 +78,7 @@ its output is explicitly ineligible for `check-mutation-suite`.
 the per-inventory component check, including zero unviable. Passing that component
 alone does not establish complete generation or authorize promotion.
 
-The [versioned contract](../verification/mutation-contract.json) identifies twelve
+The [versioned contract](../verification/mutation-contract.json) identifies
 individual ill-typed cargo-mutants expressions, their complete original identities,
 historical compiler logs/diffs, source SHA-256 bindings, and explicit replacement
 edits. It is executable review material, not a runtime allow-list supplied by the

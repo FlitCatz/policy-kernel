@@ -2,6 +2,8 @@
 //! Kernel-owned local scope assembly and debt comparison.
 //! No filesystem, report parser or authorization.
 mod ratchet;
+/// The typed inputs shared by scope evaluators and their authentication boundary.
+pub use policy_native_contracts as contracts;
 pub use ratchet::{evaluate_ratchet, evaluate_ratchet_json};
 
 use policy_contracts::*;

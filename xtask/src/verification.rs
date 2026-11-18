@@ -380,7 +380,12 @@ const WORKSPACE_DEPENDENCIES: &[(&str, &[&str])] = &[
     ("policy-bootstrap", &["project-verification"]),
     (
         "policy-ci",
-        &["github-adapter", "policy-contracts", "policy-core"],
+        &[
+            "github-adapter",
+            "policy-contracts",
+            "policy-core",
+            "policy-native-verifier",
+        ],
     ),
     (
         "policy-cli",
