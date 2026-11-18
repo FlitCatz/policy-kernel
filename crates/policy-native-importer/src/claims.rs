@@ -3,6 +3,9 @@ use policy_contracts::SensorId;
 use policy_native_contracts::*;
 use std::{collections::BTreeSet, io, path::Path};
 
+// Reject oversize test reports before reading them, matching the shared parser's cap.
+const REPORT_LIMIT: u64 = 16 * 1024 * 1024;
+
 /// Explicit producer association; no filename or suite-name inference occurs.
 pub struct ReportSelection {
     pub observation_id: SensorId,
@@ -76,7 +79,7 @@ pub fn populate_claims(
             .iter()
             .find(|e| e.path == artifact.path)
             .ok_or_else(|| fs::invalid("missing raw report file"))?;
-        if entry.kind != rustix::fs::FileType::RegularFile || entry.stat.2 > fs::FILE_LIMIT {
+        if entry.kind != rustix::fs::FileType::RegularFile || entry.stat.2 > REPORT_LIMIT {
             return Err(fs::invalid(
                 "raw report must be a regular file within 16 MiB",
             ));

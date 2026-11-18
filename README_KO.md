@@ -440,6 +440,9 @@ policy-cli evaluate-scope \
   --expected approved-scope.json --observations imported-run/observations.json
 ```
 
+가져오기 도구는 아티팩트당 최대 64 MiB, 실행당 최대 256 MiB를 보존합니다.
+테스트 클레임을 검증하거나 준비할 때 파싱하는 보고서는 파일당 최대 16 MiB입니다.
+
 종료 코드는 **0** 충족, **2** 유효한 non-pass, **64** 잘못되거나 불완전한
 입력입니다. 파일 하나만 `-`로 지정하여 stdin을 사용할 수 있습니다.
 출력은 `LocalScopeResultV1`이며 trust는 `local_untrusted`, review는 `unmet`입니다.

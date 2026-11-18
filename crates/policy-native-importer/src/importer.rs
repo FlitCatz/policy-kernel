@@ -150,7 +150,11 @@ pub fn import_run(
                 if !is_file {
                     continue;
                 }
-                if entry.stat.2 > fs::FILE_LIMIT || total + entry.stat.2 > fs::TOTAL_LIMIT {
+                if entry.stat.2 > fs::FILE_LIMIT {
+                    record.issue(IssueCode::Artifact, &entry.path, fs::FILE_LIMIT_MESSAGE);
+                    continue;
+                }
+                if total + entry.stat.2 > fs::TOTAL_LIMIT {
                     record.issue(
                         IssueCode::Artifact,
                         &entry.path,

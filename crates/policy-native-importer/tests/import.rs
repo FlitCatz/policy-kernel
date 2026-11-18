@@ -625,8 +625,8 @@ fn forged_tests_identities_counts_attempts_and_parser_bindings_are_rejected() {
 }
 
 #[test]
-fn path_attacks_extra_entries_and_size_limits_preserve_safe_artifacts() {
-    for case in 0..9 {
+fn path_attacks_and_extra_entries_preserve_safe_artifacts() {
+    for case in 0..8 {
         let mut f = Fixture::new(ReportFormat::VitestJson);
         match case {
             0 => {
@@ -639,16 +639,10 @@ fn path_attacks_extra_entries_and_size_limits_preserve_safe_artifacts() {
             3 => f.run.artifacts[0].path = "../outside".into(),
             4 => f.run.artifacts[0].path = "/absolute".into(),
             5 => {
-                fs::File::create(f.input.join("huge"))
-                    .unwrap()
-                    .set_len(16 * 1024 * 1024 + 1)
-                    .unwrap();
-            }
-            6 => {
                 std::os::unix::fs::symlink(f.temp.path(), f.input.join("dir")).unwrap();
                 f.run.artifacts[0].path = "dir/raw.json".into();
             }
-            7 => f.run.artifacts[0].path = "a\\b".into(),
+            6 => f.run.artifacts[0].path = "a\\b".into(),
             _ => {
                 std::os::unix::net::UnixListener::bind(f.input.join("socket")).unwrap();
             }
@@ -662,6 +656,81 @@ fn path_attacks_extra_entries_and_size_limits_preserve_safe_artifacts() {
             assert!(result.artifacts.is_empty());
         }
     }
+}
+
+#[test]
+fn imports_large_raw_artifacts_without_changing_bytes_or_digest() {
+    // SHA-256 of the JSON below padded with ASCII spaces to each size.
+    for (size, sha256) in [
+        (
+            18_227_388,
+            "cd6879c59ae565384faba7384e9254a2c7cf606cbac82c81a75ca34ad369763c",
+        ),
+        (
+            64 * 1024 * 1024,
+            "4e452fbb764a9cedcb50690ff49d00eb101b74ef603843aeb8c83d2bfbb4d854",
+        ),
+    ] {
+        let mut f = Fixture::new(ReportFormat::VitestJson);
+        let mut bytes = b"{\n  \"symbols\": [\"Example\"]\n}\n".to_vec();
+        bytes.resize(size, b' ');
+        let digest = RawByteDigest {
+            kind: RawHashKind::RawByteSha256,
+            sha256: policy_contracts::Sha256Digest::parse(sha256).unwrap(),
+        };
+        let path = "symbols.json";
+        fs::write(f.input.join(path), &bytes).unwrap();
+        f.run.artifacts.push(ArtifactV1 {
+            id: RecordId::parse("symbols").unwrap(),
+            path: path.into(),
+            role: ArtifactRole::Other,
+            digest: digest.clone(),
+        });
+
+        let record = f.import();
+        assert!(record.issues.is_empty(), "{:?}", record.issues);
+        let artifact = record
+            .artifacts
+            .iter()
+            .find(|artifact| artifact.original_path == path)
+            .unwrap();
+        assert_eq!(artifact.size, size as u64);
+        assert_eq!(artifact.digest, digest);
+        assert!(
+            fs::read(f.output().join(&artifact.stored_file)).unwrap() == bytes,
+            "preserved bytes differ for the {size}-byte artifact"
+        );
+
+        let (_, code) = policy_cli::evaluate_scope_json(
+            &serde_json::to_vec(&f.expected).unwrap(),
+            &fs::read(f.output().join("observations.json")).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(code, 0);
+    }
+}
+
+#[test]
+fn rejects_artifact_one_byte_over_64_mib() {
+    let f = Fixture::new(ReportFormat::VitestJson);
+    let path = f.input.join("raw.json");
+    let size = 64 * 1024 * 1024 + 1;
+    fs::OpenOptions::new()
+        .write(true)
+        .open(&path)
+        .unwrap()
+        .set_len(size)
+        .unwrap();
+
+    let record = f.import();
+    assert!(record.issues.iter().any(|issue| {
+        matches!(issue.code, IssueCode::Artifact)
+            && issue.location == "raw.json"
+            && issue.detail == "artifact exceeds 64 MiB"
+    }));
+    assert!(record.artifacts.is_empty());
+    assert!(record.verified_observations().is_none());
+    assert_eq!(fs::metadata(path).unwrap().len(), size);
 }
 
 #[test]
