@@ -15,6 +15,9 @@ Validation [[crates/policy-native-contracts/src/validation.rs#ExpectedScopeV1#va
 [[crates/policy-native-contracts/src/validation.rs#LocalScopeResultV1#validate]].
 Subject comparison [[crates/policy-native-contracts/src/validation.rs#validate_subject_binding]]
 checks consistency, not authenticity. Results remain local-untrusted with unmet review.
+Suite rules [[crates/policy-native-contracts/src/types.rs#TestRuleV1]] optionally
+name exact raw identities for skipped tests. Omitted lists preserve count-only
+policy and its canonical digest. An empty list permits no skips.
 The sibling [[native-contracts#Local-runner attestations]] preserves these records
 and supports issuance and opt-in verification through
 [[trust-boundaries#Local-runner attestation]].
@@ -49,9 +52,11 @@ Entry [[crates/policy-native-importer/src/importer.rs#import_run]] requires
 independent run/scope IDs alongside ExpectedScopeV1. Verification
 [[crates/policy-native-importer/src/importer.rs#verify]] compares subject, age,
 raw report timing and claimed observations. Parser outcomes come from shared
-readers; [[crates/policy-native-importer/src/reports.rs#recompute]] supplements
-raw identity pairs and attempts without changing those readers.
+readers. [[crates/policy-native-importer/src/reports.rs#recompute]] adds
+raw identity pairs and attempts to the parsed outcomes.
 TRX identity and outcome lookups use unqualified attributes, as in the shared reader.
+Empty and retried reports fail import verification. Explicit skips survive
+recomputation and export so the verifier can apply the suite rule.
 
 Descriptor access [[crates/policy-native-importer/src/fs.rs#directory]],
 bounded inventory [[crates/policy-native-importer/src/fs.rs#inventory]],
@@ -66,7 +71,8 @@ in claims at 16 MiB per report.
 
 Conformance [[crates/policy-native-importer/tests/import.rs#shared_corpus_imports_all_formats_and_preserves_exact_bytes]],
 replay [[crates/policy-native-importer/tests/import.rs#wrong_subject_identity_stale_future_and_replayed_raw_are_rejected]],
-reports [[crates/policy-native-importer/tests/import.rs#missing_hash_malformed_skip_retry_duplicate_and_summary_fail_closed]],
+reports [[crates/policy-native-importer/tests/import.rs#missing_hash_malformed_mismatched_outcome_retry_duplicate_and_summary_fail_closed]],
+skip export [[crates/policy-native-importer/tests/import.rs#native_import_exports_trx_skips_for_scope_evaluation]],
 claims [[crates/policy-native-importer/tests/import.rs#forged_tests_identities_counts_attempts_and_parser_bindings_are_rejected]],
 paths [[crates/policy-native-importer/tests/import.rs#path_attacks_and_extra_entries_preserve_safe_artifacts]],
 output [[crates/policy-native-importer/tests/import.rs#output_is_fresh_disjoint_and_never_overwritten]],
@@ -137,6 +143,9 @@ and adequacy evaluation to core. [[crates/policy-native-verifier/src/lib.rs#asse
 uses explicit local recorder identity and no reviews. The adapter exports
 [[crates/policy-native-importer/src/importer.rs#ImportRecord#verified_observations]]
 only after successful verification, retaining parser-level failure flags.
+The verifier checks the skip count and any named allowances against the full
+suite observation. Unexpected skips carry their raw identities in the result.
+Core evidence counts exclude explicit skips, which cannot satisfy mappings.
 [[crates/policy-cli/src/lib.rs#evaluate_scope_json]] implements the JSON-only
 command with 0/2/64 exits. It cannot authenticate artifact bytes or grant trust.
 
@@ -145,6 +154,7 @@ Conformance [[crates/policy-native-verifier/tests/scope.rs#satisfied_scope_assem
 [[crates/policy-native-verifier/tests/scope.rs#empty_policy_fake_trust_review_and_unknown_versions_are_rejected]],
 [[crates/policy-native-verifier/tests/scope.rs#subject_binding_time_required_set_and_exclusions_fail_closed]],
 [[crates/policy-native-verifier/tests/scope.rs#native_bounds_policy_digest_and_incomplete_completion_are_enforced]];
+skip policy [[crates/policy-native-verifier/tests/scope.rs#skip_allowance_enforces_names_and_count_independently]];
 exclusions [[crates/policy-native-verifier/tests/scope.rs#exclusions_never_waive_required_mappings_or_allow_unapproved_scope]];
 mapping limits [[crates/policy-native-verifier/tests/scope.rs#mapping_minimum_and_allowed_suite_are_independent_of_passing_counts]];
 command [[crates/policy-cli/tests/scope.rs#local_scope_command_exit_codes_and_input_boundaries]];

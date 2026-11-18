@@ -173,6 +173,76 @@ fn native_bounds_policy_digest_and_incomplete_completion_are_enforced() {
 }
 
 #[test]
+fn skip_allowance_enforces_names_and_count_independently() {
+    let (mut expected, mut imported) = fixture();
+    let report = &mut imported.run.test_observations[0];
+    let skipped_identity = RecordId::parse(r#"["test-id","Suite.SkippedCase"]"#).unwrap();
+    report.tests.push(TestV1 {
+        id: RecordId::parse("unit:normalized-skipped-id").unwrap(),
+        raw_identity: skipped_identity.clone(),
+        outcome: TestOutcome::Skipped,
+        attempts: 0,
+    });
+    report.counts.discovered += 1;
+    report.counts.skipped = 1;
+    let suite_id = report.observation_id.clone();
+    let artifact_id = report.raw_report.id.clone();
+    let named = Some(vec![skipped_identity.clone()]);
+    let other = Some(vec![RecordId::parse("Suite.OtherCase").unwrap()]);
+    let mut rules = expected.requirements.observations.as_slice().to_vec();
+    for (allowed, maximum, pass, unexpected) in [
+        (named.clone(), 1, true, false),
+        (other, 1, false, true),
+        (Some(vec![]), 1, false, true),
+        (named, 0, false, false),
+        (None, 1, true, false),
+        (None, 0, false, false),
+    ] {
+        let rule = rules[0].tests.as_mut().unwrap();
+        rule.minimum_discovered = 2;
+        rule.maximum_skipped = maximum;
+        rule.allowed_skipped_tests = allowed;
+        expected.requirements.observations = RequiredSet::new(rules.clone()).unwrap();
+        imported.expected_scope_digest = expected.digest().unwrap();
+        let evaluated = evaluate_scope(&expected, &imported).unwrap();
+        assert_eq!(
+            evaluated.result.status,
+            if pass {
+                ScopeStatus::Satisfied
+            } else {
+                ScopeStatus::NonPass
+            }
+        );
+        let issue = evaluated
+            .result
+            .reasons
+            .iter()
+            .find(|reason| reason.code == ReasonCode::UnexpectedSkippedTest);
+        assert_eq!(issue.is_some(), unexpected);
+        if let Some(issue) = issue {
+            assert_eq!(issue.location.suite_id.as_ref(), Some(&suite_id));
+            assert_eq!(issue.location.artifact_id.as_ref(), Some(&artifact_id));
+            assert_eq!(
+                issue.location.test_identity.as_ref(),
+                Some(&skipped_identity)
+            );
+            assert_eq!(
+                evaluated.result.requirements[0].status,
+                ScopeStatus::NonPass
+            );
+        }
+    }
+
+    // A missing execution must still be an invalid report when it isn't an explicit skip.
+    let report = &mut imported.run.test_observations[0];
+    report.tests[1].outcome = TestOutcome::NotExecuted;
+    report.counts.skipped = 0;
+    let evaluated = evaluate_scope(&expected, &imported).unwrap();
+    assert_eq!(evaluated.result.status, ScopeStatus::Error);
+    assert_eq!(evaluated.result.reasons[0].code, ReasonCode::InvalidReport);
+}
+
+#[test]
 fn exclusions_never_waive_required_mappings_or_allow_unapproved_scope() {
     let (mut expected, mut imported) = fixture();
     let exclusion = ExclusionV1 {

@@ -58,6 +58,7 @@ fn reason(
             suite_id: suite.cloned(),
             requirement_id: requirement.cloned(),
             artifact_id: artifact.cloned(),
+            test_identity: None,
         },
     }
 }
@@ -261,9 +262,8 @@ pub fn evaluate_scope(
         }
         if report.is_some_and(|r| {
             r.counts.discovered == 0
-                || r.counts.skipped != 0
                 || r.counts.retries != 0
-                || r.counts.discovered != r.counts.executed
+                || r.counts.discovered - r.counts.skipped != r.counts.executed
         }) {
             result.reasons.push(reason(
                 ReasonCode::InvalidReport,
@@ -349,6 +349,25 @@ pub fn evaluate_scope(
             .test_observations
             .iter()
             .find(|t| t.observation_id == rule.id);
+        if let Some((allowed, report)) = rule
+            .tests
+            .as_ref()
+            .and_then(|p| p.allowed_skipped_tests.as_deref())
+            .zip(report)
+        {
+            for test in &report.tests {
+                if test.outcome == TestOutcome::Skipped && !allowed.contains(&test.raw_identity) {
+                    let mut issue = reason(
+                        ReasonCode::UnexpectedSkippedTest,
+                        Some(&rule.id),
+                        None,
+                        Some(&report.raw_report.id),
+                    );
+                    issue.location.test_identity = Some(test.raw_identity.clone());
+                    result.reasons.push(issue);
+                }
+            }
+        }
         let bounds_fail = rule.tests.as_ref().zip(report).is_some_and(|(p, r)| {
             r.counts.discovered < p.minimum_discovered
                 || r.counts.executed < p.minimum_executed
@@ -471,8 +490,9 @@ fn assemble(
         head_sha: Some(expected.subject.head.clone()),
     };
     for report in &run.test_observations {
-        // Counts are structurally checked against allocated test vectors first.
-        adequacy.discovered += report.counts.discovered;
+        // Core requires every test in its evidence to run. Native scope judges
+        // skips separately against the raw counts and identities in the run.
+        adequacy.discovered += report.counts.discovered - report.counts.skipped;
         adequacy.executed += report.counts.executed;
         adequacy.passed += report.counts.passed;
         adequacy.executed_test_ids.extend(
@@ -574,7 +594,7 @@ fn assemble(
                     .unwrap_or_else(|| "native-process-v1".into()),
             ),
             exit_code: Some(code),
-            discovered: report.map(|r| r.counts.discovered),
+            discovered: report.map(|r| r.counts.discovered - r.counts.skipped),
             executed: report.map(|r| r.counts.executed),
             passed: report.map(|r| r.counts.passed),
             not_applicable_condition_id: None,

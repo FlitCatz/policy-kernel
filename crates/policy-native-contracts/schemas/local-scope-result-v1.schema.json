@@ -182,6 +182,17 @@
               "type": "null"
             }
           ]
+        },
+        "test_identity": {
+          "description": "Original producer identity of an unexpected skipped test.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/WorkItemId"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "additionalProperties": false
@@ -220,7 +231,8 @@
         "INVALID_REPORT",
         "UNEXECUTED_MAPPING",
         "SCOPE_UNSATISFIED",
-        "INCOMPLETE_RUN"
+        "INCOMPLETE_RUN",
+        "UNEXPECTED_SKIPPED_TEST"
       ]
     },
     "ReasonV1": {

@@ -476,6 +476,10 @@ policy-cli evaluate-scope \
 
 The importer preserves up to 64 MiB per artifact and 256 MiB per run. Test
 reports parsed to verify or prepare claims have a 16 MiB per-report limit.
+It preserves skipped tests for scope evaluation and rejects empty or retried
+reports. Set a suite's `allowed_skipped_tests` to the exact `raw_identity` strings
+it may skip. `maximum_skipped` always caps the count. Omit the list for a
+count-only allowance or use `[]` to disallow all skips.
 
 Exit codes are **0** satisfied, **2** valid non-pass, **64** invalid or incomplete
 input. Either file may be `-` for stdin, but not both. Output is `LocalScopeResultV1`;

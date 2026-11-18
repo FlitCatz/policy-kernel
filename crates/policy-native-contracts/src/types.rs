@@ -114,6 +114,21 @@ pub struct TestRuleV1 {
     pub maximum_failed: u64,
     pub maximum_skipped: u64,
     pub maximum_retries: u64,
+    /// Exact `TestV1.raw_identity` values allowed to be skipped in this suite.
+    /// Omit to use only the count limit. An empty list disallows all skips.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "read_skip_list"
+    )]
+    #[schemars(with = "Vec<RecordId>")]
+    pub allowed_skipped_tests: Option<Vec<RecordId>>,
+}
+
+fn read_skip_list<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<Vec<RecordId>>, D::Error> {
+    Vec::deserialize(deserializer).map(Some)
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -292,6 +307,7 @@ pub enum ReasonCode {
     UnexecutedMapping,
     ScopeUnsatisfied,
     IncompleteRun,
+    UnexpectedSkippedTest,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
@@ -299,6 +315,9 @@ pub struct LocationV1 {
     pub suite_id: Option<SensorId>,
     pub requirement_id: Option<RecordId>,
     pub artifact_id: Option<RecordId>,
+    /// Original producer identity of an unexpected skipped test.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test_identity: Option<RecordId>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]

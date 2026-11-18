@@ -40,6 +40,29 @@
     },
     {
       "document": "expected",
+      "name": "skip-list-is-not-an-array",
+      "pointer": "/requirements/observations/0/tests/allowed_skipped_tests",
+      "schema_valid": false,
+      "value": "test-1"
+    },
+    {
+      "document": "expected",
+      "name": "null-skip-list",
+      "pointer": "/requirements/observations/0/tests/allowed_skipped_tests",
+      "schema_valid": false,
+      "value": null
+    },
+    {
+      "document": "expected",
+      "name": "blank-skip-identity",
+      "pointer": "/requirements/observations/0/tests/allowed_skipped_tests",
+      "schema_valid": false,
+      "value": [
+        " "
+      ]
+    },
+    {
+      "document": "expected",
       "name": "requirement-id-collision",
       "pointer": "/requirements/requirements/1/id",
       "schema_valid": true,
@@ -203,6 +226,107 @@
               "maximum_failed": 0,
               "maximum_retries": 0,
               "maximum_skipped": 0,
+              "minimum_discovered": 1,
+              "minimum_executed": 1,
+              "minimum_passed": 1
+            }
+          }
+        ],
+        "requirements": [
+          {
+            "id": "AC-1",
+            "kind": "acceptance_criterion",
+            "minimum_executed_tests": 1,
+            "suites": [
+              "unit"
+            ]
+          },
+          {
+            "id": "B-1",
+            "kind": "changed_behavior",
+            "minimum_executed_tests": 1,
+            "suites": [
+              "unit"
+            ]
+          },
+          {
+            "id": "N-1",
+            "kind": "negative_case",
+            "minimum_executed_tests": 1,
+            "suites": [
+              "unit"
+            ]
+          }
+        ]
+      },
+      "schema_version": 1,
+      "subject": {
+        "head": "1111111111111111111111111111111111111111",
+        "repository": "example/project",
+        "scope_definition_digest": {
+          "kind": "canonical_sha256",
+          "role": "scope_definition",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "source_inventory_digest": {
+          "kind": "raw_byte_sha256",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "source_set_digest": {
+          "kind": "canonical_sha256",
+          "role": "source_set",
+          "schema": "policy_native_v1",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+        }
+      }
+    },
+    "expected_with_named_skips": {
+      "bindings": {
+        "evaluated_at": "2026-10-19T01:01:00Z",
+        "maximum_age_seconds": 3600,
+        "mode": "local_advisory",
+        "observations": [
+          {
+            "command_digest": {
+              "kind": "canonical_sha256",
+              "role": "command",
+              "schema": "policy_native_v1",
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "configuration_digest": {
+              "kind": "canonical_sha256",
+              "role": "configuration",
+              "schema": "policy_native_v1",
+              "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+            },
+            "id": "unit",
+            "parser": {
+              "id": "example-json",
+              "version": "1"
+            }
+          }
+        ]
+      },
+      "requirements": {
+        "approved_file_digest": {
+          "kind": "raw_byte_sha256",
+          "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        },
+        "exemptions": [],
+        "observations": [
+          {
+            "accepted_exit_codes": [
+              0
+            ],
+            "id": "unit",
+            "tests": {
+              "allowed_skipped_tests": [
+                "[\"browser-id\",\"Suite.RequiresFlag\"]"
+              ],
+              "maximum_failed": 0,
+              "maximum_retries": 0,
+              "maximum_skipped": 1,
               "minimum_discovered": 1,
               "minimum_executed": 1,
               "minimum_passed": 1

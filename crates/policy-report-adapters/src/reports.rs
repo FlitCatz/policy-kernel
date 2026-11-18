@@ -115,7 +115,7 @@ fn finish(
         passed,
         failed,
         skipped,
-        successful: clean && !tests.is_empty() && failed == 0 && skipped == 0,
+        successful: clean && passed != 0 && failed == 0,
         tests,
         messages: vec![],
         started_at,
@@ -129,6 +129,18 @@ fn same(actual: u64, expected: u64) -> Result<(), ReportError> {
     }
 }
 pub fn parse_report(
+    format: ReportFormat,
+    namespace: &str,
+    bytes: &[u8],
+) -> Result<ParsedReport, ReportError> {
+    let mut report = parse_report_with_skips(format, namespace, bytes)?;
+    report.successful &= report.skipped == 0;
+    Ok(report)
+}
+
+/// Parse for native scope evaluation, where explicit skips are judged by suite policy.
+/// `successful` still accounts for failed tests and producer-level failure signals.
+pub fn parse_report_with_skips(
     format: ReportFormat,
     namespace: &str,
     bytes: &[u8],
@@ -297,7 +309,7 @@ fn playwright(namespace: &str, v: &Value) -> Result<ParsedReport, ReportError> {
     let started_at = timestamp(string(stats, "startTime")?)?;
     let mut tests = vec![];
     let mut counts = [0u64; 4];
-    let mut clean = array(v, "errors")?.is_empty();
+    let errors = array(v, "errors")?;
     let mut suites: Vec<&Value> = array(v, "suites")?.iter().collect();
     while let Some(suite) = suites.pop() {
         if suite.get("suites").is_some() {
@@ -376,7 +388,6 @@ fn playwright(namespace: &str, v: &Value) -> Result<ParsedReport, ReportError> {
                     ));
                     TestOutcome::Failed
                 };
-                clean &= outcome == TestOutcome::Passed;
                 tests.push(TestResult {
                     id: id(namespace, &[spec_id, string(test, "projectId")?]),
                     outcome,
@@ -391,8 +402,8 @@ fn playwright(namespace: &str, v: &Value) -> Result<ParsedReport, ReportError> {
     {
         same(count(stats, key)?, actual)?;
     }
-    let mut report = finish(tests, started_at, clean)?;
-    report.messages = array(v, "errors")?.iter().map(Value::to_string).collect();
+    let mut report = finish(tests, started_at, errors.is_empty())?;
+    report.messages = errors.iter().map(Value::to_string).collect();
     Ok(report)
 }
 

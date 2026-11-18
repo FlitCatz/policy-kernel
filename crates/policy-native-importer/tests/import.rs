@@ -208,6 +208,64 @@ fn claim_preparation_uses_shared_parsers_and_explicit_mappings() {
 }
 
 #[test]
+fn native_import_exports_trx_skips_for_scope_evaluation() {
+    let skipped = "Browser.RequiresFlag";
+    for clean in [true, false] {
+        let mut f = Fixture::new(ReportFormat::Trx);
+        let raw_path = f.input.join("raw.json");
+        let mut raw = fs::read_to_string(&raw_path)
+            .unwrap()
+            .replace(
+                "</Results>",
+                &format!(
+                    r#"<UnitTestResult testId="browser-test" testName="{skipped}" outcome="NotExecuted"/></Results>"#
+                ),
+            )
+            .replace(r#"total="1""#, r#"total="2""#);
+        if !clean {
+            raw = raw.replace(r#"outcome="Completed""#, r#"outcome="Failed""#);
+        }
+        let strict = parse_report(ReportFormat::Trx, "unit", raw.as_bytes()).unwrap();
+        assert!(!strict.successful);
+        fs::write(&raw_path, &raw).unwrap();
+        f.run.artifacts[0].digest = raw_digest(raw.as_bytes());
+        f.run.test_observations.clear();
+        f.run.mappings.clear();
+        let skipped_identity =
+            RecordId::parse(serde_json::to_string(&["browser-test", skipped]).unwrap()).unwrap();
+        let mut rules = f.expected.requirements.observations.as_slice().to_vec();
+        let rule = rules[0].tests.as_mut().unwrap();
+        rule.maximum_skipped = 1;
+        rule.allowed_skipped_tests = Some(vec![skipped_identity.clone()]);
+        f.expected.requirements.observations = RequiredSet::new(rules).unwrap();
+
+        let mut command = f.command();
+        command.args(["--report", "unit=raw-1"]);
+        for requirement in f.expected.requirements.requirements.as_slice() {
+            command
+                .arg("--map")
+                .arg(format!("{}=unit", requirement.id.as_str()));
+        }
+        command.assert().success();
+        let observations = fs::read(f.output().join("observations.json")).unwrap();
+        let imported: policy_native_verifier::ImportedObservationsV1 =
+            serde_json::from_slice(&observations).unwrap();
+        let report = &imported.run.test_observations[0];
+        assert_eq!(report.counts.skipped, 1);
+        assert_eq!(report.tests[1].raw_identity, skipped_identity);
+        assert_eq!(report.tests[1].outcome, TestOutcome::Skipped);
+        assert_eq!(report.tests[1].attempts, 0);
+        assert_eq!(imported.unsuccessful_reports.is_empty(), clean);
+        let (_, code) = policy_cli::evaluate_scope_json(
+            &serde_json::to_vec(&f.expected).unwrap(),
+            &observations,
+        )
+        .unwrap();
+        assert_eq!(code, if clean { 0 } else { 2 });
+    }
+}
+
+#[test]
 fn multiple_trx_reports_use_distinct_observations_and_approved_suites() {
     let mut f = Fixture::new(ReportFormat::Trx);
     let mut observation = f.run.observations[0].clone();
@@ -530,7 +588,7 @@ fn wrong_subject_identity_stale_future_and_replayed_raw_are_rejected() {
 }
 
 #[test]
-fn missing_hash_malformed_skip_retry_duplicate_and_summary_fail_closed() {
+fn missing_hash_malformed_mismatched_outcome_retry_duplicate_and_summary_fail_closed() {
     for case in 0..9 {
         let mut f = Fixture::new(if case == 4 {
             ReportFormat::PlaywrightJson
