@@ -2,7 +2,7 @@
 use crate::{
     invalid,
     profile::{relative, ProjectProfile, ProjectSensor},
-    Error,
+    unqualified_attribute, Error,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -1331,7 +1331,7 @@ fn validate_files(
                         || targets[0].text().map(str::trim) != Some(framework)
                         || targets[0]
                             .ancestors()
-                            .any(|n| n.attribute("Condition").is_some())
+                            .any(|n| unqualified_attribute(n, "Condition").is_some())
                     {
                         return Err(invalid(format!(
                             "conflicting target framework: {}",
@@ -1342,8 +1342,7 @@ fn validate_files(
                         .descendants()
                         .filter(|n| n.has_tag_name("ProjectReference"))
                     {
-                        let include = reference
-                            .attribute("Include")
+                        let include = unqualified_attribute(reference, "Include")
                             .ok_or_else(|| invalid("project reference without Include"))?;
                         let mut path: Vec<_> = graph.manifest.split('/').collect();
                         path.pop();

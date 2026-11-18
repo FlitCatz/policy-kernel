@@ -51,6 +51,7 @@ independent run/scope IDs alongside ExpectedScopeV1. Verification
 raw report timing and claimed observations. Parser outcomes come from shared
 readers; [[crates/policy-native-importer/src/reports.rs#recompute]] supplements
 raw identity pairs and attempts without changing those readers.
+TRX identity and outcome lookups use unqualified attributes, as in the shared reader.
 
 Descriptor access [[crates/policy-native-importer/src/fs.rs#directory]],
 bounded inventory [[crates/policy-native-importer/src/fs.rs#inventory]],

@@ -272,9 +272,12 @@ fn detect(root: &Root, plan: &mut Plan, installation: &Installation) -> Result<(
                             && targets.len() == 1
                             && targets[0].has_tag_name("TargetFramework")
                             && targets[0].text().map(str::trim) == Some("net9.0")
-                            && !targets[0]
-                                .ancestors()
-                                .any(|node| node.attribute("Condition").is_some())
+                            && !targets[0].ancestors().any(|node| {
+                                node.attributes().any(|attribute| {
+                                    attribute.namespace().is_none()
+                                        && attribute.name() == "Condition"
+                                })
+                            })
                     });
                 if !compatible {
                     plan.conflicts

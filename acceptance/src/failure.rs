@@ -3,6 +3,12 @@ use policy_contracts::{ExecutionStatus, SensorStatus};
 use project_verification::{reports::TestOutcome, run::NormalizedSensor};
 use serde::Serialize;
 
+fn unqualified_attribute<'a>(node: roxmltree::Node<'a, '_>, name: &str) -> Option<&'a str> {
+    node.attributes()
+        .find(|attribute| attribute.namespace().is_none() && attribute.name() == name)
+        .map(|attribute| attribute.value())
+}
+
 fn empty_trx_summary(bytes: &[u8]) -> crate::Result<bool> {
     let document = roxmltree::Document::parse(std::str::from_utf8(bytes)?)?;
     let root = document.root_element();
@@ -33,7 +39,7 @@ fn empty_trx_summary(bytes: &[u8]) -> crate::Result<bool> {
             "notExecuted",
         ]
         .iter()
-        .all(|field| counters[0].attribute(*field) == Some("0")))
+        .all(|field| unqualified_attribute(counters[0], field) == Some("0")))
 }
 
 fn failed_names(sensor: &NormalizedSensor) -> crate::Result<Vec<String>> {
@@ -78,9 +84,9 @@ fn names_from_report(
                 .descendants()
                 .filter(|node| {
                     node.has_tag_name("UnitTestResult")
-                        && node.attribute("outcome") == Some("Failed")
+                        && unqualified_attribute(*node, "outcome") == Some("Failed")
                 })
-                .filter_map(|node| node.attribute("testName").map(str::to_owned))
+                .filter_map(|node| unqualified_attribute(node, "testName").map(str::to_owned))
                 .collect())
         }
         ReportFormat::PlaywrightJson => {

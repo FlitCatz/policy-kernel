@@ -60,6 +60,9 @@ versions [[crates/policy-report-adapters/src/reports.rs#ReportFormat#parser_vers
 identities [[crates/policy-report-adapters/src/reports.rs#id]];
 duplicate and outcome checks [[crates/policy-report-adapters/src/reports.rs#finish]].
 The only workspace dependency is `policy-contracts`, for the existing timestamp type.
+TRX attribute lookups require unqualified names, so namespaced extensions cannot
+substitute for required fields or shadow their values. See
+[[crates/policy-report-adapters/tests/corpus.rs#trx_attributes_must_be_unqualified]].
 Fixed pre-extraction bytes are checked by
 [[crates/policy-report-adapters/tests/corpus.rs#corpus_serialization_matches_pre_extraction_bytes]];
 legacy API compatibility by

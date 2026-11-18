@@ -51,6 +51,7 @@ pub(crate) fn recompute(
             roxmltree::ParsingOptions {
                 allow_dtd: false,
                 nodes_limit: 500_000,
+                entity_resolver: None,
             },
         )
         .map_err(|e| e.to_string())?;
@@ -61,12 +62,17 @@ pub(crate) fn recompute(
             .find(|n| n.has_tag_name((ns, "Results")))
             .ok_or("missing Results")?;
         for test in results.children().filter(|n| n.is_element()) {
+            let attribute = |name| {
+                test.attributes()
+                    .find(|attribute| attribute.namespace().is_none() && attribute.name() == name)
+                    .map(|attribute| attribute.value())
+            };
             identities.push((
                 identity(
-                    test.attribute("testId").ok_or("missing testId")?,
-                    test.attribute("testName").ok_or("missing testName")?,
+                    attribute("testId").ok_or("missing testId")?,
+                    attribute("testName").ok_or("missing testName")?,
                 ),
-                u32::from(test.attribute("outcome") != Some("NotExecuted")),
+                u32::from(attribute("outcome") != Some("NotExecuted")),
             ));
         }
     } else {
