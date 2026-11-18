@@ -140,6 +140,25 @@ fn dirty_tree_rejected_before_runner() {
 }
 
 #[test]
+fn edits_hidden_by_index_flags_are_rejected_before_runner() {
+    for flag in ["--assume-unchanged", "--skip-worktree"] {
+        let fixture = Fixture::new("pass");
+        let repo = fixture.args().repo;
+        fs::write(repo.join("tracked"), "committed").unwrap();
+        git(&repo, &["add", "tracked"]).unwrap();
+        commit(&repo);
+        git(&repo, &["update-index", flag, "tracked"]).unwrap();
+        fs::write(repo.join("tracked"), "edited").unwrap();
+        assert!(
+            git(&repo, &["status", "--porcelain"]).unwrap().is_empty(),
+            "{flag} must hide the edit from git status"
+        );
+        fixture.reject("Git worktree is dirty");
+        assert!(!fixture.root.join("ran-once").exists());
+    }
+}
+
+#[test]
 fn runner_cannot_change_head_even_if_the_tree_is_unchanged() {
     let fixture = Fixture::new("change-head");
     fixture.reject("Git head or tree changed");

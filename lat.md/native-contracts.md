@@ -206,7 +206,10 @@ direct callers/signing bytes [[crates/policy-native-contracts/tests/attestation.
 The Unix adapter observes a single explicit runner argv in a clean worktree, verifies run artifacts and issues a signed statement only after the owner approves the displayed result and statement hash.
 
 [[crates/policy-local-attest/src/attest.rs#attest]] pairs Git snapshots and runner
-timestamps before passing the manifest and artifacts to the importer. It binds
+timestamps before passing the manifest and artifacts to the importer. A snapshot
+treats assume-unchanged and skip-worktree index entries as dirty because Git
+status hides edits to them. Git runs without the owner's environment, so global
+config and excludes cannot weaken the clean-tree check. It binds
 the scope to the actual head and preserves the scope with the completion clock.
 [[crates/policy-local-attest/src/attest.rs#sign_and_publish]] presents the hash of
 the canonical statement bytes and publishes the envelope atomically after the

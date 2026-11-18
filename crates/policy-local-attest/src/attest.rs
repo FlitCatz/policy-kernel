@@ -293,7 +293,7 @@ impl GitSnapshot {
         }
         let head = revision(repo, "HEAD^{commit}")?;
         let tree = revision(repo, &format!("{head}^{{tree}}"))?;
-        if !git(
+        let status = git(
             repo,
             &[
                 "status",
@@ -302,8 +302,12 @@ impl GitSnapshot {
                 "--untracked-files=all",
                 "--ignore-submodules=none",
             ],
-        )?
-        .is_empty()
+        )?;
+        let index = git(repo, &["ls-files", "-v", "-z"])?;
+        if !status.is_empty()
+            || index
+                .split(|byte| *byte == 0)
+                .any(|entry| !entry.is_empty() && !entry.starts_with(b"H "))
         {
             return Err("Git worktree is dirty".into());
         }

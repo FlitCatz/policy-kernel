@@ -209,7 +209,12 @@ cargo run --locked -p policy-local-attest -- \
 
 The attester starts one argv in the checkout with stdin closed. It checks that the
 worktree is clean before and after the command, that head and tree are unchanged,
-and that all observation times fall inside the measured run. It imports the raw
+and that all observation times fall inside the measured run. Index entries marked
+assume-unchanged or skip-worktree count as dirty, so sparse checkouts are rejected.
+Git runs with an empty environment: global and user Git config, including global
+excludes, is ignored, and `git` is found on the default exec path. Ignore
+generated files such as `.DS_Store` in the repository `.gitignore`, or attest
+from a fresh worktree. It imports the raw
 artifacts and sets the scope evaluation clock to runner completion. When the
 result is `Satisfied`, the attester shows the result summary and SHA-256 of the
 canonical statement signing bytes on the owner's terminal. The statement and its
