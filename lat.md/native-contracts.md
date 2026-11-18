@@ -16,8 +16,8 @@ Validation [[crates/policy-native-contracts/src/validation.rs#ExpectedScopeV1#va
 Subject comparison [[crates/policy-native-contracts/src/validation.rs#validate_subject_binding]]
 checks consistency, not authenticity. Results remain local-untrusted with unmet review.
 Suite rules [[crates/policy-native-contracts/src/types.rs#TestRuleV1]] optionally
-name exact raw identities for skipped tests. Omitted lists preserve count-only
-policy and its canonical digest. An empty list permits no skips.
+name exact raw identities for skipped tests; any other skip fails. Omitted
+lists keep their canonical digest and, like empty lists, permit no skips.
 The sibling [[native-contracts#Local-runner attestations]] preserves these records
 and supports issuance and opt-in verification through
 [[trust-boundaries#Local-runner attestation]].

@@ -349,12 +349,8 @@ pub fn evaluate_scope(
             .test_observations
             .iter()
             .find(|t| t.observation_id == rule.id);
-        if let Some((allowed, report)) = rule
-            .tests
-            .as_ref()
-            .and_then(|p| p.allowed_skipped_tests.as_deref())
-            .zip(report)
-        {
+        if let Some((policy, report)) = rule.tests.as_ref().zip(report) {
+            let allowed = policy.allowed_skipped_tests.as_deref().unwrap_or_default();
             for test in &report.tests {
                 if test.outcome == TestOutcome::Skipped && !allowed.contains(&test.raw_identity) {
                     let mut issue = reason(

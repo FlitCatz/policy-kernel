@@ -115,7 +115,7 @@ pub struct TestRuleV1 {
     pub maximum_skipped: u64,
     pub maximum_retries: u64,
     /// Exact `TestV1.raw_identity` values allowed to be skipped in this suite.
-    /// Omit to use only the count limit. An empty list disallows all skips.
+    /// Omit or leave empty to disallow all skips.
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",

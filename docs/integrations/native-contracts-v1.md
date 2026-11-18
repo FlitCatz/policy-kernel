@@ -63,8 +63,8 @@ for example, set these fields:
 }
 ```
 
-An empty list disallows all skips. Omit the field to apply the count limit alone.
-The count limit also applies when identities are listed.
+A skipped test passes only when its identity is listed and the count stays
+within `maximum_skipped`. An omitted or empty list disallows all skips.
 
 Test counts must match their records: passed/failed tests have positive attempts;
 skipped/not-executed tests have zero attempts; retries sum attempts minus one for

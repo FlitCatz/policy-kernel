@@ -195,8 +195,8 @@ fn skip_allowance_enforces_names_and_count_independently() {
         (other, 1, false, true),
         (Some(vec![]), 1, false, true),
         (named, 0, false, false),
-        (None, 1, true, false),
-        (None, 0, false, false),
+        (None, 1, false, true),
+        (None, 0, false, true),
     ] {
         let rule = rules[0].tests.as_mut().unwrap();
         rule.minimum_discovered = 2;
