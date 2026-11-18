@@ -372,10 +372,10 @@ v1 wire contracts and their existing canonical vectors/schemas are unchanged.
 
 The [release workflow](../../.github/workflows/release-binaries.yml) builds both
 commands with Rust **1.95.0**, `--locked` and `--release` on native macOS arm64 and
-Linux x64 runners. An owner-created `v[0-9]*` tag triggers publication. No initial
-release is claimed here; the owner cuts it after merge. Linux binaries are built
+Linux x64 runners. An owner-created `v[0-9]*` tag triggers publication. Linux binaries are built
 on Ubuntu 22.04 (glibc 2.35); they are GNU/glibc binaries, not musl binaries.
 macOS binaries are built on macOS 15 arm64. CI smoke tests each native command.
+Windows x64 users can run the Linux x64 binaries under WSL2.
 
 Each version has four raw executable assets:
 `policy-cli-<target>` and `policy-native-importer-<target>`, for targets
@@ -386,14 +386,14 @@ copies exact bytes into a fresh output directory, and hashes those bytes. Its
 input layout is `INPUT/<target>/<command>`. The workflow creates a draft only
 after both builds succeed, uploads all assets, then makes the release public.
 
-After a release exists, replace `vX.Y.Z` with the reviewed exact tag and select
-the target explicitly. The URL pattern is
+After `v0.1.1` is published, select the target explicitly and run the following
+in a fresh download directory. To install the previous release, set
+`tag=v0.1.0`. The URL pattern is
 `https://github.com/FlitCatz/policy-kernel/releases/download/<tag>/<asset>`.
-Run in a fresh download directory:
 
 ```sh
 set -eu
-tag=vX.Y.Z
+tag=v0.1.1
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
@@ -413,6 +413,13 @@ manifest in consumer configuration. For recurring CI installs, verify against th
 entries; do not use `latest` or build from source on every run. Downloaded
 checksums detect byte corruption but do not independently authenticate the release
 publisher. Binary distribution does not promote observations or grant readiness.
+
+### v0.1.1 release notes
+
+- Raise the native importer's per-artifact limit from 16 MiB to 64 MiB.
+  [Importer limit change](https://github.com/FlitCatz/policy-kernel/pull/60)
+- Update the XML parser dependency to `roxmltree` 0.21.2.
+  [Dependency update](https://github.com/FlitCatz/policy-kernel/pull/59)
 
 ## Kernel verifier and local command
 
