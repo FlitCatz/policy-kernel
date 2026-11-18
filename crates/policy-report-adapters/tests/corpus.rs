@@ -39,6 +39,26 @@ fn corpus_serialization_matches_pre_extraction_bytes() {
 }
 
 #[test]
+fn trx_attributes_must_be_unqualified() {
+    let trx = include_str!("fixtures/project-reports/vstest.trx")
+        .replace("<TestRun ", "<TestRun xmlns:ext=\"urn:extension\" ");
+    let qualified_only = trx.replace(" start=", " ext:start=");
+    assert_eq!(
+        parse_report(ReportFormat::Trx, "auth", qualified_only.as_bytes())
+            .unwrap_err()
+            .to_string(),
+        "invalid report: missing attribute start"
+    );
+
+    let shadowed = trx.replace(" testName=", " ext:testName=\"different\" testName=");
+    let report = parse_report(ReportFormat::Trx, "auth", shadowed.as_bytes()).unwrap();
+    assert_eq!(
+        serde_json::to_vec(&report).unwrap(),
+        include_bytes!("fixtures/project-reports/vstest.trx.expected.json")
+    );
+}
+
+#[test]
 fn report_size_and_namespace_limits_are_preserved() {
     let mut bytes = include_bytes!("fixtures/project-reports/vitest.json").to_vec();
     bytes.resize(16 * 1024 * 1024, b' ');

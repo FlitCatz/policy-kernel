@@ -412,18 +412,21 @@ fn child<'a, 'input>(
     Ok(result)
 }
 fn attr<'a, 'input>(node: roxmltree::Node<'a, 'input>, name: &str) -> Result<&'a str, ReportError> {
-    node.attribute(name)
+    // TRX attributes are unqualified, even on elements in the TRX namespace.
+    node.attributes()
+        .find(|attribute| attribute.namespace().is_none() && attribute.name() == name)
+        .map(|attribute| attribute.value())
         .filter(|s| !s.is_empty())
         .ok_or_else(|| invalid(format!("missing attribute {name}")))
 }
 fn trx(namespace: &str, bytes: &[u8]) -> Result<ParsedReport, ReportError> {
     let text = std::str::from_utf8(bytes).map_err(|_| invalid("TRX must be UTF-8"))?;
-    // Default roxmltree parsing rejects DTD; explicit option prevents entity expansion.
     let doc = roxmltree::Document::parse_with_options(
         text,
         roxmltree::ParsingOptions {
             allow_dtd: false,
             nodes_limit: 500_000,
+            entity_resolver: None,
         },
     )
     .map_err(|e| invalid(e.to_string()))?;

@@ -1,5 +1,5 @@
 //! Explicit opt-in contracts for consumers outside the frozen preset layouts.
-use crate::{invalid, selection::*, Error};
+use crate::{invalid, selection::*, unqualified_attribute, Error};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
@@ -239,12 +239,12 @@ pub fn validate_vstest17(
             .descendants()
             .filter(|n| {
                 n.has_tag_name("PackageReference")
-                    && n.attribute("Include")
+                    && unqualified_attribute(*n, "Include")
                         .is_some_and(|p| p.eq_ignore_ascii_case("Microsoft.NET.Test.Sdk"))
             })
             .collect();
         if references.len() != 1
-            || references[0].attribute("Version") != Some("17.14.1")
+            || unqualified_attribute(references[0], "Version") != Some("17.14.1")
             || references[0].ancestors().any(|n| {
                 n.attributes()
                     .any(|a| a.name().eq_ignore_ascii_case("Condition"))
@@ -326,9 +326,7 @@ pub(crate) fn validate_framework_xml_with_generated_files(
             "GenerateProgramFile",
         ];
         if !doc.root_element().has_tag_name("Project")
-            || doc
-                .root_element()
-                .attribute("Sdk")
+            || unqualified_attribute(doc.root_element(), "Sdk")
                 .is_some_and(|s| !matches!(s, "Microsoft.NET.Sdk" | "Microsoft.NET.Sdk.Web"))
             || doc
                 .root_element()

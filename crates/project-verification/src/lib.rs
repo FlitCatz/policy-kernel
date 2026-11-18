@@ -32,6 +32,12 @@ pub(crate) fn invalid(message: impl Into<String>) -> Error {
     Error::Invalid(message.into())
 }
 
+fn unqualified_attribute<'a>(node: roxmltree::Node<'a, '_>, name: &str) -> Option<&'a str> {
+    node.attributes()
+        .find(|attribute| attribute.namespace().is_none() && attribute.name() == name)
+        .map(|attribute| attribute.value())
+}
+
 pub fn bytes_digest(bytes: &[u8]) -> policy_contracts::Sha256Digest {
     use sha2::{Digest, Sha256};
     policy_contracts::Sha256Digest::parse(hex::encode(Sha256::digest(bytes)))

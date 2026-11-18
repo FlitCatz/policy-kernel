@@ -229,23 +229,22 @@ fn validate_audit_input(path: &str, bytes: &[u8]) -> Result<(), Error> {
     if document.descendants().any(|n| {
         n.has_tag_name("NuGetAuditSuppress")
             || n.has_tag_name("NuGetLockFilePath")
-            || n.attribute("TreatAsLocalProperty")
-                .is_some_and(|properties| {
-                    properties.split(';').any(|property| {
-                        [
-                            "NuGetAudit",
-                            "NuGetAuditMode",
-                            "NuGetAuditLevel",
-                            "WarningsAsErrors",
-                            "NoWarn",
-                            "WarningsNotAsErrors",
-                            "RestoreLockedMode",
-                            "NuGetLockFilePath",
-                        ]
-                        .iter()
-                        .any(|protected| property.trim().eq_ignore_ascii_case(protected))
-                    })
+            || crate::unqualified_attribute(n, "TreatAsLocalProperty").is_some_and(|properties| {
+                properties.split(';').any(|property| {
+                    [
+                        "NuGetAudit",
+                        "NuGetAuditMode",
+                        "NuGetAuditLevel",
+                        "WarningsAsErrors",
+                        "NoWarn",
+                        "WarningsNotAsErrors",
+                        "RestoreLockedMode",
+                        "NuGetLockFilePath",
+                    ]
+                    .iter()
+                    .any(|protected| property.trim().eq_ignore_ascii_case(protected))
                 })
+            })
     }) {
         return Err(invalid(
             "audit contract rejects suppressed advisories or locally overridden audit properties",
@@ -256,7 +255,7 @@ fn validate_audit_input(path: &str, bytes: &[u8]) -> Result<(), Error> {
             n.has_tag_name("auditSources")
                 && n.children().any(|c| {
                     c.has_tag_name("add")
-                        && c.attribute("value")
+                        && crate::unqualified_attribute(c, "value")
                             .is_some_and(|value| value.starts_with("https://"))
                 })
         })
