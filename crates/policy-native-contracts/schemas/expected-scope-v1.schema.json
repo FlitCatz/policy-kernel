@@ -372,6 +372,13 @@
     "TestRuleV1": {
       "type": "object",
       "properties": {
+        "allowed_skipped_tests": {
+          "description": "Exact `TestV1.raw_identity` values allowed to be skipped in this suite.\nOmit or leave empty to disallow all skips.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WorkItemId"
+          }
+        },
         "maximum_failed": {
           "type": "integer",
           "format": "uint64",

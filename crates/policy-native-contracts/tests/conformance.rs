@@ -97,6 +97,14 @@ fn committed_schemas_and_corpus_conform() {
         let schema = serde_json::to_value(generated).unwrap();
         let validator = jsonschema::validator_for(&schema).unwrap();
         assert!(validator.is_valid(&corpus["valid"][kind]), "{kind}");
+        if kind == "expected" {
+            let named = &corpus["valid"]["expected_with_named_skips"];
+            assert!(validator.is_valid(named));
+            for value in [&corpus["valid"][kind], named] {
+                let expected: ExpectedScopeV1 = serde_json::from_value(value.clone()).unwrap();
+                assert_eq!(serde_json::to_value(expected).unwrap(), *value);
+            }
+        }
         for case in corpus["invalid"]
             .as_array()
             .unwrap()

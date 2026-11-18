@@ -334,14 +334,11 @@ fn verify(
                         "raw report and claimed tests/counts/identity/attempts disagree",
                     );
                 }
-                if recomputed.counts.skipped != 0
-                    || recomputed.counts.retries != 0
-                    || recomputed.counts.discovered == 0
-                {
+                if recomputed.counts.retries != 0 || recomputed.counts.discovered == 0 {
                     record.issue(
                         IssueCode::Report,
                         claim.observation_id.as_str(),
-                        "empty, skipped or retried report is incomplete",
+                        "empty or retried report is incomplete",
                     );
                 }
                 record.reports.push(RecomputedReport {

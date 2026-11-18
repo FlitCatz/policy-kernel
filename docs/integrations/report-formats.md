@@ -17,6 +17,9 @@ These adapters normalize advisory local reports. Parsing does not authenticate a
 runner, establish complete discovery, or replace its recorded exit status. A
 successful report also requires successful command execution and profile count
 requirements in the collector. Empty or skipped-only reports never succeed.
+The native importer carries explicit skips to its verifier, which applies
+the approved suite's count and identity rules. Producer-level failures still
+mark the report unsuccessful. See [native contracts](native-contracts-v1.md).
 
 | Format | Exercised producer / maintenance scope | Parser version |
 | --- | --- | --- |

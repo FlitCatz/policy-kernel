@@ -56,12 +56,20 @@ pub fn result() -> Value {
 /// Patch vectors are deliberately data, reusable by consumers without Rust.
 /// `schema_valid` distinguishes structural JSON Schema checks from typed invariants.
 pub fn corpus() -> Value {
-    json!({"valid":{"expected":expected(),"run":run(),"result":result()},"invalid":[
+    let mut expected_with_named_skips = expected();
+    let suite = &mut expected_with_named_skips["requirements"]["observations"][0]["tests"];
+    suite["maximum_skipped"] = json!(1);
+    suite["allowed_skipped_tests"] = json!([r#"["browser-id","Suite.RequiresFlag"]"#]);
+    json!({"valid":{"expected":expected(),"expected_with_named_skips":expected_with_named_skips,
+        "run":run(),"result":result()},"invalid":[
         {"name":"unknown-version","document":"expected","pointer":"/schema_version","value":2,"schema_valid":false},
         {"name":"unknown-field","document":"run","pointer":"/trusted","value":true,"schema_valid":false},
         {"name":"unknown-nested-field","document":"expected","pointer":"/subject/trusted","value":true,"schema_valid":false},
         {"name":"empty-required-set","document":"expected","pointer":"/requirements/observations","value":[],"schema_valid":false},
         {"name":"duplicate-required-set","document":"expected","pointer":"/requirements/observations/0/accepted_exit_codes","value":[0,0],"schema_valid":false},
+        {"name":"skip-list-is-not-an-array","document":"expected","pointer":"/requirements/observations/0/tests/allowed_skipped_tests","value":"test-1","schema_valid":false},
+        {"name":"null-skip-list","document":"expected","pointer":"/requirements/observations/0/tests/allowed_skipped_tests","value":null,"schema_valid":false},
+        {"name":"blank-skip-identity","document":"expected","pointer":"/requirements/observations/0/tests/allowed_skipped_tests","value":[" "],"schema_valid":false},
         {"name":"requirement-id-collision","document":"expected","pointer":"/requirements/requirements/1/id","value":"AC-1","schema_valid":true},
         {"name":"unknown-suite","document":"expected","pointer":"/requirements/requirements/0/suites/0","value":"missing","schema_valid":true},
         {"name":"raw-in-typed-slot","document":"expected","pointer":"/subject/source_set_digest","value":raw(),"schema_valid":false},

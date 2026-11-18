@@ -36,9 +36,9 @@ rejected, including nested fields. Rust callers can construct records and call
 
 | Type | Contents |
 | --- | --- |
-| `ExpectedScopeV1` | Independently approved repository/head/source subject; raw requirements-file digest; required observation IDs and exit/count rules; AC, changed-behavior and negative-case requirements with suite mapping rules; exemptions; command/configuration/parser bindings; evaluation time, positive maximum age and local-advisory mode |
+| `ExpectedScopeV1` | Independently approved repository/head/source subject; raw requirements-file digest; required observation IDs and exit/count rules with optional per-suite skip identities; AC, changed-behavior and negative-case requirements with suite mapping rules; exemptions; command/configuration/parser bindings; evaluation time, positive maximum age and local-advisory mode |
 | `NativeRunV1` | Subject plus run/scope IDs; observations with execution ID, argv, relative cwd, times, completion and configuration digest; parser bindings, raw report references, counts and test identity/outcomes/attempts; artifacts, mappings and exclusions |
-| `LocalScopeResultV1` | Satisfied/non-pass/error status, subject, per-requirement results, stable reason codes and suite/requirement/artifact locations, input/policy/optional evidence digests, evaluation time, verifier/adapter versions, local-untrusted trust and unmet review gate |
+| `LocalScopeResultV1` | Satisfied/non-pass/error status, subject, per-requirement results, stable reason codes and suite/requirement/artifact/test locations, input/policy/optional evidence digests, evaluation time, verifier/adapter versions, local-untrusted trust and unmet review gate |
 
 Required observations and requirements are nonempty. Requirements carry an
 explicit kind; a category may be absent when outside the approved consumer scope,
@@ -51,6 +51,21 @@ both suite and test ID. Requirement kinds share one ID namespace.
 
 Bindings must cover exactly the required observations. Only suite rules have
 parser bindings. Requirement suite references must resolve to declared suites.
+A suite's `requirements.observations[].tests.allowed_skipped_tests` is an optional
+array of exact `TestV1.raw_identity` strings. Use the producer identity pairs
+listed under [adapter import](#adapter-import-library-pr-4). In a TRX suite rule,
+for example, set these fields:
+
+```json
+{
+  "maximum_skipped": 1,
+  "allowed_skipped_tests": ["[\"browser-test\",\"Browser.RequiresFlag\"]"]
+}
+```
+
+A skipped test passes only when its identity is listed and the count stays
+within `maximum_skipped`. An omitted or empty list disallows all skips.
+
 Test counts must match their records: passed/failed tests have positive attempts;
 skipped/not-executed tests have zero attempts; retries sum attempts minus one for
 executed tests. Mappings must reference executed tests, which may have failed.
@@ -166,8 +181,8 @@ this value projection (array order remains significant):
 ```
 
 It includes the requirements-file digest, all requirements, observation rules,
-count bounds, exemptions, command/configuration/parser bindings and time/mode
-policy. It excludes the entire source subject, document version and
+count bounds, named skip allowances, exemptions, command/configuration/parser
+bindings and time/mode policy. It excludes the entire source subject, document version and
 `bindings.evaluated_at`; the enclosing digest retains `schema: policy_native_v1`.
 The full expected-scope digest still covers those excluded fields.
 
@@ -236,8 +251,9 @@ exactly equal the corresponding shared `ReportFormat::parser_version()` and the
 expected suite parser binding. The namespace is the observation ID. The shared
 parser enforces a 16 MiB limit on test reports used in claims and remains
 authoritative for report validity, normalized IDs, outcomes, counts and
-diagnostic messages. The importer supplements it with a projection
-of raw identities and attempts; no parser behavior is changed.
+diagnostic messages. The importer supplements it with a projection of raw
+identities and attempts. It uses the shared reader's native scope mode, which
+leaves skip acceptance to the verifier.
 
 For these adapters, `TestV1.raw_identity` is a compact JSON string encoding the
 original two identity components, retaining any absolute producer path:
@@ -249,11 +265,10 @@ original two identity components, retaining any absolute producer path:
 | TRX | result `testId`, result `testName` |
 
 Test arrays must match parser traversal order. Claims must agree on every count,
-normalized ID, raw identity, outcome and attempt count. Empty, skipped or retried
-reports receive verification issues. Unsupported parser versions, malformed raw
+normalized ID, raw identity, outcome and attempt count. Empty or retried reports
+receive verification issues. Unsupported parser versions, malformed raw
 reports, duplicate suites and contradictory summaries cannot silently pass.
-Valid failed tests and process failures remain data; the importer does not compare
-exit codes/counts to policy bounds or declare requirements satisfied. Parser-level
+Skipped and failed tests and process failures remain data. Parser-level
 `successful` and messages remain in the audit record so downstream consumers
 cannot lose a run-level failure that is not represented by test counts alone.
 Required observation coverage, mappings/exclusions and command/configuration
@@ -436,13 +451,17 @@ including its explanation; exclusions never waive required observations or
 mappings. Unknown mapping requirements fail. Missing mappings, insufficient mapped
 executions, wrong allowed suites and failed tests cannot satisfy requirements.
 Malformed/unexecuted references fail structural validation. Empty policies cannot
-decode. Incomplete processes, absent reports and skipped/retried/partial reports
-cannot yield successful evidence.
+decode. Incomplete processes, absent reports, empty reports, retries and
+unexecuted tests beyond explicit skips cannot yield successful evidence.
 
 Assembly produces `EvidenceManifest`, `ExecutionEvidence`, `SensorEvidence`,
 `TestAdequacyEvidence`, `SensorProfile` and `TestAdequacyPolicy`, delegating sensor
-and adequacy evaluation to existing policy-core functions. Native minimum/maximum
-bounds add constraints; they cannot relax core all-tests-passed rules. Independent
+and adequacy evaluation to existing policy-core functions. The verifier checks
+skip counts and identities against the approved suite rule using the original
+observations. Unexpected skips yield `UNEXPECTED_SKIPPED_TEST` with the original
+identity in `location.test_identity`. The core evidence counts exclude explicit
+skips, while the native report counts and digests retain them. Failed tests and
+missing mapped executions still fail the core checks. Independent
 negative IDs become required core changed behaviors with negative obligations.
 Suite/test tuple encoding prevents ID collisions. Parser-level failure flags
 produce failed sensor evidence even with passing test counts.
@@ -450,7 +469,7 @@ produce failed sensor evidence even with passing test counts.
 The diagnostic Rust return includes core reasons and optional evidence separately
 from `LocalScopeResultV1`. Invalid structural records return an error; incomplete
 binding/input checks yield an error result without evidence. Valid evaluated
-failures retain evidence and stable reason codes with suite/requirement/artifact
+failures retain evidence and stable reason codes with suite/requirement/artifact/test
 locations. Policy digests bind native requirements, approved file digest, bounds,
 exemptions, bindings and time policy as well as the core profile. Evidence digests
 cover the assembled bundle and its child digests; the expected and run digests
