@@ -309,10 +309,8 @@ fn validate_merge_policy(input: &PostMergeEvaluationInput, gates: &mut Gates) {
 
 fn is_fresh(observed: &UtcTimestamp, reference: &UtcTimestamp, max_age_seconds: u64) -> bool {
     reference
-        .as_datetime()
-        .signed_duration_since(*observed.as_datetime())
-        .to_std()
-        .is_ok_and(|age| age <= std::time::Duration::from_secs(max_age_seconds))
+        .duration_since(observed)
+        .is_some_and(|age| age <= std::time::Duration::from_secs(max_age_seconds))
 }
 
 fn post_merge_decision_digest(

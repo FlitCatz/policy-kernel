@@ -92,7 +92,7 @@ mod integration {
     // built for this integration test. It is not a production binary target.
     fn fake_gh() -> &'static PathBuf {
         static EXE: OnceLock<PathBuf> = OnceLock::new();
-        EXE.get_or_init(|| compile_process_fixture("fake_gh", &["serde_json", "chrono"]))
+        EXE.get_or_init(|| compile_process_fixture("fake_gh", &["serde_json", "policy_contracts"]))
     }
 
     fn compile_process_fixture(name: &str, dependencies: &[&str]) -> PathBuf {
@@ -201,8 +201,12 @@ mod integration {
                 base
             });
             let head = git(&["rev-parse", "HEAD"]);
-            let now: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
-            let observed = (now - chrono::Duration::seconds(20)).to_rfc3339();
+            let now =
+                policy_contracts::UtcTimestamp::try_from(std::time::SystemTime::now()).unwrap();
+            let observed = now
+                .checked_sub(std::time::Duration::from_secs(20))
+                .unwrap()
+                .to_string();
             let raw = include_str!("../../../tests/fixtures/pre-merge/ready.json")
                 .replace(
                     "cccccccccccccccccccccccccccccccccccccccc\"",
@@ -210,7 +214,7 @@ mod integration {
                 )
                 .replace("2026-09-07T08:58:00Z", &observed)
                 .replace("2026-09-07T08:57:00Z", &observed)
-                .replace("2026-09-07T09:00:00Z", &now.to_rfc3339())
+                .replace("2026-09-07T09:00:00Z", &now.to_string())
                 .replace("run-6", "9001");
             let mut input: PreMergeEvaluationInput = serde_json::from_str(&raw).unwrap();
             if let Some(base) = &base {
@@ -416,13 +420,14 @@ mod integration {
         for name in ["publication-receipt.json", "pre-merge-input.json"] {
             fs::copy(fixture.artifacts.join(name), fixture.trusted.join(name)).unwrap();
         }
-        let merged_at: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
+        let merged_at =
+            policy_contracts::UtcTimestamp::try_from(std::time::SystemTime::now()).unwrap();
         let merge_sha = "dddddddddddddddddddddddddddddddddddddddd";
         let mut pr: Value =
             serde_json::from_slice(&fs::read(fixture.root.join("pr.json")).unwrap()).unwrap();
         pr["state"] = json!("closed");
         pr["merged"] = json!(true);
-        pr["merged_at"] = json!(merged_at.to_rfc3339());
+        pr["merged_at"] = json!(merged_at);
         pr["merge_commit_sha"] = json!(merge_sha);
         pr["merged_by"] = json!({"login":"release-owner", "type":"User"});
         fs::write(
@@ -434,7 +439,7 @@ mod integration {
             "schema_version":1, "repository":"FlitCatz/policy-kernel", "pull_request_number":6,
             "head_sha":fixture.head, "merge_commit_sha":merge_sha, "target_branch":"main",
             "method":"squash", "protected":true, "merged_by":"release-owner", "actor_type":"human",
-            "via_merge_queue":false, "merged_at":merged_at.to_rfc3339()
+            "via_merge_queue":false, "merged_at":merged_at
         })).unwrap()).unwrap();
         fixture.artifacts = fixture.root.join("post-artifacts");
         let output = fixture.command_for("post-merge").output().unwrap();

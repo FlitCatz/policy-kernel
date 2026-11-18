@@ -187,16 +187,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 
 [[package]]
-name = "chrono"
-version = "0.4.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "145052bdd345b87320e369255277e3fb5152762ad123a901ef5c262dd38fe8d2"
-dependencies = [
- "num-traits",
- "serde",
-]
-
-[[package]]
 name = "clap"
 version = "4.5.47"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -334,7 +324,6 @@ dependencies = [
 name = "evidence-collector"
 version = "0.1.1"
 dependencies = [
- "chrono",
  "hex",
  "policy-contracts",
  "policy-core",
@@ -424,7 +413,6 @@ dependencies = [
 name = "github-adapter"
 version = "0.1.1"
 dependencies = [
- "chrono",
  "policy-contracts",
  "rustix",
  "serde",
@@ -488,6 +476,41 @@ name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+
+[[package]]
+name = "jiff"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ed5d126d72eb017f10b302e73bdeca446bea405ee449af4d9e7866d6b082d83e"
+dependencies = [
+ "jiff-core",
+ "jiff-static",
+ "log",
+ "portable-atomic",
+ "portable-atomic-util",
+ "serde_core",
+]
+
+[[package]]
+name = "jiff-core"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b6b46a105a9874634dd96231021526bf24ca04955a5998c59a9c7666e634b7b8"
+dependencies = [
+ "log",
+]
+
+[[package]]
+name = "jiff-static"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0127e9bde3c6130d6169e7d8d68676e4be69c4bf7573c308b6f960a5089c428"
+dependencies = [
+ "jiff-core",
+ "proc-macro2",
+ "quote",
+ "syn 3.0.5",
+]
 
 [[package]]
 name = "js-sys"
@@ -772,7 +795,6 @@ version = "0.1.1"
 dependencies = [
  "assert_cmd",
  "base64",
- "chrono",
  "clap",
  "github-adapter",
  "policy-contracts",
@@ -804,7 +826,7 @@ dependencies = [
 name = "policy-contracts"
 version = "0.1.1"
 dependencies = [
- "chrono",
+ "jiff",
  "schemars",
  "serde",
  "serde_json",
@@ -815,7 +837,6 @@ dependencies = [
 name = "policy-core"
 version = "0.1.1"
 dependencies = [
- "chrono",
  "globset",
  "hex",
  "policy-contracts",
@@ -831,7 +852,6 @@ dependencies = [
 name = "policy-local-attest"
 version = "0.1.1"
 dependencies = [
- "chrono",
  "clap",
  "policy-contracts",
  "policy-core",
@@ -894,7 +914,6 @@ dependencies = [
 name = "policy-report-adapters"
 version = "0.1.1"
 dependencies = [
- "chrono",
  "hex",
  "policy-contracts",
  "roxmltree",
@@ -903,6 +922,21 @@ dependencies = [
  "serde_json",
  "sha2",
  "thiserror",
+]
+
+[[package]]
+name = "portable-atomic"
+version = "1.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05c8b63e8d9609db387f0324918f81d68fe27748f084ef092fb35954d0539a85"
+
+[[package]]
+name = "portable-atomic-util"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10ab3eb7f3becc3a1cbc4f2c6f20267996cfc1a6467a873763411b136a122715"
+dependencies = [
+ "portable-atomic",
 ]
 
 [[package]]
@@ -954,7 +988,6 @@ dependencies = [
 name = "project-verification"
 version = "0.1.1"
 dependencies = [
- "chrono",
  "evidence-collector",
  "hex",
  "jsonschema",
@@ -1177,7 +1210,6 @@ version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "82d20c4491bc164fa2f6c5d44565947a52ad80b9505d8e36f8d54c27c739fcd0"
 dependencies = [
- "chrono",
  "dyn-clone",
  "ref-cast",
  "schemars_derive",

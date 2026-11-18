@@ -246,3 +246,22 @@ fn mapping_minimum_and_allowed_suite_are_independent_of_passing_counts() {
         ScopeStatus::NonPass
     );
 }
+
+#[test]
+fn start_age_window_is_inclusive_and_exact_at_both_edges() {
+    let evaluated = UtcTimestamp::parse("2026-11-18T01:02:03.5Z").unwrap();
+    let within = |started: &str, maximum| {
+        started_within_age(&UtcTimestamp::parse(started).unwrap(), &evaluated, maximum)
+    };
+    assert!(within("2026-11-18T01:02:03.5Z", 0));
+    assert!(!within("2026-11-18T01:02:03.499999999Z", 0));
+    assert!(within("2026-11-18T01:01:03.5Z", 60));
+    assert!(!within("2026-11-18T01:01:03.499999999Z", 60));
+    assert!(within("2026-11-18T01:01:03.500000001Z", 60));
+    assert!(within("0000-01-01T00:00:00Z", u64::MAX));
+    // Only whole seconds count on the future side: a start less than one second
+    // after evaluation passes here and is bounded by `observed_at` instead.
+    assert!(within("2026-11-18T01:02:04.499999999Z", 0));
+    assert!(!within("2026-11-18T01:02:04.5Z", 0));
+    assert!(!within("2026-11-18T01:02:04.5Z", u64::MAX));
+}

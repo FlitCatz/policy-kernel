@@ -1,7 +1,11 @@
-use chrono::{DateTime, SecondsFormat, Utc};
+use jiff::{civil::DateTime, SignedDuration};
 use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::{fmt, str::FromStr};
+use std::{
+    fmt,
+    str::FromStr,
+    time::{Duration, SystemTime},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum IdentityError {
@@ -192,9 +196,16 @@ impl<'de> Deserialize<'de> for PullRequestNumber {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema)]
+// A UTC instant with nanosecond precision from `0000-01-01T00:00:00Z` through
+// `9999-12-31T23:59:59.999999999Z`, so its canonical form always parses back.
+// The inner value is a civil date-time on the UTC time scale; no time library
+// type appears in the public API. Not a doc comment: schemars would copy one
+// into every generated schema as a description.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema)]
 #[schemars(schema_with = "utc_timestamp_schema")]
-pub struct UtcTimestamp(DateTime<Utc>);
+pub struct UtcTimestamp(DateTime);
+
+const UNIX_EPOCH: UtcTimestamp = UtcTimestamp(DateTime::constant(1970, 1, 1, 0, 0, 0, 0));
 
 fn utc_timestamp_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
     schemars::json_schema!({"type": "string", "format": "date-time"})
@@ -209,13 +220,164 @@ fn pull_request_number_schema(_: &mut schemars::SchemaGenerator) -> schemars::Sc
 }
 
 impl UtcTimestamp {
+    /// Parses an RFC 3339 `date-time` and normalizes it to UTC.
+    ///
+    /// The accepted grammar is deliberately narrower than ISO 8601: a four-digit
+    /// year, `T`, `t` or a space before the time, `Z`, `z` or a numeric offset of
+    /// at most 23:59, and any number of fractional digits (truncated to
+    /// nanoseconds). A leap second (`:60`) and an instant whose UTC year falls
+    /// outside 0000-9999 are rejected because neither has a canonical form here.
     pub fn parse(value: &str) -> Result<Self, IdentityError> {
-        DateTime::parse_from_rfc3339(value)
-            .map(|timestamp| Self(timestamp.with_timezone(&Utc)))
-            .map_err(|_| IdentityError::InvalidTimestamp)
+        parse_rfc3339(value).ok_or(IdentityError::InvalidTimestamp)
     }
-    pub fn as_datetime(&self) -> &DateTime<Utc> {
-        &self.0
+
+    /// The instant `millis` milliseconds after (or before) the Unix epoch.
+    pub fn from_unix_millis(millis: i64) -> Option<Self> {
+        let distance = Duration::from_millis(millis.unsigned_abs());
+        if millis < 0 {
+            UNIX_EPOCH.checked_sub(distance)
+        } else {
+            UNIX_EPOCH.checked_add(distance)
+        }
+    }
+
+    /// Time elapsed from `earlier` to `self`, or `None` when `earlier` is later.
+    pub fn duration_since(&self, earlier: &Self) -> Option<Duration> {
+        Duration::try_from(self.0.duration_since(earlier.0)).ok()
+    }
+
+    pub fn checked_add(&self, duration: Duration) -> Option<Self> {
+        Self::in_range(self.0.checked_add(duration).ok()?)
+    }
+
+    pub fn checked_sub(&self, duration: Duration) -> Option<Self> {
+        Self::in_range(self.0.checked_sub(duration).ok()?)
+    }
+
+    /// Drops the fractional second without rounding.
+    pub fn truncated_to_seconds(&self) -> Self {
+        let whole = self.0.with().subsec_nanosecond(0).build();
+        Self(whole.expect("a zero fractional second is always valid"))
+    }
+
+    // The civil type also covers years before 0000, which the canonical
+    // four-digit form cannot express.
+    fn in_range(value: DateTime) -> Option<Self> {
+        (value.year() >= 0).then_some(Self(value))
+    }
+}
+
+fn number<T: TryFrom<u32>>(bytes: &[u8], start: usize, length: usize) -> Option<T> {
+    let digits = bytes.get(start..start + length)?;
+    let value = digits.iter().try_fold(0u32, |value, byte| {
+        byte.is_ascii_digit()
+            .then(|| value * 10 + u32::from(byte - b'0'))
+    })?;
+    T::try_from(value).ok()
+}
+
+fn parse_rfc3339(value: &str) -> Option<UtcTimestamp> {
+    let bytes = value.as_bytes();
+    let separated = bytes.get(4) == Some(&b'-')
+        && bytes.get(7) == Some(&b'-')
+        && matches!(bytes.get(10), Some(b'T' | b't' | b' '))
+        && bytes.get(13) == Some(&b':')
+        && bytes.get(16) == Some(&b':');
+    if !separated {
+        return None;
+    }
+    let mut rest = bytes.get(19..)?;
+    let mut nanosecond = 0;
+    if let Some(fraction) = rest.strip_prefix(b".") {
+        let length = fraction.iter().take_while(|b| b.is_ascii_digit()).count();
+        // Digits beyond nanosecond precision are dropped, not rounded.
+        let kept = length.clamp(1, 9);
+        nanosecond = number::<i32>(fraction, 0, kept)? * 10i32.pow(9 - kept as u32);
+        rest = &fraction[length..];
+    }
+    let offset_seconds = match rest {
+        [b'Z' | b'z'] => 0,
+        _ => {
+            let (negative, offset) = match rest.strip_prefix(b"+") {
+                Some(offset) => (false, offset),
+                // U+2212 MINUS SIGN is accepted like the ASCII hyphen.
+                None => (
+                    true,
+                    rest.strip_prefix(b"-")
+                        .or_else(|| rest.strip_prefix("\u{2212}".as_bytes()))?,
+                ),
+            };
+            if offset.len() != 5 || offset[2] != b':' {
+                return None;
+            }
+            let hours = number::<i64>(offset, 0, 2).filter(|hours| *hours <= 23)?;
+            let minutes = number::<i64>(offset, 3, 2).filter(|minutes| *minutes <= 59)?;
+            let seconds = hours * 3600 + minutes * 60;
+            if negative {
+                -seconds
+            } else {
+                seconds
+            }
+        }
+    };
+    let local = DateTime::new(
+        number(bytes, 0, 4)?,
+        number(bytes, 5, 2)?,
+        number(bytes, 8, 2)?,
+        number(bytes, 11, 2)?,
+        number(bytes, 14, 2)?,
+        number(bytes, 17, 2)?,
+        nanosecond,
+    )
+    .ok()?;
+    let utc = local
+        .checked_sub(SignedDuration::from_secs(offset_seconds))
+        .ok()?;
+    UtcTimestamp::in_range(utc)
+}
+
+impl TryFrom<SystemTime> for UtcTimestamp {
+    type Error = IdentityError;
+    fn try_from(time: SystemTime) -> Result<Self, Self::Error> {
+        match time.duration_since(SystemTime::UNIX_EPOCH) {
+            Ok(after) => UNIX_EPOCH.checked_add(after),
+            Err(before) => UNIX_EPOCH.checked_sub(before.duration()),
+        }
+        .ok_or(IdentityError::InvalidTimestamp)
+    }
+}
+
+/// The canonical form: RFC 3339 with a `Z` suffix and 0, 3, 6 or 9 fractional
+/// digits, whichever is the shortest that loses nothing.
+impl fmt::Display for UtcTimestamp {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let time = self.0;
+        write!(
+            formatter,
+            "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+            time.year(),
+            time.month(),
+            time.day(),
+            time.hour(),
+            time.minute(),
+            time.second()
+        )?;
+        match time.subsec_nanosecond() {
+            0 => {}
+            nanos if nanos % 1_000_000 == 0 => write!(formatter, ".{:03}", nanos / 1_000_000)?,
+            nanos if nanos % 1_000 == 0 => write!(formatter, ".{:06}", nanos / 1_000)?,
+            nanos => write!(formatter, ".{nanos:09}")?,
+        }
+        formatter.write_str("Z")
+    }
+}
+
+impl fmt::Debug for UtcTimestamp {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter
+            .debug_tuple("UtcTimestamp")
+            .field(&format_args!("{self}"))
+            .finish()
     }
 }
 
@@ -231,7 +393,7 @@ impl Serialize for UtcTimestamp {
     where
         S: Serializer,
     {
-        serializer.serialize_str(&self.0.to_rfc3339_opts(SecondsFormat::AutoSi, true))
+        serializer.collect_str(self)
     }
 }
 

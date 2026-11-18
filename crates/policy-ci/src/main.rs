@@ -181,13 +181,12 @@ fn run(cli: Cli) -> Result<bool> {
         .clone()
         .ok_or("--artifact-directory is required")?;
     fs::create_dir_all(&artifacts)?;
-    let now: chrono::DateTime<chrono::Utc> = SystemTime::now().into();
     let runtime = Runtime {
         receipt,
         trusted,
         artifacts,
         policy,
-        now: now.to_rfc3339().parse()?,
+        now: UtcTimestamp::try_from(SystemTime::now())?,
     };
     evaluate(options, runtime, post_merge)
 }

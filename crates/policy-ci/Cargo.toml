@@ -19,7 +19,6 @@ github-adapter = { path = "../github-adapter" }
 serde.workspace = true
 serde_json.workspace = true
 clap.workspace = true
-chrono.workspace = true
 rustix = { workspace = true, features = ["fs"] }
 
 [dev-dependencies]

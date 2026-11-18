@@ -10,7 +10,6 @@ publish.workspace = true
 path = "src/lib.rs"
 
 [dependencies]
-chrono.workspace = true
 policy-contracts = { path = "../policy-contracts" }
 serde.workspace = true
 serde_json.workspace = true

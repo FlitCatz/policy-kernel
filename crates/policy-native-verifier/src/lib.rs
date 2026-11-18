@@ -62,6 +62,23 @@ fn reason(
     }
 }
 
+/// Whether a start time is within `maximum_age_seconds` before `evaluated_at`.
+///
+/// On the future side only whole seconds count, so a start less than one second
+/// after evaluation still passes; `observed_at` bounds later times separately.
+pub fn started_within_age(
+    started_at: &UtcTimestamp,
+    evaluated_at: &UtcTimestamp,
+    maximum_age_seconds: u64,
+) -> bool {
+    match evaluated_at.duration_since(started_at) {
+        Some(age) => age <= std::time::Duration::from_secs(maximum_age_seconds),
+        None => started_at
+            .duration_since(evaluated_at)
+            .is_some_and(|ahead| ahead < std::time::Duration::from_secs(1)),
+    }
+}
+
 fn profile(expected: &ExpectedScopeV1) -> SensorProfile {
     let mut adequacy = TestAdequacyPolicy {
         acceptance_criterion_ids: vec![],
@@ -220,13 +237,12 @@ pub fn evaluate_scope(
                 None,
             ));
         }
-        let elapsed =
-            *expected.bindings.evaluated_at.as_datetime() - *observation.started_at.as_datetime();
         if observation.observed_at > expected.bindings.evaluated_at
-            || elapsed.num_seconds() < 0
-            || elapsed.num_seconds() as u64 > expected.bindings.maximum_age_seconds
-            || (elapsed.num_seconds() as u64 == expected.bindings.maximum_age_seconds
-                && elapsed.subsec_nanos() > 0)
+            || !started_within_age(
+                &observation.started_at,
+                &expected.bindings.evaluated_at,
+                expected.bindings.maximum_age_seconds,
+            )
         {
             result.reasons.push(reason(
                 ReasonCode::StaleObservation,

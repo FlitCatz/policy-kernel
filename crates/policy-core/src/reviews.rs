@@ -390,10 +390,8 @@ fn owner_review_is_fresh(input: &ReviewEvaluationInput, timestamp: &UtcTimestamp
         .min(input.policy.max_evidence_age_seconds);
     input
         .evaluation_time
-        .as_datetime()
-        .signed_duration_since(*timestamp.as_datetime())
-        .to_std()
-        .is_ok_and(|age| age <= std::time::Duration::from_secs(maximum))
+        .duration_since(timestamp)
+        .is_some_and(|age| age <= std::time::Duration::from_secs(maximum))
 }
 
 fn validate_owner_approval(
@@ -555,11 +553,8 @@ fn validate_review_provenance(input: &ReviewEvaluationInput, reasons: &mut Vec<R
         .map(|r| &r.observed_at)
         .chain(input.modifications.iter().map(|m| &m.observed_at))
     {
-        let age = input
-            .evaluation_time
-            .as_datetime()
-            .signed_duration_since(*timestamp.as_datetime());
-        if !age.to_std().is_ok_and(|age| {
+        let age = input.evaluation_time.duration_since(timestamp);
+        if !age.is_some_and(|age| {
             age <= std::time::Duration::from_secs(input.policy.max_evidence_age_seconds)
         }) {
             insert_reason(
@@ -649,10 +644,7 @@ fn waiver_state(
         .authorized_waiver_actors
         .iter()
         .any(|actor| actor == &waiver.actor);
-    let age = input
-        .evaluation_time
-        .as_datetime()
-        .signed_duration_since(*waiver.issued_at.as_datetime());
+    let age = input.evaluation_time.duration_since(&waiver.issued_at);
     let bindings_match = !waiver.actor.trim().is_empty()
         && !finding_id.trim().is_empty()
         && input
@@ -660,14 +652,14 @@ fn waiver_state(
             .authorized_waiver_actors
             .iter()
             .all(|actor| !actor.trim().is_empty())
-        && age.to_std().is_ok_and(|age| {
+        && age.is_some_and(|age| {
             age <= std::time::Duration::from_secs(input.policy.max_evidence_age_seconds)
         })
         && waiver.repository == input.repository
         && waiver.head_sha == input.head_sha
         && waiver.evidence_digest == input.evidence_digest
         && !waiver.reason.trim().is_empty()
-        && waiver.issued_at.as_datetime() < waiver.expires_at.as_datetime();
+        && waiver.issued_at < waiver.expires_at;
     if !authorized || !bindings_match {
         return (
             false,
@@ -677,7 +669,7 @@ fn waiver_state(
             )),
         );
     }
-    if waiver.expires_at.as_datetime() <= input.evaluation_time.as_datetime() {
+    if waiver.expires_at <= input.evaluation_time {
         return (
             false,
             Some(("PK-WAIVER-EXPIRED", "the matching human waiver has expired")),
