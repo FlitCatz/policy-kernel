@@ -10,7 +10,7 @@ const FLAGS: OFlags = OFlags::RDONLY
     .union(OFlags::NOFOLLOW)
     .union(OFlags::CLOEXEC)
     .union(OFlags::NONBLOCK);
-pub(crate) const FILE_LIMIT: u64 = 16 * 1024 * 1024;
+pub(crate) const FILE_LIMIT: u64 = 64 * 1024 * 1024;
 pub(crate) const TOTAL_LIMIT: u64 = 256 * 1024 * 1024;
 pub(crate) const ENTRY_LIMIT: usize = 4096;
 
@@ -192,10 +192,11 @@ pub(crate) fn read(root: &File, entry: &Entry) -> io::Result<Vec<u8>> {
                 return Err(invalid("artifact changed or is not regular"));
             }
             if meta.len() > FILE_LIMIT {
-                return Err(invalid("artifact exceeds 16 MiB"));
+                return Err(invalid("artifact exceeds 64 MiB"));
             }
             let mut bytes = Vec::new();
-            file.take(FILE_LIMIT + 1).read_to_end(&mut bytes)?;
+            // Bound reads to the size already charged against the aggregate limit.
+            file.take(meta.len() + 1).read_to_end(&mut bytes)?;
             if bytes.len() as u64 != meta.len() {
                 return Err(invalid("artifact size changed"));
             }

@@ -471,6 +471,9 @@ policy-cli evaluate-scope \
   --expected approved-scope.json --observations imported-run/observations.json
 ```
 
+The importer preserves up to 64 MiB per artifact and 256 MiB per run. Test
+reports parsed to verify or prepare claims have a 16 MiB per-report limit.
+
 Exit codes are **0** satisfied, **2** valid non-pass, **64** invalid or incomplete
 input. Either file may be `-` for stdin, but not both. Output is `LocalScopeResultV1`;
 trust remains `local_untrusted` and review `unmet`. This JSON-only command checks

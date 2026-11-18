@@ -78,7 +78,7 @@ pub fn populate_claims(
             .ok_or_else(|| fs::invalid("missing raw report file"))?;
         if entry.kind != rustix::fs::FileType::RegularFile || entry.stat.2 > fs::FILE_LIMIT {
             return Err(fs::invalid(
-                "raw report must be a regular file within 16 MiB",
+                "raw report must be a regular file within 64 MiB",
             ));
         }
         total += entry.stat.2;

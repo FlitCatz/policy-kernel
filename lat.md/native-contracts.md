@@ -60,16 +60,25 @@ raw reads [[crates/policy-native-importer/src/fs.rs#read]] and atomic marker
 silent replacement. A completion marker denotes persistence even for rejected
 imports. Originals remain untouched when unsafe or oversize artifacts cannot be copied.
 
+Artifact copies are limited to 64 MiB per file and 256 MiB total, with 4096
+entries and 32 nested directory levels. The shared parser caps test reports used
+in claims at 16 MiB per report.
+
 Conformance [[crates/policy-native-importer/tests/import.rs#shared_corpus_imports_all_formats_and_preserves_exact_bytes]],
 replay [[crates/policy-native-importer/tests/import.rs#wrong_subject_identity_stale_future_and_replayed_raw_are_rejected]],
 reports [[crates/policy-native-importer/tests/import.rs#missing_hash_malformed_skip_retry_duplicate_and_summary_fail_closed]],
 claims [[crates/policy-native-importer/tests/import.rs#forged_tests_identities_counts_attempts_and_parser_bindings_are_rejected]],
-paths [[crates/policy-native-importer/tests/import.rs#path_attacks_extra_entries_and_size_limits_preserve_safe_artifacts]],
+paths [[crates/policy-native-importer/tests/import.rs#path_attacks_and_extra_entries_preserve_safe_artifacts]],
 output [[crates/policy-native-importer/tests/import.rs#output_is_fresh_disjoint_and_never_overwritten]],
 and failure data [[crates/policy-native-importer/tests/import.rs#failed_native_tests_are_retained_without_a_scope_decision]].
 Nested roots [[crates/policy-native-importer/tests/import.rs#nested_artifacts_and_symlinked_roots_have_no_implicit_path_exceptions]]
 and missing-report process errors [[crates/policy-native-importer/tests/import.rs#failed_process_logs_survive_even_when_no_raw_report_was_produced]]
 retain diagnostics without a weaker symlink path or empty success record.
+[[crates/policy-native-importer/tests/import.rs#imports_large_raw_artifacts_without_changing_bytes_or_digest]]
+checks preservation and scope evaluation with a generated 18,227,388-byte
+artifact and a 64 MiB artifact.
+[[crates/policy-native-importer/tests/import.rs#rejects_artifact_one_byte_over_64_mib]]
+checks the diagnostic and source retention one byte over the limit.
 
 ## Native command distribution
 
@@ -101,7 +110,8 @@ Explicit report selections populate empty producer test claims through the share
 Entry [[crates/policy-native-importer/src/claims.rs#populate_claims]] reuses bounded,
 descriptor-relative artifact reads and [[crates/policy-native-importer/src/reports.rs#recompute]]
 for counts, normalized/raw identities, outcomes and attempts. The CLI then invokes
-the unchanged [[crates/policy-native-importer/src/importer.rs#import_run]] checks.
+[[crates/policy-native-importer/src/importer.rs#import_run]] to verify the run.
+Preparation bounds selected test reports to 16 MiB each and 256 MiB total.
 [[crates/policy-native-importer/src/claims.rs#populate_mappings]] maps all executed
 tests, including failures, only for explicitly selected approved requirement/suite
 pairs. No mappings are inferred and no v1 schema or canonical vector changes.
