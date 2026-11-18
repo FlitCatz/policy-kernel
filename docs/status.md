@@ -155,6 +155,20 @@ consumer execution, authoritative hosted decision, protected merge or production
 promotion. Consumer integration and verification with an actual hardware key
 remain outstanding.
 
+## Timestamp library migration
+
+On 2026-11-18 the workspace replaced `chrono` with `jiff` 1.0.1 because RustSec
+marks every `chrono` release unmaintained (RUSTSEC-2026-0543), which failed the
+dependency policy check for every change. Serialized timestamps, generated
+schemas, freshness boundaries and signed bytes are unchanged for timestamps in
+years 0000-9999. Leap-second (`:60`) input and offsets that move the UTC year
+outside 0000-9999 are now rejected instead of serialized in a form that could not
+be read back; see the [timestamp library note](provenance.md#timestamp-library).
+The mutation contract was rebound to the edited sources. This records local
+checks only; no hosted result, authoritative decision or production promotion is
+claimed. The npm `picomatch` advisory in the native fixture audits is separate and
+remains open.
+
 ## Policy v3 review quorum
 
 The [review contract](trust-model.md) binds approving-review quorum and allowed

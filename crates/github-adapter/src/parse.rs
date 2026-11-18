@@ -320,7 +320,7 @@ pub fn parse_trusted_check(
             && check.app.slug == receipt.check_app_slug
             && binding.workflow_run_id == receipt.workflow_run_id
             && binding.workflow_run_attempt == receipt.workflow_run_attempt
-            && binding.completed_at.as_datetime() <= receipt.published_at.as_datetime(),
+            && binding.completed_at <= receipt.published_at,
         "check run did not match trusted publication receipt",
     )?;
     let mut observation = check_observation(&check, &binding, expected)?;
@@ -352,18 +352,10 @@ pub fn publish_pre_merge_check<A: GitHubApi>(
     )?;
     // GitHub's Check Run timestamp format is whole-second UTC. Use the same
     // representation in the posted fields and the canonical embedded binding.
-    let completed_at = UtcTimestamp::parse(
-        &completed_at
-            .as_datetime()
-            .to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
-    )?;
-    let started_at = decision
-        .binding
-        .evaluated_at
-        .as_datetime()
-        .to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+    let completed_at = completed_at.truncated_to_seconds();
+    let started_at = decision.binding.evaluated_at.truncated_to_seconds();
     ensure(
-        UtcTimestamp::parse(&started_at)? <= completed_at,
+        started_at <= completed_at,
         "publication completion preceded evaluation",
     )?;
     let conclusion = match decision.status {
@@ -427,11 +419,9 @@ pub fn publish_pre_merge_check<A: GitHubApi>(
         observation.conclusion == conclusion,
         "created check conclusion disagreed with decision status",
     )?;
-    let publication_observed_at = UtcTimestamp::parse(
-        &chrono::DateTime::<chrono::Utc>::from(SystemTime::now()).to_rfc3339(),
-    )?;
+    let publication_observed_at = UtcTimestamp::try_from(SystemTime::now())?;
     ensure(
-        parsed_binding.completed_at.as_datetime() <= publication_observed_at.as_datetime(),
+        parsed_binding.completed_at <= publication_observed_at,
         "created check completion was later than runner publication observation",
     )?;
     observation.completed_at = publication_observed_at.clone();
@@ -580,7 +570,7 @@ fn check_observation(
 ) -> Result<GitHubCheckObservation, AdapterError> {
     let conclusion = parse_conclusion(&check.conclusion)?;
     ensure(
-        check.started_at.as_datetime() <= check.completed_at.as_datetime(),
+        check.started_at <= check.completed_at,
         "check completion preceded start",
     )?;
     Ok(GitHubCheckObservation {

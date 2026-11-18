@@ -343,8 +343,7 @@ fn git(repo: &Path, args: &[&str]) -> Result<Vec<u8>> {
 }
 
 fn now() -> UtcTimestamp {
-    let time: chrono::DateTime<chrono::Utc> = SystemTime::now().into();
-    UtcTimestamp::parse(&time.to_rfc3339()).expect("system UTC timestamp")
+    UtcTimestamp::try_from(SystemTime::now()).expect("system UTC timestamp")
 }
 
 #[cfg(test)]

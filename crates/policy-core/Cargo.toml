@@ -19,7 +19,6 @@ thiserror.workspace = true
 globset.workspace = true
 
 [dev-dependencies]
-chrono.workspace = true
 proptest.workspace = true
 yaml-rust2.workspace = true
 

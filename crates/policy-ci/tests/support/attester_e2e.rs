@@ -88,7 +88,7 @@ fn run_with_owner_confirmation(attester: &Path, args: &[OsString], signing_input
 #[test]
 fn issued_attestations_reach_ci_and_respect_required_paths() {
     let attester = compiled_attester();
-    let helper = compile_process_fixture("attester_fixture", &["serde_json", "chrono", "base64"]);
+    let helper = compile_process_fixture("attester_fixture", &["serde_json", "policy_contracts", "base64"]);
     let ci_required = [
         ("dependencies", "Cargo.lock"),
         ("analysis-policy", "analysis/baseline.json"),

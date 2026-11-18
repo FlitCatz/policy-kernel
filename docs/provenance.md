@@ -34,7 +34,7 @@ for deterministic resolution as the crates begin using them.
 | serde | 1.0.228 |
 | serde_json | 1.0.145 |
 | yaml-rust2 | 0.13.0 (development only; default features disabled) |
-| chrono | 0.4.42 |
+| jiff | 1.0.1 (default features disabled; `std` only) |
 | sha2 | 0.10.9 |
 | hex | 0.4.3 |
 | thiserror | 2.0.16 |
@@ -50,6 +50,41 @@ for deterministic resolution as the crates begin using them.
 validation against the generated files. Its HTTP and file resolution features are
 disabled; the tests resolve only each schema's in-document definitions and run
 offline with timestamp format validation enabled.
+
+### Timestamp library
+
+`jiff` replaced `chrono` on 2026-11-18 after RustSec marked every `chrono`
+release unmaintained (RUSTSEC-2026-0543, no patched version). Only
+`policy-contracts` depends on it, and no Jiff type appears in a public API:
+`UtcTimestamp` stores a UTC civil date-time and offers the clock, comparison,
+duration and arithmetic operations the other crates need. The minimum compiler
+stays Rust 1.85, and schemars no longer enables its `chrono04` feature.
+
+Jiff's own parser and printer are not used for wire data. `UtcTimestamp` keeps the
+previous RFC 3339 grammar and canonical output exactly: a four-digit year, `T`,
+`t` or a space before the time, `Z`, `z` or a numeric offset of at most 23:59
+(U+2212 is accepted as the minus sign), any number of fractional digits truncated
+to nanoseconds, and a `Z`-suffixed result with 0, 3, 6 or 9 fractional digits.
+Timestamps from `0000-01-01T00:00:00Z` through `9999-12-31T23:59:59.999999999Z`
+serialize to the same bytes as before, so existing digests and signed bytes are
+unchanged.
+
+Three behaviors changed on purpose, all for input no real producer emits:
+
+- A leap second (seconds field `60`) is rejected. It was formerly kept and
+  serialized as `:60`; Jiff cannot represent it, and rewriting it to `:59` would
+  silently change signed bytes.
+- An offset that moves the UTC year outside 0000-9999 is rejected. It was formerly
+  serialized with a signed year such as `-0001` or `+10000`, a form the parser
+  never accepted back.
+- A Vitest `startTime` outside years 0000-9999 is still rejected, now always as
+  `invalid startTime` instead of sometimes `invalid timestamp`.
+
+A local differential run against `chrono` 0.4.42 compared 2,000,065 parse inputs,
+2,999,965 ordered pairs (ordering, durations and every freshness predicate) and
+2,000,000 clock and Unix-millisecond conversions. It found no difference outside
+the first two classes. The pinned expectations live in
+`crates/policy-contracts/tests/utc_timestamp.rs`.
 
 ## Verification status
 

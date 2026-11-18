@@ -48,8 +48,7 @@ fn real_actions_run_publishes_and_reads_back_blocked_decision() {
     let trusted = root.join("trusted");
     let artifacts = root.join("artifacts");
     fs::create_dir_all(&trusted).unwrap();
-    let now: chrono::DateTime<chrono::Utc> = SystemTime::now().into();
-    let now: UtcTimestamp = now.to_rfc3339().parse().unwrap();
+    let now = UtcTimestamp::try_from(SystemTime::now()).unwrap();
     let work_item = WorkItemObservation {
         schema_version: SCHEMA_VERSION,
         repository: repository.clone(),

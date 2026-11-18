@@ -1,11 +1,11 @@
 #![forbid(unsafe_code)]
 
-use chrono::{DateTime, SecondsFormat, Utc};
+use policy_contracts::UtcTimestamp;
 use serde_json::{json, Value};
 use std::{env, fs, io, path::PathBuf, time::SystemTime};
 
-fn now() -> String {
-    DateTime::<Utc>::from(SystemTime::now()).to_rfc3339_opts(SecondsFormat::AutoSi, true)
+fn now() -> UtcTimestamp {
+    UtcTimestamp::try_from(SystemTime::now()).unwrap()
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -32,8 +32,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         data["app"] = json!({"id":15368,"slug":"github-actions"});
         if data.get("started_at").is_none() { data["started_at"] = json!(now()); }
         for key in ["started_at", "completed_at"] {
-            let timestamp = DateTime::parse_from_rfc3339(data[key].as_str().ok_or("missing timestamp")?)?;
-            data[key] = json!(timestamp.to_rfc3339_opts(SecondsFormat::Secs, true));
+            let timestamp = UtcTimestamp::parse(data[key].as_str().ok_or("missing timestamp")?)?;
+            data[key] = json!(timestamp.truncated_to_seconds());
         }
         let response = serde_json::to_string(&data)?;
         fs::write(root.join("published.json"), &response)?;

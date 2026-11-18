@@ -389,12 +389,10 @@ fn validate_local_runner(input: &PreMergeEvaluationInput) -> ValidationResult {
         times.push(&sensor.observed_at);
     }
     if times.into_iter().any(|timestamp| {
-        let age = input
-            .evaluation_time
-            .as_datetime()
-            .signed_duration_since(timestamp.as_datetime());
-        !age.to_std()
-            .is_ok_and(|age| age <= std::time::Duration::from_secs(policy.maximum_age_seconds))
+        let age = input.evaluation_time.duration_since(timestamp);
+        let fresh = age
+            .is_some_and(|age| age <= std::time::Duration::from_secs(policy.maximum_age_seconds));
+        !fresh
     }) {
         result.insert(
             "PK-PROV-STALE",
@@ -426,11 +424,10 @@ fn validate_provenance_common(
     }
 
     if timestamps(bundle, freshness_mode).any(|timestamp| {
-        let age = evaluation_time
-            .as_datetime()
-            .signed_duration_since(timestamp.as_datetime());
-        !age.to_std()
-            .is_ok_and(|age| age <= std::time::Duration::from_secs(max_evidence_age_seconds))
+        let age = evaluation_time.duration_since(timestamp);
+        let fresh =
+            age.is_some_and(|age| age <= std::time::Duration::from_secs(max_evidence_age_seconds));
+        !fresh
     }) {
         result.insert(
             "PK-PROV-STALE",

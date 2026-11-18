@@ -738,11 +738,13 @@ pub fn normalize_collection(
             result.original_report = Some(artifact);
             let parsed = parse_report(report.format, sensor.definition.id.as_str(), &bytes)
                 .map_err(|e| invalid(e.to_string()))?;
-            let start = parsed.started_at.as_datetime();
-            if *start
-                < *collection.record.execution.started_at.as_datetime()
-                    - chrono::Duration::milliseconds(1)
-                || start > collection.record.execution.completed_at.as_datetime()
+            let execution = &collection.record.execution;
+            // The report may start up to one millisecond before the execution.
+            if execution
+                .started_at
+                .duration_since(&parsed.started_at)
+                .is_some_and(|early| early > std::time::Duration::from_millis(1))
+                || parsed.started_at > execution.completed_at
             {
                 return Err(invalid("report start time is outside this execution"));
             }

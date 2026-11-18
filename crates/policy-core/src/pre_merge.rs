@@ -351,13 +351,10 @@ fn validate_sensors(input: &PreMergeEvaluationInput, gates: &mut Gates) {
 }
 
 fn check_freshness(input: &PreMergeEvaluationInput, timestamp: &UtcTimestamp, gates: &mut Gates) {
-    let age = input
-        .evaluation_time
-        .as_datetime()
-        .signed_duration_since(*timestamp.as_datetime());
-    // Duration conversion rejects negative ages and preserves fractional seconds
+    let age = input.evaluation_time.duration_since(timestamp);
+    // A missing duration rejects negative ages; fractional seconds are preserved
     // at both boundaries without overflowing large policy windows.
-    if !age.to_std().is_ok_and(|age| {
+    if !age.is_some_and(|age| {
         age <= std::time::Duration::from_secs(input.policy.max_evidence_age_seconds)
     }) {
         gates.unknown(

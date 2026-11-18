@@ -1,6 +1,5 @@
 mod support;
 
-use chrono::{Duration, SecondsFormat};
 use policy_contracts::{
     FindingSeverity, PreMergeEvaluationInput, PreMergeStatus, ReviewStatus, Risk, SensorProfile,
     UtcTimestamp,
@@ -111,10 +110,13 @@ proptest! {
     #[test]
     fn waiver_expiry_uses_the_injected_evaluation_time(offset_seconds in -300_i64..=300_i64) {
         let mut input = review_fixture("tests/fixtures/reviews/waiver-expired.json");
-        let expiry = *input.evaluation_time.as_datetime() + Duration::seconds(offset_seconds);
-        input.waivers[0].expires_at = UtcTimestamp::parse(
-            &expiry.to_rfc3339_opts(SecondsFormat::Nanos, true)
-        ).unwrap();
+        let offset = std::time::Duration::from_secs(offset_seconds.unsigned_abs());
+        input.waivers[0].expires_at = if offset_seconds < 0 {
+            input.evaluation_time.checked_sub(offset)
+        } else {
+            input.evaluation_time.checked_add(offset)
+        }
+        .unwrap();
         let actual = evaluate_reviews(input);
         if offset_seconds > 0 {
             prop_assert_eq!(actual.status, ReviewStatus::Inconclusive);

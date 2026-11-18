@@ -536,9 +536,13 @@ fn verify_local(
         .args(["-I", &key.runner_id, "-n", LOCAL_DOMAIN, "-s"])
         .arg(scratch.0.join("signature"))
         .arg("-O")
+        // ssh-keygen takes YYYYMMDDHHMMSSZ: the canonical whole-second form
+        // without its separators.
         .arg(format!(
             "verify-time={}",
-            now.as_datetime().format("%Y%m%d%H%M%SZ")
+            now.truncated_to_seconds()
+                .to_string()
+                .replace(['-', ':', 'T'], "")
         ))
         .stdin(fs::File::open(scratch.0.join("payload"))?);
     bounded_crypto(&mut command)
@@ -675,10 +679,8 @@ fn local_evidence(
 }
 
 fn local_time_is_fresh(time: &UtcTimestamp, now: &UtcTimestamp, maximum_age: u64) -> bool {
-    now.as_datetime()
-        .signed_duration_since(time.as_datetime())
-        .to_std()
-        .is_ok_and(|age| age <= Duration::from_secs(maximum_age))
+    now.duration_since(time)
+        .is_some_and(|age| age <= Duration::from_secs(maximum_age))
 }
 
 fn rehash_bundle(evidence: &mut EvidenceBundle) -> Result<()> {
@@ -881,8 +883,7 @@ pub fn produce(config: &ControllerConfig, signed: &SignedObservation, output: &P
             "authenticated inventory is incomplete or missing required reviews/sensors".into(),
         );
     }
-    let now: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
-    let now: UtcTimestamp = now.to_rfc3339().parse()?;
+    let now = UtcTimestamp::try_from(std::time::SystemTime::now())?;
     let local = local_evidence(config, raw, &registry, &now)?;
     let local_ids: BTreeSet<_> = local
         .iter()

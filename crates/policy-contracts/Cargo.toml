@@ -11,7 +11,7 @@ path = "src/lib.rs"
 
 [dependencies]
 serde.workspace = true
-chrono.workspace = true
+jiff.workspace = true
 thiserror.workspace = true
 schemars.workspace = true
 

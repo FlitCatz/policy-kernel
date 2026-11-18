@@ -201,9 +201,8 @@ fn vitest(namespace: &str, v: &Value) -> Result<ParsedReport, ReportError> {
     let millis = field(v, "startTime")?
         .as_i64()
         .ok_or_else(|| invalid("invalid startTime"))?;
-    let date = chrono::DateTime::from_timestamp_millis(millis)
-        .ok_or_else(|| invalid("invalid startTime"))?;
-    let started_at = timestamp(&date.to_rfc3339())?;
+    let started_at =
+        UtcTimestamp::from_unix_millis(millis).ok_or_else(|| invalid("invalid startTime"))?;
     let mut clean = field(v, "success")?
         .as_bool()
         .ok_or_else(|| invalid("invalid success"))?;

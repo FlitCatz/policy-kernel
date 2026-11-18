@@ -46,7 +46,7 @@ mod local_runner {
             let mut run: native::NativeRunV1 = serde_json::from_value(corpus["valid"]["run"].clone()).unwrap();
             let raw = &mut fixture.signed.observation;
             let now = raw.evidence.manifest.created_at.clone();
-            let start: UtcTimestamp = (*now.as_datetime() - chrono::Duration::seconds(10)).to_rfc3339().parse().unwrap();
+            let start = now.checked_sub(std::time::Duration::from_secs(10)).unwrap();
             expected.subject.repository = raw.binding.repository.clone();
             expected.subject.head = raw.binding.head_sha.clone();
             expected.subject.source_set_digest.sha256 = raw.evidence.manifest.source_set_digest.clone();
@@ -262,8 +262,8 @@ mod local_runner {
     #[test]
     fn local_interval_checks_cover_interior_times_and_each_boundary_independently() {
         let mut local = LocalFixture::new();
-        let now = *local.fixture.signed.observation.evidence.manifest.created_at.as_datetime();
-        let time = |seconds| (now - chrono::Duration::seconds(seconds)).to_rfc3339().parse::<UtcTimestamp>().unwrap();
+        let now = local.fixture.signed.observation.evidence.manifest.created_at.clone();
+        let time = |seconds| now.checked_sub(std::time::Duration::from_secs(seconds)).unwrap();
         let input = &mut local.fixture.signed.observation.local_attestations[0];
         input.attestation.statement.started_at = time(30);
         input.observations.run.observations[0].started_at = time(25);
@@ -295,7 +295,7 @@ mod local_runner {
     fn local_placeholders_use_neither_ci_freshness_nor_submitted_adequacy_bindings() {
         let mut local = LocalFixture::new();
         let raw = &mut local.fixture.signed.observation;
-        let older: UtcTimestamp = (*raw.evidence.manifest.created_at.as_datetime() - chrono::Duration::seconds(600)).to_rfc3339().parse().unwrap();
+        let older = raw.evidence.manifest.created_at.checked_sub(std::time::Duration::from_secs(600)).unwrap();
         raw.policy.max_evidence_age_seconds = 60;
         let execution = raw.evidence.executions.last_mut().unwrap();
         execution.started_at = older.clone();
@@ -403,7 +403,7 @@ mod local_runner {
         for field in ["start", "completed", "attested", "evaluated"] {
             local.fixture.signed = original.clone();
             let input = &mut local.fixture.signed.observation.local_attestations[0];
-            let future = (*input.attestation.statement.attested_at.as_datetime() + chrono::Duration::days(1)).to_rfc3339().parse().unwrap();
+            let future = input.attestation.statement.attested_at.checked_add(std::time::Duration::from_secs(86_400)).unwrap();
             match field {
                 "start" => input.attestation.statement.started_at = future,
                 "completed" => input.attestation.statement.completed_at = future,

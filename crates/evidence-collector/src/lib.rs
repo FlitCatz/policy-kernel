@@ -221,8 +221,8 @@ pub struct CollectedExecution {
 }
 
 fn now() -> UtcTimestamp {
-    let time: chrono::DateTime<chrono::Utc> = std::time::SystemTime::now().into();
-    UtcTimestamp::parse(&time.to_rfc3339()).expect("chrono emits valid UTC timestamps")
+    UtcTimestamp::try_from(std::time::SystemTime::now())
+        .expect("the system clock is within the supported timestamp range")
 }
 
 fn resolve(fields: &RequestFields, environment: &BTreeMap<String, OsString>) -> Option<PathBuf> {

@@ -176,6 +176,21 @@ All policy, evidence and decision digests hash canonical JSON with sorted keys a
 
 Encoding [[crates/policy-core/src/canonical.rs#canonical_json]] and [[crates/policy-core/src/canonical.rs#canonical_sha256]]; evidence identity [[crates/policy-core/src/pre_merge_digest.rs#pre_merge_evidence_digest]]; policy identity [[crates/policy-core/src/pre_merge_digest.rs#pre_merge_policy_digest]].
 
+## UTC timestamps
+
+Every wire timestamp is a `UtcTimestamp`: RFC 3339 in, UTC-normalized canonical bytes out. Jiff does the calendar arithmetic privately; no other crate uses a time library.
+
+Grammar [[crates/policy-contracts/src/identity.rs#parse_rfc3339]]; the canonical form ends in `Z` with 0, 3, 6 or 9 fractional digits.
+Elapsed time [[crates/policy-contracts/src/identity.rs#UtcTimestamp#duration_since]] is absent for a negative age, so freshness checks fail closed.
+Whole-second form for published checks [[crates/policy-contracts/src/identity.rs#UtcTimestamp#truncated_to_seconds]].
+Leap seconds and UTC years outside 0000-9999 are rejected because they have no canonical form.
+[[crates/policy-contracts/tests/utc_timestamp.rs#accepted_inputs_serialize_to_the_pinned_canonical_bytes]]
+pins the bytes the previous chrono implementation produced, and
+[[crates/policy-contracts/tests/utc_timestamp.rs#malformed_and_unrepresentable_inputs_are_rejected]]
+the rejections. Native start age shares
+[[crates/policy-native-verifier/src/lib.rs#started_within_age]] between the verifier and importer.
+See the [timestamp library note](../docs/provenance.md#timestamp-library).
+
 ## Post-merge shipping
 
 Shipping needs an authoritative ready decision, its published check, and a protected merge of the same head; the receipt's protection claim is cross-checked with GitHub.

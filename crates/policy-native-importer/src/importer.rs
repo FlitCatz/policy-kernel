@@ -1,7 +1,7 @@
 use crate::{fs, reports};
 use policy_contracts::ExecutionId;
 use policy_native_contracts::*;
-use policy_native_verifier::ImportedObservationsV1;
+use policy_native_verifier::{started_within_age, ImportedObservationsV1};
 use policy_report_adapters::ParsedReport;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
@@ -265,14 +265,12 @@ fn verify(
         );
     }
     for observation in &run.observations {
-        let evaluated = expected.bindings.evaluated_at.as_datetime();
-        let elapsed = *evaluated - *observation.started_at.as_datetime();
-        // Check subsecond age precisely without converting an unbounded u64 to i64.
         if observation.observed_at > expected.bindings.evaluated_at
-            || elapsed.num_seconds() < 0
-            || elapsed.num_seconds() as u64 > expected.bindings.maximum_age_seconds
-            || (elapsed.num_seconds() as u64 == expected.bindings.maximum_age_seconds
-                && elapsed.subsec_nanos() > 0)
+            || !started_within_age(
+                &observation.started_at,
+                &expected.bindings.evaluated_at,
+                expected.bindings.maximum_age_seconds,
+            )
         {
             record.issue(
                 IssueCode::Time,
