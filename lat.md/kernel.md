@@ -55,7 +55,8 @@ The [adequacy contract](../docs/integrations/adequacy.md) records preserved lega
 
 The shared report-adapter crate owns strict TRX, Vitest, compatibility-only Jest and Playwright parsing. The compatibility runner re-exports the same types; parsing alone supplies no authentication or release authority.
 
-Entry and bounds [[crates/policy-report-adapters/src/reports.rs#parse_report]];
+Entry [[crates/policy-report-adapters/src/reports.rs#parse_report]] rejects skips;
+bounds and the native skip-preserving mode [[crates/policy-report-adapters/src/reports.rs#parse_report_with_skips]];
 versions [[crates/policy-report-adapters/src/reports.rs#ReportFormat#parser_version]];
 identities [[crates/policy-report-adapters/src/reports.rs#id]];
 duplicate and outcome checks [[crates/policy-report-adapters/src/reports.rs#finish]].
