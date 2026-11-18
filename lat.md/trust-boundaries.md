@@ -24,19 +24,19 @@ must authenticate the PR author, all modifiers, reviewer identities, and the
 authorizing content of owner comments. Typed fields and digests do not authenticate
 these observations. The reference controller's existing review floor is unchanged.
 
-## Planned local-runner attestation
+## Local-runner attestation
 
-Core accepts fresh local-runner sensors/executions under v4 opt-in and no CI requirement. The controller authenticates this class; attester issuance remains planned, and local readiness cannot ship.
+Core accepts fresh local-runner sensors and executions under v4 opt-in when no CI requirement matches. The controller authenticates this class, and local-class readiness cannot ship.
 
 The [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 holds the threat model and the default-closed rules; the
-[trust model](../docs/trust-model.md#planned-local-runner-attestation) summarizes
+[trust model](../docs/trust-model.md#local-runner-attestation) summarizes
 them. The authenticated controller boundary is the only place that raises
 the class. Reviews, modifications, agent-ready and required knowledge never accept
 it, and changes to the checking system stay CI-required. Native local scope output
 remains untrusted; core acceptance does not authenticate a submitted label.
 
-Signatures must come from a hardware security key with the user-presence flag set.
-That flag proves a touch, not which statement the owner approved, so an agent under
-the owner's account could get a fabricated statement signed during an expected
-touch. This residual risk is open; its mitigation is an owner decision.
+The [[native-contracts#Local attester]] shows the summary and statement hash and
+waits for the owner before invoking the signer. Controller verification separately
+requires a hardware security key and the signed user-presence flag. Software
+under the owner's account can still impersonate the prompt or request a signature.

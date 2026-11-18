@@ -3,14 +3,12 @@ mod local_runner {
     use base64::{engine::general_purpose::STANDARD, Engine};
     use policy_native_verifier::{contracts as native, evaluate_scope, ImportedObservationsV1};
 
-    const NS: &str = "policy-kernel/local-runner-attestation/v1";
-    const SK: &str = "sk-ssh-ed25519@openssh.com";
-
-    fn string(bytes: &[u8]) -> Vec<u8> {
-        let mut out = (bytes.len() as u32).to_be_bytes().to_vec();
-        out.extend(bytes);
-        out
+    mod local_signing {
+        include!("local_signing.rs");
     }
+    use local_signing::{string, NS, SK};
+
+    include!("attester_e2e.rs");
 
     /// Software-only FIDO-format fixture, following OpenSSH PROTOCOL.sshsig and
     /// PROTOCOL.u2f. No authenticator, agent, private user key or device is used.
@@ -20,17 +18,12 @@ mod local_runner {
     }
 
     impl LocalFixture {
-        fn openssl(fixture: &SignedFixture, args: &[&str], input: &[u8]) -> Vec<u8> {
-            let path = fixture.ci.root.join("local-input");
-            fs::write(&path, input).unwrap();
-            let out = std::process::Command::new(&fixture.config.openssl)
-                .args(args).arg(&path).output().unwrap();
-            assert!(out.status.success(), "{}", String::from_utf8_lossy(&out.stderr));
-            out.stdout
+        fn new() -> Self {
+            Self::for_ci(Fixture::new("ready"))
         }
 
-        fn new() -> Self {
-            let mut fixture = SignedFixture::new();
+        fn for_ci(ci: Fixture) -> Self {
+            let mut fixture = SignedFixture::for_ci(ci);
             let key = fixture.ci.root.join("local.key");
             assert!(std::process::Command::new(&fixture.config.openssl)
                 .args(["genpkey", "-algorithm", "ED25519", "-out"])
@@ -110,29 +103,18 @@ mod local_runner {
         fn sign(&mut self, flags: u8, namespace: &str) {
             let input = &self.fixture.signed.observation.local_attestations[0];
             let payload = canonical(&input.attestation.statement).unwrap();
-            let hash = Self::openssl(&self.fixture, &["dgst", "-sha512", "-binary"], &payload);
-            let mut message = b"SSHSIG".to_vec();
-            message.extend(string(namespace.as_bytes()));
-            message.extend(string(b""));
-            message.extend(string(b"sha512"));
-            message.extend(string(&hash));
-            let mut fido = Self::openssl(&self.fixture, &["dgst", "-sha256", "-binary"], b"ssh:fixture");
-            fido.push(flags);
-            fido.extend(1u32.to_be_bytes());
-            fido.extend(Self::openssl(&self.fixture, &["dgst", "-sha256", "-binary"], &message));
-            let signature = Self::openssl(&self.fixture, &["pkeyutl", "-sign", "-rawin", "-inkey", self.fixture.ci.root.join("local.key").to_str().unwrap(), "-in"], &fido);
-            let mut inner = string(SK.as_bytes());
-            inner.extend(string(&signature));
-            inner.push(flags);
-            inner.extend(1u32.to_be_bytes());
-            let mut outer = b"SSHSIG".to_vec();
-            outer.extend(1u32.to_be_bytes());
-            outer.extend(string(&self.key_blob));
-            outer.extend(string(namespace.as_bytes()));
-            outer.extend(string(b""));
-            outer.extend(string(b"sha512"));
-            outer.extend(string(&inner));
-            self.fixture.signed.observation.local_attestations[0].attestation.signature.value = native::RecordId::parse(format!("-----BEGIN SSH SIGNATURE-----\n{}\n-----END SSH SIGNATURE-----\n", STANDARD.encode(outer))).unwrap();
+            let key = local_signing::SoftwareKey {
+                openssl: &self.fixture.config.openssl,
+                root: &self.fixture.ci.root,
+                blob: &self.key_blob,
+            };
+            let signature = key.sign(&payload, flags, namespace);
+            self.fixture.signed.observation.local_attestations[0].attestation.signature.value =
+                native::RecordId::parse(signature).unwrap();
+            self.sign_observation();
+        }
+
+        fn sign_observation(&mut self) {
             let raw = &mut self.fixture.signed.observation;
             raw.policy.policy_digest = policy_core::pre_merge_policy_digest(&raw.policy).unwrap();
             raw.evidence.manifest.policy_digest = raw.policy.policy_digest.clone();

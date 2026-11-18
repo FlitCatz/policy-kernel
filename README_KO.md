@@ -407,8 +407,10 @@ Core는 v4가 명시적으로 허용하고 `ci_required_when`에 일치하지 �
 [Schema-2 controller](action/controller.md#local-runner-verification)는 등록한 하드웨어
 키 서명, 서명된 GitHub 관찰값과 승인된 template을 검증하고 scope를 재계산한 뒤
 이 등급을 부여합니다. Schema 1과 로컬 증명이 없는 기존 서명 바이트는 유지됩니다.
-증명기와 종단 간 통합은 후속 작업입니다. 합성 시험만으로 실제 실행기 실행,
-권위 CI 판정이나 운영 승격이 입증되지는 않습니다.
+Unix [`policy-local-attest` 어댑터](action/controller.md#issuing-a-local-attestation)는
+충족된 결과의 요약과 진술 서명 바이트의 SHA-256을 보여 주고 소유자가 확인한 뒤에만
+서명합니다. 종단 간 고정물 시험은 모의 GitHub로 참조 경로 전체를 검증합니다.
+실제 소비 프로젝트 운영과 승격에는 별도의 [배포 증거](docs/promotion.md)가 필요합니다.
 
 정책 v4는 단일 소유자 저장소를 위한 독립 선택 규칙
 [`owner_with_independent_agent_review`](docs/integrations/owner-review-policy-v4.md)도

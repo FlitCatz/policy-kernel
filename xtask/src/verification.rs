@@ -398,6 +398,15 @@ const WORKSPACE_DEPENDENCIES: &[(&str, &[&str])] = &[
     ),
     ("policy-core", &["policy-contracts"]),
     (
+        "policy-local-attest",
+        &[
+            "policy-contracts",
+            "policy-core",
+            "policy-native-importer",
+            "policy-native-verifier",
+        ],
+    ),
+    (
         "policy-native-contracts",
         &["policy-contracts", "policy-core"],
     ),

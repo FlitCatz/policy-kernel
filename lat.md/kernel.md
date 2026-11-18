@@ -19,7 +19,7 @@ approved bindings and delegates sensor/adequacy decisions to core. Assembly
 [[crates/policy-native-verifier/src/lib.rs#assemble]] uses local recorder identity,
 local-untrusted executions/sensors and no reviews. It never calls pre-merge evaluation.
 The local-runner attestation wire class does not change this
-assembly; see [[trust-boundaries#Planned local-runner attestation]].
+assembly. See [[trust-boundaries#Local-runner attestation]].
 
 ## Pre-merge gates
 
@@ -226,6 +226,10 @@ outside the CI freshness window. Parser tests pin the exact SSHSIG size limit
 and registry comment/blank-line handling. The
 [existing controller suite](../crates/policy-ci/tests/support/controller.rs)
 also pins v1 signing bytes and byte-identical output without local evidence.
+The [[crates/policy-ci/tests/support/attester_e2e.rs#issued_attestations_reach_ci_and_respect_required_paths]]
+fixture uses real commands for [[native-contracts#Local attester]], controller
+and CI, with mocked GitHub. It checks ordinary readiness plus policy-defined
+CI-required paths using the issued attestation.
 
 ## Project verification binding
 

@@ -3,10 +3,11 @@
 The current-state authority is [docs/status.md](../docs/status.md); this page only summarizes it and must not claim more.
 
 A 2026-11-12 [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
-plans signed local-runner attestation as a weaker trust class. Its wire class and
-policy v4 contract, core opt-in acceptance and controller authentication exist;
-attester issuance and end-to-end integration remain unimplemented. Local-class readiness cannot ship. Sibling structural contracts are
-described below. See [[trust-boundaries#Planned local-runner attestation]].
+adopted [[trust-boundaries#Local-runner attestation]] as a weaker trust class
+under policy v4. The reference path issues an owner-approved attestation,
+authenticates it in the controller and exercises opt-in readiness and CI-required
+paths with simulated GitHub. Local-class readiness cannot ship. Live consumer
+adoption and production promotion require separate evidence.
 
 [Task 18](../docs/tasks/task-18/README.md) records the accepted scope decision.
 New exact native combinations/presets stop. Parser extraction merged in PR 23;
@@ -22,9 +23,9 @@ Profiles, bootstrap and required environment checks are preserved;
 TJERP is unchanged. Adapter support and compatibility end conditions remain open.
 See [[kernel#Scope boundary]]. No adoption or promotion is established by this decision.
 
-[[native-contracts#Local-runner attestations]] adds structural statement/envelope
-contracts and scope-template digests. It does not establish signature verification,
-authenticated local-runner acceptance or promotion; existing scope v1 stays unchanged.
+[[native-contracts#Local-runner attestations]] defines structural statement and
+envelope checks and scope-template digests alongside the existing scope v1
+contracts. The controller authenticates the statement and recomputes scope.
 
 Native distribution adds a Unix importer command and a version-tag workflow for
 both commands on macOS arm64 and Linux x64, with SHA-256 and source-commit assets.

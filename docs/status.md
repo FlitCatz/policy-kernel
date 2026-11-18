@@ -96,7 +96,7 @@ Missing opt-in, CI-required changes and invalid evidence kinds have dedicated
 `PK-PROV-LOCAL-NOT-ACCEPTED`, `PK-PROV-CI-REQUIRED` and
 `PK-PROV-LOCAL-CLASS-INVALID` reasons; expired or future evidence uses `PK-PROV-STALE`.
 The context-free provenance API remains CI-grade only. Controller authentication
-is implemented as described below; attestor issuance remains later work (K7).
+and attestation issuance are described below.
 The sibling K5 contracts are structural only. These core tests cannot establish real key
 custody, honest runner execution, an authoritative CI decision, a protected merge
 or production promotion.
@@ -131,12 +131,27 @@ existing producer/observer authentication and class. The new internal dependency
 is `policy-ci` to `policy-native-verifier`, which exposes its typed contracts.
 No report parser or contributor command execution enters the controller.
 
-Local cryptographic fixtures use temporary software keys to create synthetic
-FIDO-format SSHSIG signatures, including valid signatures lacking user presence;
-no physical key is used. They verify controller behavior, not hardware custody,
-actual runner execution or deployment. K7's attester and end-to-end integration
-remain pending, along with real hardware-key measurement. No authoritative CI
-decision, protected merge, consumer adoption or production promotion is established.
+Local cryptographic fixtures generate temporary software keys and synthetic
+FIDO-format SSHSIG signatures, including valid signatures lacking user presence.
+
+## Local-runner attester
+
+The Unix [attester adapter](../action/controller.md#issuing-a-local-attestation)
+runs one explicit argv in a clean Git worktree, checks head/tree stability and
+observation times, imports raw reports and evaluates the approved scope. A
+satisfied scope prompts the owner with the result summary and the SHA-256 of the
+exact statement signing bytes. Only confirmation on the terminal invokes the
+external signer. The envelope and exact scope/observations from the import can
+then be submitted to the controller through the authenticated observer.
+
+End-to-end fixtures use that adapter, the controller CLI and `policy-ci` with
+simulated GitHub. An ordinary change reaches `READY_TO_MERGE` with
+`PK-PROV-LOCAL-ATTESTED`. Representative policy paths for dependencies, static
+analysis, hosted review and the scheduled-check workflow yield
+`PK-PROV-CI-REQUIRED`. Fixture validation covers no live key custody, real
+consumer execution, authoritative hosted decision, protected merge or production
+promotion. Consumer integration and verification with an actual hardware key
+remain outstanding.
 
 ## Policy v3 review quorum
 
@@ -224,10 +239,9 @@ accepted a design for signed local-runner evidence for ordinary pull-request
 readiness, with a new weaker trust class `local_runner_attested`. That decision
 changed documentation only. Sibling structural contracts, the class's wire value,
 the policy v4 contract and core opt-in acceptance are now implemented as described
-above. Schema 2 controller authentication is now implemented; signed statement
-issuance by the attester remains **planned and not implemented**. The unsigned
-local collection path still produces `local_untrusted`, which cannot authorize readiness; the
-[trust model](trust-model.md#planned-local-runner-attestation) lists the
+above, including controller authentication and signed statement issuance. The
+unsigned local collection path still produces `local_untrusted`, which cannot
+authorize readiness. The [trust model](trust-model.md#local-runner-attestation) lists the
 default-closed rules. The record supersedes the archived scope-reduction ADR's
 local-evidence guardrail only for the authenticated attestation path.
 
