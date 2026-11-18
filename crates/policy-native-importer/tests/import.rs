@@ -726,7 +726,7 @@ fn rejects_artifact_one_byte_over_64_mib() {
     assert!(record.issues.iter().any(|issue| {
         matches!(issue.code, IssueCode::Artifact)
             && issue.location == "raw.json"
-            && issue.detail == "artifact exceeds 64 MiB"
+            && issue.detail == "artifact size or total 256 MiB limit exceeded; original retained"
     }));
     assert!(record.artifacts.is_empty());
     assert!(record.verified_observations().is_none());
