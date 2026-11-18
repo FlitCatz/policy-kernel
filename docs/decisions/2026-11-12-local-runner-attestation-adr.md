@@ -127,6 +127,10 @@ Residual risks the design does not close:
   touch produces a signature every rule above accepts. A mitigation, for example
   an attestor that shows the owner the statement digest before signing, is an
   owner decision that stays open and must be recorded before step 7.
+  Recorded 2026-11-13: the owner chose that the attestor shows a result summary
+  and the statement digest and signs only after explicit confirmation. Software
+  under the owner's account can still impersonate that prompt or start a separate
+  signing request.
 
 ## Default-closed rules
 
