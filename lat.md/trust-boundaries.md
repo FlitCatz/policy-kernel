@@ -26,14 +26,14 @@ these observations. The reference controller's existing review floor is unchange
 
 ## Planned local-runner attestation
 
-Core accepts `local_runner_attested` for fresh sensors and executions under explicit v4 opt-in and no CI requirement. It never permits shipping; authenticated collection and issuance remain planned.
+Core accepts fresh local-runner sensors/executions under v4 opt-in and no CI requirement. The controller authenticates this class; attester issuance remains planned, and local readiness cannot ship.
 
 The [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 holds the threat model and the default-closed rules; the
 [trust model](../docs/trust-model.md#planned-local-runner-attestation) summarizes
-them. The authenticated collection boundary would be the only place that raises
+them. The authenticated controller boundary is the only place that raises
 the class. Reviews, modifications, agent-ready and required knowledge never accept
-it, and changes to the checking system stay CI-required. Current local collection
+it, and changes to the checking system stay CI-required. Native local scope output
 remains untrusted; core acceptance does not authenticate a submitted label.
 
 Signatures must come from a hardware security key with the user-presence flag set.

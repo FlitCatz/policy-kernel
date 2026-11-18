@@ -196,12 +196,33 @@ neutral checks as described in the [Action contract](../action/README.md#results
 
 ## Controller authentication
 
-The controller verifies observer and producer signatures with owner-installed keys before promoting local evidence to trusted-runner provenance.
+The controller authenticates observer/producer records and approved local scopes. Only verified local sensors/executions receive the weaker local-runner class; other records retain trusted-runner provenance.
 
 Authentication [[crates/policy-ci/src/controller.rs#produce]]; producer payload [[crates/policy-ci/src/controller.rs#producer_payload]]; signed bytes [[crates/policy-ci/src/controller.rs#canonical]]; input bounds [[crates/policy-ci/src/controller.rs#read_json]].
 
 The v3 policy governs quorum. Controller configuration must mirror the policy
 minimum with a floor of two approving providers; mismatches fail before issuance.
+
+Schema-2 [[crates/policy-ci/src/controller.rs#local_registry]] restricts runner keys
+and rejects no-touch options. [[crates/policy-ci/src/controller.rs#local_signature_presence]]
+requires the signed FIDO presence bit; [[crates/policy-ci/src/controller.rs#verify_local]]
+uses bounded OpenSSH verification. [[crates/policy-ci/src/controller.rs#local_evidence]]
+checks GitHub bindings, approval digests, scope recomputation and controller-time
+freshness. [[crates/policy-ci/src/controller.rs#install_local]] replaces covered
+records and rebuilds adequacy; no review semantics change.
+
+### Local-runner controller tests
+
+Synthetic software-generated FIDO signatures exercise the cryptographic path without a device. Rejections cover runner/key policy, presence, replay, template/digest changes, unsatisfied scope, freshness and coverage; legacy bytes remain stable.
+
+The [local controller suite](../crates/policy-ci/tests/support/local_controller.rs)
+covers reconstruction, signatures/presence, runner policy, key options, replay,
+scope/digests, freshness and disjoint coverage. Independent cases pin each
+versioned configuration field, nonzero run intervals and local placeholders
+outside the CI freshness window. Parser tests pin the exact SSHSIG size limit
+and registry comment/blank-line handling. The
+[existing controller suite](../crates/policy-ci/tests/support/controller.rs)
+also pins v1 signing bytes and byte-identical output without local evidence.
 
 ## Project verification binding
 
@@ -274,6 +295,9 @@ Scope and result validation [[xtask/src/verification.rs#mutation_scope]]; the co
 The trust iterator's generated `Default` forms cannot construct `TrustClass`;
 explicit CI-grade replacements test bypassing supplied trust assertions instead.
 Ordinary viable iterator mutations stay in the generated selection.
+Local-key, registry and reconstructed-evidence return types also have no `Default`;
+their exact replacements reject valid local input. Controller source hashes and
+shifted repair spans bind these checks to the current implementation.
 
 ## Split-consumer conformance
 

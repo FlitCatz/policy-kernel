@@ -7,17 +7,15 @@ tests generate fixture RSA keys and simulate GitHub. They demonstrate signature,
 inventory and binding enforcement; they do not establish real provider identity,
 live execution, deployment, publication, protected merge or promotion.
 
-**Planned, not implemented:** the
+The
 [local-runner attestation decision](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
-would add a second statement type to this boundary. The controller would verify a
-signed statement from an owner-registered local runner, check it against GitHub
-observations, recompute the scope verdict and promote only the covered sensor and
-execution evidence to the weaker `local_runner_attested` class. Today the
-controller promotes only to `trusted_runner_attested`, and local signatures do not
-establish trusted provenance. Core now accepts the weaker class for fresh sensors
-and executions under explicit policy v4 opt-in, rejects CI-required changes and
-invalid conditions, and prevents such readiness from shipping. Those core rules
-do not authenticate a local statement or change this controller boundary.
+adds a second statement type to this boundary. Configuration schema 2 verifies
+owner-registered local runners, binds their statements to signed GitHub
+observations, recomputes scope and issues only the covered sensors and executions
+as `local_runner_attested`. Core separately requires policy v4 opt-in, freshness
+and a change exempt from CI, and prevents such readiness from shipping. The
+attester executable and its end-to-end integration remain later work. Synthetic
+cryptographic tests do not establish production key custody or honest execution.
 
 ## Ownership and isolation
 
@@ -41,7 +39,9 @@ execution, after verifying its record and the complete assembled bundle. It must
 not sign arbitrary caller JSON. A signing service that blindly signs uploads
 would defeat this design.
 
-Every modification, execution and review needs its producer signature. The
+Every modification and review, and each execution outside a verified local scope,
+needs its producer signature. Covered local executions instead require the
+registered local runner's signature. The
 observer additionally authenticates the whole collection and its explicit
 complete inventory. The observer attests sensor/knowledge measurements and any
 waiver authorization; it must independently authenticate those sources. Review
@@ -62,7 +62,7 @@ GitHub workflow and PR, and the publishing response before reporting readiness.
 
 The strict Rust wire types are in
 [`controller.rs`](../crates/policy-ci/src/controller.rs). Unknown fields are
-rejected. `ControllerConfig.schema_version` is 1. Its fields are `expected`
+rejected. `ControllerConfig.schema_version` accepts 1 and 2. The common fields are `expected`
 (`RunBinding`), `observer_public_key` (absolute PEM path), `producer_keys`,
 `openssl` (absolute executable path), and `minimum_reviewers`, which must equal
 `max(2, policy.required_reviews.minimum_reviewers)`. The v3 policy is the source
@@ -84,6 +84,19 @@ Observer and producer public keys must all be distinct, compared as DER public
 keys rather than PEM formatting. A producer key may authenticate multiple
 executions of its configured provider and model.
 
+Schema 2 additionally requires `ssh_keygen`, an owner-installed absolute path,
+and accepts `local_runners`: entries with `runner_id` and an absolute `public_key`
+file path. Runner IDs use ASCII letters, digits, `-`, `_`, `.` and `@`. IDs and
+decoded keys must be unique. Each file contains one OpenSSH public key or one
+`allowed_signers` entry with that exact principal; comments and blank lines are
+allowed. Wildcard/multiple principals and certificate-authority registrations are
+rejected. Allowed key types are exactly `sk-ssh-ed25519@openssh.com` and
+`sk-ecdsa-sha2-nistp256@openssh.com`. A `no-touch-required` option is rejected
+with a distinct error from an unsupported key type. OpenSSH enforces other
+allowed-signers options, including `namespaces`, `valid-after` and `valid-before`.
+Schema 1 accepts no local runner configuration or local observations and retains
+its existing bytes and behavior.
+
 `SignedObservation` contains `observation`, `observer_signature`, and `producers`.
 The observation fields are `domain` (exactly
 `policy-kernel/controller-observation/v1`), `binding`, `policy`, `context`,
@@ -95,6 +108,15 @@ authentication can produce new evidence. The required inventory fields are:
 - `contributors`, `executions`, `reviews`: complete execution-ID arrays.
 - `sensors`: complete sensor-ID array.
 - `knowledge`: complete strings `LatClaim:<source>` or `CodeGraphIndex:<source>`.
+
+The optional `local_attestations` array is omitted when empty. Each entry has
+`attestation` (`SignedLocalAttestationV1`), `expected_scope` (`ExpectedScopeV1`)
+and `observations` (`ImportedObservationsV1`, including its native run). No
+submitted verdict or evidence projection is accepted in place of recomputation.
+When local entries are present, `github_head_tree` must name the head commit's
+tree independently read by the observer from GitHub. It is omitted when absent.
+Both fields are covered by the observer signature. Existing observations without
+them retain exactly the same signing bytes and producer payloads.
 
 Inventory entries must match evidence exactly, with no duplicates. An empty
 contributor ledger or missing required reviews/sensors is rejected. Context and
@@ -120,6 +142,50 @@ explicit OpenSSL executable, fixed argv, cleared environment, bounded files,
 private scratch storage and a ten-second per-operation timeout. It does not
 invoke a shell or search PATH. The controller contains no signing CLI.
 
+## Local-runner verification
+
+For each local input the controller performs these checks before creating output:
+
+1. Validate the statement/envelope and verify its SSHSIG against the registered
+   key, fixed `policy-kernel/local-runner-attestation/v1` namespace and key validity
+   at the controller's clock. The signature's embedded key must equal the
+   registered key. Parse the signed security-key flags and require user presence
+   (`0x01`): `ssh-keygen -Y verify` alone does not enforce this bit.
+2. Require policy v4 opt-in and membership in `allowed_runner_ids`.
+3. Match statement, scope and run subjects, repository/head to the GitHub binding,
+   tree to `github_head_tree`, base to the observer's PR manifest, and source-set,
+   run and scope identities to the signed inputs.
+4. Recompute the scope-template digest and require it in
+   `approved_scope_template_digests`.
+5. Recompute expected-scope, native-run and imported-observation digests, rerun
+   `evaluate_scope`, require `Satisfied` and compare the recomputed result digest.
+   The verifier checks command/config/parser bindings, required sets, mappings,
+   counts, skip/retry limits and exclusions. A signed claim of success is insufficient.
+6. Check start, completion, attestation and scope evaluation times against the
+   controller's clock, using the smaller of the approved scope and local-policy
+   windows with inclusive, subsecond precision. All observations must fall inside
+   the attested run interval; scope evaluation follows completion and precedes
+   attestation. Local freshness does not extend the global CI evidence window.
+7. Require complete, disjoint coverage of execution/sensor IDs in the observer's
+   inventory. Reject duplicate runs, overlapping records, uncovered records and
+   attempts to cover modifier/reviewer IDs. Replace those sensor/execution slots
+   with the verifier's reconstructed records and set only them to
+   `local_runner_attested`. Remaining records retain the existing authenticated
+   producer/observer path and become `trusted_runner_attested`.
+
+With local inputs the single aggregate adequacy record is rebuilt solely from
+their verified scope results; submitted adequacy is discarded. Multiple disjoint
+scopes combine counts and mappings, rejecting overlapping requirement IDs or
+count overflow. CI sensors/executions may coexist, but their submitted adequacy
+mappings do not augment this local aggregate. Approve scope templates covering
+all adequacy obligations needed by the PR's adopted profile.
+
+SSHSIG verification uses fixed argv, a cleared environment, bounded input,
+private scratch storage and the existing ten-second crypto timeout. Public keys
+and the SSH verifier receive the same checkout-isolation checks as RSA anchors.
+The controller does not parse raw test reports, execute contributor commands,
+sign statements, or change review evaluation.
+
 ## Invocation and output
 
 Build and install both Rust binaries from the approved revision:
@@ -136,7 +202,8 @@ statements before creating files and writes `identity.json` last. Output also
 contains `policy.json`, `evidence.json`, `context.json`, `work-item.json` and the
 original `authentication.json` envelope for auditing. It leaves incoming
 collector evidence unchanged. Authenticated reconstructed evidence uses
-`trusted_runner_attested` and recomputed child/full digests. Version 2 identity
+`trusted_runner_attested`, plus `local_runner_attested` for verified local
+sensors/executions, with recomputed child/full digests. Version 2 identity
 receipts additionally bind exact workflow ref and workflow definition SHA.
 Exit 0 means receipt production succeeded; invalid configuration, malformed or
 unauthenticated input, incomplete inventories and output errors return 2.
@@ -158,7 +225,9 @@ cargo test --locked --offline -p policy-ci
 ```
 
 Cryptographic controller tests require OpenSSL (optionally set the absolute
-`POLICY_TEST_OPENSSL`). They generate local test keys, exercise valid collection
+`POLICY_TEST_OPENSSL`) and `/usr/bin/ssh-keygen`. They generate local test keys,
+including software-only synthetic FIDO-format signatures with and without user
+presence, exercise valid collection
 through the real controller CLI and CI consumer with simulated GitHub, and reject
 tampering, replay, policy/provider changes and incomplete inventories. Existing
 live GitHub smoke remains ignored by default. Local signing does not prove who

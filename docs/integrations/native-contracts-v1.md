@@ -17,10 +17,11 @@ plans authenticated acceptance of a signed local-runner statement and approved
 scope-template digest. The sibling [wire contracts below](#local-runner-attestation-contracts)
 are implemented. Core also implements policy v4 opt-in acceptance for fresh sensor
 and execution evidence at the weaker class, with a shipping prohibition;
-authenticated collection and attestor issuance remain planned. The three original v1
+the [schema-2 controller](../../action/controller.md#local-runner-verification)
+authenticates signatures and recomputes scope, while attestor issuance remains planned. The three original v1
 documents and `policy-cli evaluate-scope` remain unchanged: results stay
 `local_untrusted` with an unmet review gate. Signature verification belongs to
-the future authenticated collection boundary.
+the authenticated controller boundary, outside this contract crate.
 
 ## Documents and validation
 

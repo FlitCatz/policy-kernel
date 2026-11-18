@@ -35,8 +35,9 @@ multiple agents from the same model provider is not provider independence. Model
 prose naming a provider, a local signature, and a structurally valid CI-shaped JSON
 object do not establish trusted provenance. Core rules for an owner-enabled
 local-runner class are described under
-[Planned local-runner attestation](#planned-local-runner-attestation); authenticating
-and issuing that class remains follow-up work at the collection boundary.
+[Local-runner attestation](#planned-local-runner-attestation). Configuration schema 2
+authenticates that class at the [controller boundary](../action/controller.md);
+the local attester executable remains follow-up work.
 
 Policy schema v3 requires a digest-bound `required_reviews` object:
 `minimum_reviewers` is a positive integer (1–4294967295),
@@ -125,13 +126,13 @@ Authoritative execution and test adequacy evidence must name the manifest head.
 
 ## Planned local-runner attestation
 
-**Core acceptance implemented; authenticated collection remains planned.** The
+**Core acceptance and controller authentication implemented; attester issuance remains planned.** The
 [policy v4 contract and current status](status.md#policy-v4-local-runner-contract)
-distinguish the implemented core rules from later controller/attestor work. The
+distinguish implemented verification from later attester/integration work. The
 [2026-11-12 decision record](decisions/2026-11-12-local-runner-attestation-adr.md)
 accepts a design for letting a single-owner repository use signed local-runner
-evidence for ordinary pull-request readiness. The current collection path still
-produces `local_untrusted`; a caller-supplied class is not authentication.
+evidence for ordinary pull-request readiness. Native scope output remains
+`local_untrusted`; a caller-supplied class is not authentication.
 
 The design adds a trust class, `local_runner_attested`, that is distinct
 from and weaker than `ci_observed` and `trusted_runner_attested`:
@@ -143,6 +144,8 @@ from and weaker than `ci_observed` and `trusted_runner_attested`:
   owner-controlled `allowed_signers` file, accepts only hardware-backed
   security-key types, and then parses the SSHSIG signature blob to require the
   user-presence flag (`0x01`), which `ssh-keygen -Y verify` does not enforce.
+  Registry entries carrying `no-touch-required` are rejected independently of
+  the key-type check. Registered key validity is checked against controller time.
 - The authenticated collection boundary verifies the signature against
   owner-installed keys, checks the bindings against GitHub observations,
   recomputes the scope verdict itself and promotes only the covered sensor and
@@ -181,8 +184,8 @@ The context-free `validate_provenance` API retains its CI-grade-only behavior.
 The local marker is informational in pre-merge, enters the decision digest, and
 prevents shipping even with a successful bound required check.
 
-The full authenticated path additionally requires the following (authentication
-and issuance remain controller/attestor work):
+The controller's authenticated path additionally enforces the following; the
+attester that produces signed statements remains later work:
 
 - Without a local-evidence block in the approved policy, the class is rejected.
 - `local_untrusted` never counts in authoritative evaluation.
@@ -216,7 +219,7 @@ the threat model.
 ## Pre-merge and post-merge
 
 Local evaluation always sets advisory mode before computing the decision digest.
-This remains true under the planned local-runner attestation: only the hosted
+This remains true under local-runner attestation: only the hosted
 authoritative path can use the new class.
 `inspect` validates typed decisions and bundle integrity, but cannot recompute or
 authenticate a decision without its original evaluation input and trusted source.

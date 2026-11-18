@@ -660,6 +660,7 @@
       "historical_diff": "controller/mutants.out/diff/crates__policy-ci__src__controller.rs_line_121_col_5.diff",
       "historical_log": "controller/mutants.out/log/crates__policy-ci__src__controller.rs_line_121_col_5.log",
       "original": {
+        "diff": "--- crates/policy-ci/src/controller.rs\n+++ replace read_json -> Result<T> with Ok(Default::default())\n@@ -146,17 +146,17 @@\n     }))\n }\n \n pub fn canonical<T: Serialize>(value: &T) -> Result<Vec<u8>> {\n     Ok(policy_core::canonical_json(value)?)\n }\n \n pub fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<T> {\n-    Ok(serde_json::from_slice(&read_file(path)?)?)\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn read_file(path: &Path) -> Result<Vec<u8>> {\n     if fs::symlink_metadata(path)?.file_type().is_symlink() {\n         return Err(\"authentication inputs cannot be symlinks\".into());\n     }\n     #[cfg(unix)]\n     let file = open_input(path)?;\n",
         "file": "crates/policy-ci/src/controller.rs",
         "function": {
           "function_name": "read_json",
@@ -667,26 +668,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 122
+              "line": 155
             },
             "start": {
               "column": 1,
-              "line": 120
+              "line": 153
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-ci/src/controller.rs:121:5: replace read_json -> Result<T> with Ok(Default::default())",
+        "name": "crates/policy-ci/src/controller.rs:154:5: replace read_json -> Result<T> with Ok(Default::default())",
         "package": "policy-ci",
         "replacement": "Ok(Default::default())",
         "span": {
           "end": {
             "column": 51,
-            "line": 121
+            "line": 154
           },
           "start": {
             "column": 5,
-            "line": 121
+            "line": 154
           }
         }
       },
@@ -695,11 +696,11 @@
       "span": {
         "end": {
           "column": 51,
-          "line": 121
+          "line": 154
         },
         "start": {
           "column": 5,
-          "line": 121
+          "line": 154
         }
       }
     },
@@ -707,6 +708,7 @@
       "historical_diff": "controller/mutants.out/diff/crates__policy-ci__src__controller.rs_line_145_col_5.diff",
       "historical_log": "controller/mutants.out/log/crates__policy-ci__src__controller.rs_line_145_col_5.log",
       "original": {
+        "diff": "--- crates/policy-ci/src/controller.rs\n+++ replace open_input -> Result<fs::File> with Ok(Default::default())\n@@ -170,27 +170,17 @@\n     if (bytes.len() as u64) > LIMIT {\n         return Err(\"authentication input exceeds 8 MiB\".into());\n     }\n     Ok(bytes)\n }\n \n #[cfg(unix)]\n fn open_input(path: &Path) -> Result<fs::File> {\n-    use rustix::fs::{open, Mode, OFlags};\n-    Ok(open(\n-        path,\n-        OFlags::RDONLY\n-            .union(OFlags::CLOEXEC)\n-            .union(OFlags::NONBLOCK)\n-            .union(OFlags::NOFOLLOW),\n-        Mode::empty(),\n-    )\n-    .map_err(std::io::Error::from)?\n-    .into())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n struct Scratch(PathBuf);\n impl Scratch {\n     fn new() -> Result<Self> {\n         static NEXT: AtomicU64 = AtomicU64::new(0);\n         let path = std::env::temp_dir().join(format!(\n             \"policy-controller-{}-{}\",\n",
         "file": "crates/policy-ci/src/controller.rs",
         "function": {
           "function_name": "open_input",
@@ -714,26 +716,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 156
+              "line": 189
             },
             "start": {
               "column": 1,
-              "line": 143
+              "line": 176
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-ci/src/controller.rs:145:5: replace open_input -> Result<fs::File> with Ok(Default::default())",
+        "name": "crates/policy-ci/src/controller.rs:178:5: replace open_input -> Result<fs::File> with Ok(Default::default())",
         "package": "policy-ci",
         "replacement": "Ok(Default::default())",
         "span": {
           "end": {
             "column": 13,
-            "line": 155
+            "line": 188
           },
           "start": {
             "column": 5,
-            "line": 145
+            "line": 178
           }
         }
       },
@@ -742,11 +744,11 @@
       "span": {
         "end": {
           "column": 13,
-          "line": 155
+          "line": 188
         },
         "start": {
           "column": 5,
-          "line": 145
+          "line": 178
         }
       }
     },
@@ -754,6 +756,7 @@
       "historical_diff": "controller/mutants.out/diff/crates__policy-ci__src__controller.rs_line_222_col_35_001.diff",
       "historical_log": "controller/mutants.out/log/crates__policy-ci__src__controller.rs_line_222_col_35_001.log",
       "original": {
+        "diff": "--- crates/policy-ci/src/controller.rs\n+++ replace + with * in bounded_crypto\n@@ -247,17 +247,17 @@\n }\n \n fn bounded_crypto(command: &mut Command) -> Result<()> {\n     let mut child = command\n         .env_clear()\n         .stdout(Stdio::null())\n         .stderr(Stdio::null())\n         .spawn()?;\n-    let deadline = Instant::now() + Duration::from_secs(10);\n+    let deadline = Instant::now() * /* ~ changed by cargo-mutants ~ */ Duration::from_secs(10);\n     loop {\n         if let Some(status) = child.try_wait()? {\n             return if status.success() {\n                 Ok(())\n             } else {\n                 Err(\"signature authentication failed\".into())\n             };\n         }\n",
         "file": "crates/policy-ci/src/controller.rs",
         "function": {
           "function_name": "bounded_crypto",
@@ -761,26 +764,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 238
+              "line": 271
             },
             "start": {
               "column": 1,
-              "line": 215
+              "line": 249
             }
           }
         },
         "genre": "BinaryOperator",
-        "name": "crates/policy-ci/src/controller.rs:222:35: replace + with * in bounded_crypto",
+        "name": "crates/policy-ci/src/controller.rs:255:35: replace + with * in bounded_crypto",
         "package": "policy-ci",
         "replacement": "*",
         "span": {
           "end": {
             "column": 36,
-            "line": 222
+            "line": 255
           },
           "start": {
             "column": 35,
-            "line": 222
+            "line": 255
           }
         }
       },
@@ -789,11 +792,11 @@
       "span": {
         "end": {
           "column": 60,
-          "line": 222
+          "line": 255
         },
         "start": {
           "column": 20,
-          "line": 222
+          "line": 255
         }
       }
     },
@@ -888,11 +891,149 @@
           "line": 500
         }
       }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-ci/src/controller.rs\n+++ replace local_key -> Result<RegisteredLocalKey> with Ok(Default::default())\n@@ -342,83 +342,17 @@\n     runner_id: String,\n     allowed_signers: String,\n     blob: Vec<u8>,\n }\n \n /// Deliberately narrower than OpenSSH's pattern registry: one key and one exact\n /// principal per owner entry. OpenSSH enforces namespaces and key validity options.\n fn local_key(entry: &LocalRunnerKey) -> Result<RegisteredLocalKey> {\n-    if entry.runner_id.is_empty()\n-        || !entry\n-            .runner_id\n-            .bytes()\n-            .all(|b| b.is_ascii_alphanumeric() || b\"-_.@\".contains(&b))\n-        || !entry.public_key.is_absolute()\n-    {\n-        return Err(\"invalid local runner registry entry\".into());\n-    }\n-    let bytes = read_file(&entry.public_key)?;\n-    let text = std::str::from_utf8(&bytes)?;\n-    let lines: Vec<_> = text\n-        .lines()\n-        .map(str::trim)\n-        .filter(|line| !line.is_empty() && !line.starts_with('#'))\n-        .collect();\n-    if lines.len() != 1 || text.contains('\\0') {\n-        return Err(\"local runner registry requires exactly one key\".into());\n-    }\n-    let fields: Vec<_> = lines[0].split_ascii_whitespace().collect();\n-    let index = fields\n-        .iter()\n-        .enumerate()\n-        .position(|(index, _)| {\n-            // A principal or comment can share an algorithm prefix. Identify\n-            // the key by its encoded algorithm, not the spelling alone.\n-            fields.get(index + 1).is_some_and(|encoded| {\n-                STANDARD\n-                    .decode(encoded)\n-                    .is_ok_and(|blob| ssh_string(&mut blob.as_slice()).is_ok())\n-            })\n-        })\n-        .ok_or(\"invalid local runner public key\")?;\n-    if fields[..index]\n-        .iter()\n-        .any(|field| field.contains(\"no-touch-required\"))\n-    {\n-        return Err(\"local runner no-touch-required option is forbidden\".into());\n-    }\n-    if !HARDWARE_KEYS.contains(&fields[index]) {\n-        return Err(\"local runner key type is not hardware backed\".into());\n-    }\n-    if index > 2\n-        || (index > 0 && fields[0] != entry.runner_id)\n-        || (index == 2 && fields[1].contains(\"cert-authority\"))\n-    {\n-        return Err(\"local runner registry requires an exact principal and direct key\".into());\n-    }\n-    let blob = STANDARD.decode(\n-        fields\n-            .get(index + 1)\n-            .ok_or(\"missing local runner key bytes\")?,\n-    )?;\n-    let mut encoded = blob.as_slice();\n-    if ssh_string(&mut encoded)? != fields[index].as_bytes() {\n-        return Err(\"local runner key type does not match key bytes\".into());\n-    }\n-    let allowed_signers = if index == 0 {\n-        format!(\"{} {}\\n\", entry.runner_id, lines[0])\n-    } else {\n-        format!(\"{}\\n\", lines[0])\n-    };\n-    Ok(RegisteredLocalKey {\n-        runner_id: entry.runner_id.clone(),\n-        allowed_signers,\n-        blob,\n-    })\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn local_registry(config: &ControllerConfig, raw: &Observation) -> Result<Vec<RegisteredLocalKey>> {\n     match config.schema_version {\n         1 if config.local_runners.is_empty()\n             && config.ssh_keygen.is_none()\n             && raw.local_attestations.is_empty()\n             && raw.github_head_tree.is_none() =>\n",
+        "file": "crates/policy-ci/src/controller.rs",
+        "function": {
+          "function_name": "local_key",
+          "return_type": "-> Result<RegisteredLocalKey>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 417
+            },
+            "start": {
+              "column": 1,
+              "line": 347
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-ci/src/controller.rs:350:5: replace local_key -> Result<RegisteredLocalKey> with Ok(Default::default())",
+        "package": "policy-ci",
+        "replacement": "Ok(Default::default())",
+        "span": {
+          "end": {
+            "column": 7,
+            "line": 416
+          },
+          "start": {
+            "column": 5,
+            "line": 350
+          }
+        }
+      },
+      "reason": "E0277: the authenticated return record has no Default; explicitly reject valid local evidence without adding a product Default implementation",
+      "replacement": "Err(\"mutated local_key rejects valid local evidence\".into())",
+      "span": {
+        "end": {
+          "column": 7,
+          "line": 416
+        },
+        "start": {
+          "column": 5,
+          "line": 350
+        }
+      }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-ci/src/controller.rs\n+++ replace local_registry -> Result<Vec<RegisteredLocalKey>> with Ok(vec![Default::default()])\n@@ -412,43 +412,17 @@\n     Ok(RegisteredLocalKey {\n         runner_id: entry.runner_id.clone(),\n         allowed_signers,\n         blob,\n     })\n }\n \n fn local_registry(config: &ControllerConfig, raw: &Observation) -> Result<Vec<RegisteredLocalKey>> {\n-    match config.schema_version {\n-        1 if config.local_runners.is_empty()\n-            && config.ssh_keygen.is_none()\n-            && raw.local_attestations.is_empty()\n-            && raw.github_head_tree.is_none() =>\n-        {\n-            return Ok(vec![])\n-        }\n-        2 if config\n-            .ssh_keygen\n-            .as_ref()\n-            .is_some_and(|path| path.is_absolute()) => {}\n-        _ => return Err(\"controller configuration/current-run binding mismatch\".into()),\n-    }\n-    let mut ids = BTreeSet::new();\n-    let mut keys = BTreeSet::new();\n-    config\n-        .local_runners\n-        .iter()\n-        .map(|entry| {\n-            let key = local_key(entry)?;\n-            if !ids.insert(key.runner_id.clone()) || !keys.insert(key.blob.clone()) {\n-                return Err(\"local runner keys must be distinct and unambiguous\".into());\n-            }\n-            Ok(key)\n-        })\n-        .collect()\n+    Ok(vec![Default::default()]) /* ~ changed by cargo-mutants ~ */\n }\n \n fn ssh_bytes<'a>(bytes: &mut &'a [u8], length: usize) -> Result<&'a [u8]> {\n     if bytes.len() < length {\n         return Err(\"malformed local SSH signature\".into());\n     }\n     let (value, rest) = bytes.split_at(length);\n     *bytes = rest;\n",
+        "file": "crates/policy-ci/src/controller.rs",
+        "function": {
+          "function_name": "local_registry",
+          "return_type": "-> Result<Vec<RegisteredLocalKey>>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 447
+            },
+            "start": {
+              "column": 1,
+              "line": 419
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-ci/src/controller.rs:420:5: replace local_registry -> Result<Vec<RegisteredLocalKey>> with Ok(vec![Default::default()])",
+        "package": "policy-ci",
+        "replacement": "Ok(vec![Default::default()])",
+        "span": {
+          "end": {
+            "column": 19,
+            "line": 446
+          },
+          "start": {
+            "column": 5,
+            "line": 420
+          }
+        }
+      },
+      "reason": "E0277: the authenticated return record has no Default; explicitly reject valid local evidence without adding a product Default implementation",
+      "replacement": "Err(\"mutated local_registry rejects valid local evidence\".into())",
+      "span": {
+        "end": {
+          "column": 19,
+          "line": 446
+        },
+        "start": {
+          "column": 5,
+          "line": 420
+        }
+      }
+    },
+    {
+      "original": {
+        "diff": "--- crates/policy-ci/src/controller.rs\n+++ replace local_evidence -> Result<Vec<EvidenceBundle>> with Ok(vec![Default::default()])\n@@ -545,138 +545,17 @@\n }\n \n fn local_evidence(\n     config: &ControllerConfig,\n     raw: &Observation,\n     registry: &[RegisteredLocalKey],\n     now: &UtcTimestamp,\n ) -> Result<Vec<EvidenceBundle>> {\n-    let mut results = vec![];\n-    let mut executions = BTreeSet::new();\n-    let mut sensors = BTreeSet::new();\n-    let mut runs = BTreeSet::new();\n-    for input in &raw.local_attestations {\n-        let s = &input.attestation.statement;\n-        let key = registry\n-            .iter()\n-            .find(|key| key.runner_id == s.runner.runner_id.as_str())\n-            .ok_or(\"local runner is not registered\")?;\n-        verify_local(\n-            config.ssh_keygen.as_deref().ok_or(\"missing SSH verifier\")?,\n-            key,\n-            input,\n-            now,\n-        )?;\n-        let policy = raw\n-            .policy\n-            .local_runner_evidence\n-            .as_ref()\n-            .filter(|_| raw.policy.schema_version == 4)\n-            .ok_or(\"local runner requires policy v4 opt-in\")?;\n-        if !policy\n-            .allowed_runner_ids\n-            .iter()\n-            .any(|id| id == s.runner.runner_id.as_str())\n-        {\n-            return Err(\"local runner is not allowed by policy\".into());\n-        }\n-        // evaluate_scope independently binds the native run to this scope.\n-        if s.subject != input.expected_scope.subject\n-            || s.subject.repository != raw.binding.repository\n-            || s.subject.head != raw.binding.head_sha\n-            || s.subject.source_set_digest.sha256 != raw.evidence.manifest.source_set_digest\n-            || Some(&s.head_tree) != raw.github_head_tree.as_ref()\n-            || s.base != raw.evidence.manifest.base_sha\n-            || s.run_id != input.observations.run.subject.run_id\n-            || s.scope_id != input.observations.run.subject.scope_id\n-        {\n-            return Err(\"local subject/GitHub binding mismatch\".into());\n-        }\n-        let template = input.expected_scope.template_digest()?;\n-        if s.expected_scope_digest != input.expected_scope.digest()?\n-            || s.scope_template_digest != template\n-            || s.native_run_digest != input.observations.run.digest()?\n-            || s.observations_digest\n-                != canonical_local_digest(\n-                    LocalDigestRole::ImportedObservations,\n-                    &input.observations,\n-                )?\n-        {\n-            return Err(\"local digest mismatch\".into());\n-        }\n-        if !policy\n-            .approved_scope_template_digests\n-            .contains(&template.sha256)\n-        {\n-            return Err(\"local scope template is not approved\".into());\n-        }\n-        let evaluation = evaluate_scope(&input.expected_scope, &input.observations)?;\n-        if evaluation.result.status != ScopeStatus::Satisfied {\n-            return Err(\"local scope is not satisfied\".into());\n-        }\n-        if s.result_digest != evaluation.result.digest()? {\n-            return Err(\"local digest mismatch\".into());\n-        }\n-        let maximum_age = policy\n-            .maximum_age_seconds\n-            .min(input.expected_scope.bindings.maximum_age_seconds);\n-        if [\n-            &s.started_at,\n-            &s.completed_at,\n-            &s.attested_at,\n-            &input.expected_scope.bindings.evaluated_at,\n-        ]\n-        .into_iter()\n-        .any(|time| !local_time_is_fresh(time, now, maximum_age))\n-        {\n-            return Err(\"local evidence is stale or future dated\".into());\n-        }\n-        if input.expected_scope.bindings.evaluated_at < s.completed_at\n-            || input.expected_scope.bindings.evaluated_at > s.attested_at\n-            || input\n-                .observations\n-                .run\n-                .observations\n-                .iter()\n-                .any(|observation| {\n-                    observation.started_at < s.started_at\n-                        || observation.completed_at > s.completed_at\n-                        || observation.observed_at > s.completed_at\n-                })\n-        {\n-            return Err(\"local observation is outside attested run interval\".into());\n-        }\n-        let evidence = evaluation\n-            .evidence\n-            .ok_or(\"satisfied local scope has no evidence\")?;\n-        if !runs.insert(s.run_id.clone())\n-            || evidence.executions.iter().any(|e| {\n-                !executions.insert(e.execution_id.clone())\n-                    || raw\n-                        .evidence\n-                        .modifications\n-                        .iter()\n-                        .any(|item| item.execution_id == e.execution_id)\n-                    || raw\n-                        .evidence\n-                        .reviews\n-                        .iter()\n-                        .any(|item| item.execution_id == e.execution_id)\n-            })\n-            || evidence\n-                .sensors\n-                .iter()\n-                .any(|s| !sensors.insert(s.sensor_id.clone()))\n-        {\n-            return Err(\"local coverage must be complete and disjoint\".into());\n-        }\n-        results.push(evidence);\n-    }\n-    Ok(results)\n+    Ok(vec![Default::default()]) /* ~ changed by cargo-mutants ~ */\n }\n \n fn local_time_is_fresh(time: &UtcTimestamp, now: &UtcTimestamp, maximum_age: u64) -> bool {\n     now.as_datetime()\n         .signed_duration_since(time.as_datetime())\n         .to_std()\n         .is_ok_and(|age| age <= Duration::from_secs(maximum_age))\n }\n",
+        "file": "crates/policy-ci/src/controller.rs",
+        "function": {
+          "function_name": "local_evidence",
+          "return_type": "-> Result<Vec<EvidenceBundle>>",
+          "span": {
+            "end": {
+              "column": 2,
+              "line": 675
+            },
+            "start": {
+              "column": 1,
+              "line": 547
+            }
+          }
+        },
+        "genre": "FnValue",
+        "name": "crates/policy-ci/src/controller.rs:553:5: replace local_evidence -> Result<Vec<EvidenceBundle>> with Ok(vec![Default::default()])",
+        "package": "policy-ci",
+        "replacement": "Ok(vec![Default::default()])",
+        "span": {
+          "end": {
+            "column": 16,
+            "line": 674
+          },
+          "start": {
+            "column": 5,
+            "line": 553
+          }
+        }
+      },
+      "reason": "E0277: the authenticated return record has no Default; explicitly reject valid local evidence without adding a product Default implementation",
+      "replacement": "Err(\"mutated local_evidence rejects valid local evidence\".into())",
+      "span": {
+        "end": {
+          "column": 16,
+          "line": 674
+        },
+        "start": {
+          "column": 5,
+          "line": 553
+        }
+      }
     }
   ],
   "schema_version": 1,
   "sources": {
-    "crates/policy-ci/src/controller.rs": "2c073130f5ed661c79719e5186616840a8a979b810906ba085c37c02d769e0f9",
+    "crates/policy-ci/src/controller.rs": "ada0bcb0898a9c03377fd53afe595b1be5e2dd96f09b08cdf62da1296f03b0c4",
     "crates/policy-contracts/src/decision.rs": "513a58a2f4458d63cdea95802bdac2c140c2073de67a7b5bbd98a7f45bb0bcbd",
     "crates/policy-contracts/src/evidence.rs": "7d99d88f5735e529f1496d34e3242b8159a64cfbd610ba5ea6ab77aaac065cbd",
     "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
