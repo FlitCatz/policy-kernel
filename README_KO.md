@@ -504,12 +504,12 @@ scope 평가에서도 non-pass로 유지합니다.
 게시합니다. Linux 빌드는 Ubuntu 22.04/glibc 2.35, macOS 빌드는 macOS 15를
 사용합니다. Windows x64에서는 WSL2에서 Linux x64 바이너리를 실행할 수 있습니다.
 
-`v0.1.1`이 게시되면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
-이전 릴리스를 설치하려면 `tag=v0.1.0`으로 설정합니다.
+`v0.1.2`가 게시되면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
+이전 릴리스를 설치하려면 `tag=v0.1.1`로 설정합니다.
 
 ```sh
 set -eu
-tag=v0.1.1
+tag=v0.1.2
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do

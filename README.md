@@ -534,12 +534,12 @@ Assets include both executables per target, `SHA256SUMS` and `SOURCE_COMMIT`.
 Linux builds use Ubuntu 22.04/glibc 2.35; macOS builds use macOS 15.
 Windows x64 users can run the Linux x64 binaries under WSL2.
 
-Use the example below in a fresh directory after `v0.1.1` is published. To install
-the previous release, set `tag=v0.1.0`.
+Use the example below in a fresh directory after `v0.1.2` is published. To install
+the previous release, set `tag=v0.1.1`.
 
 ```sh
 set -eu
-tag=v0.1.1
+tag=v0.1.2
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do

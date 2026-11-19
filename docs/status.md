@@ -64,7 +64,10 @@ commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
 describe version and checksum pins. The
 [`v0.1.0` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/43784765825)
 published the first [binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.0)
-from `e7d24be0c9d28a597addd237f5c1e79d1605c15a`. The `v0.1.1` workspace
+from `e7d24be0c9d28a597addd237f5c1e79d1605c15a`. The
+[`v0.1.1` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/44267290833)
+published the [next binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.1)
+from `30bd89ad79e82c39030193b2fe09973b9fa0a00e`. The `v0.1.2` workspace
 version prepares the next native release, whose publication requires a tag.
 Consumer adoption, authoritative decisions and production promotion are tracked separately.
 
