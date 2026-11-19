@@ -108,9 +108,9 @@ The [workflow](../.github/workflows/release-binaries.yml) uses Rust 1.95.0,
 locked builds and SHA-pinned actions. The
 [consumer contract](../docs/integrations/native-contracts-v1.md#pinned-binary-releases)
 defines assets, install commands and checksum pins.
-The [v0.1.2 release notes](../docs/integrations/native-contracts-v1.md#v012-release-notes)
-record the UTC timestamp dependency update and named skip support. Windows x64
-users can run the Linux x64 binaries under WSL2. See [[status]] for publication status.
+The [v0.1.3 release notes](../docs/integrations/native-contracts-v1.md#v013-release-notes)
+record support for xUnit skip-only TRX warnings. Windows x64 users can run the
+Linux x64 binaries under WSL2. See [[status]] for publication status.
 
 ## Claim preparation
 
@@ -157,6 +157,7 @@ Conformance [[crates/policy-native-verifier/tests/scope.rs#satisfied_scope_assem
 [[crates/policy-native-verifier/tests/scope.rs#subject_binding_time_required_set_and_exclusions_fail_closed]],
 [[crates/policy-native-verifier/tests/scope.rs#native_bounds_policy_digest_and_incomplete_completion_are_enforced]];
 skip policy [[crates/policy-native-verifier/tests/scope.rs#skip_allowance_enforces_names_and_count_independently]];
+xUnit skip warning import and scope evaluation [[crates/policy-native-importer/tests/import.rs#native_import_evaluates_named_trx_skips_with_xunit_warnings]];
 exclusions [[crates/policy-native-verifier/tests/scope.rs#exclusions_never_waive_required_mappings_or_allow_unapproved_scope]];
 mapping limits [[crates/policy-native-verifier/tests/scope.rs#mapping_minimum_and_allowed_suite_are_independent_of_passing_counts]];
 command [[crates/policy-cli/tests/scope.rs#local_scope_command_exit_codes_and_input_boundaries]];

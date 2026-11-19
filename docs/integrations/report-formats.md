@@ -94,8 +94,15 @@ therefore derived from individual NotExecuted results, not that counter.
 
 Only UTF-8 TestRun documents in the TeamTest/2010 namespace with flat
 UnitTestResult entries are supported. Passed, Failed, and NotExecuted individual
-outcomes are supported; other outcomes and InnerResults are rejected. Run summary
-Completed or Passed can succeed; Failed, Error, Aborted and run diagnostics cannot.
+outcomes are supported; other outcomes and InnerResults are rejected. A clean run
+requires a Completed or Passed summary and each RunInfo must be Passed or a
+Warning whose trimmed Text is exactly one xUnit skip notice. The notice must use
+the xUnit format `[xUnit.net hh:mm:ss.ff]     <testName> [SKIP]` and name an exact
+`testName` on a NotExecuted result in the same report; each skipped test gets
+its own RunInfo. All other RunInfo outcomes
+and warning diagnostics make the run unclean. Skips stay in the parsed data for
+native scope evaluation, which applies the approved suite's allowed identities
+and count limit.
 DTD parsing is disabled and XML nodes are capped at 500,000. Ordered tests and
 nested data-driven result structures require a future explicit adapter version.
 
@@ -103,8 +110,8 @@ nested data-driven result structures require a future explicit adapter version.
 
 Rust regression cases cover normal reports, count mismatches, missing fields,
 duplicate identities, skips, failures, empty reports, Playwright retry/expected
-failure/global errors, and TRX namespace/DTD rejection. The current native harness
-and its alternate Vitest test exercise maintained producers; Jest reader/corpus
+failure/global errors, TRX skip warnings, and TRX namespace/DTD rejection. The
+current native harness and its alternate Vitest test exercise maintained producers; Jest reader/corpus
 regressions preserve compatibility without running Jest. See [acceptance](acceptance.md).
 These local observations do not authenticate hosted CI or authorize promotion.
 

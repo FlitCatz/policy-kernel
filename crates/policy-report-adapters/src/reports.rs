@@ -429,6 +429,46 @@ fn attr<'a, 'input>(node: roxmltree::Node<'a, 'input>, name: &str) -> Result<&'a
         .filter(|s| !s.is_empty())
         .ok_or_else(|| invalid(format!("missing attribute {name}")))
 }
+
+fn xunit_skipped_name(line: &str) -> Option<&str> {
+    let (elapsed, notice) = line.strip_prefix("[xUnit.net ")?.split_once("]     ")?;
+    let clock = b"00:00:00.00";
+    if elapsed.len() != clock.len()
+        || !elapsed.bytes().zip(clock).all(|(byte, expected)| {
+            if *expected == b'0' {
+                byte.is_ascii_digit()
+            } else {
+                byte == *expected
+            }
+        })
+    {
+        return None;
+    }
+    notice.strip_suffix(" [SKIP]")
+}
+
+fn trx_skip_warning(info: roxmltree::Node<'_, '_>, skipped_names: &BTreeSet<&str>) -> bool {
+    let Ok(text) = child(info, "Text") else {
+        return false;
+    };
+    // Any additional diagnostic content makes the warning significant.
+    if info.children().any(|node| {
+        node != text
+            && (node.is_element()
+                || node.is_text() && node.text().is_some_and(|s| !s.trim_ascii().is_empty()))
+    }) {
+        return false;
+    }
+    let Some(content) = text
+        .first_child()
+        .filter(|node| node.is_text() && node.next_sibling().is_none())
+        .and_then(|node| node.text())
+    else {
+        return false;
+    };
+    xunit_skipped_name(content.trim_ascii()).is_some_and(|name| skipped_names.contains(name))
+}
+
 fn trx(namespace: &str, bytes: &[u8]) -> Result<ParsedReport, ReportError> {
     let text = std::str::from_utf8(bytes).map_err(|_| invalid("TRX must be UTF-8"))?;
     let doc = roxmltree::Document::parse_with_options(
@@ -452,12 +492,7 @@ fn trx(namespace: &str, bytes: &[u8]) -> Result<ParsedReport, ReportError> {
         "Failed" | "Error" | "Aborted" => false,
         _ => return Err(invalid("unsupported run outcome")),
     };
-    for info in summary
-        .descendants()
-        .filter(|n| n.has_tag_name((TRX_NS, "RunInfo")))
-    {
-        clean &= attr(info, "outcome")? == "Passed";
-    }
+    let mut skipped_names = BTreeSet::new();
     let mut tests = vec![];
     for result in child(root, "Results")?
         .children()
@@ -476,6 +511,11 @@ fn trx(namespace: &str, bytes: &[u8]) -> Result<ParsedReport, ReportError> {
             "NotExecuted" => TestOutcome::Skipped,
             _ => return Err(invalid("unsupported TRX test outcome")),
         };
+        let test_id = attr(result, "testId")?;
+        let name = attr(result, "testName")?;
+        if outcome == TestOutcome::Skipped {
+            skipped_names.insert(name);
+        }
         let messages = result
             .descendants()
             .filter(|n| {
@@ -489,13 +529,20 @@ fn trx(namespace: &str, bytes: &[u8]) -> Result<ParsedReport, ReportError> {
             .map(str::to_owned)
             .collect();
         tests.push(TestResult {
-            id: id(
-                namespace,
-                &[attr(result, "testId")?, attr(result, "testName")?],
-            ),
+            id: id(namespace, &[test_id, name]),
             outcome,
             messages,
         });
+    }
+    for info in summary
+        .descendants()
+        .filter(|n| n.has_tag_name((TRX_NS, "RunInfo")))
+    {
+        clean &= match attr(info, "outcome")? {
+            "Passed" => true,
+            "Warning" => trx_skip_warning(info, &skipped_names),
+            _ => false,
+        };
     }
     let mut report = finish(tests, started_at, clean)?;
     report.messages = summary

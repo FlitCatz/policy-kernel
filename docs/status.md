@@ -67,7 +67,10 @@ published the first [binary release](https://github.com/FlitCatz/policy-kernel/r
 from `e7d24be0c9d28a597addd237f5c1e79d1605c15a`. The
 [`v0.1.1` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/44267290833)
 published the [next binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.1)
-from `30bd89ad79e82c39030193b2fe09973b9fa0a00e`. The `v0.1.2` workspace
+from `30bd89ad79e82c39030193b2fe09973b9fa0a00e`. The
+[`v0.1.2` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/44446908609)
+published the [binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.2)
+from `d9aa477e7563bba4ec787354a8a43ad779643f41`. The `v0.1.3` workspace
 version prepares the next native release, whose publication requires a tag.
 Consumer adoption, authoritative decisions and production promotion are tracked separately.
 

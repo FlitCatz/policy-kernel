@@ -1,9 +1,12 @@
-use policy_report_adapters::{parse_report, ReportFormat, TestOutcome};
+use policy_report_adapters::{parse_report, parse_report_with_skips, ReportFormat, TestOutcome};
 use serde_json::{json, Value};
 
 const VITEST: &[u8] = include_bytes!("fixtures/project-reports/vitest.json");
 const PLAYWRIGHT: &[u8] = include_bytes!("fixtures/project-reports/playwright.json");
 const TRX: &str = include_str!("fixtures/project-reports/vstest.trx");
+const TRX_XUNIT_SKIP: &str = include_str!("fixtures/project-reports/vstest-xunit-skip.trx");
+const XUNIT_SKIP_NOTICE: &str =
+    "[xUnit.net 00:00:00.39]     Sample.Tests.BrowserTests.RequiresFlag [SKIP]";
 fn parse_json(
     format: ReportFormat,
     value: &Value,
@@ -179,4 +182,82 @@ fn trx_failures_skips_and_empty_are_not_success() {
             .unwrap()
             .successful
     );
+}
+
+#[test]
+fn trx_accepts_xunit_warnings_for_recorded_skips() {
+    let report =
+        parse_report_with_skips(ReportFormat::Trx, "auth", TRX_XUNIT_SKIP.as_bytes()).unwrap();
+    assert!(report.successful);
+    assert_eq!(report.skipped, 1);
+    assert_eq!(report.tests[1].outcome, TestOutcome::Skipped);
+    assert_eq!(report.messages, [XUNIT_SKIP_NOTICE]);
+    assert!(
+        !parse_report(ReportFormat::Trx, "auth", TRX_XUNIT_SKIP.as_bytes())
+            .unwrap()
+            .successful
+    );
+}
+
+#[test]
+fn trx_keeps_other_run_diagnostics_unclean() {
+    for (case, text) in [
+        (
+            "ordinary warning",
+            TRX_XUNIT_SKIP.replace(XUNIT_SKIP_NOTICE, "Test host warning"),
+        ),
+        (
+            "mixed warning",
+            TRX_XUNIT_SKIP.replace(
+                XUNIT_SKIP_NOTICE,
+                &format!("{XUNIT_SKIP_NOTICE}\nTest host warning"),
+            ),
+        ),
+        (
+            "two notices in one text",
+            TRX_XUNIT_SKIP.replace(
+                XUNIT_SKIP_NOTICE,
+                &format!("{XUNIT_SKIP_NOTICE}\n{XUNIT_SKIP_NOTICE}"),
+            ),
+        ),
+        (
+            "partial name",
+            TRX_XUNIT_SKIP.replace(
+                XUNIT_SKIP_NOTICE,
+                &XUNIT_SKIP_NOTICE.replace("Sample.Tests.", ""),
+            ),
+        ),
+        (
+            "passed test",
+            TRX_XUNIT_SKIP.replace(
+                XUNIT_SKIP_NOTICE,
+                &XUNIT_SKIP_NOTICE.replace(
+                    "Sample.Tests.BrowserTests.RequiresFlag",
+                    "Login.AcceptsCredentials",
+                ),
+            ),
+        ),
+        (
+            "malformed notice",
+            TRX_XUNIT_SKIP.replace(
+                XUNIT_SKIP_NOTICE,
+                &XUNIT_SKIP_NOTICE.replace("00:00:00.39", "warning"),
+            ),
+        ),
+        (
+            "empty warning",
+            TRX_XUNIT_SKIP.replace(XUNIT_SKIP_NOTICE, ""),
+        ),
+        (
+            "additional diagnostic",
+            TRX_XUNIT_SKIP.replace("</Text>", "</Text><Exception>Test host warning</Exception>"),
+        ),
+        (
+            "error outcome",
+            TRX_XUNIT_SKIP.replace("outcome=\"Warning\"", "outcome=\"Error\""),
+        ),
+    ] {
+        let report = parse_report_with_skips(ReportFormat::Trx, "auth", text.as_bytes()).unwrap();
+        assert!(!report.successful, "{case}");
+    }
 }

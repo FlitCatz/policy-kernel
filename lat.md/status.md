@@ -32,7 +32,7 @@ both commands on macOS arm64 and Linux x64, with SHA-256 and source-commit asset
 Explicit report selections populate empty test claims with shared parsers before
 import; explicit suite mappings claim coverage. Each TRX has a separate observation
 and approved suite, with no v1 wire-contract change or consumer Rust requirement.
-The `v0.1.0` and `v0.1.1` tag runs published binary releases. The `v0.1.2`
+The `v0.1.0`, `v0.1.1`, and `v0.1.2` tag runs published binary releases. The `v0.1.3`
 workspace version prepares the next native release, whose publication requires a tag.
 See [[native-contracts#Native command distribution]].
 

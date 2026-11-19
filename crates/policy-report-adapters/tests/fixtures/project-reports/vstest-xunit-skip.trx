@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times start="2025-09-01T00:00:00Z"/>
+  <Results>
+    <UnitTestResult testId="login-test" testName="Login.AcceptsCredentials" outcome="Passed"/>
+    <UnitTestResult testId="browser-test" testName="Sample.Tests.BrowserTests.RequiresFlag" outcome="NotExecuted"/>
+  </Results>
+  <ResultSummary outcome="Completed">
+    <Counters total="2" executed="1" passed="1" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0"/>
+    <RunInfos>
+      <RunInfo computerName="runner" outcome="Warning" timestamp="2025-09-01T00:00:00.39Z">
+        <Text>[xUnit.net 00:00:00.39]     Sample.Tests.BrowserTests.RequiresFlag [SKIP]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
