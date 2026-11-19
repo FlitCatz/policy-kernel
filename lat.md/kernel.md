@@ -65,8 +65,8 @@ TRX attribute lookups require unqualified names, so namespaced extensions cannot
 substitute for required fields or shadow their values. See
 [[crates/policy-report-adapters/tests/corpus.rs#trx_attributes_must_be_unqualified]].
 [[crates/policy-report-adapters/src/reports.rs#trx_skip_warning]] keeps a run
-clean only for xUnit warnings made up entirely of notices matching exact names
-on NotExecuted results. Coverage is in
+clean only for xUnit warnings whose trimmed Text is exactly one skip notice
+naming a NotExecuted result. Coverage is in
 [[crates/policy-report-adapters/tests/reports.rs#trx_accepts_xunit_warnings_for_recorded_skips]]
 and [[crates/policy-report-adapters/tests/reports.rs#trx_keeps_other_run_diagnostics_unclean]].
 Fixed pre-extraction bytes are checked by

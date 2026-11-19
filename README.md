@@ -480,8 +480,8 @@ It preserves skipped tests for scope evaluation and rejects empty or retried
 reports. Set a suite's `allowed_skipped_tests` to the exact `raw_identity` strings
 it may skip. `maximum_skipped` always caps the count. Any skipped test not in
 the list fails, so omitting the list or using `[]` disallows all skips.
-An xUnit TRX run warning preserves a clean run only when every notice names
-an exact `testName` recorded as `NotExecuted` in the same report. Other
+An xUnit TRX run warning preserves a clean run only when its text is exactly
+one skip notice naming a `testName` recorded as `NotExecuted` in the same report. Other
 run warnings keep the suite non-pass.
 
 Exit codes are **0** satisfied, **2** valid non-pass, **64** invalid or incomplete

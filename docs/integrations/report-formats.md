@@ -96,9 +96,10 @@ Only UTF-8 TestRun documents in the TeamTest/2010 namespace with flat
 UnitTestResult entries are supported. Passed, Failed, and NotExecuted individual
 outcomes are supported; other outcomes and InnerResults are rejected. A clean run
 requires a Completed or Passed summary and each RunInfo must be Passed or a
-Warning whose Text contains only xUnit skip notices. Each notice must use the
-xUnit format `[xUnit.net hh:mm:ss.ff]     <testName> [SKIP]` and name an exact
-`testName` on a NotExecuted result in the same report. All other RunInfo outcomes
+Warning whose trimmed Text is exactly one xUnit skip notice. The notice must use
+the xUnit format `[xUnit.net hh:mm:ss.ff]     <testName> [SKIP]` and name an exact
+`testName` on a NotExecuted result in the same report; each skipped test gets
+its own RunInfo. All other RunInfo outcomes
 and warning diagnostics make the run unclean. Skips stay in the parsed data for
 native scope evaluation, which applies the approved suite's allowed identities
 and count limit.

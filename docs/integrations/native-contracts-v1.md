@@ -66,7 +66,7 @@ for example, set these fields:
 A skipped test passes only when its identity is listed and the count stays
 within `maximum_skipped`. An omitted or empty list disallows all skips.
 The [TRX reader](report-formats.md#trx) lets a run stay clean if a warning
-contains only xUnit skip notices for the report's NotExecuted tests. The
+is exactly one xUnit skip notice for one of the report's NotExecuted tests. The
 approved suite rule evaluates those skips.
 
 Test counts must match their records: passed/failed tests have positive attempts;

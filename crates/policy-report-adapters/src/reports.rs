@@ -466,15 +466,7 @@ fn trx_skip_warning(info: roxmltree::Node<'_, '_>, skipped_names: &BTreeSet<&str
     else {
         return false;
     };
-    let mut lines = content
-        .lines()
-        .map(str::trim_ascii)
-        .filter(|line| !line.is_empty());
-    let is_skip_notice =
-        |line| xunit_skipped_name(line).is_some_and(|name| skipped_names.contains(name));
-    lines
-        .next()
-        .is_some_and(|first| is_skip_notice(first) && lines.all(is_skip_notice))
+    xunit_skipped_name(content.trim_ascii()).is_some_and(|name| skipped_names.contains(name))
 }
 
 fn trx(namespace: &str, bytes: &[u8]) -> Result<ParsedReport, ReportError> {

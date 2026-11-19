@@ -197,16 +197,6 @@ fn trx_accepts_xunit_warnings_for_recorded_skips() {
             .unwrap()
             .successful
     );
-
-    let multiline = TRX_XUNIT_SKIP.replace(
-        XUNIT_SKIP_NOTICE,
-        &format!("\n{XUNIT_SKIP_NOTICE}\n{XUNIT_SKIP_NOTICE}\n"),
-    );
-    assert!(
-        parse_report_with_skips(ReportFormat::Trx, "auth", multiline.as_bytes())
-            .unwrap()
-            .successful
-    );
 }
 
 #[test]
@@ -221,6 +211,13 @@ fn trx_keeps_other_run_diagnostics_unclean() {
             TRX_XUNIT_SKIP.replace(
                 XUNIT_SKIP_NOTICE,
                 &format!("{XUNIT_SKIP_NOTICE}\nTest host warning"),
+            ),
+        ),
+        (
+            "two notices in one text",
+            TRX_XUNIT_SKIP.replace(
+                XUNIT_SKIP_NOTICE,
+                &format!("{XUNIT_SKIP_NOTICE}\n{XUNIT_SKIP_NOTICE}"),
             ),
         ),
         (
