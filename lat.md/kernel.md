@@ -64,11 +64,16 @@ The only workspace dependency is `policy-contracts`, for the existing timestamp 
 TRX attribute lookups require unqualified names, so namespaced extensions cannot
 substitute for required fields or shadow their values. See
 [[crates/policy-report-adapters/tests/corpus.rs#trx_attributes_must_be_unqualified]].
+[[crates/policy-report-adapters/src/reports.rs#trx_skip_warning]] keeps a run
+clean only for xUnit warnings made up entirely of notices matching exact names
+on NotExecuted results. Coverage is in
+[[crates/policy-report-adapters/tests/reports.rs#trx_accepts_xunit_warnings_for_recorded_skips]]
+and [[crates/policy-report-adapters/tests/reports.rs#trx_keeps_other_run_diagnostics_unclean]].
 Fixed pre-extraction bytes are checked by
 [[crates/policy-report-adapters/tests/corpus.rs#corpus_serialization_matches_pre_extraction_bytes]];
 legacy API compatibility by
 [[crates/project-verification/tests/report_compatibility.rs#legacy_module_reexports_identical_types_and_corpus_outputs]].
-See [report formats](../docs/integrations/report-formats.md) for the unchanged contract.
+See [report formats](../docs/integrations/report-formats.md) for the parser contract.
 
 ## Review consensus and waivers
 

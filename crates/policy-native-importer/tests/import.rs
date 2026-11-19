@@ -266,6 +266,67 @@ fn native_import_exports_trx_skips_for_scope_evaluation() {
 }
 
 #[test]
+fn native_import_evaluates_named_trx_skips_with_xunit_warnings() {
+    let raw = include_bytes!(
+        "../../policy-report-adapters/tests/fixtures/project-reports/vstest-xunit-skip.trx"
+    );
+    let skipped_identity =
+        RecordId::parse(r#"["browser-test","Sample.Tests.BrowserTests.RequiresFlag"]"#).unwrap();
+    for named in [true, false] {
+        let mut f = Fixture::new(ReportFormat::Trx);
+        fs::write(f.input.join("raw.json"), raw).unwrap();
+        f.run.artifacts[0].digest = raw_digest(raw);
+        f.run.test_observations.clear();
+        f.run.mappings.clear();
+        let mut rules = f.expected.requirements.observations.as_slice().to_vec();
+        let rule = rules[0].tests.as_mut().unwrap();
+        rule.maximum_skipped = 1;
+        rule.allowed_skipped_tests = named.then(|| vec![skipped_identity.clone()]);
+        f.expected.requirements.observations = RequiredSet::new(rules).unwrap();
+
+        let mut command = f.command();
+        command.args(["--report", "unit=raw-1"]);
+        for requirement in f.expected.requirements.requirements.as_slice() {
+            command
+                .arg("--map")
+                .arg(format!("{}=unit", requirement.id.as_str()));
+        }
+        command.assert().success();
+
+        let observations = fs::read(f.output().join("observations.json")).unwrap();
+        let imported: policy_native_verifier::ImportedObservationsV1 =
+            serde_json::from_slice(&observations).unwrap();
+        let report = &imported.run.test_observations[0];
+        assert_eq!(report.counts.skipped, 1);
+        assert_eq!(report.tests[1].raw_identity, skipped_identity);
+        assert_eq!(report.tests[1].outcome, TestOutcome::Skipped);
+        assert_eq!(report.tests[1].attempts, 0);
+        assert!(imported.unsuccessful_reports.is_empty());
+        let (result, code) = policy_cli::evaluate_scope_json(
+            &serde_json::to_vec(&f.expected).unwrap(),
+            &observations,
+        )
+        .unwrap();
+        assert_eq!(
+            (result.status, code),
+            if named {
+                (ScopeStatus::Satisfied, 0)
+            } else {
+                (ScopeStatus::NonPass, 2)
+            }
+        );
+        let unexpected_skip = result
+            .reasons
+            .iter()
+            .find(|reason| reason.code == ReasonCode::UnexpectedSkippedTest);
+        assert_eq!(
+            unexpected_skip.map(|reason| reason.location.test_identity.as_ref()),
+            (!named).then_some(Some(&skipped_identity))
+        );
+    }
+}
+
+#[test]
 fn multiple_trx_reports_use_distinct_observations_and_approved_suites() {
     let mut f = Fixture::new(ReportFormat::Trx);
     let mut observation = f.run.observations[0].clone();

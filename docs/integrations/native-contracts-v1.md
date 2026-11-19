@@ -65,6 +65,9 @@ for example, set these fields:
 
 A skipped test passes only when its identity is listed and the count stays
 within `maximum_skipped`. An omitted or empty list disallows all skips.
+The [TRX reader](report-formats.md#trx) lets a run stay clean if a warning
+contains only xUnit skip notices for the report's NotExecuted tests. The
+approved suite rule evaluates those skips.
 
 Test counts must match their records: passed/failed tests have positive attempts;
 skipped/not-executed tests have zero attempts; retries sum attempts minus one for
@@ -401,14 +404,14 @@ copies exact bytes into a fresh output directory, and hashes those bytes. Its
 input layout is `INPUT/<target>/<command>`. The workflow creates a draft only
 after both builds succeed, uploads all assets, then makes the release public.
 
-After `v0.1.2` is published, select the target explicitly and run the following
+After `v0.1.3` is published, select the target explicitly and run the following
 in a fresh download directory. To install the previous release, set
-`tag=v0.1.1`. The URL pattern is
+`tag=v0.1.2`. The URL pattern is
 `https://github.com/FlitCatz/policy-kernel/releases/download/<tag>/<asset>`.
 
 ```sh
 set -eu
-tag=v0.1.2
+tag=v0.1.3
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
@@ -428,6 +431,11 @@ manifest in consumer configuration. For recurring CI installs, verify against th
 entries; do not use `latest` or build from source on every run. Downloaded
 checksums detect byte corruption but do not independently authenticate the release
 publisher. Binary distribution does not promote observations or grant readiness.
+
+### v0.1.3 release notes
+
+- Keep xUnit skip-only TRX warnings from blocking scope satisfaction when the
+  report names the skipped tests and the suite rule allows them.
 
 ### v0.1.2 release notes
 

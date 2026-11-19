@@ -480,6 +480,9 @@ It preserves skipped tests for scope evaluation and rejects empty or retried
 reports. Set a suite's `allowed_skipped_tests` to the exact `raw_identity` strings
 it may skip. `maximum_skipped` always caps the count. Any skipped test not in
 the list fails, so omitting the list or using `[]` disallows all skips.
+An xUnit TRX run warning preserves a clean run only when every notice names
+an exact `testName` recorded as `NotExecuted` in the same report. Other
+run warnings keep the suite non-pass.
 
 Exit codes are **0** satisfied, **2** valid non-pass, **64** invalid or incomplete
 input. Either file may be `-` for stdin, but not both. Output is `LocalScopeResultV1`;
@@ -534,12 +537,12 @@ Assets include both executables per target, `SHA256SUMS` and `SOURCE_COMMIT`.
 Linux builds use Ubuntu 22.04/glibc 2.35; macOS builds use macOS 15.
 Windows x64 users can run the Linux x64 binaries under WSL2.
 
-Use the example below in a fresh directory after `v0.1.2` is published. To install
-the previous release, set `tag=v0.1.1`.
+Use the example below in a fresh directory after `v0.1.3` is published. To install
+the previous release, set `tag=v0.1.2`.
 
 ```sh
 set -eu
-tag=v0.1.2
+tag=v0.1.3
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do

@@ -449,6 +449,10 @@ policy-cli evaluate-scope \
 `raw_identity` 문자열을 정확히 지정합니다. `maximum_skipped`는 항상 개수
 상한으로 적용됩니다. 목록에 없는 테스트를 건너뛰면 실패하므로, 목록을 생략하거나
 `[]`로 두면 건너뛰기를 허용하지 않습니다.
+xUnit TRX 실행 경고의 내용이 건너뛰기 알림뿐이고 각 알림이 같은 보고서에서
+`NotExecuted`로 기록된 테스트의 `testName`과 정확히 일치하면 해당 경고는
+실행 성공 여부에 영향을 주지 않습니다.
+그 외 실행 경고가 있는 suite는 non-pass로 유지합니다.
 
 종료 코드는 **0** 충족, **2** 유효한 non-pass, **64** 잘못되거나 불완전한
 입력입니다. 파일 하나만 `-`로 지정하여 stdin을 사용할 수 있습니다.
@@ -504,12 +508,12 @@ scope 평가에서도 non-pass로 유지합니다.
 게시합니다. Linux 빌드는 Ubuntu 22.04/glibc 2.35, macOS 빌드는 macOS 15를
 사용합니다. Windows x64에서는 WSL2에서 Linux x64 바이너리를 실행할 수 있습니다.
 
-`v0.1.2`가 게시되면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
-이전 릴리스를 설치하려면 `tag=v0.1.1`로 설정합니다.
+`v0.1.3`이 게시되면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
+이전 릴리스를 설치하려면 `tag=v0.1.2`로 설정합니다.
 
 ```sh
 set -eu
-tag=v0.1.2
+tag=v0.1.3
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
