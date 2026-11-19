@@ -401,14 +401,14 @@ copies exact bytes into a fresh output directory, and hashes those bytes. Its
 input layout is `INPUT/<target>/<command>`. The workflow creates a draft only
 after both builds succeed, uploads all assets, then makes the release public.
 
-After `v0.1.1` is published, select the target explicitly and run the following
+After `v0.1.2` is published, select the target explicitly and run the following
 in a fresh download directory. To install the previous release, set
-`tag=v0.1.0`. The URL pattern is
+`tag=v0.1.1`. The URL pattern is
 `https://github.com/FlitCatz/policy-kernel/releases/download/<tag>/<asset>`.
 
 ```sh
 set -eu
-tag=v0.1.1
+tag=v0.1.2
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
@@ -428,6 +428,13 @@ manifest in consumer configuration. For recurring CI installs, verify against th
 entries; do not use `latest` or build from source on every run. Downloaded
 checksums detect byte corruption but do not independently authenticate the release
 publisher. Binary distribution does not promote observations or grant readiness.
+
+### v0.1.2 release notes
+
+- Replace `chrono` with `jiff` for UTC timestamps.
+  [Timestamp dependency update](https://github.com/FlitCatz/policy-kernel/pull/63)
+- Accept skipped tests when the native suite scope lists them by name.
+  [Native importer update](https://github.com/FlitCatz/policy-kernel/pull/64)
 
 ### v0.1.1 release notes
 

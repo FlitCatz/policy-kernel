@@ -107,8 +107,10 @@ output and pins a known SHA-256 vector.
 The [workflow](../.github/workflows/release-binaries.yml) uses Rust 1.95.0,
 locked builds and SHA-pinned actions. The
 [consumer contract](../docs/integrations/native-contracts-v1.md#pinned-binary-releases)
-defines assets, install commands and checksum pins. Windows x64 users can run
-the Linux x64 binaries under WSL2. See [[status]] for publication status.
+defines assets, install commands and checksum pins.
+The [v0.1.2 release notes](../docs/integrations/native-contracts-v1.md#v012-release-notes)
+record the UTC timestamp dependency update and named skip support. Windows x64
+users can run the Linux x64 binaries under WSL2. See [[status]] for publication status.
 
 ## Claim preparation
 
