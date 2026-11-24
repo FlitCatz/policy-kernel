@@ -26,25 +26,10 @@ are explicitly rejected as implementation coupling.
 
 ## Rust dependency pins
 
-The workspace declares only the approved technology stack. Exact versions are pinned
-for deterministic resolution as the crates begin using them.
-
-| Package | Pin |
-|---|---:|
-| serde | 1.0.228 |
-| serde_json | 1.0.145 |
-| yaml-rust2 | 0.13.0 (development only; default features disabled) |
-| jiff | 1.0.1 (default features disabled; `std` only) |
-| sha2 | 0.10.9 |
-| hex | 0.4.3 |
-| thiserror | 2.0.16 |
-| clap | 4.5.47 |
-| schemars | 1.0.4 |
-| globset | 0.4.16 |
-| assert_cmd | 2.0.17 |
-| jsonschema | 0.55.0 (development only; default features disabled) |
-| test-case | 3.3.1 |
-| proptest | 1.7.0 |
+The workspace declares only the approved technology stack. The version
+requirements and feature selections live in `[workspace.dependencies]` of the
+root `Cargo.toml`; `Cargo.lock` records the exact tested resolution, which must
+build on the workspace minimum compiler (Rust 1.85).
 
 `jsonschema` is used only by Task 8 tests to execute Draft 2020-12 instance
 validation against the generated files. Its HTTP and file resolution features are
