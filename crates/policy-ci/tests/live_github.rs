@@ -77,6 +77,7 @@ fn real_actions_run_publishes_and_reads_back_blocked_decision() {
         required_knowledge: vec![],
         local_runner_evidence: None,
         owner_with_independent_agent_review: None,
+        scope_rules: None,
         required_reviews: Some(policy_contracts::RequiredReviewPolicy {
             minimum_reviewers: 2,
             require_provider_independence: true,
@@ -116,9 +117,10 @@ fn real_actions_run_publishes_and_reads_back_blocked_decision() {
         schema_version: SCHEMA_VERSION,
         sensor_profile: profile,
         changed_paths: vec![],
-        risk: Risk::Low,
+        risk: Some(Risk::Low),
         workflow_run_id: run.clone(),
         agent_ready: None,
+        labels: None,
     };
     write_json(&root.join("policy.json"), &policy);
     write_json(&root.join("evidence.json"), &evidence);

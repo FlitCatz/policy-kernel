@@ -33,9 +33,10 @@ both commands on macOS arm64 and Linux x64, with SHA-256 and source-commit asset
 Explicit report selections populate empty test claims with shared parsers before
 import; explicit suite mappings claim coverage. Each TRX has a separate observation
 and approved suite, with no v1 wire-contract change or consumer Rust requirement.
-Tags `v0.1.0` through `v0.1.3` published binary releases. The v0.1.4 source adds
+Tags `v0.1.0` through `v0.1.4` published binary releases. The v0.1.4 release adds
 [[native-contracts#Process-check requirements]] for process-only and mixed local
-scopes. Publishing v0.1.4 requires a version tag.
+scopes. The v0.1.5 source adds [[kernel#Declarative PR scope rules]].
+Publishing v0.1.5 requires a version tag.
 See [[native-contracts#Native command distribution]].
 
 `policy-cli evaluate-ratchet --rule FILE --observation FILE` exposes the existing

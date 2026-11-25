@@ -435,14 +435,14 @@ input layout is `INPUT/<target>/<command>`. The workflow creates a draft only
 after both builds succeed, uploads all assets, then makes the release public.
 
 Select the target explicitly and run the following in a fresh download
-directory. The example uses the published `v0.1.3` release. Process-check
-requirements need `v0.1.4`, which can be selected once that release is published.
+directory. The example uses the published `v0.1.4` release, which includes
+process-check requirements.
 The URL pattern is
 `https://github.com/FlitCatz/policy-kernel/releases/download/<tag>/<asset>`.
 
 ```sh
 set -eu
-tag=v0.1.3
+tag=v0.1.4
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
@@ -462,6 +462,11 @@ manifest in consumer configuration. For recurring CI installs, verify against th
 entries; do not use `latest` or build from source on every run. Downloaded
 checksums detect byte corruption but do not independently authenticate the release
 publisher. Binary distribution does not promote observations or grant readiness.
+
+### v0.1.5 release notes
+
+- Evaluate [policy v5 scope rules](policy-scope-v5.md) from complete PR labels
+  and changed paths through the kernel and the advisory `evaluate-pre` command.
 
 ### v0.1.4 release notes
 

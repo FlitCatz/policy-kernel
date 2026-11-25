@@ -48,22 +48,26 @@ pub fn resolve_required_sensors(
         .iter()
         .map(|path| normalize_path(path))
         .collect::<Result<Vec<_>, _>>()?;
-    let mut required = Vec::new();
-    let mut seen = BTreeSet::new();
+    Ok(required_sensors(profile, &paths, Some(risk)).collect())
+}
 
-    for sensor in &profile.sensors {
-        if (sensor.required
-            || sensor
-                .required_when
-                .iter()
-                .any(|condition| condition_matches(condition, &paths, risk)))
-            && seen.insert(sensor.id.clone())
-        {
-            required.push(sensor.id.clone());
-        }
-    }
-
-    Ok(required)
+/// Callers validate the profile before resolving requirements.
+pub(crate) fn required_sensors<'a>(
+    profile: &'a SensorProfile,
+    paths: &'a [String],
+    risk: Option<Risk>,
+) -> impl Iterator<Item = SensorId> + 'a {
+    profile
+        .sensors
+        .iter()
+        .filter(move |sensor| {
+            sensor.required
+                || sensor
+                    .required_when
+                    .iter()
+                    .any(|condition| condition_matches(condition, paths, risk))
+        })
+        .map(|sensor| sensor.id.clone())
 }
 
 pub fn evaluate_sensor_evidence(
@@ -92,16 +96,16 @@ pub fn evaluate_sensor_evidence_for_change(
         &required,
         evidence,
         adequacy,
-        Some((&paths, risk)),
+        Some((&paths, Some(risk))),
     ))
 }
 
-fn evaluate_sensor_evidence_inner(
+pub(crate) fn evaluate_sensor_evidence_inner(
     profile: &SensorProfile,
     required_sensor_ids: &[SensorId],
     evidence: &[SensorEvidence],
     adequacy: Option<&TestAdequacyEvidence>,
-    context: Option<(&[String], Risk)>,
+    context: Option<(&[String], Option<Risk>)>,
 ) -> SensorEvaluation {
     if let Err(error) = validate_profile(profile) {
         return SensorEvaluation {
@@ -271,7 +275,7 @@ fn evaluate_sensor_evidence_inner(
     SensorEvaluation { status, reasons }
 }
 
-fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError> {
+pub(crate) fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError> {
     profile
         .validate_version()
         .map_err(SensorResolutionError::InvalidVersion)?;
@@ -321,8 +325,14 @@ pub(crate) fn normalize_path(path: &str) -> Result<String, SensorResolutionError
         .join("/"))
 }
 
-pub(crate) fn condition_matches(condition: &SensorCondition, paths: &[String], risk: Risk) -> bool {
-    let risk_matches = condition.risks.is_empty() || condition.risks.contains(&risk);
+pub(crate) fn condition_matches(
+    condition: &SensorCondition,
+    paths: &[String],
+    risk: Option<Risk>,
+) -> bool {
+    // With no trusted risk, retain any requirement that could apply to these paths.
+    let risk_matches =
+        condition.risks.is_empty() || risk.is_none_or(|risk| condition.risks.contains(&risk));
     let path_matches = condition.path_globs.is_empty()
         || condition.path_globs.iter().any(|pattern| {
             path_glob(pattern)
@@ -334,8 +344,9 @@ pub(crate) fn condition_matches(condition: &SensorCondition, paths: &[String], r
 
 /// An exemption must cover the entire known change. Matching one changed path,
 /// as `required_when` does, would let a docs-only condition exempt a code change.
-fn condition_covers(condition: &SensorCondition, paths: &[String], risk: Risk) -> bool {
-    let risk_matches = condition.risks.is_empty() || condition.risks.contains(&risk);
+fn condition_covers(condition: &SensorCondition, paths: &[String], risk: Option<Risk>) -> bool {
+    let risk_matches =
+        condition.risks.is_empty() || risk.is_some_and(|risk| condition.risks.contains(&risk));
     let matchers = condition
         .path_globs
         .iter()

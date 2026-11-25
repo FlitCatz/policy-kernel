@@ -6,7 +6,7 @@ of GitHub records or an update to the reference controller's review floor.
 
 ## Declaration and compatibility
 
-Add this independent optional field to a policy v4 snapshot:
+Add this independent optional field to a policy v4 or v5 snapshot:
 
 ```json
 "owner_with_independent_agent_review": {
@@ -17,7 +17,8 @@ Add this independent optional field to a policy v4 snapshot:
 
 The owner identity must be nonblank without NUL, and the age must be positive.
 `required_reviews` remains mandatory. Versions 1–3 reject the field, including
-null; v4 rejects null too. When absent, v4 retains its existing quorum evaluation.
+null. Both v4 and v5 require an object when the field is present. Without the
+field, the declared reviewer quorum applies.
 Legacy policy/evidence serialization and digests are unchanged when the new fields
 are absent. Adoption changes the policy digest and requires owner reapproval and
 evidence binding to that digest; no existing policy must migrate.

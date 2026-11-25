@@ -317,6 +317,20 @@ fn validate_sensors(input: &PreMergeEvaluationInput, gates: &mut Gates) {
     let Some(context) = &input.context else {
         return;
     };
+    if input.policy.schema_version == 5 {
+        match crate::scope::evaluate_scoped_sensors(input, context) {
+            Ok(result) => record_sensor_result(result, gates),
+            Err(error) => gates.unknown("PK-PRE-SCOPE-INVALID", &error.to_string()),
+        }
+        return;
+    }
+    let Some(risk) = context.risk else {
+        gates.unknown(
+            "PK-PRE-RISK-MISSING",
+            "legacy policy requires the observed risk",
+        );
+        return;
+    };
     // Union explicit policy requirements with profile-resolved requirements while
     // keeping the real change context for not-applicable validation.
     let mut profile = context.sensor_profile.clone();
@@ -334,20 +348,24 @@ fn validate_sensors(input: &PreMergeEvaluationInput, gates: &mut Gates) {
     match evaluate_sensor_evidence_for_change(
         &profile,
         &paths,
-        context.risk,
+        risk,
         &input.evidence.sensors,
         input.evidence.test_adequacy.as_ref(),
     ) {
-        Ok(result) => gates.extend(
-            match result.status {
-                SensorEvaluationStatus::Passed => PreMergeStatus::ReadyToMerge,
-                SensorEvaluationStatus::Blocked => PreMergeStatus::Blocked,
-                SensorEvaluationStatus::Inconclusive => PreMergeStatus::Inconclusive,
-            },
-            result.reasons,
-        ),
+        Ok(result) => record_sensor_result(result, gates),
         Err(error) => gates.unknown("PK-SENSOR-PROFILE-INVALID", &error.to_string()),
     }
+}
+
+fn record_sensor_result(result: crate::SensorEvaluation, gates: &mut Gates) {
+    gates.extend(
+        match result.status {
+            SensorEvaluationStatus::Passed => PreMergeStatus::ReadyToMerge,
+            SensorEvaluationStatus::Blocked => PreMergeStatus::Blocked,
+            SensorEvaluationStatus::Inconclusive => PreMergeStatus::Inconclusive,
+        },
+        result.reasons,
+    );
 }
 
 fn check_freshness(input: &PreMergeEvaluationInput, timestamp: &UtcTimestamp, gates: &mut Gates) {

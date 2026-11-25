@@ -37,7 +37,7 @@ JSON object do not establish trusted provenance. The schema-2 controller
 authenticates the opt-in [local-runner class](#local-runner-attestation)
 using the signed statement, the approved scope and independent GitHub observations.
 
-Policy schema v3 requires a digest-bound `required_reviews` object:
+Policy schemas v3 through v5 require a digest-bound `required_reviews` object:
 `minimum_reviewers` is a positive integer (1–4294967295),
 `require_provider_independence` must be `true`, and `allowed_providers` is an
 explicit list (empty permits any provider). The existing independence invariant
@@ -53,8 +53,8 @@ authorize readiness or shipping: `PK-POLICY-V3-MIGRATION-REQUIRED` requires owne
 reapproval as v3. No implicit quorum is inserted under an old digest. Migration
 adds `required_reviews`, changes `schema_version` to 3, and recomputes the policy
 digest; evidence, current-run bindings, and approvals must bind the new digest.
-V1/v2 reject the new field (including null); v3 rejects its absence, null, zero
-quorum, or disabled independence. Direct Rust construction is checked too.
+V1/v2 reject the field, including null. V3 through v5 reject its absence, null,
+zero quorum, or disabled independence. Direct Rust construction is checked too.
 This policy version is separate from project-profile schema versions; existing
 consumer project profiles are not automatically rewritten or reapproved.
 
@@ -64,7 +64,7 @@ The reference controller retains its floor of two approving providers. Its
 assertion, not an independent policy knob. Policy-core enforces the declared
 quorum by default for every caller, including local advisory evaluation and other adapters.
 
-Policy v4 can independently opt into
+Policy v4 or v5 can independently opt into
 [`owner_with_independent_agent_review`](integrations/owner-review-policy-v4.md).
 For an authenticated owner-authored PR, a separate owner approval or authorizing
 comment plus one independent approving automated review replaces the numerical
@@ -115,6 +115,12 @@ means one arbitrary character. This pattern now fails closed: use the two entrie
 `src/*.js` and `src/*.jsx`. Replace `**.js` with `**/*.js`. This subset keeps the
 existing matcher small without silently accepting incompatible syntax. Existing
 shipped profiles and fixtures use supported patterns and need no migration.
+
+[Policy v5](integrations/policy-scope-v5.md) applies the same subset to
+digest-bound PR scope rules. Complete changed paths select all matching rule
+requirements or the path fallback. Complete PR labels can add to those
+requirements. The trusted context must supply both observations for the PR
+under evaluation. Scope errors withhold readiness.
 
 A blocked review whose Medium, High
 and Critical findings are all validly waived does not conflict with an approving
@@ -243,7 +249,7 @@ Task 11 plus sensor evaluation (`sensors.rs`), added on 2026-09-30. A completed 
 timeouts; unviable mutants remain separately counted, never counted as killed.
 Tool failure, missing files, incomplete outcomes and skipped coverage cannot pass.
 
-Knowledge claims and indexes provide context, not approvals. Policy schemas v2/v3 can
+Knowledge claims and indexes supply context. Policy schemas v2 through v5 can
 declare `required_knowledge` entries with `kind` (`lat_claim` or `code_graph_index`),
 an exact `source` identity, and `required_when` conditions. An empty condition list
 means always required. Otherwise any condition applies when both its `risks` and

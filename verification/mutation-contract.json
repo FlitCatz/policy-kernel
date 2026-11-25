@@ -202,26 +202,26 @@
           "span": {
             "end": {
               "column": 6,
-              "line": 155
+              "line": 157
             },
             "start": {
               "column": 5,
-              "line": 153
+              "line": 155
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:154:9: replace ValidationResult::reasons -> &[Reason] with Vec::leak(vec![Default::default()])",
+        "name": "crates/policy-core/src/provenance.rs:156:9: replace ValidationResult::reasons -> &[Reason] with Vec::leak(vec![Default::default()])",
         "package": "policy-core",
         "replacement": "Vec::leak(vec![Default::default()])",
         "span": {
           "end": {
             "column": 22,
-            "line": 154
+            "line": 156
           },
           "start": {
             "column": 9,
-            "line": 154
+            "line": 156
           }
         }
       },
@@ -230,11 +230,11 @@
       "span": {
         "end": {
           "column": 22,
-          "line": 154
+          "line": 156
         },
         "start": {
           "column": 9,
-          "line": 154
+          "line": 156
         }
       }
     },
@@ -249,26 +249,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 249
+              "line": 251
             },
             "start": {
               "column": 1,
-              "line": 237
+              "line": 239
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:238:5: replace child_digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
+        "name": "crates/policy-core/src/provenance.rs:240:5: replace child_digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
         "package": "policy-core",
         "replacement": "Some(Default::default())",
         "span": {
           "end": {
             "column": 6,
-            "line": 248
+            "line": 250
           },
           "start": {
             "column": 5,
-            "line": 238
+            "line": 240
           }
         }
       },
@@ -277,11 +277,11 @@
       "span": {
         "end": {
           "column": 6,
-          "line": 248
+          "line": 250
         },
         "start": {
           "column": 5,
-          "line": 238
+          "line": 240
         }
       }
     },
@@ -296,26 +296,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 253
+              "line": 255
             },
             "start": {
               "column": 1,
-              "line": 251
+              "line": 253
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:252:5: replace digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
+        "name": "crates/policy-core/src/provenance.rs:254:5: replace digest -> Option<policy_contracts::Sha256Digest> with Some(Default::default())",
         "package": "policy-core",
         "replacement": "Some(Default::default())",
         "span": {
           "end": {
             "column": 33,
-            "line": 252
+            "line": 254
           },
           "start": {
             "column": 5,
-            "line": 252
+            "line": 254
           }
         }
       },
@@ -324,11 +324,11 @@
       "span": {
         "end": {
           "column": 33,
-          "line": 252
+          "line": 254
         },
         "start": {
           "column": 5,
-          "line": 252
+          "line": 254
         }
       }
     },
@@ -343,26 +343,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 533
+              "line": 535
             },
             "start": {
               "column": 1,
-              "line": 511
+              "line": 513
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:515:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
+        "name": "crates/policy-core/src/provenance.rs:517:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
         "package": "policy-core",
         "replacement": "::std::iter::once(Box::leak(Box::new(Default::default())))",
         "span": {
           "end": {
             "column": 68,
-            "line": 532
+            "line": 534
           },
           "start": {
             "column": 5,
-            "line": 515
+            "line": 517
           }
         }
       },
@@ -371,11 +371,11 @@
       "span": {
         "end": {
           "column": 68,
-          "line": 532
+          "line": 534
         },
         "start": {
           "column": 5,
-          "line": 515
+          "line": 517
         }
       }
     },
@@ -428,7 +428,7 @@
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace resolve_required_sensors -> Result<Vec<SensorId>, SensorResolutionError> with Ok(vec![Default::default()])\n@@ -38,37 +38,17 @@\n     InvalidGlob(String),\n }\n \n pub fn resolve_required_sensors(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n ) -> Result<Vec<SensorId>, SensorResolutionError> {\n-    validate_profile(profile)?;\n-    let paths = changed_paths\n-        .iter()\n-        .map(|path| normalize_path(path))\n-        .collect::<Result<Vec<_>, _>>()?;\n-    let mut required = Vec::new();\n-    let mut seen = BTreeSet::new();\n-\n-    for sensor in &profile.sensors {\n-        if (sensor.required\n-            || sensor\n-                .required_when\n-                .iter()\n-                .any(|condition| condition_matches(condition, &paths, risk)))\n-            && seen.insert(sensor.id.clone())\n-        {\n-            required.push(sensor.id.clone());\n-        }\n-    }\n-\n-    Ok(required)\n+    Ok(vec![Default::default()]) /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn evaluate_sensor_evidence(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> SensorEvaluation {\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace resolve_required_sensors -> Result<Vec<SensorId>, SensorResolutionError> with Ok(vec![Default::default()])\n@@ -38,22 +38,17 @@\n     InvalidGlob(String),\n }\n \n pub fn resolve_required_sensors(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n ) -> Result<Vec<SensorId>, SensorResolutionError> {\n-    validate_profile(profile)?;\n-    let paths = changed_paths\n-        .iter()\n-        .map(|path| normalize_path(path))\n-        .collect::<Result<Vec<_>, _>>()?;\n-    Ok(required_sensors(profile, &paths, Some(risk)).collect())\n+    Ok(vec![Default::default()]) /* ~ changed by cargo-mutants ~ */\n }\n \n /// Callers validate the profile before resolving requirements.\n pub(crate) fn required_sensors<'a>(\n     profile: &'a SensorProfile,\n     paths: &'a [String],\n     risk: Option<Risk>,\n ) -> impl Iterator<Item = SensorId> + 'a {\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "resolve_required_sensors",
@@ -436,7 +436,7 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 67
+              "line": 52
             },
             "start": {
               "column": 1,
@@ -450,8 +450,8 @@
         "replacement": "Ok(vec![Default::default()])",
         "span": {
           "end": {
-            "column": 17,
-            "line": 66
+            "column": 64,
+            "line": 51
           },
           "start": {
             "column": 5,
@@ -463,8 +463,8 @@
       "replacement": "Ok(vec![SensorId::parse(\"mutated-sensor\").unwrap()])",
       "span": {
         "end": {
-          "column": 17,
-          "line": 66
+          "column": 64,
+          "line": 51
         },
         "start": {
           "column": 5,
@@ -474,7 +474,7 @@
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence -> SensorEvaluation with Default::default()\n@@ -67,17 +67,17 @@\n }\n \n pub fn evaluate_sensor_evidence(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> SensorEvaluation {\n-    evaluate_sensor_evidence_inner(profile, required_sensor_ids, evidence, adequacy, None)\n+    Default::default() /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn evaluate_sensor_evidence_for_change(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence -> SensorEvaluation with Default::default()\n@@ -71,17 +71,17 @@\n }\n \n pub fn evaluate_sensor_evidence(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> SensorEvaluation {\n-    evaluate_sensor_evidence_inner(profile, required_sensor_ids, evidence, adequacy, None)\n+    Default::default() /* ~ changed by cargo-mutants ~ */\n }\n \n pub fn evaluate_sensor_evidence_for_change(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "evaluate_sensor_evidence",
@@ -482,26 +482,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 76
+              "line": 80
             },
             "start": {
               "column": 1,
-              "line": 69
+              "line": 73
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/sensors.rs:75:5: replace evaluate_sensor_evidence -> SensorEvaluation with Default::default()",
+        "name": "crates/policy-core/src/sensors.rs:79:5: replace evaluate_sensor_evidence -> SensorEvaluation with Default::default()",
         "package": "policy-core",
         "replacement": "Default::default()",
         "span": {
           "end": {
             "column": 91,
-            "line": 75
+            "line": 79
           },
           "start": {
             "column": 5,
-            "line": 75
+            "line": 79
           }
         }
       },
@@ -510,17 +510,17 @@
       "span": {
         "end": {
           "column": 91,
-          "line": 75
+          "line": 79
         },
         "start": {
           "column": 5,
-          "line": 75
+          "line": 79
         }
       }
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence_for_change -> Result<SensorEvaluation, SensorResolutionError> with Ok(Default::default())\n@@ -77,28 +77,17 @@\n \n pub fn evaluate_sensor_evidence_for_change(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> Result<SensorEvaluation, SensorResolutionError> {\n-    let required = resolve_required_sensors(profile, changed_paths, risk)?;\n-    let paths = changed_paths\n-        .iter()\n-        .map(|path| normalize_path(path))\n-        .collect::<Result<Vec<_>, _>>()?;\n-    Ok(evaluate_sensor_evidence_inner(\n-        profile,\n-        &required,\n-        evidence,\n-        adequacy,\n-        Some((&paths, risk)),\n-    ))\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n fn evaluate_sensor_evidence_inner(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n     context: Option<(&[String], Risk)>,\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence_for_change -> Result<SensorEvaluation, SensorResolutionError> with Ok(Default::default())\n@@ -81,28 +81,17 @@\n \n pub fn evaluate_sensor_evidence_for_change(\n     profile: &SensorProfile,\n     changed_paths: &[&str],\n     risk: Risk,\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n ) -> Result<SensorEvaluation, SensorResolutionError> {\n-    let required = resolve_required_sensors(profile, changed_paths, risk)?;\n-    let paths = changed_paths\n-        .iter()\n-        .map(|path| normalize_path(path))\n-        .collect::<Result<Vec<_>, _>>()?;\n-    Ok(evaluate_sensor_evidence_inner(\n-        profile,\n-        &required,\n-        evidence,\n-        adequacy,\n-        Some((&paths, Some(risk))),\n-    ))\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn evaluate_sensor_evidence_inner(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n     context: Option<(&[String], Option<Risk>)>,\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "evaluate_sensor_evidence_for_change",
@@ -528,26 +528,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 97
+              "line": 101
             },
             "start": {
               "column": 1,
-              "line": 78
+              "line": 82
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/sensors.rs:85:5: replace evaluate_sensor_evidence_for_change -> Result<SensorEvaluation, SensorResolutionError> with Ok(Default::default())",
+        "name": "crates/policy-core/src/sensors.rs:89:5: replace evaluate_sensor_evidence_for_change -> Result<SensorEvaluation, SensorResolutionError> with Ok(Default::default())",
         "package": "policy-core",
         "replacement": "Ok(Default::default())",
         "span": {
           "end": {
             "column": 7,
-            "line": 96
+            "line": 100
           },
           "start": {
             "column": 5,
-            "line": 85
+            "line": 89
           }
         }
       },
@@ -556,17 +556,17 @@
       "span": {
         "end": {
           "column": 7,
-          "line": 96
+          "line": 100
         },
         "start": {
           "column": 5,
-          "line": 85
+          "line": 89
         }
       }
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence_inner -> SensorEvaluation with Default::default()\n@@ -98,182 +98,17 @@\n \n fn evaluate_sensor_evidence_inner(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n     context: Option<(&[String], Risk)>,\n ) -> SensorEvaluation {\n-    if let Err(error) = validate_profile(profile) {\n-        return SensorEvaluation {\n-            status: SensorEvaluationStatus::Inconclusive,\n-            reasons: vec![Reason {\n-                code: \"PK-SENSOR-PROFILE-INVALID\".to_owned(),\n-                message: error.to_string(),\n-            }],\n-        };\n-    }\n-    let definitions = profile\n-        .sensors\n-        .iter()\n-        .map(|sensor| (&sensor.id, sensor))\n-        .collect::<BTreeMap<_, _>>();\n-    let mut by_id: BTreeMap<&SensorId, Vec<&SensorEvidence>> = BTreeMap::new();\n-    for item in evidence {\n-        by_id.entry(&item.sensor_id).or_default().push(item);\n-    }\n-\n-    let mut reasons = Vec::new();\n-    for sensor_id in required_sensor_ids {\n-        let Some(items) = by_id.get(sensor_id) else {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-MISSING\",\n-                \"required sensor evidence is missing\",\n-            );\n-            continue;\n-        };\n-        if items.len() != 1 {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-DUPLICATE\",\n-                \"required sensor evidence must occur exactly once\",\n-            );\n-            continue;\n-        }\n-\n-        let item = items[0];\n-        let definition = definitions.get(sensor_id).copied();\n-        if definition.is_none() {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-UNKNOWN\",\n-                \"required sensor is absent from the sensor profile\",\n-            );\n-            continue;\n-        }\n-        match item.status {\n-            SensorStatus::Passed => {\n-                if definition\n-                    .unwrap()\n-                    .result_binding\n-                    .as_ref()\n-                    .is_some_and(|binding| {\n-                        item.configuration_digest.as_ref() != Some(&binding.configuration_digest)\n-                            || item.parser_version.as_deref()\n-                                != Some(binding.parser_version.as_str())\n-                            || item.resolved_command != binding.resolved_command\n-                    })\n-                {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-RESULT-BINDING\",\n-                        \"sensor result does not match its policy-bound configuration, parser, and command\",\n-                    );\n-                }\n-                // Partial counts are rejected by `validate_typed_result`; here the\n-                // profile additionally forbids the all-absent form.\n-                if definition.unwrap().result_requirement\n-                    == Some(SensorResultRequirement::TestCounts)\n-                    && item.discovered.is_none()\n-                {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-RESULT-INCOMPLETE\",\n-                        \"sensor profile requires discovered, executed, and passed test counts\",\n-                    );\n-                }\n-                validate_typed_result(item, &mut reasons);\n-                if let Some(exit_code) = item.exit_code {\n-                    if !definition.unwrap().accepted_exit_codes.contains(&exit_code) {\n-                        insert_reason(\n-                            &mut reasons,\n-                            \"PK-SENSOR-EXIT-CODE\",\n-                            \"sensor exit code is not accepted by the profile\",\n-                        );\n-                    }\n-                }\n-            }\n-            SensorStatus::Failed => {\n-                validate_typed_result(item, &mut reasons);\n-                insert_reason(\n-                    &mut reasons,\n-                    \"PK-SENSOR-FAILED\",\n-                    \"a required sensor reported an executed failure\",\n-                );\n-            }\n-            SensorStatus::TimedOut => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-TIMEOUT\",\n-                \"a required sensor timed out\",\n-            ),\n-            SensorStatus::Skipped => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-SKIPPED\",\n-                \"a required sensor was skipped\",\n-            ),\n-            SensorStatus::Unparsable => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-UNPARSABLE\",\n-                \"a required sensor result could not be parsed\",\n-            ),\n-            SensorStatus::NotApplicable => {\n-                let condition_matches_context = context\n-                    .zip(item.not_applicable_condition_id.as_deref())\n-                    .is_some_and(|((paths, risk), condition_id)| {\n-                        definition\n-                            .unwrap()\n-                            .not_applicable_when\n-                            .iter()\n-                            .any(|condition| {\n-                                condition.id == condition_id\n-                                    && condition_covers(condition, paths, risk)\n-                            })\n-                    });\n-                let reason_recorded = item\n-                    .not_applicable_reason\n-                    .as_deref()\n-                    .is_some_and(|reason| !reason.trim().is_empty());\n-                if !condition_matches_context || !reason_recorded {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-NOT-APPLICABLE-INVALID\",\n-                        \"not-applicable evidence needs a declared condition and reason\",\n-                    );\n-                }\n-            }\n-        }\n-    }\n-\n-    evaluate_adequacy(&profile.adequacy, adequacy, &mut reasons);\n-\n-    let status = if reasons.iter().any(|reason| {\n-        matches!(\n-            reason.code.as_str(),\n-            \"PK-SENSOR-FAILED\"\n-                | \"PK-SENSOR-EXIT-CODE\"\n-                | \"PK-SENSOR-RESULT-COUNT-MISMATCH\"\n-                | \"PK-ADEQ-NO-TESTS\"\n-                | \"PK-ADEQ-COUNT-MISMATCH\"\n-                | \"PK-ADEQ-CRITERION-UNMAPPED\"\n-                | \"PK-ADEQ-BEHAVIOR-UNMAPPED\"\n-                | \"PK-ADEQ-NEGATIVE-CASE-MISSING\"\n-                | \"PK-ADEQ-UNEXECUTED-MAPPING\"\n-                | \"PK-ADEQ-DUPLICATE-TEST\"\n-        )\n-    }) {\n-        SensorEvaluationStatus::Blocked\n-    } else if reasons.is_empty() {\n-        SensorEvaluationStatus::Passed\n-    } else {\n-        SensorEvaluationStatus::Inconclusive\n-    };\n-\n-    SensorEvaluation { status, reasons }\n+    Default::default() /* ~ changed by cargo-mutants ~ */\n }\n \n fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError> {\n     profile\n         .validate_version()\n         .map_err(SensorResolutionError::InvalidVersion)?;\n     let mut sensors = BTreeSet::new();\n     for sensor in &profile.sensors {\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace evaluate_sensor_evidence_inner -> SensorEvaluation with Default::default()\n@@ -102,182 +102,17 @@\n \n pub(crate) fn evaluate_sensor_evidence_inner(\n     profile: &SensorProfile,\n     required_sensor_ids: &[SensorId],\n     evidence: &[SensorEvidence],\n     adequacy: Option<&TestAdequacyEvidence>,\n     context: Option<(&[String], Option<Risk>)>,\n ) -> SensorEvaluation {\n-    if let Err(error) = validate_profile(profile) {\n-        return SensorEvaluation {\n-            status: SensorEvaluationStatus::Inconclusive,\n-            reasons: vec![Reason {\n-                code: \"PK-SENSOR-PROFILE-INVALID\".to_owned(),\n-                message: error.to_string(),\n-            }],\n-        };\n-    }\n-    let definitions = profile\n-        .sensors\n-        .iter()\n-        .map(|sensor| (&sensor.id, sensor))\n-        .collect::<BTreeMap<_, _>>();\n-    let mut by_id: BTreeMap<&SensorId, Vec<&SensorEvidence>> = BTreeMap::new();\n-    for item in evidence {\n-        by_id.entry(&item.sensor_id).or_default().push(item);\n-    }\n-\n-    let mut reasons = Vec::new();\n-    for sensor_id in required_sensor_ids {\n-        let Some(items) = by_id.get(sensor_id) else {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-MISSING\",\n-                \"required sensor evidence is missing\",\n-            );\n-            continue;\n-        };\n-        if items.len() != 1 {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-DUPLICATE\",\n-                \"required sensor evidence must occur exactly once\",\n-            );\n-            continue;\n-        }\n-\n-        let item = items[0];\n-        let definition = definitions.get(sensor_id).copied();\n-        if definition.is_none() {\n-            insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-UNKNOWN\",\n-                \"required sensor is absent from the sensor profile\",\n-            );\n-            continue;\n-        }\n-        match item.status {\n-            SensorStatus::Passed => {\n-                if definition\n-                    .unwrap()\n-                    .result_binding\n-                    .as_ref()\n-                    .is_some_and(|binding| {\n-                        item.configuration_digest.as_ref() != Some(&binding.configuration_digest)\n-                            || item.parser_version.as_deref()\n-                                != Some(binding.parser_version.as_str())\n-                            || item.resolved_command != binding.resolved_command\n-                    })\n-                {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-RESULT-BINDING\",\n-                        \"sensor result does not match its policy-bound configuration, parser, and command\",\n-                    );\n-                }\n-                // Partial counts are rejected by `validate_typed_result`; here the\n-                // profile additionally forbids the all-absent form.\n-                if definition.unwrap().result_requirement\n-                    == Some(SensorResultRequirement::TestCounts)\n-                    && item.discovered.is_none()\n-                {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-RESULT-INCOMPLETE\",\n-                        \"sensor profile requires discovered, executed, and passed test counts\",\n-                    );\n-                }\n-                validate_typed_result(item, &mut reasons);\n-                if let Some(exit_code) = item.exit_code {\n-                    if !definition.unwrap().accepted_exit_codes.contains(&exit_code) {\n-                        insert_reason(\n-                            &mut reasons,\n-                            \"PK-SENSOR-EXIT-CODE\",\n-                            \"sensor exit code is not accepted by the profile\",\n-                        );\n-                    }\n-                }\n-            }\n-            SensorStatus::Failed => {\n-                validate_typed_result(item, &mut reasons);\n-                insert_reason(\n-                    &mut reasons,\n-                    \"PK-SENSOR-FAILED\",\n-                    \"a required sensor reported an executed failure\",\n-                );\n-            }\n-            SensorStatus::TimedOut => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-TIMEOUT\",\n-                \"a required sensor timed out\",\n-            ),\n-            SensorStatus::Skipped => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-SKIPPED\",\n-                \"a required sensor was skipped\",\n-            ),\n-            SensorStatus::Unparsable => insert_reason(\n-                &mut reasons,\n-                \"PK-SENSOR-UNPARSABLE\",\n-                \"a required sensor result could not be parsed\",\n-            ),\n-            SensorStatus::NotApplicable => {\n-                let condition_matches_context = context\n-                    .zip(item.not_applicable_condition_id.as_deref())\n-                    .is_some_and(|((paths, risk), condition_id)| {\n-                        definition\n-                            .unwrap()\n-                            .not_applicable_when\n-                            .iter()\n-                            .any(|condition| {\n-                                condition.id == condition_id\n-                                    && condition_covers(condition, paths, risk)\n-                            })\n-                    });\n-                let reason_recorded = item\n-                    .not_applicable_reason\n-                    .as_deref()\n-                    .is_some_and(|reason| !reason.trim().is_empty());\n-                if !condition_matches_context || !reason_recorded {\n-                    insert_reason(\n-                        &mut reasons,\n-                        \"PK-SENSOR-NOT-APPLICABLE-INVALID\",\n-                        \"not-applicable evidence needs a declared condition and reason\",\n-                    );\n-                }\n-            }\n-        }\n-    }\n-\n-    evaluate_adequacy(&profile.adequacy, adequacy, &mut reasons);\n-\n-    let status = if reasons.iter().any(|reason| {\n-        matches!(\n-            reason.code.as_str(),\n-            \"PK-SENSOR-FAILED\"\n-                | \"PK-SENSOR-EXIT-CODE\"\n-                | \"PK-SENSOR-RESULT-COUNT-MISMATCH\"\n-                | \"PK-ADEQ-NO-TESTS\"\n-                | \"PK-ADEQ-COUNT-MISMATCH\"\n-                | \"PK-ADEQ-CRITERION-UNMAPPED\"\n-                | \"PK-ADEQ-BEHAVIOR-UNMAPPED\"\n-                | \"PK-ADEQ-NEGATIVE-CASE-MISSING\"\n-                | \"PK-ADEQ-UNEXECUTED-MAPPING\"\n-                | \"PK-ADEQ-DUPLICATE-TEST\"\n-        )\n-    }) {\n-        SensorEvaluationStatus::Blocked\n-    } else if reasons.is_empty() {\n-        SensorEvaluationStatus::Passed\n-    } else {\n-        SensorEvaluationStatus::Inconclusive\n-    };\n-\n-    SensorEvaluation { status, reasons }\n+    Default::default() /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn validate_profile(profile: &SensorProfile) -> Result<(), SensorResolutionError> {\n     profile\n         .validate_version()\n         .map_err(SensorResolutionError::InvalidVersion)?;\n     let mut sensors = BTreeSet::new();\n     for sensor in &profile.sensors {\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "evaluate_sensor_evidence_inner",
@@ -574,26 +574,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 272
+              "line": 276
             },
             "start": {
               "column": 1,
-              "line": 99
+              "line": 103
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/sensors.rs:106:5: replace evaluate_sensor_evidence_inner -> SensorEvaluation with Default::default()",
+        "name": "crates/policy-core/src/sensors.rs:110:5: replace evaluate_sensor_evidence_inner -> SensorEvaluation with Default::default()",
         "package": "policy-core",
         "replacement": "Default::default()",
         "span": {
           "end": {
             "column": 41,
-            "line": 271
+            "line": 275
           },
           "start": {
             "column": 5,
-            "line": 106
+            "line": 110
           }
         }
       },
@@ -602,17 +602,17 @@
       "span": {
         "end": {
           "column": 41,
-          "line": 271
+          "line": 275
         },
         "start": {
           "column": 5,
-          "line": 106
+          "line": 110
         }
       }
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())\n@@ -586,24 +586,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// GitHub Actions subset: ASCII alphanumerics, `.`, `_`, `-`, `/`, segment-local\n /// `*`, and whole-segment `**`. Reject other syntax before compiling with globset.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, SensorResolutionError> {\n-    let invalid = || SensorResolutionError::InvalidGlob(pattern.to_owned());\n-    if !pattern\n-        .bytes()\n-        .all(|byte| byte.is_ascii_alphanumeric() || b\"._-/*\".contains(&byte))\n-        || pattern.split('/').any(|segment| {\n-            matches!(segment, \"\" | \".\" | \"..\") || (segment.contains(\"**\") && segment != \"**\")\n-        })\n-    {\n-        return Err(invalid());\n-    }\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n-        .map_err(|_| invalid())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
+        "diff": "--- crates/policy-core/src/sensors.rs\n+++ replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())\n@@ -597,24 +597,10 @@\n         });\n         reasons.sort_by(|left, right| left.code.cmp(&right.code));\n     }\n }\n \n /// GitHub Actions subset: ASCII alphanumerics, `.`, `_`, `-`, `/`, segment-local\n /// `*`, and whole-segment `**`. Reject other syntax before compiling with globset.\n pub(crate) fn path_glob(pattern: &str) -> Result<GlobMatcher, SensorResolutionError> {\n-    let invalid = || SensorResolutionError::InvalidGlob(pattern.to_owned());\n-    if !pattern\n-        .bytes()\n-        .all(|byte| byte.is_ascii_alphanumeric() || b\"._-/*\".contains(&byte))\n-        || pattern.split('/').any(|segment| {\n-            matches!(segment, \"\" | \".\" | \"..\") || (segment.contains(\"**\") && segment != \"**\")\n-        })\n-    {\n-        return Err(invalid());\n-    }\n-    GlobBuilder::new(pattern)\n-        .literal_separator(true)\n-        .build()\n-        .map(|glob| glob.compile_matcher())\n-        .map_err(|_| invalid())\n+    Ok(Default::default()) /* ~ changed by cargo-mutants ~ */\n }\n",
         "file": "crates/policy-core/src/sensors.rs",
         "function": {
           "function_name": "path_glob",
@@ -620,26 +620,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 609
+              "line": 620
             },
             "start": {
               "column": 1,
-              "line": 591
+              "line": 602
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/sensors.rs:594:5: replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())",
+        "name": "crates/policy-core/src/sensors.rs:605:5: replace path_glob -> Result<GlobMatcher, SensorResolutionError> with Ok(Default::default())",
         "package": "policy-core",
         "replacement": "Ok(Default::default())",
         "span": {
           "end": {
             "column": 32,
-            "line": 608
+            "line": 619
           },
           "start": {
             "column": 5,
-            "line": 594
+            "line": 605
           }
         }
       },
@@ -648,11 +648,11 @@
       "span": {
         "end": {
           "column": 32,
-          "line": 608
+          "line": 619
         },
         "start": {
           "column": 5,
-          "line": 594
+          "line": 605
         }
       }
     },
@@ -802,7 +802,7 @@
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/provenance.rs\n+++ replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))\n@@ -492,24 +492,17 @@\n     })\n }\n \n fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {\n     evidence_trusts(bundle).any(|(trust, _)| !is_ci_grade(trust))\n }\n \n fn evidence_trusts(bundle: &EvidenceBundle) -> impl Iterator<Item = (TrustClass, bool)> + '_ {\n-    bundle\n-        .modifications\n-        .iter()\n-        .map(|value| (value.trust, false))\n-        .chain(bundle.executions.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.reviews.iter().map(|value| (value.trust, false)))\n-        .chain(bundle.sensors.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.knowledge.iter().map(|value| (value.trust, false)))\n+    ::std::iter::once((Default::default(), true)) /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn uses_local_freshness(mode: EvaluationMode, trust: TrustClass) -> bool {\n     mode == EvaluationMode::Authoritative && trust == TrustClass::LocalRunnerAttested\n }\n \n fn timestamps(\n     bundle: &EvidenceBundle,\n",
+        "diff": "--- crates/policy-core/src/provenance.rs\n+++ replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))\n@@ -491,24 +491,17 @@\n     })\n }\n \n fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {\n     evidence_trusts(bundle).any(|(trust, _)| !is_ci_grade(trust))\n }\n \n fn evidence_trusts(bundle: &EvidenceBundle) -> impl Iterator<Item = (TrustClass, bool)> + '_ {\n-    bundle\n-        .modifications\n-        .iter()\n-        .map(|value| (value.trust, false))\n-        .chain(bundle.executions.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.reviews.iter().map(|value| (value.trust, false)))\n-        .chain(bundle.sensors.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.knowledge.iter().map(|value| (value.trust, false)))\n+    ::std::iter::once((Default::default(), true)) /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn uses_local_freshness(mode: EvaluationMode, trust: TrustClass) -> bool {\n     mode == EvaluationMode::Authoritative && trust == TrustClass::LocalRunnerAttested\n }\n \n fn timestamps(\n     bundle: &EvidenceBundle,\n",
         "file": "crates/policy-core/src/provenance.rs",
         "function": {
           "function_name": "evidence_trusts",
@@ -810,26 +810,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 505
+              "line": 507
             },
             "start": {
               "column": 1,
-              "line": 496
+              "line": 498
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:497:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))",
+        "name": "crates/policy-core/src/provenance.rs:499:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))",
         "package": "policy-core",
         "replacement": "::std::iter::once((Default::default(), true))",
         "span": {
           "end": {
             "column": 74,
-            "line": 504
+            "line": 506
           },
           "start": {
             "column": 5,
-            "line": 497
+            "line": 499
           }
         }
       },
@@ -838,17 +838,17 @@
       "span": {
         "end": {
           "column": 74,
-          "line": 504
+          "line": 506
         },
         "start": {
           "column": 5,
-          "line": 497
+          "line": 499
         }
       }
     },
     {
       "original": {
-        "diff": "--- crates/policy-core/src/provenance.rs\n+++ replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))\n@@ -492,24 +492,17 @@\n     })\n }\n \n fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {\n     evidence_trusts(bundle).any(|(trust, _)| !is_ci_grade(trust))\n }\n \n fn evidence_trusts(bundle: &EvidenceBundle) -> impl Iterator<Item = (TrustClass, bool)> + '_ {\n-    bundle\n-        .modifications\n-        .iter()\n-        .map(|value| (value.trust, false))\n-        .chain(bundle.executions.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.reviews.iter().map(|value| (value.trust, false)))\n-        .chain(bundle.sensors.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.knowledge.iter().map(|value| (value.trust, false)))\n+    ::std::iter::once((Default::default(), false)) /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn uses_local_freshness(mode: EvaluationMode, trust: TrustClass) -> bool {\n     mode == EvaluationMode::Authoritative && trust == TrustClass::LocalRunnerAttested\n }\n \n fn timestamps(\n     bundle: &EvidenceBundle,\n",
+        "diff": "--- crates/policy-core/src/provenance.rs\n+++ replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))\n@@ -491,24 +491,17 @@\n     })\n }\n \n fn contains_untrusted_evidence(bundle: &EvidenceBundle) -> bool {\n     evidence_trusts(bundle).any(|(trust, _)| !is_ci_grade(trust))\n }\n \n fn evidence_trusts(bundle: &EvidenceBundle) -> impl Iterator<Item = (TrustClass, bool)> + '_ {\n-    bundle\n-        .modifications\n-        .iter()\n-        .map(|value| (value.trust, false))\n-        .chain(bundle.executions.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.reviews.iter().map(|value| (value.trust, false)))\n-        .chain(bundle.sensors.iter().map(|value| (value.trust, true)))\n-        .chain(bundle.knowledge.iter().map(|value| (value.trust, false)))\n+    ::std::iter::once((Default::default(), false)) /* ~ changed by cargo-mutants ~ */\n }\n \n pub(crate) fn uses_local_freshness(mode: EvaluationMode, trust: TrustClass) -> bool {\n     mode == EvaluationMode::Authoritative && trust == TrustClass::LocalRunnerAttested\n }\n \n fn timestamps(\n     bundle: &EvidenceBundle,\n",
         "file": "crates/policy-core/src/provenance.rs",
         "function": {
           "function_name": "evidence_trusts",
@@ -856,26 +856,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 505
+              "line": 507
             },
             "start": {
               "column": 1,
-              "line": 496
+              "line": 498
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:497:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))",
+        "name": "crates/policy-core/src/provenance.rs:499:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))",
         "package": "policy-core",
         "replacement": "::std::iter::once((Default::default(), false))",
         "span": {
           "end": {
             "column": 74,
-            "line": 504
+            "line": 506
           },
           "start": {
             "column": 5,
-            "line": 497
+            "line": 499
           }
         }
       },
@@ -884,11 +884,11 @@
       "span": {
         "end": {
           "column": 74,
-          "line": 504
+          "line": 506
         },
         "start": {
           "column": 5,
-          "line": 497
+          "line": 499
         }
       }
     },
@@ -1034,17 +1034,17 @@
   "schema_version": 1,
   "sources": {
     "crates/policy-ci/src/controller.rs": "b32b29d597f4c7b9caed0adf5953add3cae9898246df600fce0e6c4535dec0cf",
-    "crates/policy-contracts/src/decision.rs": "513a58a2f4458d63cdea95802bdac2c140c2073de67a7b5bbd98a7f45bb0bcbd",
+    "crates/policy-contracts/src/decision.rs": "1d37fbf9a961f77e5fb487a9f3bbf7f7353241f2a464d4c264fc30918f4ab7f4",
     "crates/policy-contracts/src/evidence.rs": "7d99d88f5735e529f1496d34e3242b8159a64cfbd610ba5ea6ab77aaac065cbd",
     "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
     "crates/policy-contracts/src/identity.rs": "f3a9de1f500876e24f3a2616bb18991b08e48c6bc25df0d9d47b7b608edfa42e",
     "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
-    "crates/policy-contracts/src/policy.rs": "68e4ef1b702adc093f0e0a288f201c5885e40b371d0ce3e6891927684542e873",
+    "crates/policy-contracts/src/policy.rs": "909561f6935645706047a8b4392024beb5d76b2f8c709aa389e44e6f838fede9",
     "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
     "crates/policy-core/src/post_merge.rs": "da57582ff06464e14c760f2d758097c05780b17af8472207bdf5f4013f88840b",
-    "crates/policy-core/src/pre_merge.rs": "69959b1337525a7dc7f993f43d720152a3de5e56330309597011be9585e94545",
-    "crates/policy-core/src/provenance.rs": "5ec13c38f152dabcd0444f9af76a4b9d4cd7324a89f2aa61b2740394d7a415ca",
+    "crates/policy-core/src/pre_merge.rs": "c977ff5d9a96ec5feb4f974716495955bed2e3f663c1509e551c2baee9b0211f",
+    "crates/policy-core/src/provenance.rs": "0deedb665689509a61b1040bc01febb44a7ec7679ee87bb46d983e227274c6b7",
     "crates/policy-core/src/reviews.rs": "67fcf7d6da7dbf89c03798718ab4ffbbb5ab7931144ca71862af59d0394fa6e2",
-    "crates/policy-core/src/sensors.rs": "40fecb0550b5eb6d8340ee28565c2e74519732bb95ad29e3a80aa43c3611a619"
+    "crates/policy-core/src/sensors.rs": "0b6ce8f76317537bbbed19fc4e7ddffb02033b51dbd1419c415550c3d39d9264"
   }
 }
