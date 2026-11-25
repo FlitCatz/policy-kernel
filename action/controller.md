@@ -214,7 +214,8 @@ assume-unchanged or skip-worktree count as dirty, so sparse checkouts are reject
 Git runs with an empty environment: global and user Git config, including global
 excludes, is ignored, and `git` is found on the default exec path. Ignore
 generated files such as `.DS_Store` in the repository `.gitignore`, or attest
-from a fresh worktree. It imports the raw
+from a fresh worktree. Process-only scopes, which declare no test suite, are
+not supported yet and are refused before the runner starts. It imports the raw
 artifacts and sets the scope evaluation clock to runner completion. When the
 result is `Satisfied`, the attester shows the result summary and SHA-256 of the
 canonical statement signing bytes on the owner's terminal. The statement and its

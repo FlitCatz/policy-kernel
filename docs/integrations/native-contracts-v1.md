@@ -93,6 +93,10 @@ suite still requires a suite-backed requirement and applies suite counts and
 executed-test mappings. Existing suite-backed v1 documents keep their encoding
 and canonical digests.
 
+The [local attester](../../action/controller.md#issuing-a-local-attestation)
+does not support process-only scopes yet. It refuses such a scope before
+starting the runner, so no statement is signed.
+
 ### Run and result validation
 
 Test counts must match their records: passed/failed tests have positive attempts;

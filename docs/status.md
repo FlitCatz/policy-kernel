@@ -230,8 +230,6 @@ and split source/head bindings. It now belongs to the consuming project's
 Its product-specific assertions are no longer maintained in this workspace.
 The following P8/P9 records retain their original execution scope and revisions.
 
-<a name="tjerp-p8-adoption-and-p9-first-actual-dry-run"></a>
-
 ## Consuming project P8 adoption and P9 first actual dry-run
 
 P8 and P9 are complete in the consuming project's local-only repository (no

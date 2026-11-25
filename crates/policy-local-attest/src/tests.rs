@@ -218,3 +218,22 @@ fn declining_owner_confirmation_does_not_call_the_signer() {
     assert_eq!(outcome, Outcome::Unconfirmed);
     fixture.assert_unsigned();
 }
+
+#[test]
+fn process_only_scope_is_refused_before_the_runner() {
+    let fixture = Fixture::new("pass");
+    let path = fixture.root.join("expected.json");
+    let mut expected: Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    let check = expected["requirements"]["observations"][0]["id"].clone();
+    expected["requirements"]["observations"][0]["tests"] = Value::Null;
+    expected["bindings"]["observations"][0]["parser"] = Value::Null;
+    expected["requirements"]["requirements"] =
+        json!([{"id": "formatting", "process_checks": [check]}]);
+    serde_json::from_value::<ExpectedScopeV1>(expected.clone())
+        .unwrap()
+        .validate()
+        .expect("fixture is a valid process-only scope");
+    fs::write(&path, serde_json::to_vec(&expected).unwrap()).unwrap();
+    fixture.reject("local attestation of process-only scopes is not supported yet");
+    assert!(!fixture.root.join("ran-once").exists());
+}

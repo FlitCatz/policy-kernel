@@ -32,6 +32,8 @@ bound observations without test rules or parser bindings. All required
 observations must be present, complete and pass. Suite-backed requirements retain
 their wire representation, and a scope with any suite still requires test
 coverage. See the [contract](../docs/integrations/native-contracts-v1.md#process-check-requirements).
+The [[native-contracts#Local attester]] does not support process-only scopes
+yet and refuses them before starting the runner.
 
 Contract tests
 [[crates/policy-native-contracts/tests/process_requirements.rs#process_requirement_round_trips_without_a_suite]],
@@ -275,6 +277,8 @@ Attester tests exercise Git and native artifact checks, owner rejection and sign
 
 See the [attester tests](../crates/policy-local-attest/src/tests.rs) and
 [[kernel#Controller authentication#Local-runner controller tests]].
+[[crates/policy-local-attest/src/tests.rs#process_only_scope_is_refused_before_the_runner]]
+checks that a valid process-only scope is refused before the runner starts.
 
 ## Debt ratchet conformance
 
