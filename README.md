@@ -199,6 +199,8 @@ typed decision or evidence bundle; it does not recompute or authenticate a
 supplied decision.
 
 `evaluate-scope --expected FILE --observations FILE` evaluates native local scope.
+From v0.1.4, it accepts [process-check requirements](docs/integrations/native-contracts-v1.md#process-check-requirements)
+on their own or alongside suite-backed requirements.
 `evaluate-ratchet --rule FILE --observation FILE` compares approved/head debt
 baselines with observed counts through the existing ratchet verifier:
 
@@ -537,8 +539,8 @@ Assets include both executables per target, `SHA256SUMS` and `SOURCE_COMMIT`.
 Linux builds use Ubuntu 22.04/glibc 2.35; macOS builds use macOS 15.
 Windows x64 users can run the Linux x64 binaries under WSL2.
 
-Use the example below in a fresh directory after `v0.1.3` is published. To install
-the previous release, set `tag=v0.1.2`.
+Use the example below in a fresh directory to install the published `v0.1.3`
+release. For process-check requirements, use `tag=v0.1.4` after publication.
 
 ```sh
 set -eu

@@ -89,12 +89,44 @@ pub struct RequirementV1 {
     pub minimum_executed_tests: u64,
     pub suites: RequiredSet<SensorId>,
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ProcessRequirementV1 {
+    pub id: RecordId,
+    pub process_checks: RequiredSet<SensorId>,
+}
+
+/// The suite variant preserves the original v1 requirement representation.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ScopeRequirementV1 {
+    Suite(RequirementV1),
+    Process(ProcessRequirementV1),
+}
+
+impl ScopeRequirementV1 {
+    pub fn id(&self) -> &RecordId {
+        match self {
+            Self::Suite(requirement) => &requirement.id,
+            Self::Process(requirement) => &requirement.id,
+        }
+    }
+
+    pub fn suite(&self) -> Option<&RequirementV1> {
+        match self {
+            Self::Suite(requirement) => Some(requirement),
+            Self::Process(_) => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct RequirementsV1 {
     pub approved_file_digest: RawByteDigest,
     pub observations: RequiredSet<ObservationRuleV1>,
-    pub requirements: RequiredSet<RequirementV1>,
+    pub requirements: RequiredSet<ScopeRequirementV1>,
     pub exemptions: Vec<ExclusionV1>,
 }
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

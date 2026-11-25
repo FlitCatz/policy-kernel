@@ -204,6 +204,22 @@
         "version"
       ]
     },
+    "ProcessRequirementV1": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/WorkItemId"
+        },
+        "process_checks": {
+          "$ref": "#/$defs/RequiredSet_SensorId"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "process_checks"
+      ]
+    },
     "RawByteDigest": {
       "description": "An externally computed SHA-256 of exact file bytes, never typed JSON.",
       "type": "object",
@@ -247,10 +263,10 @@
       "minItems": 1,
       "uniqueItems": true
     },
-    "RequiredSet_RequirementV1": {
+    "RequiredSet_ScopeRequirementV1": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/RequirementV1"
+        "$ref": "#/$defs/ScopeRequirementV1"
       },
       "minItems": 1,
       "uniqueItems": true
@@ -322,7 +338,7 @@
           "$ref": "#/$defs/RequiredSet_ObservationRuleV1"
         },
         "requirements": {
-          "$ref": "#/$defs/RequiredSet_RequirementV1"
+          "$ref": "#/$defs/RequiredSet_ScopeRequirementV1"
         }
       },
       "additionalProperties": false,
@@ -331,6 +347,17 @@
         "observations",
         "requirements",
         "exemptions"
+      ]
+    },
+    "ScopeRequirementV1": {
+      "description": "The suite variant preserves the original v1 requirement representation.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RequirementV1"
+        },
+        {
+          "$ref": "#/$defs/ProcessRequirementV1"
+        }
       ]
     },
     "SensorId": {

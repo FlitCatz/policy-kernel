@@ -14,13 +14,14 @@ New exact native combinations/presets stop. Parser extraction merged in PR 23;
 [[native-contracts]] supplies v1 types and the importer merged in PR 25.
 Plan PR 5 added kernel-owned core evidence assembly and a local advisory
 scope command (0/2/64). Trust remains local-untrusted, review unmet; no pre-merge
-decision is produced. Plan PRs 6–7 transferred and adopted the TJERP harness;
-PR 8 completes stage 1
+decision is produced. Plan PRs 6–7 transferred the harness to the consuming
+project, which adopted it. PR 8 completes stage 1
 in implementation, removing product code here and retaining generic split-consumer
-conformance. TJERP main `3c62b9e` owns `tools/policy-adoption`, pinned to `4df10fa`.
+conformance. The consuming project's main branch at `3c62b9e` owns
+`tools/policy-adoption`, pinned to `4df10fa`.
 This does not assert that the PR has merged.
-Profiles, bootstrap and required environment checks are preserved;
-TJERP is unchanged. Adapter support and compatibility end conditions remain open.
+Profiles, bootstrap and required environment checks are preserved. Adapter
+support and compatibility end conditions remain open.
 See [[kernel#Scope boundary]]. No adoption or promotion is established by this decision.
 
 [[native-contracts#Local-runner attestations]] defines structural statement and
@@ -32,13 +33,13 @@ both commands on macOS arm64 and Linux x64, with SHA-256 and source-commit asset
 Explicit report selections populate empty test claims with shared parsers before
 import; explicit suite mappings claim coverage. Each TRX has a separate observation
 and approved suite, with no v1 wire-contract change or consumer Rust requirement.
-The `v0.1.0`, `v0.1.1`, and `v0.1.2` tag runs published binary releases. The `v0.1.3`
-workspace version prepares the next native release, whose publication requires a tag.
+Tags `v0.1.0` through `v0.1.3` published binary releases. The v0.1.4 source adds
+[[native-contracts#Process-check requirements]] for process-only and mixed local
+scopes. Publishing v0.1.4 requires a version tag.
 See [[native-contracts#Native command distribution]].
 
 `policy-cli evaluate-ratchet --rule FILE --observation FILE` exposes the existing
-standalone JSON comparison with 0/2/64 exits. It is source implementation for the
-next binary release; no release, TJERPS adoption or scope authorization is claimed.
+standalone JSON comparison with 0/2/64 exits in the published v0.1.3 binary.
 See [[native-contracts#Debt ratchet]].
 
 Policy v3 binds approving-review quorum and allowed providers. Legacy policy
@@ -65,17 +66,17 @@ hardware custody, live execution or promotion. See [[kernel#Controller authentic
 
 Third-party npm bundle inventory requires registry-tarball/sha512-pinned parents
 and records `bundled, not individually audited`, including absent optional
-platform parents. The native oxide fixture satisfies local scope; TJERP P8
-adoption and re-verification completed at `4cf51da`. See [[kernel#Npm workspace graph]].
+platform parents. The native oxide fixture satisfies local scope. The consuming
+project's P8 adoption and re-verification completed at `4cf51da`.
+See [[kernel#Npm workspace graph]].
 
 Reviewed npm root overrides bind exact versions into the profile and verify
 affected lock resolutions. Native Node 26.12.0/npm 11.20.0 audits detect vulnerable
-and fixed override versions. TJERP P8 adopted `4df10fa` and re-verified frontend
-preparation; promotion remains unestablished. See [[kernel#Npm workspace graph]].
+and fixed override versions. The consuming project's P8 adopted `4df10fa` and
+re-verified frontend preparation. See [[kernel#Npm workspace graph]].
 
-The former P7 [[tjerp]] harness and its product-specific assertions now belong
-to TJERP; the pinned dependency is unaffected.
-TJERP completed P8 profiles/run procedure (`1fd96a7`,
+The former P7 harness and its product-specific assertions now belong to the
+consuming project, which completed P8 profiles/run procedure (`1fd96a7`,
 merged as `4cf51da`) and P9 execution (`3556ce9`, merged as `6e688e9`) on
 2026-10-17. FI-00 and recovery on `f926418` satisfied local scope; FI-01–FI-09
 were rejected as intended. Evidence remains LocalUntrusted and the review gate
@@ -85,7 +86,7 @@ Full revision and catalog-digest citations are in the current-status authority.
 
 P2 adds explicit graph opt-in for bounded compiler-generated output, with XML,
 command/environment and filesystem checks. The offline Mapperly fixture does not
-establish TJERP adoption, authoritative CI or trust. See [[kernel#Compiler-generated output]].
+establish consumer adoption, authoritative CI or trust. See [[kernel#Compiler-generated output]].
 The current-status authority records local scope satisfied for the cached-package
 native proof, including the empty-output rejection.
 
@@ -112,7 +113,7 @@ See the current-status authority.
 
 P1 adds explicit npm members under one root graph and audit. Native
 Node 26.12.0/npm 11.20.0 fixtures satisfy the local scope; evidence remains
-LocalUntrusted and does not establish TJERP adoption or promotion.
+LocalUntrusted and does not establish consumer adoption or promotion.
 See [[kernel#Npm workspace graph]] and the current-status authority.
 
 It identifies the implemented scope, dated verification evidence, and conditions
