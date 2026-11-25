@@ -18,8 +18,8 @@ Each path rule applies when any changed path matches any of its globs. Globs
 use the [sensor glob subset](../trust-model.md#boundaries) with
 literal characters, segment-local `*`, and whole-segment `**`. The default
 applies when the change is empty or when any changed path matches no path rule,
-so a change that mixes matched and unmatched paths still requires it. A label rule adds its IDs whenever the
-complete PR label list contains its exact name. Labels preserve the path or
+so a change that mixes matched and unmatched paths still requires it. A label
+rule adds its IDs whenever the complete PR label list contains its exact name. Labels preserve the path or
 default requirements, and unknown labels have no effect on scope. The kernel
 unions all applicable IDs with the policy's `required_sensor_ids` and applicable
 requirements from the bound sensor profile. Overlap contributes a single ID.

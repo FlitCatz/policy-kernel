@@ -397,8 +397,8 @@ digest는 유지되지만, 새 digest 및 결합된 증거를 갖춘 v3로 명�
 
 [정책 v5 범위 규칙](docs/integrations/policy-scope-v5.md)은 변경 경로와 일치하는 규칙과,
 어떤 경로 규칙과도 일치하지 않는 변경 경로가 있을 때 적용되는 기본값으로 필수 센서를
-선택합니다. `run-ci` 같은 PR 라벨은 요구사항을 추가할 수 있습니다. 커널은 호출자가 계산한 위험도 없이 범위를 결정하며, 관찰값이
-불완전하면 readiness를 거부합니다.
+선택합니다. `run-ci` 같은 PR 라벨은 요구사항을 추가할 수 있습니다. 커널은 호출자가
+계산한 위험도 없이 범위를 결정하며, 관찰값이 불완전하면 readiness를 거부합니다.
 
 추가된 [정책 v4 계약](docs/status.md#policy-v4-local-runner-contract)은 같은 리뷰 블록을
 필수로 유지하고 `local_runner_evidence`를 선택 필드로 선언합니다. V1–v3는 이 필드를
