@@ -151,8 +151,8 @@ inputs produce identical output bytes.
 
 Help (`policy-cli --help` or `policy-cli evaluate-ratchet --help`) exits 0.
 No schema or comparison rule changes accompany this command. The CLI addition
-is intended for the next binary release; it does not change already published
-v0.1.0 assets or establish consumer adoption.
+first shipped in the v0.1.3 binary release; it does not change earlier published
+assets or establish consumer adoption.
 
 ## Trust and integration boundary
 
