@@ -29,6 +29,153 @@ fn fixture() -> (ExpectedScopeV1, ImportedObservationsV1) {
     (expected, imported)
 }
 
+fn process_scope(with_suite: bool) -> (ExpectedScopeV1, ImportedObservationsV1) {
+    let (mut expected, mut imported) = fixture();
+    let check = policy_contracts::SensorId::parse("format").unwrap();
+    let mut observation = imported.run.observations[0].clone();
+    observation.id = check.clone();
+    observation.execution_id = policy_contracts::ExecutionId::parse("format-execution").unwrap();
+    observation.command.argv = vec!["formatter".into(), "--check".into()];
+    let mut rules = expected.requirements.observations.as_slice().to_vec();
+    let mut bindings = expected.bindings.observations.as_slice().to_vec();
+    let mut requirements = expected.requirements.requirements.as_slice().to_vec();
+    if !with_suite {
+        rules.clear();
+        bindings.clear();
+        requirements.clear();
+        imported.run.observations.clear();
+        imported.run.test_observations.clear();
+        imported.run.artifacts.clear();
+        imported.run.mappings.clear();
+    }
+    rules.push(ObservationRuleV1 {
+        id: check.clone(),
+        accepted_exit_codes: RequiredSet::new(vec![0]).unwrap(),
+        tests: None,
+    });
+    bindings.push(ObservationBindingV1 {
+        id: check.clone(),
+        command_digest: canonical_digest(DigestRole::Command, &observation.command).unwrap(),
+        configuration_digest: observation.configuration_digest.clone(),
+        parser: None,
+    });
+    requirements.push(ScopeRequirementV1::Process(ProcessRequirementV1 {
+        id: RecordId::parse("formatting").unwrap(),
+        process_checks: RequiredSet::new(vec![check]).unwrap(),
+    }));
+    expected.requirements.observations = RequiredSet::new(rules).unwrap();
+    expected.requirements.requirements = RequiredSet::new(requirements).unwrap();
+    expected.bindings.observations = RequiredSet::new(bindings).unwrap();
+    imported.run.observations.push(observation);
+    imported.expected_scope_digest = expected.digest().unwrap();
+    (expected, imported)
+}
+
+#[test]
+fn process_only_scope_passes_without_test_adequacy() {
+    let (expected, imported) = process_scope(false);
+    let evaluation = evaluate_scope(&expected, &imported).unwrap();
+    assert_eq!(evaluation.result.status, ScopeStatus::Satisfied);
+    let [requirement] = evaluation.result.requirements.as_slice() else {
+        panic!("expected one process requirement result");
+    };
+    assert_eq!(requirement.id.as_str(), "formatting");
+    assert_eq!(requirement.status, ScopeStatus::Satisfied);
+    assert_eq!(evaluation.result.trust, LocalTrust::LocalUntrusted);
+    assert_eq!(evaluation.result.review, ReviewGate::Unmet);
+    let evidence = evaluation.evidence.unwrap();
+    assert!(evidence.test_adequacy.is_none());
+    assert!(policy_core::validate_bundle(&evidence).is_valid());
+}
+
+#[test]
+fn process_only_scope_rejects_missing_or_interrupted_checks() {
+    for (missing, code) in [
+        (true, ReasonCode::MissingObservation),
+        (false, ReasonCode::IncompleteRun),
+    ] {
+        let (expected, mut imported) = process_scope(false);
+        if missing {
+            imported.run.observations.clear();
+        } else {
+            imported.run.observations[0].completion = CompletionV1::Interrupted {
+                detail: RecordId::parse("check skipped").unwrap(),
+            };
+        }
+        let evaluation = evaluate_scope(&expected, &imported).unwrap();
+        assert_eq!(evaluation.result.status, ScopeStatus::Error);
+        assert_eq!(evaluation.result.requirements[0].status, ScopeStatus::Error);
+        assert!(evaluation.evidence.is_none());
+        assert!(evaluation.result.reasons.iter().any(|r| {
+            r.code == code
+                && r.location
+                    .suite_id
+                    .as_ref()
+                    .is_some_and(|id| id.as_str() == "format")
+        }));
+    }
+}
+
+#[test]
+fn process_only_scope_rejects_failed_checks() {
+    let (expected, mut imported) = process_scope(false);
+    imported.run.observations[0].completion = CompletionV1::Exited { code: 1 };
+    let evaluation = evaluate_scope(&expected, &imported).unwrap();
+    assert_eq!(evaluation.result.status, ScopeStatus::NonPass);
+    let requirement = &evaluation.result.requirements[0];
+    assert_eq!(requirement.status, ScopeStatus::NonPass);
+    assert_eq!(requirement.reasons[0].code, ReasonCode::ScopeUnsatisfied);
+    assert_eq!(
+        requirement.reasons[0]
+            .location
+            .suite_id
+            .as_ref()
+            .unwrap()
+            .as_str(),
+        "format"
+    );
+}
+
+#[test]
+fn mixed_scope_requires_both_process_and_suite_evidence() {
+    let (expected, mut imported) = process_scope(true);
+    let evaluation = evaluate_scope(&expected, &imported).unwrap();
+    assert_eq!(evaluation.result.status, ScopeStatus::Satisfied);
+    assert_eq!(evaluation.result.requirements.len(), 4);
+    assert!(evaluation.evidence.unwrap().test_adequacy.is_some());
+
+    imported.run.observations[1].completion = CompletionV1::Exited { code: 1 };
+    let evaluation = evaluate_scope(&expected, &imported).unwrap();
+    assert_eq!(evaluation.result.status, ScopeStatus::NonPass);
+    assert_eq!(
+        evaluation.result.requirements[0].status,
+        ScopeStatus::Satisfied
+    );
+    assert_eq!(
+        evaluation.result.requirements[3].status,
+        ScopeStatus::NonPass
+    );
+
+    imported.run.observations[1].completion = CompletionV1::Exited { code: 0 };
+    imported.run.mappings[0].requirement_id = RecordId::parse("formatting").unwrap();
+    assert_eq!(
+        evaluate_scope(&expected, &imported).unwrap().result.status,
+        ScopeStatus::Error
+    );
+
+    imported.run.mappings.remove(0);
+    let evaluation = evaluate_scope(&expected, &imported).unwrap();
+    assert_eq!(evaluation.result.status, ScopeStatus::NonPass);
+    assert_eq!(
+        evaluation.result.requirements[0].status,
+        ScopeStatus::NonPass
+    );
+    assert_eq!(
+        evaluation.result.requirements[3].status,
+        ScopeStatus::Satisfied
+    );
+}
+
 #[test]
 fn satisfied_scope_assembles_local_evidence_without_reviews() {
     let (expected, imported) = fixture();
@@ -277,7 +424,10 @@ fn exclusions_never_waive_required_mappings_or_allow_unapproved_scope() {
 fn mapping_minimum_and_allowed_suite_are_independent_of_passing_counts() {
     let (mut expected, mut imported) = fixture();
     let mut requirements = expected.requirements.requirements.as_slice().to_vec();
-    requirements[0].minimum_executed_tests = 2;
+    let ScopeRequirementV1::Suite(requirement) = &mut requirements[0] else {
+        panic!("fixture requires a suite requirement");
+    };
+    requirement.minimum_executed_tests = 2;
     expected.requirements.requirements = RequiredSet::new(requirements).unwrap();
     imported.expected_scope_digest = expected.digest().unwrap();
     let e = evaluate_scope(&expected, &imported).unwrap();

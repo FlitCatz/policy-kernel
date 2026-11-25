@@ -11,7 +11,7 @@ retains synthetic report/audit/version conformance coverage.
 
 See [Task 18](../tasks/task-18/README.md), the
 [current ownership status](../status.md#scope-reduction-decision), and the
-[P8/P9 revision and execution records](../status.md#tjerp-p8-adoption-and-p9-first-actual-dry-run).
+[P8/P9 revision and execution records](../status.md#consuming-project-p8-adoption-and-p9-first-actual-dry-run).
 TJERP's `docs/policy/local-adoption.md` owns its current execution procedure.
 Historical evidence remains LocalUntrusted with the review gate unmet; this
 ownership transfer establishes no new native run or promotion.

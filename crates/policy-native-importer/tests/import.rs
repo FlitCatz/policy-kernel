@@ -173,6 +173,45 @@ impl Fixture {
 }
 
 #[test]
+fn native_import_and_cli_evaluate_process_scope_without_reports() {
+    let mut f = Fixture::new(ReportFormat::VitestJson);
+    let id = policy_contracts::SensorId::parse("format").unwrap();
+    let observation = &mut f.run.observations[0];
+    observation.id = id.clone();
+    observation.command.argv = vec!["formatter".into(), "--check".into()];
+    let mut rule = f.expected.requirements.observations.as_slice()[0].clone();
+    rule.id = id.clone();
+    rule.tests = None;
+    f.expected.requirements.observations = RequiredSet::new(vec![rule]).unwrap();
+    let mut binding = f.expected.bindings.observations.as_slice()[0].clone();
+    binding.id = id.clone();
+    binding.command_digest = canonical_digest(DigestRole::Command, &observation.command).unwrap();
+    binding.parser = None;
+    f.expected.bindings.observations = RequiredSet::new(vec![binding]).unwrap();
+    f.expected.requirements.requirements =
+        RequiredSet::new(vec![ScopeRequirementV1::Process(ProcessRequirementV1 {
+            id: RecordId::parse("formatting").unwrap(),
+            process_checks: RequiredSet::new(vec![id]).unwrap(),
+        })])
+        .unwrap();
+    f.run.test_observations.clear();
+    f.run.mappings.clear();
+    f.run.artifacts.clear();
+    fs::remove_file(f.input.join("raw.json")).unwrap();
+
+    f.command().assert().success();
+    let observations = f.output().join("observations.json");
+    let (result, code) = policy_cli::evaluate_scope_json(
+        &serde_json::to_vec(&f.expected).unwrap(),
+        &fs::read(observations).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(code, 0);
+    assert_eq!(result.status, ScopeStatus::Satisfied);
+    assert_eq!(result.requirements[0].id.as_str(), "formatting");
+}
+
+#[test]
 fn claim_preparation_uses_shared_parsers_and_explicit_mappings() {
     for format in [
         ReportFormat::Trx,
@@ -189,7 +228,7 @@ fn claim_preparation_uses_shared_parsers_and_explicit_mappings() {
         for requirement in f.expected.requirements.requirements.as_slice() {
             command
                 .arg("--map")
-                .arg(format!("{}=unit", requirement.id.as_str()));
+                .arg(format!("{}=unit", requirement.id().as_str()));
         }
         command.assert().success();
         let imported: NativeRunV1 =
@@ -244,7 +283,7 @@ fn native_import_exports_trx_skips_for_scope_evaluation() {
         for requirement in f.expected.requirements.requirements.as_slice() {
             command
                 .arg("--map")
-                .arg(format!("{}=unit", requirement.id.as_str()));
+                .arg(format!("{}=unit", requirement.id().as_str()));
         }
         command.assert().success();
         let observations = fs::read(f.output().join("observations.json")).unwrap();
@@ -289,7 +328,7 @@ fn native_import_evaluates_named_trx_skips_with_xunit_warnings() {
         for requirement in f.expected.requirements.requirements.as_slice() {
             command
                 .arg("--map")
-                .arg(format!("{}=unit", requirement.id.as_str()));
+                .arg(format!("{}=unit", requirement.id().as_str()));
         }
         command.assert().success();
 
@@ -354,6 +393,9 @@ fn multiple_trx_reports_use_distinct_observations_and_approved_suites() {
     f.expected.bindings.observations = RequiredSet::new(bindings).unwrap();
     let mut requirements = f.expected.requirements.requirements.as_slice().to_vec();
     for requirement in &mut requirements {
+        let ScopeRequirementV1::Suite(requirement) = requirement else {
+            panic!("fixture requires a suite requirement");
+        };
         requirement.suites = RequiredSet::new(vec![
             f.run.observations[0].id.clone(),
             observation.id.clone(),
@@ -372,7 +414,7 @@ fn multiple_trx_reports_use_distinct_observations_and_approved_suites() {
         for suite in ["unit", "unit-second"] {
             command
                 .arg("--map")
-                .arg(format!("{}={suite}", requirement.id.as_str()));
+                .arg(format!("{}={suite}", requirement.id().as_str()));
         }
     }
     command.assert().success();
@@ -434,7 +476,7 @@ fn claim_preparation_rejects_ambiguous_unsafe_or_unapproved_inputs_without_outpu
                 let mapping = format!(
                     "{}=unit",
                     f.expected.requirements.requirements.as_slice()[0]
-                        .id
+                        .id()
                         .as_str()
                 );
                 command.args(["--map", &mapping, "--map", &mapping]);
@@ -474,7 +516,7 @@ fn prepared_claims_preserve_native_and_parser_failures_without_inventing_coverag
             for requirement in f.expected.requirements.requirements.as_slice() {
                 command
                     .arg("--map")
-                    .arg(format!("{}=unit", requirement.id.as_str()));
+                    .arg(format!("{}=unit", requirement.id().as_str()));
             }
         }
         command.assert().success();

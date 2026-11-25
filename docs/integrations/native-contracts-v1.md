@@ -22,8 +22,8 @@ authenticates signatures and recomputes scope. The
 [attester](../../action/controller.md#issuing-a-local-attestation) verifies the
 raw run, sets the evaluation timestamp on the expected scope, and signs only
 after the owner confirms the satisfied result and signing-byte hash. The
-observer forwards the attester's exact output scope and observations. The three original v1
-documents and `policy-cli evaluate-scope` remain unchanged: results stay
+observer forwards the attester's exact output scope and observations. Results from
+`policy-cli evaluate-scope` stay
 `local_untrusted` with an unmet review gate. Signature verification belongs to
 the authenticated controller boundary, outside this contract crate.
 
@@ -36,18 +36,19 @@ rejected, including nested fields. Rust callers can construct records and call
 
 | Type | Contents |
 | --- | --- |
-| `ExpectedScopeV1` | Independently approved repository/head/source subject; raw requirements-file digest; required observation IDs and exit/count rules with optional per-suite skip identities; AC, changed-behavior and negative-case requirements with suite mapping rules; exemptions; command/configuration/parser bindings; evaluation time, positive maximum age and local-advisory mode |
+| `ExpectedScopeV1` | Independently approved repository/head/source subject; raw requirements-file digest; required observation IDs and exit/count rules with optional per-suite skip identities; suite-backed and process-check requirements; exemptions; command/configuration/parser bindings; evaluation time, positive maximum age and local-advisory mode |
 | `NativeRunV1` | Subject plus run/scope IDs; observations with execution ID, argv, relative cwd, times, completion and configuration digest; parser bindings, raw report references, counts and test identity/outcomes/attempts; artifacts, mappings and exclusions |
 | `LocalScopeResultV1` | Satisfied/non-pass/error status, subject, per-requirement results, stable reason codes and suite/requirement/artifact/test locations, input/policy/optional evidence digests, evaluation time, verifier/adapter versions, local-untrusted trust and unmet review gate |
 
-Required observations and requirements are nonempty. Requirements carry an
-explicit kind; a category may be absent when outside the approved consumer scope,
-but the overall approved requirement set cannot be empty. Required suites,
+Required observations and requirements are nonempty. Suite-backed requirements
+carry an explicit kind (acceptance criterion, changed behavior or negative case),
+a positive `minimum_executed_tests`, and suite references. Required suites,
 accepted exit codes and mapping test references are also nonempty and unique.
 Requirement, observation, execution, artifact and exclusion IDs must be unique
 within their respective namespaces. Repeating a record ID with different contents
 is rejected. Normalized test IDs are unique within a suite; references include
-both suite and test ID. Requirement kinds share one ID namespace.
+both suite and test ID. Suite-backed and process-check requirements share one ID
+namespace.
 
 Bindings must cover exactly the required observations. Only suite rules have
 parser bindings. Requirement suite references must resolve to declared suites.
@@ -68,6 +69,35 @@ within `maximum_skipped`. An omitted or empty list disallows all skips.
 The [TRX reader](report-formats.md#trx) lets a run stay clean if a warning
 is exactly one xUnit skip notice for one of the report's NotExecuted tests. The
 approved suite rule evaluates those skips.
+
+### Process-check requirements
+
+A requirement can explicitly reference a nonempty, unique set of process
+observation IDs using `process_checks`:
+
+```json
+{"id": "format-and-docs", "process_checks": ["format", "docs"]}
+```
+
+Each ID must resolve to an approved observation with `tests: null` and a
+binding with `parser: null`. Every referenced check must complete with an
+approved exit code. All declared observations remain required, and a missing,
+interrupted, or failed check prevents scope satisfaction. The result uses the
+existing `location.suite_id` field for the observation ID.
+
+A process-check requirement carries no `kind`, `suites`, or
+`minimum_executed_tests` fields and accepts no run test mapping. A process-only
+scope can leave the run's `test_observations` and `mappings` arrays empty. A
+mixed scope can include both requirement forms. A scope declaring any test
+suite still requires a suite-backed requirement and applies suite counts and
+executed-test mappings. Existing suite-backed v1 documents keep their encoding
+and canonical digests.
+
+The [local attester](../../action/controller.md#issuing-a-local-attestation)
+does not support process-only scopes yet. It refuses such a scope before
+starting the runner, so no statement is signed.
+
+### Run and result validation
 
 Test counts must match their records: passed/failed tests have positive attempts;
 skipped/not-executed tests have zero attempts; retries sum attempts minus one for
@@ -404,9 +434,10 @@ copies exact bytes into a fresh output directory, and hashes those bytes. Its
 input layout is `INPUT/<target>/<command>`. The workflow creates a draft only
 after both builds succeed, uploads all assets, then makes the release public.
 
-After `v0.1.3` is published, select the target explicitly and run the following
-in a fresh download directory. To install the previous release, set
-`tag=v0.1.2`. The URL pattern is
+Select the target explicitly and run the following in a fresh download
+directory. The example uses the published `v0.1.3` release. Process-check
+requirements need `v0.1.4`, which can be selected once that release is published.
+The URL pattern is
 `https://github.com/FlitCatz/policy-kernel/releases/download/<tag>/<asset>`.
 
 ```sh
@@ -431,6 +462,11 @@ manifest in consumer configuration. For recurring CI installs, verify against th
 entries; do not use `latest` or build from source on every run. Downloaded
 checksums detect byte corruption but do not independently authenticate the release
 publisher. Binary distribution does not promote observations or grant readiness.
+
+### v0.1.4 release notes
+
+- Evaluate explicitly approved process-check requirements, both on their own and
+  alongside suite-backed requirements.
 
 ### v0.1.3 release notes
 
@@ -469,9 +505,11 @@ Malformed/unexecuted references fail structural validation. Empty policies canno
 decode. Incomplete processes, absent reports, empty reports, retries and
 unexecuted tests beyond explicit skips cannot yield successful evidence.
 
-Assembly produces `EvidenceManifest`, `ExecutionEvidence`, `SensorEvidence`,
-`TestAdequacyEvidence`, `SensorProfile` and `TestAdequacyPolicy`, delegating sensor
-and adequacy evaluation to existing policy-core functions. The verifier checks
+Assembly produces `EvidenceManifest`, `ExecutionEvidence`, `SensorEvidence` and
+`SensorProfile`. Scopes with suite-backed requirements also assemble test
+adequacy and delegate sensor and adequacy evaluation to existing policy-core
+functions. Process-only scopes use the bound process evidence for each check
+and omit test adequacy evidence. The verifier checks
 skip counts and identities against the approved suite rule using the original
 observations. Unexpected skips yield `UNEXPECTED_SKIPPED_TEST` with the original
 identity in `location.test_identity`. The core evidence counts exclude explicit

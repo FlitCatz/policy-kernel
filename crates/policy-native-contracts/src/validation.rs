@@ -54,7 +54,7 @@ impl ExpectedScopeV1 {
         let requirements = self.requirements.requirements.as_slice();
         let bindings = self.bindings.observations.as_slice();
         unique(rules.iter().map(|r| r.id.as_str()))?;
-        unique(requirements.iter().map(|r| r.id.as_str()))?;
+        unique(requirements.iter().map(|r| r.id().as_str()))?;
         unique(bindings.iter().map(|r| r.id.as_str()))?;
         require(
             self.bindings.maximum_age_seconds > 0,
@@ -82,18 +82,36 @@ impl ExpectedScopeV1 {
                 )?;
             }
         }
+        let mut has_suite_requirement = false;
         for requirement in requirements {
-            require(
-                requirement.minimum_executed_tests > 0,
-                "mapping minimum must be positive",
-            )?;
-            for suite in requirement.suites.as_slice() {
-                require(
-                    rules.iter().any(|r| r.id == *suite && r.tests.is_some()),
-                    "mapping rule references unknown suite",
-                )?;
+            match requirement {
+                ScopeRequirementV1::Suite(requirement) => {
+                    has_suite_requirement = true;
+                    require(
+                        requirement.minimum_executed_tests > 0,
+                        "mapping minimum must be positive",
+                    )?;
+                    for suite in requirement.suites.as_slice() {
+                        require(
+                            rules.iter().any(|r| r.id == *suite && r.tests.is_some()),
+                            "mapping rule references unknown suite",
+                        )?;
+                    }
+                }
+                ScopeRequirementV1::Process(requirement) => {
+                    for check in requirement.process_checks.as_slice() {
+                        require(
+                            rules.iter().any(|r| r.id == *check && r.tests.is_none()),
+                            "process requirement references unknown process check",
+                        )?;
+                    }
+                }
             }
         }
+        require(
+            has_suite_requirement || rules.iter().all(|r| r.tests.is_none()),
+            "a scope with test suites requires test coverage",
+        )?;
         exclusions(&self.requirements.exemptions)
     }
     pub fn digest(&self) -> std::result::Result<CanonicalDigest, policy_core::CanonicalError> {

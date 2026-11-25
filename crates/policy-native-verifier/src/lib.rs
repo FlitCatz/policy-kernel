@@ -86,7 +86,13 @@ fn profile(expected: &ExpectedScopeV1) -> SensorProfile {
         changed_behavior_ids: vec![],
         negative_case_ids: vec![],
     };
-    for requirement in expected.requirements.requirements.as_slice() {
+    for requirement in expected
+        .requirements
+        .requirements
+        .as_slice()
+        .iter()
+        .filter_map(ScopeRequirementV1::suite)
+    {
         match requirement.kind {
             RequirementKind::AcceptanceCriterion => adequacy
                 .acceptance_criterion_ids
@@ -284,7 +290,11 @@ pub fn evaluate_scope(
         }
     }
     for mapping in &run.mappings {
-        if !requirements.iter().any(|r| r.id == mapping.requirement_id) {
+        if !requirements
+            .iter()
+            .filter_map(ScopeRequirementV1::suite)
+            .any(|r| r.id == mapping.requirement_id)
+        {
             result.reasons.push(reason(
                 ReasonCode::BindingMismatch,
                 None,
@@ -309,9 +319,9 @@ pub fn evaluate_scope(
         result.requirements = requirements
             .iter()
             .map(|r| RequirementResultV1 {
-                id: r.id.clone(),
+                id: r.id().clone(),
                 status: ScopeStatus::Error,
-                reasons: vec![reason(ReasonCode::IncompleteRun, None, Some(&r.id), None)],
+                reasons: vec![reason(ReasonCode::IncompleteRun, None, Some(r.id()), None)],
             })
             .collect();
         result.validate()?;
@@ -330,21 +340,34 @@ pub fn evaluate_scope(
         &imported.unsuccessful_reports,
     )?;
     let required = rules.iter().map(|r| r.id.clone()).collect::<Vec<_>>();
-    let core = evaluate_sensor_evidence(
-        &profile,
-        &required,
-        &evidence.sensors,
-        evidence.test_adequacy.as_ref(),
-    );
-    // Evaluate each required sensor through the same core path for precise native
-    // locations. Aggregate adequacy failures are mapped below per requirement.
+    let has_process_requirements = requirements
+        .iter()
+        .any(|r| matches!(r, ScopeRequirementV1::Process(_)));
+    let evaluate_with_adequacy = |ids: &[SensorId]| {
+        evidence.test_adequacy.as_ref().map(|adequacy| {
+            evaluate_sensor_evidence(&profile, ids, &evidence.sensors, Some(adequacy))
+        })
+    };
+    let core = evaluate_with_adequacy(&required);
+    // Evaluate each required sensor for precise native locations. Aggregate
+    // adequacy failures are mapped below per suite requirement.
     for rule in rules {
-        let single = evaluate_sensor_evidence(
-            &profile,
-            std::slice::from_ref(&rule.id),
-            &evidence.sensors,
-            evidence.test_adequacy.as_ref(),
-        );
+        let sensor_failed = if has_process_requirements && rule.tests.is_none() {
+            // Process requirements depend on bound process evidence. Suite
+            // adequacy cannot stand in for a failed check or fail a passing one.
+            evidence
+                .sensors
+                .iter()
+                .find(|sensor| sensor.sensor_id == rule.id)
+                .is_none_or(|sensor| sensor.status != SensorStatus::Passed)
+        } else {
+            evaluate_with_adequacy(std::slice::from_ref(&rule.id)).is_none_or(|single| {
+                single
+                    .reasons
+                    .iter()
+                    .any(|r| r.code.starts_with("PK-SENSOR-") || r.code == "PK-ADEQ-NO-TESTS")
+            })
+        };
         let report = run
             .test_observations
             .iter()
@@ -372,12 +395,7 @@ pub fn evaluate_scope(
                 || r.counts.skipped > p.maximum_skipped
                 || r.counts.retries > p.maximum_retries
         });
-        if bounds_fail
-            || single
-                .reasons
-                .iter()
-                .any(|r| r.code.starts_with("PK-SENSOR-") || r.code == "PK-ADEQ-NO-TESTS")
-        {
+        if bounds_fail || sensor_failed {
             result.reasons.push(reason(
                 ReasonCode::ScopeUnsatisfied,
                 Some(&rule.id),
@@ -387,55 +405,31 @@ pub fn evaluate_scope(
         }
     }
     for requirement in requirements {
-        let mapping = run
-            .mappings
-            .iter()
-            .find(|m| m.requirement_id == requirement.id);
-        let mut reasons = vec![];
-        if mapping.is_none_or(|m| {
-            (m.tests.as_slice().len() as u64) < requirement.minimum_executed_tests
-                || m.tests
-                    .as_slice()
-                    .iter()
-                    .any(|t| !requirement.suites.as_slice().contains(&t.suite_id))
-        }) {
-            reasons.push(reason(
-                ReasonCode::UnexecutedMapping,
-                None,
-                Some(&requirement.id),
-                None,
-            ));
-        }
-        if let Some(mapping) = mapping {
-            for reference in mapping.tests.as_slice() {
-                let report = run
-                    .test_observations
-                    .iter()
-                    .find(|r| r.observation_id == reference.suite_id)
-                    .expect("validated mapping");
-                let test = report
-                    .tests
-                    .iter()
-                    .find(|t| t.id == reference.test_id)
-                    .expect("validated mapping");
-                if test.outcome != TestOutcome::Passed
-                    || result
+        let reasons = match requirement {
+            ScopeRequirementV1::Suite(suite) => suite_reasons(suite, run, &result.reasons),
+            ScopeRequirementV1::Process(process) => process
+                .process_checks
+                .as_slice()
+                .iter()
+                .filter(|id| {
+                    result
                         .reasons
                         .iter()
-                        .any(|r| r.location.suite_id.as_ref() == Some(&reference.suite_id))
-                {
-                    reasons.push(reason(
+                        .any(|r| r.location.suite_id.as_ref() == Some(id))
+                })
+                .map(|id| {
+                    reason(
                         ReasonCode::ScopeUnsatisfied,
-                        Some(&reference.suite_id),
-                        Some(&requirement.id),
-                        Some(&report.raw_report.id),
-                    ));
-                }
-            }
-        }
+                        Some(id),
+                        Some(&process.id),
+                        None,
+                    )
+                })
+                .collect(),
+        };
         result.reasons.extend(reasons.clone());
         result.requirements.push(RequirementResultV1 {
-            id: requirement.id.clone(),
+            id: requirement.id().clone(),
             status: if reasons.is_empty() {
                 ScopeStatus::Satisfied
             } else {
@@ -444,7 +438,11 @@ pub fn evaluate_scope(
             reasons,
         });
     }
-    if core.status != SensorEvaluationStatus::Passed && result.reasons.is_empty() {
+    if core
+        .as_ref()
+        .is_some_and(|e| e.status != SensorEvaluationStatus::Passed)
+        && result.reasons.is_empty()
+    {
         result
             .reasons
             .push(reason(ReasonCode::ScopeUnsatisfied, None, None, None));
@@ -460,8 +458,61 @@ pub fn evaluate_scope(
         result,
         profile,
         evidence: Some(evidence),
-        core_reasons: core.reasons,
+        core_reasons: core.map_or_else(Vec::new, |e| e.reasons),
     })
+}
+
+fn suite_reasons(
+    requirement: &RequirementV1,
+    run: &NativeRunV1,
+    scope_reasons: &[ReasonV1],
+) -> Vec<ReasonV1> {
+    let mapping = run
+        .mappings
+        .iter()
+        .find(|m| m.requirement_id == requirement.id);
+    let mut reasons = vec![];
+    if mapping.is_none_or(|m| {
+        (m.tests.as_slice().len() as u64) < requirement.minimum_executed_tests
+            || m.tests
+                .as_slice()
+                .iter()
+                .any(|t| !requirement.suites.as_slice().contains(&t.suite_id))
+    }) {
+        reasons.push(reason(
+            ReasonCode::UnexecutedMapping,
+            None,
+            Some(&requirement.id),
+            None,
+        ));
+    }
+    if let Some(mapping) = mapping {
+        for reference in mapping.tests.as_slice() {
+            let report = run
+                .test_observations
+                .iter()
+                .find(|r| r.observation_id == reference.suite_id)
+                .expect("validated mapping");
+            let test = report
+                .tests
+                .iter()
+                .find(|t| t.id == reference.test_id)
+                .expect("validated mapping");
+            if test.outcome != TestOutcome::Passed
+                || scope_reasons
+                    .iter()
+                    .any(|r| r.location.suite_id.as_ref() == Some(&reference.suite_id))
+            {
+                reasons.push(reason(
+                    ReasonCode::ScopeUnsatisfied,
+                    Some(&reference.suite_id),
+                    Some(&requirement.id),
+                    Some(&report.raw_report.id),
+                ));
+            }
+        }
+    }
+    reasons
 }
 
 // JSON tuple encoding is injective even when suite/test IDs contain separators.
@@ -499,7 +550,13 @@ fn assemble(
                 .map(|t| test_key(&report.observation_id, &t.id)),
         );
     }
-    for requirement in expected.requirements.requirements.as_slice() {
+    for requirement in expected
+        .requirements
+        .requirements
+        .as_slice()
+        .iter()
+        .filter_map(ScopeRequirementV1::suite)
+    {
         if let Some(mapping) = run
             .mappings
             .iter()
@@ -620,7 +677,13 @@ fn assemble(
         findings: vec![],
         waivers: vec![],
         sensors,
-        test_adequacy: Some(adequacy),
+        test_adequacy: expected
+            .requirements
+            .observations
+            .as_slice()
+            .iter()
+            .any(|rule| rule.tests.is_some())
+            .then_some(adequacy),
         knowledge: vec![],
     };
     macro_rules! child {

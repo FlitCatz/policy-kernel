@@ -22,6 +22,25 @@ The sibling [[native-contracts#Local-runner attestations]] preserves these recor
 and supports issuance and opt-in verification through
 [[trust-boundaries#Local-runner attestation]].
 
+## Process-check requirements
+
+An approved requirement can opt in to process evidence by naming one or more required process observations. Process-only scopes omit test adequacy. Mixed scopes require both process evidence and suite test coverage.
+
+[[crates/policy-native-contracts/src/types.rs#ScopeRequirementV1]] defines the
+two requirement shapes. A process requirement's `process_checks` references
+bound observations without test rules or parser bindings. All required
+observations must be present, complete and pass. Suite-backed requirements retain
+their wire representation, and a scope with any suite still requires test
+coverage. See the [contract](../docs/integrations/native-contracts-v1.md#process-check-requirements).
+The [[native-contracts#Local attester]] does not support process-only scopes
+yet and refuses them before starting the runner.
+
+Contract tests
+[[crates/policy-native-contracts/tests/process_requirements.rs#process_requirement_round_trips_without_a_suite]],
+[[crates/policy-native-contracts/tests/process_requirements.rs#process_requirement_rejects_missing_empty_duplicate_and_suite_references]],
+and [[crates/policy-native-contracts/tests/process_requirements.rs#mixed_scope_keeps_both_requirement_shapes_and_requires_unique_ids]]
+cover the wire forms and fail-closed validation.
+
 ## Digest domains
 
 Raw byte hashes cannot substitute for canonical typed hashes. Canonical preimages include the native schema discriminator and role, using existing core integer and sorted-key rules.
@@ -108,7 +127,9 @@ The [workflow](../.github/workflows/release-binaries.yml) uses Rust 1.95.0,
 locked builds and SHA-pinned actions. The
 [consumer contract](../docs/integrations/native-contracts-v1.md#pinned-binary-releases)
 defines assets, install commands and checksum pins.
-The [v0.1.3 release notes](../docs/integrations/native-contracts-v1.md#v013-release-notes)
+The [v0.1.4 release notes](../docs/integrations/native-contracts-v1.md#v014-release-notes)
+record process-check requirements. The
+[v0.1.3 release notes](../docs/integrations/native-contracts-v1.md#v013-release-notes)
 record support for xUnit skip-only TRX warnings. Windows x64 users can run the
 Linux x64 binaries under WSL2. See [[status]] for publication status.
 
@@ -140,8 +161,9 @@ defines selections and the one-report-per-observation rule.
 
 The kernel assembles imported observations into core evidence and evaluates independently approved scope. It enforces required sets, mappings, exclusions and bindings; local trust and unmet review cannot authorize a merge.
 
-Entry [[crates/policy-native-verifier/src/lib.rs#evaluate_scope]] delegates sensor
-and adequacy evaluation to core. [[crates/policy-native-verifier/src/lib.rs#assemble]]
+Entry [[crates/policy-native-verifier/src/lib.rs#evaluate_scope]] evaluates bound
+process observations and delegates sensor and adequacy evaluation to core when
+scope includes suite-backed requirements. [[crates/policy-native-verifier/src/lib.rs#assemble]]
 uses explicit local recorder identity and no reviews. The adapter exports
 [[crates/policy-native-importer/src/importer.rs#ImportRecord#verified_observations]]
 only after successful verification, retaining parser-level failure flags.
@@ -164,6 +186,15 @@ command [[crates/policy-cli/tests/scope.rs#local_scope_command_exit_codes_and_in
 comparison [[crates/policy-native-importer/tests/import.rs#importer_verifier_command_and_project_normalization_agree_on_failed_fixture]];
 parser failure [[crates/policy-native-importer/tests/import.rs#parser_level_failure_survives_even_when_all_tests_pass]];
 failed imports [[crates/policy-native-importer/tests/import.rs#rejected_imports_never_export_verified_observations]].
+
+Process checks
+[[crates/policy-native-verifier/tests/scope.rs#process_only_scope_passes_without_test_adequacy]],
+[[crates/policy-native-verifier/tests/scope.rs#process_only_scope_rejects_missing_or_interrupted_checks]],
+[[crates/policy-native-verifier/tests/scope.rs#process_only_scope_rejects_failed_checks]],
+and [[crates/policy-native-verifier/tests/scope.rs#mixed_scope_requires_both_process_and_suite_evidence]]
+cover pass, missing, incomplete, failure, and mixed requirements.
+[[crates/policy-native-importer/tests/import.rs#native_import_and_cli_evaluate_process_scope_without_reports]]
+verifies evaluation of a process-only run with no reports or mappings.
 
 ## Debt ratchet
 
@@ -246,6 +277,8 @@ Attester tests exercise Git and native artifact checks, owner rejection and sign
 
 See the [attester tests](../crates/policy-local-attest/src/tests.rs) and
 [[kernel#Controller authentication#Local-runner controller tests]].
+[[crates/policy-local-attest/src/tests.rs#process_only_scope_is_refused_before_the_runner]]
+checks that a valid process-only scope is refused before the runner starts.
 
 ## Debt ratchet conformance
 

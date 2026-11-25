@@ -205,6 +205,8 @@ cat decision.json | cargo run --locked -p policy-cli -- inspect -
 결정 또는 증거 묶음을 검증해 출력하지만, 제공된 결정을 재계산하거나 인증하지는 않습니다.
 
 `evaluate-scope --expected FILE --observations FILE`은 native 로컬 scope를 평가합니다.
+v0.1.4부터 [프로세스 검사 요구사항](docs/integrations/native-contracts-v1.md#process-check-requirements)을
+단독으로 또는 테스트 스위트에 연결된 요구사항과 함께 사용할 수 있습니다.
 `evaluate-ratchet --rule FILE --observation FILE`은 기존 ratchet 검증기로
 승인된 baseline·head baseline과 관측된 부채 개수를 비교합니다.
 
@@ -508,8 +510,8 @@ scope 평가에서도 non-pass로 유지합니다.
 게시합니다. Linux 빌드는 Ubuntu 22.04/glibc 2.35, macOS 빌드는 macOS 15를
 사용합니다. Windows x64에서는 WSL2에서 Linux x64 바이너리를 실행할 수 있습니다.
 
-`v0.1.3`이 게시되면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
-이전 릴리스를 설치하려면 `tag=v0.1.2`로 설정합니다.
+게시된 `v0.1.3`을 설치하려면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
+프로세스 검사 요구사항을 사용하려면 v0.1.4 게시 후 `tag=v0.1.4`로 설정합니다.
 
 ```sh
 set -eu

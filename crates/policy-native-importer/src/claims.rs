@@ -129,6 +129,7 @@ fn populate_mappings(
             .requirements
             .as_slice()
             .iter()
+            .filter_map(ScopeRequirementV1::suite)
             .find(|r| r.id == selection.requirement_id)
             .is_some_and(|r| r.suites.as_slice().contains(&selection.suite_id));
         if !approved {

@@ -25,15 +25,16 @@ schemas and synthetic conformance vectors. This is a structural contract only;
 signature verification, authenticated local-runner acceptance and promotion are
 not established by it. Existing native v1 scope documents remain unchanged.
 
-Plan PRs 6–7 transferred and adopted the TJERP-owned harness. Plan PR 8
-completes stage 1 in implementation: TJERP main `3c62b9e` owns
+Plan PRs 6–7 transferred the harness to the consuming project, which adopted it.
+Plan PR 8 completes stage 1 in implementation. The consuming project's main
+branch at `3c62b9e` owns
 `tools/policy-adoption`, pinned to policy-kernel `rev = 4df10fa` over public HTTPS.
-Its approved binary hashes and pinned dependency are unaffected; TJERP was not
-modified by PR 8. The former product module, examples and catalog tests are
+The pinned dependency and its approved binary hashes are preserved. The former
+product module, examples and catalog tests are
 removed here. The generic `examples/split-consumer` fixture and
 `native_split_consumer` tests retain report, audit and version regressions.
 This is implementation completion, not a claim that this PR has merged.
-TJERP's pinned execution is unchanged. Profile schemas 1–4, selection
+Profile schemas 1–4, selection
 schemas 1–3, bootstrap releases and every existing required environment check
 are preserved. Adapter repository ownership/support and PR 14 compatibility
 end conditions remain open. No new native adoption, authoritative decision,
@@ -43,9 +44,8 @@ protected merge or production promotion is established.
 
 The CLI also implements `evaluate-ratchet --rule FILE --observation FILE` using
 the existing [debt ratchet JSON verifier](integrations/debt-ratchet-v1.md#cli).
-It prints `RatchetResultV1` with exit 0 for pass, 2 for comparison failures and
-64 for invalid input. This is source implementation for the next binary release;
-no new release, TJERPS adoption or scope authorization is established here.
+The published v0.1.3 binary includes this command. It prints `RatchetResultV1`
+with exit 0 for pass, 2 for comparison failures and 64 for invalid input.
 
 The Unix `policy-native-importer` command delegates to the existing adapter
 library and exports `ImportedObservationsV1` only on verified imports. Its exits
@@ -70,9 +70,17 @@ published the [next binary release](https://github.com/FlitCatz/policy-kernel/re
 from `30bd89ad79e82c39030193b2fe09973b9fa0a00e`. The
 [`v0.1.2` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/44446908609)
 published the [binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.2)
-from `d9aa477e7563bba4ec787354a8a43ad779643f41`. The `v0.1.3` workspace
-version prepares the next native release, whose publication requires a tag.
-Consumer adoption, authoritative decisions and production promotion are tracked separately.
+from `d9aa477e7563bba4ec787354a8a43ad779643f41`. The
+[`v0.1.3` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/44464294671)
+published the [binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.3)
+from `614a65c81dbb85c107b19b19c48fda93a85d4733`.
+
+The v0.1.4 workspace adds
+[process-check requirements](integrations/native-contracts-v1.md#process-check-requirements)
+for native local scopes. A scope can require only process checks or combine them
+with suite-backed requirements. Each required check needs a bound observation
+with an accepted exit code. Results stay local advisory. Publishing the v0.1.4
+binaries requires a version tag.
 
 ## Policy v4 local-runner contract
 
@@ -195,7 +203,8 @@ undeclared names and conflicting entries fail closed. The
 [2026-10-17 native fixture](archive/reviews/2026-10-17-npm-bundles-local.md)
 confirmed npm 11.20.0/Node 26.12.0 oxide 4.3.3 lock shape and successful preparation.
 Local scope is satisfied; bundled names have no individual audit coverage.
-TJERP P8 adoption and frontend re-verification are complete at `4cf51da`, as
+The consuming project's P8 adoption and frontend re-verification completed at
+`4cf51da`, as
 recorded in the P8/P9 status below. No authoritative
 decision, protected merge or production promotion is established here.
 
@@ -209,23 +218,23 @@ specs, dead overrides and drift fail closed. The
 records Node 26.12.0/npm 11.20.0 root-audit failure for overridden vulnerable
 minimist 0.0.8 and clean success for scoped minimist 1.2.8. Local scope is
 satisfied; evidence remains LocalUntrusted. Frozen bootstrap assets are unchanged.
-TJERP P8 adopted reviewed revision `4df10fa` and re-verified frontend `prepare`
-at `4cf51da`, as recorded below. This local fixture alone establishes no TJERP
-adoption, merge, authoritative decision or production promotion.
+The consuming project's P8 adopted reviewed revision `4df10fa` and re-verified
+frontend `prepare` at `4cf51da`, as recorded below. This local fixture alone
+establishes no consumer adoption, merge, authoritative decision or production promotion.
 
-## P7 TJERP split-profile harness
+## P7 consuming project split-profile harness
 
 The former P7 harness checked approved catalog completeness, report identities
-and split source/head bindings. It now belongs to TJERP's `tools/policy-adoption`;
-the [ownership pointer](integrations/tjerp-adoption.md) replaces the old PK commands.
+and split source/head bindings. It now belongs to the consuming project's
+`tools/policy-adoption`. [Task 18](tasks/task-18/README.md) records the ownership change.
 Its product-specific assertions are no longer maintained in this workspace.
 The following P8/P9 records retain their original execution scope and revisions.
 
-## TJERP P8 adoption and P9 first actual dry-run
+## Consuming project P8 adoption and P9 first actual dry-run
 
-P8 and P9 are complete in TJERP's local-only repository (no remote). On
-2026-10-17, P8 branch commit `1fd96a79983a92be1a52871a6800c0ce687345f0`
-was merged into TJERP main with `--no-ff` as
+P8 and P9 are complete in the consuming project's local-only repository (no
+remote). On 2026-10-17, P8 branch commit `1fd96a79983a92be1a52871a6800c0ce687345f0`
+was merged into its main branch with `--no-ff` as
 `4cf51da42c6cda4f4544bb996e3da0e3e780dab4`. It delivered split profiles and
 the run procedure, adopting policy-kernel
 `4df10fa44f3bce79c0613bf8e918cd2d75222d68`; both profiles passed validation
@@ -240,12 +249,12 @@ SHA-256 of `config/policy/requirements.json` was
 `4f3102ff93edc471084581903a5e2ffa8830b2cd2ebc05347f4df837d71ac74d`.
 The later documentation and merge revisions are not new native execution heads.
 
-These facts are recorded in TJERP at the revisions above:
+The consuming project's records at those revisions are
 `.planning/phases/10-policy-kernel-local-adoption/10-05-SUMMARY.md` for P8,
 `10-06-SUMMARY.md` and `10-06-VERIFICATION.md` in that directory for P9,
 and `docs/policy/local-adoption.md` for the procedure and completed-run pointer.
-The local Git history confirms the branch and merge revisions; these are TJERP
-revision citations, not hosted policy-kernel commits.
+The local Git history of the consuming project records both the branch and merge
+revisions.
 
 Evidence remains **LocalUntrusted**, and the **review gate is unmet**: no
 independent review was supplied and no pre-merge decision was produced.
@@ -275,7 +284,7 @@ property pair. XML inheritance, actual command/environment and real output-path
 checks reject unsupported overrides. Rust negative fixtures preserve audit and
 lock protections. The offline native fixture requires actual Mapperly output
 read by an ArchitectureTests-style test, including an empty-output failure case.
-This is local advisory fixture coverage, not TJERP adoption, authoritative CI,
+This is local advisory fixture coverage, not consumer adoption, authoritative CI,
 Trusted evidence or production promotion. Frozen bootstrap assets are unchanged.
 The [2026-10-16 execution record](archive/reviews/2026-10-16-msbuild-generated-output-local.md)
 records **local scope satisfied** using the installed RC1 SDK and cached packages,
@@ -288,7 +297,7 @@ explained non-pass and rejects all-empty consumer policies in schemas 3/4.
 Negative names require changed-behavior policy IDs and executed-test mappings.
 Legacy parsing and frozen bootstrap bytes remain unchanged; readiness now
 requires adopting real requirements and collecting matching evidence.
-This change is local advisory work, not TJERP adoption or promotion to Trusted.
+This change is local advisory work, not consumer adoption or promotion to Trusted.
 No production promotion or authoritative CI decision is established by local tests.
 
 ## Native fixture dependency refresh
@@ -358,7 +367,7 @@ records native conformance with the captain's revised Node 26.12.0 pin and
 npm 11.20.0: TS6/TS5 resolution, root/member-only vulnerability detection and
 clean recovery. Approved registry installations, cache and logs stayed inside
 temporary fixtures. Local evidence is labelled **local scope satisfied** and
-remains LocalUntrusted. This is PK fixture coverage, not TJERP adoption,
+remains LocalUntrusted. This is PK fixture coverage, not consumer adoption,
 an authoritative CI decision, protected-branch merge or production promotion.
 
 ## Task 17 project-owned frontend tool versions
@@ -407,9 +416,10 @@ checks only.
 ## Task 16 consumer extension
 
 [Task 16](tasks/task-16/README.md) adds opt-in project schema 3/selection schema 2
-and custom bootstrap 1.2.0 for the TJERP-shaped consumer. Its exact toolchain and
-composition are covered by [local verification](archive/reviews/2026-09-29-tjerp-consumer-compatibility.md).
-This does not establish TJERP installation, new hosted CI evidence or production
+and custom bootstrap 1.2.0 for the split-profile consumer. Its exact toolchain and
+composition are covered by the local verification record linked from
+[Task 16](tasks/task-16/README.md).
+This does not establish consumer installation, new hosted CI evidence or production
 promotion. Existing Task 15 external conditions below remain applicable.
 
 This page is the canonical summary of the repository's current documentation

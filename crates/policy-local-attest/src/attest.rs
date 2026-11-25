@@ -83,6 +83,15 @@ fn attest(args: Args, confirm: impl FnOnce(&str) -> bool) -> Result<Outcome> {
         return Err("signer must be an absolute executable path".into());
     }
     let mut expected: ExpectedScopeV1 = serde_json::from_slice(&fs::read(&args.expected)?)?;
+    if expected
+        .requirements
+        .observations
+        .as_slice()
+        .iter()
+        .all(|rule| rule.tests.is_none())
+    {
+        return Err("local attestation of process-only scopes is not supported yet".into());
+    }
     let before = GitSnapshot::read(&args.repo)?;
     let base = revision(&args.repo, &format!("{}^{{commit}}", args.base))?;
     if before.head != expected.subject.head {
