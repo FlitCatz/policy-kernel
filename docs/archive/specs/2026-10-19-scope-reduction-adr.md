@@ -123,7 +123,7 @@ directory when overridden). TJERP's approved path remains the pinned
 `4df10fa44f3bce79c0613bf8e918cd2d75222d68` build of `project-verification` and
 `tjerp_adoption`, with approved binary hashes and catalog inputs. Updating kernel
 main is not consumer reapproval. See the [adoption procedure](../../integrations/tjerp-adoption.md)
-and [P8/P9 record citations](../../status.md#consuming-project-p8-adoption-and-p9-first-actual-dry-run).
+and [P8/P9 record citations](../../status.md#tjerp-p8-adoption-and-p9-first-actual-dry-run).
 
 ## Frozen and eventual retirement candidates
 
