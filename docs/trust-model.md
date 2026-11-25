@@ -118,7 +118,8 @@ shipped profiles and fixtures use supported patterns and need no migration.
 
 [Policy v5](integrations/policy-scope-v5.md) applies the same subset to
 digest-bound PR scope rules. Complete changed paths select all matching rule
-requirements or the path fallback. Complete PR labels can add to those
+requirements, plus the path fallback when the change is empty or any changed
+path matches no path rule. Complete PR labels can add to those
 requirements. The trusted context must supply both observations for the PR
 under evaluation. Scope errors withhold readiness.
 

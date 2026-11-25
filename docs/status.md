@@ -95,7 +95,8 @@ advisory entry point.
 
 The [policy schema](../schemas/policy.schema.json) accepts versions 1–5. V4
 requires `required_reviews` as v3 does and optionally declares
-`local_runner_evidence`; absence keeps local-runner acceptance closed. V1–v3
+`local_runner_evidence`; absence keeps local-runner acceptance closed. V5 accepts
+the same optional block. V1–v3
 reject that field, including explicit `null`, and retain their serialization and
 digests. A present block requires nonempty, unique, nonblank `allowed_runner_ids`
 without NUL, nonempty `approved_scope_template_digests`, positive
@@ -105,7 +106,7 @@ allowed). Explicit `null` is invalid in v4 too.
 The [evidence schema](../schemas/evidence-bundle.schema.json) adds
 `local_runner_attested` while retaining evidence schema version 1 and existing
 document digests. This class is explicitly not CI-grade. Core acceptance rules
-now allow it for sensors and executions only under a valid v4 opt-in block, a
+now allow it for sensors and executions only under a valid v4 or v5 opt-in block, a
 change exempt from CI, and the local freshness window. The evaluator clock measures
 age from execution start; local sensors also require fresh observations and
 command-bound execution starts. The local window can exceed the global window

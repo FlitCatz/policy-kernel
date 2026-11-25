@@ -244,7 +244,7 @@
       "additionalProperties": false,
       "properties": {
         "default_required_sensor_ids": {
-          "description": "The path baseline when no path rule matches. Labels can still widen it.",
+          "description": "Required when the change is empty or any changed path matches no path rule.\nLabels can still widen it.",
           "items": {
             "$ref": "#/$defs/SensorId"
           },
@@ -335,8 +335,7 @@
             "enum": [
               1,
               2,
-              3,
-              5
+              3
             ]
           }
         }

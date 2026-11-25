@@ -105,7 +105,7 @@ fn resolve_scope(
 
     let mut required: BTreeSet<_> = required_sensors(profile, paths, None).collect();
     required.extend(policy.required_sensor_ids.iter().cloned());
-    let mut path_matched = false;
+    let mut path_matched = vec![false; paths.len()];
     for rule in &scope.rules {
         let matches = match rule {
             ScopeRule::Label { label, .. } => labels.contains(label),
@@ -114,10 +114,13 @@ fn resolve_scope(
                     .iter()
                     .map(|glob| path_glob(glob))
                     .collect::<Result<Vec<_>, _>>()?;
-                let matches = matchers
-                    .iter()
-                    .any(|glob| paths.iter().any(|path| glob.is_match(path)));
-                path_matched |= matches;
+                let mut matches = false;
+                for (path, matched) in paths.iter().zip(&mut path_matched) {
+                    if matchers.iter().any(|glob| glob.is_match(path)) {
+                        *matched = true;
+                        matches = true;
+                    }
+                }
                 matches
             }
         };
@@ -125,7 +128,7 @@ fn resolve_scope(
             required.extend(rule.required_sensor_ids().iter().cloned());
         }
     }
-    if !path_matched {
+    if paths.is_empty() || path_matched.contains(&false) {
         required.extend(scope.default_required_sensor_ids.iter().cloned());
     }
     Ok(required.into_iter().collect())

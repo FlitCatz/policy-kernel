@@ -285,6 +285,46 @@ fn ci_conditions_combine_risk_and_any_path_then_union_conditions() {
     }
 }
 
+// Oracle: policy v5 ignores caller-supplied risk, so a risk-restricted CI
+// condition must apply in v5 while v4 keeps honoring the observed risk.
+#[test]
+fn v5_accepts_local_runner_evidence_without_trusting_caller_risk() {
+    for (version, condition_glob, requires_ci) in [
+        (4, "src/**", false),
+        (5, "tools/**", false),
+        (5, "src/**", true),
+    ] {
+        let mut value = candidate(true, false);
+        value["policy"]["schema_version"] = json!(version);
+        if version == 5 {
+            value["policy"]["scope_rules"] =
+                json!({"default_required_sensor_ids": ["compile"], "rules": []});
+            value["context"]["labels"] = json!([]);
+        }
+        value["context"]["risk"] = json!("low");
+        value["policy"]["local_runner_evidence"]["ci_required_when"] =
+            json!([{"id": "high-risk", "risks": ["high"], "path_globs": [condition_glob]}]);
+        value["evidence"]["sensors"][0]["trust"] = json!("local_runner_attested");
+        value["evidence"]["executions"][0]["trust"] = json!("local_runner_attested");
+        let decision = decide(value);
+        assert_eq!(
+            has(&decision, "PK-PROV-CI-REQUIRED"),
+            requires_ci,
+            "v{version} {condition_glob}: {:?}",
+            decision.reasons
+        );
+        assert_eq!(has(&decision, "PK-PROV-LOCAL-ATTESTED"), !requires_ci);
+        assert_eq!(
+            decision.status,
+            if requires_ci {
+                PreMergeStatus::Inconclusive
+            } else {
+                PreMergeStatus::ReadyToMerge
+            }
+        );
+    }
+}
+
 #[test]
 fn invalid_ci_conditions_are_rejected_even_when_other_conditions_do_not_match() {
     for conditions in [

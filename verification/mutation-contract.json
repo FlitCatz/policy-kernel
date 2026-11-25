@@ -343,26 +343,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 535
+              "line": 536
             },
             "start": {
               "column": 1,
-              "line": 513
+              "line": 514
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:517:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
+        "name": "crates/policy-core/src/provenance.rs:518:5: replace timestamps -> impl Iterator<Item =&UtcTimestamp> with ::std::iter::once(Box::leak(Box::new(Default::default())))",
         "package": "policy-core",
         "replacement": "::std::iter::once(Box::leak(Box::new(Default::default())))",
         "span": {
           "end": {
             "column": 68,
-            "line": 534
+            "line": 535
           },
           "start": {
             "column": 5,
-            "line": 517
+            "line": 518
           }
         }
       },
@@ -371,11 +371,11 @@
       "span": {
         "end": {
           "column": 68,
-          "line": 534
+          "line": 535
         },
         "start": {
           "column": 5,
-          "line": 517
+          "line": 518
         }
       }
     },
@@ -810,26 +810,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 507
+              "line": 508
             },
             "start": {
               "column": 1,
-              "line": 498
+              "line": 499
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:499:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))",
+        "name": "crates/policy-core/src/provenance.rs:500:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), true))",
         "package": "policy-core",
         "replacement": "::std::iter::once((Default::default(), true))",
         "span": {
           "end": {
             "column": 74,
-            "line": 506
+            "line": 507
           },
           "start": {
             "column": 5,
-            "line": 499
+            "line": 500
           }
         }
       },
@@ -838,11 +838,11 @@
       "span": {
         "end": {
           "column": 74,
-          "line": 506
+          "line": 507
         },
         "start": {
           "column": 5,
-          "line": 499
+          "line": 500
         }
       }
     },
@@ -856,26 +856,26 @@
           "span": {
             "end": {
               "column": 2,
-              "line": 507
+              "line": 508
             },
             "start": {
               "column": 1,
-              "line": 498
+              "line": 499
             }
           }
         },
         "genre": "FnValue",
-        "name": "crates/policy-core/src/provenance.rs:499:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))",
+        "name": "crates/policy-core/src/provenance.rs:500:5: replace evidence_trusts -> impl Iterator<Item =(TrustClass, bool)>+'_ with ::std::iter::once((Default::default(), false))",
         "package": "policy-core",
         "replacement": "::std::iter::once((Default::default(), false))",
         "span": {
           "end": {
             "column": 74,
-            "line": 506
+            "line": 507
           },
           "start": {
             "column": 5,
-            "line": 499
+            "line": 500
           }
         }
       },
@@ -884,11 +884,11 @@
       "span": {
         "end": {
           "column": 74,
-          "line": 506
+          "line": 507
         },
         "start": {
           "column": 5,
-          "line": 499
+          "line": 500
         }
       }
     },
@@ -1033,17 +1033,17 @@
   ],
   "schema_version": 1,
   "sources": {
-    "crates/policy-ci/src/controller.rs": "b32b29d597f4c7b9caed0adf5953add3cae9898246df600fce0e6c4535dec0cf",
+    "crates/policy-ci/src/controller.rs": "8945dc382f961974e7cb58ae63c312fdfd24bfc602256377d6b15dde85d0a29f",
     "crates/policy-contracts/src/decision.rs": "1d37fbf9a961f77e5fb487a9f3bbf7f7353241f2a464d4c264fc30918f4ab7f4",
     "crates/policy-contracts/src/evidence.rs": "7d99d88f5735e529f1496d34e3242b8159a64cfbd610ba5ea6ab77aaac065cbd",
     "crates/policy-contracts/src/github.rs": "2e57496f572f21c4573325088ed2cef086243644c3fb712442fb05db3d1f6081",
     "crates/policy-contracts/src/identity.rs": "f3a9de1f500876e24f3a2616bb18991b08e48c6bc25df0d9d47b7b608edfa42e",
     "crates/policy-contracts/src/lib.rs": "0ba0644fbab69b7cabc43a1739d1212f6808a7862f5cf9a127b3e1a7cfbf1364",
-    "crates/policy-contracts/src/policy.rs": "909561f6935645706047a8b4392024beb5d76b2f8c709aa389e44e6f838fede9",
+    "crates/policy-contracts/src/policy.rs": "834579438eb9f50544e6d9aa44d96506ec1102bdb53f7a875dd8a145fcd7add9",
     "crates/policy-core/src/canonical.rs": "319a980cb4aea9b44eba1f95bb7b7ab5c6aa8561c79de83c3a3d594724fde2e4",
     "crates/policy-core/src/post_merge.rs": "da57582ff06464e14c760f2d758097c05780b17af8472207bdf5f4013f88840b",
     "crates/policy-core/src/pre_merge.rs": "c977ff5d9a96ec5feb4f974716495955bed2e3f663c1509e551c2baee9b0211f",
-    "crates/policy-core/src/provenance.rs": "0deedb665689509a61b1040bc01febb44a7ec7679ee87bb46d983e227274c6b7",
+    "crates/policy-core/src/provenance.rs": "9a7e5580227ff2afd60fb568df989a890a7d74fd1fd469bc136a0f4a188e880e",
     "crates/policy-core/src/reviews.rs": "67fcf7d6da7dbf89c03798718ab4ffbbb5ab7931144ca71862af59d0394fa6e2",
     "crates/policy-core/src/sensors.rs": "0b6ce8f76317537bbbed19fc4e7ddffb02033b51dbd1419c415550c3d39d9264"
   }

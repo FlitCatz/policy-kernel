@@ -15,7 +15,7 @@ The
 [2026-11-12 decision record](../decisions/2026-11-12-local-runner-attestation-adr.md)
 plans authenticated acceptance of a signed local-runner statement and approved
 scope-template digest. The sibling [wire contracts below](#local-runner-attestation-contracts)
-are implemented. Core also implements policy v4 opt-in acceptance for fresh sensor
+are implemented. Core also implements policy v4 or v5 opt-in acceptance for fresh sensor
 and execution evidence at the weaker class, with a shipping prohibition;
 the [schema-2 controller](../../action/controller.md#local-runner-verification)
 authenticates signatures and recomputes scope. The

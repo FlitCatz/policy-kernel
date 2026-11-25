@@ -432,7 +432,7 @@ The additive [policy v4 contract](docs/status.md#policy-v4-local-runner-contract
 requires the same review block and optionally declares `local_runner_evidence`.
 V1–v3 reject this field and preserve their bytes and digests. Evidence schema 1
 now represents `local_runner_attested`, explicitly outside the CI-grade allowlist.
-Core accepts this class only for sensor and execution evidence when v4 opts in,
+Core accepts this class only for sensor and execution evidence when v4 or v5 opts in,
 no `ci_required_when` condition matches, and the local freshness window holds.
 Execution start is measured against the evaluator clock; sensor observations and
 their command-bound execution starts must be fresh. A longer local window does

@@ -35,7 +35,7 @@ pub struct PolicySnapshot {
     /// Mandatory from v3; omitted from legacy digest preimages.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub required_reviews: Option<RequiredReviewPolicy>,
-    /// Optional in v4; absence keeps local-runner evidence disabled.
+    /// Optional from v4; absence keeps local-runner evidence disabled.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub local_runner_evidence: Option<LocalRunnerEvidencePolicy>,
     /// Opt-in from v4 for an owner authorization plus an independent automated review.
@@ -49,7 +49,8 @@ pub struct PolicySnapshot {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ScopeRules {
-    /// The path baseline when no path rule matches. Labels can still widen it.
+    /// Required when the change is empty or any changed path matches no path rule.
+    /// Labels can still widen it.
     #[schemars(schema_with = "scope_sensor_ids_schema")]
     pub default_required_sensor_ids: Vec<SensorId>,
     pub rules: Vec<ScopeRule>,
@@ -245,9 +246,6 @@ impl PolicySnapshot {
             if self.schema_version < 4 {
                 return Err("policy v1/v2/v3 cannot declare local_runner_evidence");
             }
-            if self.schema_version != 4 {
-                return Err("only policy v4 can declare local_runner_evidence");
-            }
             local.validate()?;
         }
         match (self.schema_version, &self.required_reviews) {
@@ -322,7 +320,7 @@ impl JsonSchema for PolicySnapshot {
                 "then": {"required": ["required_reviews"]},
                 "else": {"not": {"required": ["required_reviews"]}}
             }, {
-                "if": {"properties": {"schema_version": {"enum": [1, 2, 3, 5]}}},
+                "if": {"properties": {"schema_version": {"enum": [1, 2, 3]}}},
                 "then": {"not": {"required": ["local_runner_evidence"]}}
             }, {
                 "if": {"properties": {"schema_version": {"enum": [1, 2, 3]}}},

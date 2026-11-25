@@ -123,6 +123,11 @@ fn required_scope_unions_path_and_label_rules_without_losing_the_baseline() {
             &["baseline", "lint", "tests"][..],
         ),
         (
+            &["src/main.rs", "notes.md"][..],
+            &[][..],
+            &["baseline", "compile", "lint", "tests"][..],
+        ),
+        (
             &["config/main.yml"][..],
             &["run-ci"][..],
             &["baseline", "lint", "tests"][..],

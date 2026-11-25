@@ -48,10 +48,10 @@ digests remain valid, but readiness and shipping require explicit v3 reapproval.
 Consumer profiles are unchanged; reapproval and promotion are not established.
 See [[kernel#Review consensus and waivers]].
 
-Policy v4 optionally declares local-runner evidence settings, with the v3 review
+Policy v4 and v5 optionally declare local-runner evidence settings, with the v3 review
 block still required. V1–v3 bytes and digests stay unchanged. Evidence v1 accepts
 the new wire value, which is not CI-grade. Core accepts it only for fresh sensors
-and executions under v4 opt-in with no matching CI condition; such readiness cannot ship.
+and executions under v4 or v5 opt-in with no matching CI condition; such readiness cannot ship.
 See [[kernel#Local-runner policy contract]].
 
 V4 also offers an independent optional owner review rule: fresh owner authorization

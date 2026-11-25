@@ -17,13 +17,15 @@ sensors from the approved policy and current PR observations.
 Each path rule applies when any changed path matches any of its globs. Globs
 use the [sensor glob subset](../trust-model.md#boundaries) with
 literal characters, segment-local `*`, and whole-segment `**`. The default
-applies when no path rule matches. A label rule adds its IDs whenever the
+applies when the change is empty or when any changed path matches no path rule,
+so a change that mixes matched and unmatched paths still requires it. A label rule adds its IDs whenever the
 complete PR label list contains its exact name. Labels preserve the path or
 default requirements, and unknown labels have no effect on scope. The kernel
 unions all applicable IDs with the policy's `required_sensor_ids` and applicable
 requirements from the bound sensor profile. Overlap contributes a single ID.
 In the example, an unmatched unlabeled change requires `compile` and adding
-`run-ci` also requires `tests` and `lint`.
+`run-ci` also requires `tests` and `lint`. An unlabeled change to `src/lib.rs`
+and `README.md` requires both `tests` and `compile`.
 
 Each requirement list is nonempty with distinct sensor IDs. Every referenced
 sensor must exist in the bound profile, including references in inactive rules.
@@ -48,8 +50,10 @@ An inherited risk-conditioned sensor or knowledge requirement can still apply
 when its path condition matches. A risk-conditioned sensor exemption cannot
 apply without trusted risk. Existing path-only exemptions still require
 coverage of every changed path. All other pre-merge gates, including test
-adequacy, provenance, and authorized agent readiness, still apply. The v4-only
-`local_runner_evidence` block remains a v4 option.
+adequacy, provenance, and authorized agent readiness, still apply. V5 can
+declare the optional `local_runner_evidence` block with the same validation and
+acceptance rules as v4. Because v5 ignores caller risk, a risk-restricted
+`ci_required_when` condition applies whenever its path condition matches.
 
 Rust callers with complete typed observations can use
 `policy_core::resolve_required_scope` to get deduplicated sensor IDs in ID order.

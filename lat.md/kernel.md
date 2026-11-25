@@ -46,7 +46,7 @@ Required knowledge:
 
 ## Declarative PR scope rules
 
-Policy v5 computes required sensor IDs from changed paths, the path fallback and additive PR labels. Missing or invalid observations withhold readiness.
+Policy v5 computes required sensor IDs from changed paths, a fallback for any path no path rule matches, and additive PR labels. Missing or invalid observations withhold readiness.
 
 [[crates/policy-contracts/src/policy.rs#ScopeRules]] is digest-bound under
 [[crates/policy-contracts/src/policy.rs#PolicySnapshot#validate_version]].
@@ -151,7 +151,7 @@ codes and the unchanged controller floor; collection authentication is separate.
 
 ## Local-runner policy contract
 
-Policy v4 optionally enables fresh local-class sensors and executions for changes exempt from CI. Other evidence stays CI-grade; local readiness carries a digest-bound marker that prevents shipping.
+Policy v4 and v5 optionally enable fresh local-class sensors and executions for changes exempt from CI. Other evidence stays CI-grade; local readiness carries a digest-bound marker that prevents shipping.
 
 Version validation [[crates/policy-contracts/src/policy.rs#PolicySnapshot#validate_version]]
 keeps each optional v4 extension independent; legacy serialization and digests
@@ -164,7 +164,7 @@ and a positive age. The required conditions list reuses
 changing evidence version 1; the existing CI-grade predicate explicitly rejects it.
 
 Schema and Rust parity tests
-[[xtask/tests/local_runner_contract.rs#v4_local_runner_block_is_optional_and_legacy_versions_reject_its_presence]],
+[[xtask/tests/local_runner_contract.rs#local_runner_block_is_optional_from_v4_and_legacy_versions_reject_its_presence]],
 [[xtask/tests/local_runner_contract.rs#local_runner_policy_shapes_match_rust_and_json_schema]],
 [[xtask/tests/local_runner_contract.rs#direct_construction_obeys_local_runner_and_review_boundaries]]
 and [[xtask/tests/local_runner_contract.rs#local_runner_trust_round_trips_in_v1_evidence]]
@@ -183,7 +183,9 @@ Both freshness call sites share
 exercises all 192 trust/kind/mode/block/CI combinations.
 [[crates/policy-core/tests/local_runner.rs#local_execution_age_uses_start_and_exact_subsecond_boundaries]],
 [[crates/policy-core/tests/local_runner.rs#local_sensor_window_is_measured_from_execution_start_even_with_ci_execution]]
-and [[crates/policy-core/tests/local_runner.rs#invalid_ci_conditions_are_rejected_even_when_other_conditions_do_not_match]]
+and [[crates/policy-core/tests/local_runner.rs#invalid_ci_conditions_are_rejected_even_when_other_conditions_do_not_match]];
+[[crates/policy-core/tests/local_runner.rs#v5_accepts_local_runner_evidence_without_trusting_caller_risk]]
+keeps v5 risk-restricted CI conditions fail closed
 pin freshness and fail-closed conditions.
 [[crates/policy-core/tests/local_runner.rs#local_freshness_can_outlive_global_freshness_without_relaxing_ci_or_advisory]]
 keeps local and global age limits independent without relaxing CI or advisory checks;

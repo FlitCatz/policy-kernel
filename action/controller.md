@@ -12,7 +12,7 @@ The
 adds a second statement type to this boundary. Configuration schema 2 verifies
 owner-registered local runners, binds their statements to signed GitHub
 observations, recomputes scope and issues only the covered sensors and executions
-as `local_runner_attested`. Core separately requires policy v4 opt-in, freshness
+as `local_runner_attested`. Core separately requires policy v4 or v5 opt-in, freshness
 and a change exempt from CI, and prevents such readiness from shipping. The
 [local attester](#issuing-a-local-attestation) prepares the three local inputs
 and requests owner approval before invoking a signer.
@@ -151,7 +151,7 @@ For each local input the controller performs these checks before creating output
    at the controller's clock. The signature's embedded key must equal the
    registered key. Parse the signed security-key flags and require user presence
    (`0x01`): `ssh-keygen -Y verify` alone does not enforce this bit.
-2. Require policy v4 opt-in and membership in `allowed_runner_ids`.
+2. Require policy v4 or v5 opt-in and membership in `allowed_runner_ids`.
 3. Match statement, scope and run subjects, repository/head to the GitHub binding,
    tree to `github_head_tree`, base to the observer's PR manifest, and source-set,
    run and scope identities to the signed inputs.
