@@ -15,3 +15,12 @@ See [[kernel#Scope boundary]] and [[tasks]].
 
 Canonical entry points are [README](../README.md),
 [Current status](../docs/status.md), and [Task index](../docs/tasks/README.md).
+
+## Rust dependency updates
+
+Dependabot caps `globset` and `proptest` updates at releases compatible with the workspace's Rust 1.85 minimum.
+
+Remove both ignore entries when the workspace `rust-version` is raised to 1.88 or later.
+
+See the [update rules](../.github/dependabot.yml) and the
+[Rust compatibility guide](../docs/integrations/rust-compatibility.md).
