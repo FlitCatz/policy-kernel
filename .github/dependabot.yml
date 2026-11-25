@@ -12,6 +12,12 @@ updates:
     labels:
       - "dependencies"
       - "rust"
+    # The newer releases require Rust 1.88 and the workspace supports Rust 1.85.
+    ignore:
+      - dependency-name: "globset"
+        versions: ["> 0.4.19"]
+      - dependency-name: "proptest"
+        versions: ["> 1.11.0"]
     groups:
       rust-patch:
         patterns:
