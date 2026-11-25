@@ -13,6 +13,7 @@ updates:
       - "dependencies"
       - "rust"
     # The newer releases require Rust 1.88 and the workspace supports Rust 1.85.
+    # Remove these ignore entries when the workspace rust-version is raised to 1.88 or later.
     ignore:
       - dependency-name: "globset"
         versions: ["> 0.4.19"]
