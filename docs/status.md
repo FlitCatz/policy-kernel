@@ -57,9 +57,9 @@ explicitly claims coverage by executed tests without inferring it. One TRX maps
 to one observation and independently approved project suite, preserving all v1
 wire contracts. [Claim preparation](integrations/native-contracts-v1.md#claim-preparation-from-raw-reports)
 removes the need for consumer Rust or duplicated report parsers.
-The [version-tag workflow](../.github/workflows/release-binaries.yml) builds both
-commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
-`x86_64-unknown-linux-gnu`, packaging four executables, `SHA256SUMS` and
+The [version-tag workflow](../.github/workflows/release-binaries.yml) builds the
+native commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
+`x86_64-unknown-linux-gnu`, packaging per-target executables, `SHA256SUMS` and
 `SOURCE_COMMIT`. [Consumer instructions](integrations/native-contracts-v1.md#pinned-binary-releases)
 describe version and checksum pins. The
 [`v0.1.0` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/43784765825)
