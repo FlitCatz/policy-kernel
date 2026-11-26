@@ -128,7 +128,8 @@ locked builds and SHA-pinned actions. The
 [consumer contract](../docs/integrations/native-contracts-v1.md#pinned-binary-releases)
 defines assets, install commands and checksum pins.
 The [v0.1.5 release notes](../docs/integrations/native-contracts-v1.md#v015-release-notes)
-record advisory evaluation of [[kernel#Declarative PR scope rules]]. The
+record advisory evaluation of [[kernel#Declarative PR scope rules]] and the
+Rust struct-literal changes for pre-merge context and policy snapshots. The
 [v0.1.4 release notes](../docs/integrations/native-contracts-v1.md#v014-release-notes)
 record process-check requirements. The
 [v0.1.3 release notes](../docs/integrations/native-contracts-v1.md#v013-release-notes)

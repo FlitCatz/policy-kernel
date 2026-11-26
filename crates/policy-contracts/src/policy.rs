@@ -60,7 +60,7 @@ pub struct ScopeRules {
 #[serde(tag = "when", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ScopeRule {
     Label {
-        #[schemars(schema_with = "binding_nonblank_string_schema")]
+        #[schemars(schema_with = "scope_label_schema")]
         label: String,
         #[schemars(schema_with = "scope_sensor_ids_schema")]
         required_sensor_ids: Vec<SensorId>,
@@ -102,9 +102,9 @@ impl ScopeRules {
         for rule in &self.rules {
             match rule {
                 ScopeRule::Label { label, .. }
-                    if label.trim().is_empty() || label.contains('\0') =>
+                    if !label.is_ascii() || label.trim().is_empty() || label.contains('\0') =>
                 {
-                    return Err("scope rule labels must be nonblank and contain no NUL");
+                    return Err("scope rule labels must be nonblank ASCII without NUL");
                 }
                 ScopeRule::Paths { path_globs, .. } if path_globs.is_empty() => {
                     return Err("scope path rules require at least one glob");
@@ -114,6 +114,15 @@ impl ScopeRules {
         }
         Ok(())
     }
+}
+
+fn scope_label_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "allOf": [
+            binding_nonblank_string_schema(generator),
+            {"not": {"pattern": r"[^\u0000-\u007f]"}}
+        ]
+    })
 }
 
 fn scope_sensor_ids_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {

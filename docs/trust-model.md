@@ -119,9 +119,10 @@ shipped profiles and fixtures use supported patterns and need no migration.
 [Policy v5](integrations/policy-scope-v5.md) applies the same subset to
 digest-bound PR scope rules. Complete changed paths select all matching rule
 requirements, plus the path fallback when the change is empty or any changed
-path matches no path rule. Complete PR labels can add to those
-requirements. The trusted context must supply both observations for the PR
-under evaluation. Scope errors withhold readiness.
+path matches no path rule. Label rules declare ASCII names and match them
+case-insensitively against the complete PR label list. Both lists carry the
+trust of their caller. A signed context binds the supplied values. The planned `gate` command
+will read both lists directly from GitHub. Scope errors withhold readiness.
 
 A blocked review whose Medium, High
 and Critical findings are all validly waived does not conflict with an approving

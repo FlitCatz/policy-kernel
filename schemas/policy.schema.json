@@ -182,11 +182,20 @@
           "additionalProperties": false,
           "properties": {
             "label": {
-              "not": {
-                "pattern": "\u0000"
-              },
-              "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
-              "type": "string"
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "\u0000"
+                  },
+                  "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+                  "type": "string"
+                },
+                {
+                  "not": {
+                    "pattern": "[^\\u0000-\\u007f]"
+                  }
+                }
+              ]
             },
             "required_sensor_ids": {
               "items": {

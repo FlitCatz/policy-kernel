@@ -436,9 +436,10 @@ This does not migrate consumer project profiles or establish production approval
 See the [review requirements and migration](docs/trust-model.md).
 
 [Policy v5 scope rules](docs/integrations/policy-scope-v5.md) select required
-sensors from the complete changed paths and a default for unmatched changes.
-PR labels such as `run-ci` can add requirements. The kernel computes this scope
-without caller-supplied risk, and incomplete observations prevent readiness.
+sensors from caller-supplied changed paths and a default for unmatched changes.
+Label rules declare ASCII names such as `run-ci` and match them case-insensitively.
+The caller is responsible for the completeness of both lists. V5
+ignores caller-supplied risk. V1–v4 still require `risk` in any supplied context.
 
 The additive [policy v4 contract](docs/status.md#policy-v4-local-runner-contract)
 requires the same review block and optionally declares `local_runner_evidence`.

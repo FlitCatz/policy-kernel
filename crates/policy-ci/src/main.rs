@@ -301,6 +301,7 @@ fn evaluate(options: Options, runtime: Runtime, post_merge: bool) -> Result<bool
             return Err("evidence does not match trusted current-run receipt".into());
         }
         let context: PreMergeContext = read_trusted(&runtime.trusted, "context.json")?;
+        context.validate_for_policy(&runtime.policy)?;
         if context.workflow_run_id != receipt.workflow_run_id {
             return Err("context workflow run mismatch".into());
         }
