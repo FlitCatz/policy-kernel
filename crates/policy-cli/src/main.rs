@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+mod gate;
+
 use clap::{error::ErrorKind, Parser, Subcommand};
 use policy_contracts::{
     EvaluationMode, EvidenceBundle, PostMergeDecision, PreMergeDecision, PreMergeEvaluationInput,
@@ -11,6 +13,7 @@ use serde_json::Value;
 use std::{
     fs,
     io::{self, Read, Write},
+    path::PathBuf,
     process::ExitCode,
 };
 
@@ -31,6 +34,19 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Evaluate a pull request's GitHub Actions evidence in advisory mode.
+    Gate {
+        #[arg(long)]
+        repo: String,
+        #[arg(long)]
+        pr: u64,
+        /// Repository-relative JSON policy path at the tip of the PR base branch.
+        #[arg(long)]
+        policy: String,
+        /// Write the detailed JSON evidence to this new file.
+        #[arg(long, default_value = "gate-evidence.json")]
+        output: PathBuf,
+    },
     /// Evaluate native local scope (typed JSON only; no raw artifact verification).
     EvaluateScope {
         #[arg(long)]
@@ -79,6 +95,12 @@ fn main() -> ExitCode {
 
 fn run(cli: Cli) -> Result<u8, String> {
     match cli.command {
+        Command::Gate {
+            repo,
+            pr,
+            policy,
+            output,
+        } => gate::run(&repo, pr, &policy, &output),
         Command::EvaluateScope {
             expected,
             observations,

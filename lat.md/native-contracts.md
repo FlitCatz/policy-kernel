@@ -107,13 +107,13 @@ checks the diagnostic and source retention one byte over the limit.
 
 ## Native command distribution
 
-The Unix importer command delegates raw verification to the adapter library. An owner-created version tag triggers packaging with the JSON-only scope CLI, SHA-256 checksums and the source commit.
+The Unix importer command delegates raw verification to the adapter library. An owner-created version tag packages it with the advisory CLI, SHA-256 checksums and the source commit.
 
 Command [[crates/policy-native-importer/src/main.rs#main]] calls
 [[crates/policy-native-importer/src/importer.rs#import_run]] without a second
 validator. It exits 0 for verified imports, 2 for persisted rejected imports and
-64 for input/output errors; only verified imports export observations. The
-separate binary preserves existing internal dependency directions.
+64 for input/output errors; only verified imports export observations.
+[[ci-gate]] uses the same importer internally for GitHub Actions artifacts.
 Command conformance
 [[crates/policy-native-importer/tests/import.rs#native_import_command_exports_only_verified_observations]]
 and [[crates/policy-native-importer/tests/import.rs#native_import_command_requires_independent_identity_and_valid_documents]]

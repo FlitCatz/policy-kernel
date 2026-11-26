@@ -12,6 +12,7 @@ short paths between the concepts an agent or maintainer needs to understand.
 - [[native-contracts]] — additive native v1 wire types, digest domains and conformance
 - [[tjerp]] — consumer-owned harness status and historical local acceptance records
 - [[github-tests]] — executable publication and adapter process regressions
+- [[ci-gate]] — advisory GitHub Actions evidence intake and scoped evaluation
 - [[structure-gates]] — measured Clippy limits and internal crate dependency directions
 
 Start with [Current status](../docs/status.md) and the

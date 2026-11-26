@@ -24,7 +24,7 @@ actual `success` observation for `SHIPPED`.
 | --- | --- | --- |
 | policy-contracts | Strict versioned wire parsing and schemas | No observation authentication |
 | policy-core | Deterministic binding, provenance, review, sensor and merge decisions | Trust depends on authenticated inputs |
-| policy-cli | Force advisory pre-merge evaluation; evaluate local scope and debt ratchet JSON; inspect supplied data | Cannot issue a required check or authorize shipping |
+| policy-cli | Force advisory pre-merge evaluation; evaluate local scope and debt ratchet JSON; inspect supplied data; read GitHub Actions evidence for the [advisory gate](integrations/ci-gate.md) | Cannot issue a required check or authorize shipping |
 | evidence-collector | Bounded explicit-argv execution and immutable artifact digests | Local execution alone remains untrusted |
 | github-adapter / policy-ci | Authenticate current GitHub workflow and API observations; publish a bound check | Required Task 10 integration boundary |
 | Consuming workflow and human owner | Preserve contributor identities, execute independent reviews, protect merge policy | Promotion requires separate owner authorization |

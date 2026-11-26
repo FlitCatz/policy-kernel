@@ -191,8 +191,8 @@ path 멤버 검사에는 Cargo patch나 설정으로 추가된 해석 그래프�
 
 ### 로컬 자문 평가 실행
 
-`policy-cli`는 JSON 파일 또는 표준 입력(`-`)을 읽습니다. 입력 JSON이 authoritative 모드를
-요청해도 병합 전 평가는 항상 advisory 모드로 수행합니다.
+`policy-cli evaluate-pre`와 `inspect`는 JSON 파일 또는 표준 입력(`-`)을 읽습니다.
+병합 전 평가는 항상 자문 모드로 수행합니다.
 
 ```console
 cargo run --locked -p policy-cli -- evaluate-pre tests/fixtures/pre-merge/ready.json
@@ -221,6 +221,18 @@ cargo run --locked -p policy-cli -- evaluate-ratchet --rule rule.json --observat
 한 입력에는 표준 입력(`-`)을 사용할 수 있지만 두 입력에 동시에 사용할 수는 없습니다.
 자세한 내용은 [ratchet 입력·결과 계약](docs/integrations/debt-ratchet-v1.md#cli)을 참고하세요.
 
+### GitHub Actions 증거 평가
+
+```console
+policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --output gate-42.json
+```
+
+자문 gate는 호출자가 인증한 `gh`를 사용합니다. PR의 대상 브랜치 최신 커밋에서 정책을 읽고,
+라벨과 변경 경로로 v5 검사 범위를 결정한 뒤 native 아티팩트 또는 지정된 CI job의
+결과를 평가합니다. `ready`(0), `not ready`(2), `unknown`(3) 중 하나를 출력하고
+상세 JSON 근거를 기록합니다. 리뷰는 근거에 자문 정보로만 표시됩니다.
+[Gate 정책 및 아티팩트 계약](docs/integrations/ci-gate.md)
+
 ## 워크스페이스 구성
 
 | 패키지 | 역할 |
@@ -229,10 +241,10 @@ cargo run --locked -p policy-cli -- evaluate-ratchet --rule rule.json --observat
 | `policy-native-contracts` | Native·debt ratchet v1 전송 타입·구조 검증·스키마·적합성 corpus; importer 없음 |
 | `policy-native-verifier` | Typed 로컬 scope 조립·core 판정·독립형 debt ratchet; adapter 의존 및 권한 부여 없음 |
 | `policy-core` | 결정론적 정책·출처·검토·센서·병합 평가 |
-| `policy-cli` | 로컬 자문 scope·병합 전 평가, 부채 ratchet 비교와 타입 객체 검사 |
+| `policy-cli` | GitHub Actions 자문 gate, 로컬 scope·병합 전 평가, 부채 ratchet 비교와 타입 객체 검사 |
 | `policy-ci` | 권한 있는 GitHub Actions 평가 및 전용 검사 게시 |
 | `evidence-collector` | 명시된 argv 실행을 제한하고 아티팩트 digest를 수집 |
-| `github-adapter` | CI 통합에 사용하는 GitHub 관측 및 프로세스 어댑터 |
+| `github-adapter` | 자문 gate와 CI 통합에 사용하는 GitHub 관측 및 프로세스 어댑터 |
 | `project-verification` | 프로젝트 프로필 검증·준비·실행·보고서 정규화 |
 | `policy-native-importer` | Unix adapter 라이브러리와 명령: 원본·subject 검증, 공용 parser 재계산과 실패 자료 보존; scope 판정 없음 |
 | `policy-report-adapters` | 공용 TRX·Vitest·Jest·Playwright reader; `project_verification::reports`에서 재노출 |
@@ -468,8 +480,8 @@ JSON 전용 명령은 typed 일관성을 검사하며 원본 진위를 인증하
 Pre-merge 또는 ReadyToMerge 판정을 만들지 않으며 기존 `evaluate-pre`의
 0/2/3/64 종료 코드는 유지합니다. [Native 계약 안내](docs/integrations/native-contracts-v1.md)를 참고하세요.
 
-Importer 명령은 Unix 라이브러리에 위임합니다. 별도 바이너리를 사용하여 JSON 전용
-CLI의 의존성 경계를 유지합니다. 종료 코드는 **0** 검증된 import, **2** issue를
+Importer 명령과 CI gate는 같은 Unix 라이브러리를 사용합니다.
+Importer 종료 코드는 **0** 검증된 import, **2** issue를
 `import.json`에 보존한 거절, **64** 잘못된 인자·문서 또는 파일시스템 오류입니다.
 검증된 import만 `observations.json`을 내보내며, 종료 0 자체가 scope 충족을
 뜻하지는 않습니다. 입력 JSON은 artifact 디렉터리 밖에 두고, output은 기존
