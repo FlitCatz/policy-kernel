@@ -224,7 +224,8 @@ policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --ou
 The advisory gate uses the caller's authenticated `gh`. It reads policy from
 the PR base, resolves v5 scope from labels and changed paths, and evaluates
 native artifacts or named CI job results. It prints `ready` (0), `not ready`
-(2), or `unknown` (3) and writes a detailed JSON report. Reviews in that report
+(2), or `unknown` (3) and writes a detailed JSON report. A cancelled native
+job yields `unknown` even if it uploaded an artifact. Reviews in the report
 are advisory. [Gate policy and artifact contract](docs/integrations/ci-gate.md)
 
 ## Workspace map

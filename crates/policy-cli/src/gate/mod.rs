@@ -15,6 +15,7 @@ use policy_core::resolve_required_scope;
 use policy_native_importer::raw_digest;
 use serde::{Deserialize, Serialize};
 use std::{
+    cell::OnceCell,
     collections::{BTreeMap, BTreeSet},
     io::{self, Write},
     path::Path,
@@ -287,15 +288,7 @@ impl Evidence<'_> {
             let jobs = api.jobs(&run)?;
             Ok((run, jobs))
         })();
-        let artifacts = jobs
-            .as_ref()
-            .ok()
-            .filter(|_| {
-                checks
-                    .iter()
-                    .any(|check| matches!(check.source, Source::Native(_)))
-            })
-            .map(|(run, _)| api.artifacts(run));
+        let artifacts = OnceCell::new();
         for check in checks {
             let mut result = CheckEvidence {
                 check: check.id.clone(),
@@ -328,7 +321,7 @@ impl Evidence<'_> {
                     evaluated_at: self.evaluated_at,
                     maximum_age_seconds,
                 };
-                evaluate_job(check, &context, &mut result, artifacts.as_ref())
+                evaluate_job(check, &context, &mut result, &artifacts)
             })();
             match evaluated {
                 Ok((verdict, reason)) => {
@@ -417,7 +410,7 @@ fn evaluate_job(
     check: &Check,
     context: &JobContext<'_>,
     result: &mut CheckEvidence,
-    artifacts: Option<&Result<Vec<github::Artifact>>>,
+    artifacts: &OnceCell<Result<Vec<github::Artifact>>>,
 ) -> Result<(Verdict, String)> {
     let job = context.job;
     let conclusion = job.conclusion.as_deref();
@@ -453,16 +446,18 @@ fn evaluate_job(
         Source::Native(_) if matches!(conclusion, Some("failure" | "timed_out")) => {
             Ok(job_failed())
         }
+        Source::Native(_) if conclusion != Some("success") => Err(format!(
+            "required native job concluded {}",
+            conclusion.unwrap_or_default()
+        )
+        .into()),
         Source::Native(policy) => {
             let artifacts = artifacts
-                .ok_or("workflow artifacts were not read")?
+                .get_or_init(|| context.api.artifacts(context.run))
                 .as_ref()
                 .map_err(ToString::to_string)?;
             match policy.evaluate(context, result, artifacts)? {
-                Verdict::Ready if conclusion == Some("success") => {
-                    Ok((Verdict::Ready, "verified native scope satisfied".into()))
-                }
-                Verdict::Ready => Ok(job_failed()),
+                Verdict::Ready => Ok((Verdict::Ready, "verified native scope satisfied".into())),
                 Verdict::NotReady => Ok((
                     Verdict::NotReady,
                     "verified native scope did not pass".into(),

@@ -551,7 +551,7 @@ fn failed_native_job_without_artifact_is_not_ready() {
         (
             "cancelled",
             Verdict::Unknown,
-            "missing artifact native-run-verify",
+            "required native job concluded cancelled",
         ),
     ] {
         let mut fixture = Fixture::new();
@@ -569,9 +569,34 @@ fn failed_native_job_without_artifact_is_not_ready() {
             .unwrap();
         job["conclusion"] = json!(conclusion);
         fixture.ci().run["conclusion"] = json!("failure");
-        let report = fixture.evaluate();
+        let get = |route: &str| {
+            assert!(!route.contains("/artifacts"), "unexpected read: {route}");
+            fixture.response(route)
+        };
+        let report = evaluate(&get, "owner/repo", 42, PATH, &NOW);
         assert_eq!(report.verdict, verdict, "{conclusion}: {report:?}");
         assert!(report.reason.contains(reason), "{report:?}");
+    }
+}
+
+#[test]
+fn unsuccessful_native_job_with_valid_artifact_is_unknown() {
+    for conclusion in ["cancelled", "skipped", "neutral"] {
+        let mut fixture = Fixture::new();
+        fixture.native_job(
+            "verify",
+            native_zip("verify", VERIFY, b"ran verify", 0),
+            VERIFY,
+        );
+        fixture.ci().jobs[0]["conclusion"] = json!(conclusion);
+
+        let get = |route: &str| {
+            assert!(!route.contains("/artifacts"), "unexpected read: {route}");
+            fixture.response(route)
+        };
+        let report = evaluate(&get, "owner/repo", 42, PATH, &NOW);
+        assert_eq!(report.verdict, Verdict::Unknown, "{conclusion}: {report:?}");
+        assert!(report.reason.contains(conclusion), "{report:?}");
     }
 }
 
