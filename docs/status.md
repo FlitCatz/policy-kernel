@@ -95,8 +95,9 @@ advisory entry point.
 
 The v0.1.6 source adds [`policy-cli gate`](integrations/ci-gate.md). It reads
 the policy at the tip of a PR's base branch and applies v5 scope rules to
-the current file and label observations. The gate combines latest-attempt native evidence across
-jobs and workflows or evaluates explicitly configured light job results.
+the current file and label observations. The gate combines latest-attempt
+native evidence across jobs and workflows or evaluates explicitly configured
+light job results.
 It produces a local, advisory report with review information. Binary
 publication requires a version tag.
 
