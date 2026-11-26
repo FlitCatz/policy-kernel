@@ -1,0 +1,39 @@
+{
+  "policy": {
+    "schema_version": 5,
+    "policy_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+    "required_check_name": "policy-kernel/advisory",
+    "max_evidence_age_seconds": 604800,
+    "authorized_actors": [],
+    "required_sensor_ids": [],
+    "required_reviews": {
+      "minimum_reviewers": 1,
+      "require_provider_independence": true,
+      "allowed_providers": []
+    },
+    "scope_rules": {
+      "default_required_sensor_ids": ["verify"],
+      "rules": [
+        {
+          "when": "label",
+          "label": "run-ci",
+          "required_sensor_ids": ["knowledge-graph"]
+        }
+      ]
+    }
+  },
+  "checks": [
+    {
+      "id": "verify",
+      "workflow": ".github/workflows/ci.yml",
+      "job": "verify",
+      "source": {"kind": "light"}
+    },
+    {
+      "id": "knowledge-graph",
+      "workflow": ".github/workflows/ci.yml",
+      "job": "lat.md knowledge graph",
+      "source": {"kind": "light"}
+    }
+  ]
+}

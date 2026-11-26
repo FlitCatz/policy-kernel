@@ -76,7 +76,7 @@ allow-list; the existing cargo-deny/advisory checks retain their own roles.
 | `policy-acceptance` | `policy-bootstrap`, `policy-contracts`, `policy-core`, `project-verification` |
 | `policy-bootstrap` | `project-verification` |
 | `policy-ci` | `github-adapter`, `policy-contracts`, `policy-core`, `policy-native-verifier` |
-| `policy-cli` | `policy-contracts`, `policy-core`, `policy-native-contracts`, `policy-native-verifier` |
+| `policy-cli` | `github-adapter`, `policy-contracts`, `policy-core`, `policy-native-contracts`, `policy-native-importer`, `policy-native-verifier` |
 | `policy-contracts` | none |
 | `policy-core` | `policy-contracts` |
 | `policy-local-attest` | `policy-contracts`, `policy-core`, `policy-native-importer`, `policy-native-verifier` |
@@ -87,9 +87,9 @@ allow-list; the existing cargo-deny/advisory checks retain their own roles.
 | `project-verification` | `evidence-collector`, `policy-contracts`, `policy-core`, `policy-report-adapters` |
 | `xtask` | `policy-contracts` |
 
-The allow-list fixes directed crate pairs, not dependency kinds. The four dev
-edges above are part of the 35 allowed pairs; changing their kind alone does not
-introduce a new direction.
+The allow-list fixes directed crate pairs across dependency kinds. The advisory
+gate adds `policy-cli` edges to reuse the GitHub transport and native importer.
+The importer's reverse edge is dev-only and covers CLI evaluation conformance.
 
 ## Measured baseline
 

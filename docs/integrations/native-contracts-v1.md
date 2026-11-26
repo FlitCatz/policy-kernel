@@ -337,10 +337,11 @@ cargo test --locked -p policy-native-importer
 
 ## Native import command
 
-The Unix `policy-native-importer` binary calls `import_run` directly; it does not
-implement a second validator. It is separate from `policy-cli` to preserve the
-existing dependency direction: the JSON-only CLI and kernel verifier do not
-depend on the importer or report adapters. Both binaries ship in the release.
+The Unix `policy-native-importer` binary calls `import_run` directly.
+The [GitHub Actions gate](ci-gate.md) shares that importer library.
+`policy-cli evaluate-scope` still evaluates typed JSON, and the kernel verifier
+remains independent of the importer and report adapters. Both binaries ship in
+the release.
 
 Keep the typed input documents outside the artifact-only run directory. Obtain
 the approved scope, run ID, scope ID and evaluation time independently of the

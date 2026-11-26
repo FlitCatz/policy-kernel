@@ -26,6 +26,10 @@ reported from a declaration is not repeated for its resolved package.
 Workspace tests and residue verification need `cargo fetch --locked` first to
 cache all platform dependencies for full offline metadata; CI does this too.
 
+The [[ci-gate]] adds runtime edges from `policy-cli` to `github-adapter` and
+`policy-native-importer`. Importer CLI conformance retains its dev-only edge
+back to `policy-cli`.
+
 Rules [[xtask/src/verification.rs#WORKSPACE_DEPENDENCIES]] and
 [[xtask/src/verification.rs#check_dependencies]] reuse
 [[xtask/src/verification.rs#cargo_metadata]] with

@@ -390,9 +390,11 @@ const WORKSPACE_DEPENDENCIES: &[(&str, &[&str])] = &[
     (
         "policy-cli",
         &[
+            "github-adapter",
             "policy-contracts",
             "policy-core",
             "policy-native-contracts",
+            "policy-native-importer",
             "policy-native-verifier",
         ],
     ),
@@ -748,7 +750,7 @@ mod tests {
     #[test]
     fn new_and_reversed_workspace_edges_are_rejected() {
         for (source, target) in [
-            ("policy-cli", "github-adapter"),
+            ("policy-cli", "project-verification"),
             ("policy-contracts", "policy-core"),
             ("new-member", "policy-contracts"),
         ] {

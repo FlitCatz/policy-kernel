@@ -11,18 +11,23 @@ name = "policy-cli"
 path = "src/main.rs"
 
 [dependencies]
+base64.workspace = true
 clap.workspace = true
+flate2.workspace = true
+github-adapter = { path = "../github-adapter" }
 policy-contracts = { path = "../policy-contracts" }
 policy-core = { path = "../policy-core" }
 policy-native-contracts = { path = "../policy-native-contracts" }
+policy-native-importer = { path = "../policy-native-importer" }
 policy-native-verifier = { path = "../policy-native-verifier" }
+rawzip.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+tempfile.workspace = true
 
 [dev-dependencies]
 assert_cmd.workspace = true
 serde_json.workspace = true
-tempfile.workspace = true
 
 [lints]
 workspace = true

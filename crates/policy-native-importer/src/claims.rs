@@ -1,15 +1,20 @@
 use crate::{fs, raw_digest, reports};
 use policy_contracts::SensorId;
 use policy_native_contracts::*;
+use serde::Deserialize;
 use std::{collections::BTreeSet, io, path::Path};
 
 /// Explicit producer association; no filename or suite-name inference occurs.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ReportSelection {
     pub observation_id: SensorId,
     pub artifact_id: RecordId,
 }
 
 /// Producer claim that all executed tests in a suite cover one requirement.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct MappingSelection {
     pub requirement_id: RecordId,
     pub suite_id: SensorId,

@@ -64,7 +64,8 @@ impl GhCliApi {
         }
     }
 
-    fn get(&self, route: String) -> Result<Vec<u8>, AdapterError> {
+    /// Issue a read-only request to a caller-constructed GitHub API route.
+    pub fn get(&self, route: impl AsRef<str>) -> Result<Vec<u8>, AdapterError> {
         self.execute(
             [
                 "api",
@@ -72,7 +73,7 @@ impl GhCliApi {
                 "github.com",
                 "--method",
                 "GET",
-                route.as_str(),
+                route.as_ref(),
             ],
             None,
         )
@@ -213,7 +214,7 @@ impl GitHubApi for GhCliApi {
     }
 }
 
-fn validated_repository<'a>(
+pub fn validated_repository<'a>(
     owner: &'a str,
     repository: &'a str,
 ) -> Result<(&'a str, &'a str), AdapterError> {
@@ -236,7 +237,7 @@ fn validate_simple_segment(value: &str) -> Result<(), AdapterError> {
     }
 }
 
-fn encode_route_segment(value: &str) -> Result<String, AdapterError> {
+pub fn encode_route_segment(value: &str) -> Result<String, AdapterError> {
     if value.is_empty()
         || value == "."
         || value == ".."

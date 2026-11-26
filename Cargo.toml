@@ -19,7 +19,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 rust-version = "1.85"
 license = "MIT"
@@ -50,3 +50,6 @@ proptest = "1.7.0"
 tempfile = "3.27.0"
 rustix = "1.1.4"
 roxmltree = "0.21.2"
+base64 = "~0.23.1"
+flate2 = "~1.1.9"
+rawzip = "~0.5.3"

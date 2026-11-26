@@ -50,7 +50,7 @@ with exit 0 for pass, 2 for comparison failures and 64 for invalid input.
 The Unix `policy-native-importer` command delegates to the existing adapter
 library and exports `ImportedObservationsV1` only on verified imports. Its exits
 are 0 (verified), 2 (persisted rejection) and 64 (invalid input/output error).
-The separate binary preserves the JSON-only `policy-cli` dependency boundary.
+The standalone binary and the advisory CI gate share the same importer library.
 Repeated `--report OBSERVATION=ARTIFACT` selections fill empty producer test claims
 with the same report parser/projection before import; `--map REQUIREMENT=SUITE`
 explicitly claims coverage by executed tests without inferring it. One TRX maps
@@ -90,6 +90,15 @@ Policy v5 selects sensors from changed paths, a fallback, and additive PR
 labels. Versions 1–4 retain their existing contract. Binary publication
 requires a version tag. This change supplies kernel evaluation and the existing
 advisory entry point.
+
+## Advisory GitHub Actions gate
+
+The v0.1.6 source adds [`policy-cli gate`](integrations/ci-gate.md). It reads
+the policy from a PR's base and applies v5 scope rules to the current file and
+label observations. The gate combines latest-attempt native evidence across
+jobs and workflows or evaluates explicitly configured light job results.
+It produces a local, advisory report with review information. Binary
+publication requires a version tag.
 
 ## Policy v4 local-runner contract
 

@@ -36,7 +36,8 @@ and approved suite, with no v1 wire-contract change or consumer Rust requirement
 Tags `v0.1.0` through `v0.1.4` published binary releases. The v0.1.4 release adds
 [[native-contracts#Process-check requirements]] for process-only and mixed local
 scopes. The v0.1.5 source adds [[kernel#Declarative PR scope rules]].
-Publishing v0.1.5 requires a version tag.
+The v0.1.6 source adds [[ci-gate]] for scoped, advisory GitHub Actions
+evaluation. Binary publication requires a version tag.
 See [[native-contracts#Native command distribution]].
 
 `policy-cli evaluate-ratchet --rule FILE --observation FILE` exposes the existing

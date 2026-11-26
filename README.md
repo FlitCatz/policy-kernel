@@ -184,8 +184,8 @@ all platforms before tests and the residue check read the full graph offline.
 
 ### Try local advisory evaluation
 
-`policy-cli` reads a JSON file or `-` for standard input. It always evaluates
-pre-merge input in advisory mode, even when the input requests authoritative mode.
+`policy-cli evaluate-pre` and `inspect` read a JSON file or `-` for standard
+input. Pre-merge evaluation always runs in advisory mode.
 
 ```console
 cargo run --locked -p policy-cli -- evaluate-pre tests/fixtures/pre-merge/ready.json
@@ -215,6 +215,18 @@ Missing files or invalid command arguments produce stderr diagnostics and no
 JSON result. Either input may use `-` for stdin, but both cannot use it together.
 See the [ratchet input and result contract](docs/integrations/debt-ratchet-v1.md#cli).
 
+### Evaluate GitHub Actions evidence
+
+```console
+policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --output gate-42.json
+```
+
+The advisory gate uses the caller's authenticated `gh`. It reads policy from
+the PR base, resolves v5 scope from labels and changed paths, and evaluates
+native artifacts or named CI job results. It prints `ready` (0), `not ready`
+(2), or `unknown` (3) and writes a detailed JSON report. Reviews in that report
+are advisory. [Gate policy and artifact contract](docs/integrations/ci-gate.md)
+
 ## Workspace map
 
 | Package | Purpose |
@@ -223,10 +235,10 @@ See the [ratchet input and result contract](docs/integrations/debt-ratchet-v1.md
 | `policy-native-contracts` | Native and debt ratchet v1 wire types, structural validation, schemas and conformance corpus; no importer. |
 | `policy-native-verifier` | Typed local scope assembly, core evaluation and standalone debt ratchet; no adapter dependency or authorization. |
 | `policy-core` | Deterministic policy, provenance, review, sensor, and merge evaluation. |
-| `policy-cli` | Local advisory scope/pre-merge evaluation, debt ratchet comparison and typed-object inspection. |
+| `policy-cli` | Advisory GitHub Actions gate, local scope and pre-merge evaluation, debt ratchet comparison and typed-object inspection. |
 | `policy-ci` | Authoritative GitHub Actions evaluation and dedicated check publication. |
 | `evidence-collector` | Bounded explicit-argv execution with artifact digests. |
-| `github-adapter` | GitHub observation and process adapter used by CI integration. |
+| `github-adapter` | GitHub observation and process adapter used by the gate and CI integration. |
 | `project-verification` | Profile validation, preparation, execution, and report normalization. |
 | `policy-native-importer` | Unix adapter library and command: raw artifact/subject verification, shared-parser recomputation and failure retention; no scope decision. |
 | `policy-report-adapters` | Shared TRX, Vitest, Jest, and Playwright readers; re-exported by `project_verification::reports`. |
@@ -498,8 +510,8 @@ typed consistency, not raw artifact authenticity, and never produces a pre-merge
 or ReadyToMerge decision. Existing `evaluate-pre` exit codes remain 0/2/3/64.
 See the [native contract reference](docs/integrations/native-contracts-v1.md).
 
-The importer command delegates to the Unix library. Its separate binary preserves
-the JSON-only CLI's dependency boundary. It exits **0** for a verified import,
+The standalone importer command delegates to the same Unix library as the CI
+gate. It exits **0** for a verified import,
 **2** for a persisted rejection with `import.json` issues, and **64** for invalid
 arguments/documents or filesystem errors. Only verified imports export
 `observations.json`; exit 0 does not itself mean scope satisfaction. Input JSON
