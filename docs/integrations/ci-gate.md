@@ -35,10 +35,9 @@ Closed and merged PRs yield `unknown`.
 Use a JSON document with a `policy` object and a `checks` array. The
 [policy-kernel gate policy](../../.policy-kernel/gate.json), which this
 repository uses for its own pull requests, uses light evidence. The
-`policy` object follows the [policy v5 contract](policy-scope-v5.md) or the
-[v4 contract](../status.md#policy-v4-local-runner-contract). V5 resolves path
-and label scope rules and derives a sensor profile from the check IDs. V4 uses
-the fixed `required_sensor_ids` list. Omit the optional `sensor_profile_digest`
+`policy` object follows the [policy v5 contract](policy-scope-v5.md). The gate
+resolves its path and label scope rules and derives a sensor profile from the
+check IDs. Omit the optional `sensor_profile_digest`
 in a standalone gate policy. The gate uses `max_evidence_age_seconds` and
 reports review observations for reference.
 
@@ -81,8 +80,10 @@ To use a registered local runner, the base policy must opt in with
 `policy.local_runner_evidence` and the gate document must declare
 `local_attestation`. Name the required native checks that the approved combined
 local scope covers. Other required checks keep their CI source. A single
-signed run can cover all selected checks from that list. The base policy's
-approved templates must each cover the whole listed set.
+signed run can cover all selected checks from that list. A listed check is
+ready only when the signed expected scope contains each of its declared native
+requirements and observation rules. A check that the run did not cover yields
+`unknown` and names the missing entry.
 
 ```json
 {

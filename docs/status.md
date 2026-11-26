@@ -95,7 +95,7 @@ advisory entry point.
 
 The v0.1.6 source adds [`policy-cli gate`](integrations/ci-gate.md). It reads
 the policy at the tip of a PR's base branch and applies v5 scope rules to
-the current file and label observations or uses the v4 required check list.
+the current file and label observations.
 The gate can evaluate latest-attempt native and light CI evidence, plus
 `local_runner_attested` for configured native checks when base policy opts in
 and the change is eligible. The one-line advisory verdict and evidence report

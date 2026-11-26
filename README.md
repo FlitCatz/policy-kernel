@@ -222,8 +222,8 @@ policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --ou
 ```
 
 The advisory gate uses the caller's authenticated `gh`. It reads policy at the
-tip of the PR's base branch and uses v5 path and label rules or the v4 check
-list. It evaluates CI evidence and, when the base policy opts in, can verify
+tip of the PR's base branch and uses v5 path and label rules to select checks.
+It evaluates CI evidence and, when the base policy opts in, can verify
 a signed local run using `--local-attestation`. It prints `ready` (0),
 `not ready` (2), or `unknown` (3) and writes a detailed JSON report. The verdict
 identifies evidence classes and the report records advisory reviews.

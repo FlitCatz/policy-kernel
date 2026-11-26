@@ -75,7 +75,10 @@ policy moves, run the checks and confirm again for the new snapshot.
 Forward `gate-attestation.json`, `expected.json`, and `observations.json` to the
 gate evaluator through your project's evidence channel. Keep the PR head
 unchanged when transferring them. The [gate command](ci-gate.md#signed-local-runs)
-reads the three files from one directory. Use the evaluator in the lightweight
+reads the three files from one directory. Policy-kernel does not yet ship a
+hosted transport for them. Until the consuming project supplies the signed
+files to its hosted job, an opted-in hosted gate returns `unknown` for a PR that
+requires local evidence. Use the evaluator in the lightweight
 hosted PR job for independently observed PR and base metadata. Keep that job
 and its policy inputs under owner control. The advisory gate report does not
 publish a check or establish shipping evidence.

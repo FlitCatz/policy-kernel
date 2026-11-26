@@ -8,7 +8,7 @@ use policy_contracts::{CommitSha, PolicySnapshot, SensorId};
 use policy_core::requires_ci_for_local_evidence;
 use policy_local_attest::{GateAttestation, GateStatement};
 use policy_native_contracts::{
-    canonical_local_digest, ExpectedScopeV1, LocalDigestRole, ScopeStatus,
+    canonical_local_digest, ExpectedScopeV1, LocalDigestRole, RequirementsV1, ScopeStatus,
 };
 use policy_native_verifier::{evaluate_scope, ImportedObservationsV1};
 use serde::{de::DeserializeOwned, Deserialize};
@@ -66,7 +66,7 @@ impl LocalPolicy {
         let policy = snapshot
             .local_runner_evidence
             .as_ref()
-            .ok_or("local gate requires policy v4 or v5 opt-in at the base commit")?;
+            .ok_or("local gate requires policy v5 local runner opt-in at the base commit")?;
         Ok(requires_ci_for_local_evidence(policy, paths)?
             || paths
                 .iter()
@@ -83,11 +83,11 @@ impl LocalPolicy {
         api: &GitHub<'_>,
         snapshot: &PolicySnapshot,
         request: &LocalRequest<'_>,
-    ) -> Result<GateStatement> {
+    ) -> Result<(GateStatement, RequirementsV1)> {
         let policy = snapshot
             .local_runner_evidence
             .as_ref()
-            .ok_or("local gate requires policy v4 or v5 opt-in at the base commit")?;
+            .ok_or("local gate requires policy v5 local runner opt-in at the base commit")?;
         let directory = request
             .directory
             .ok_or("supply the signed local run with --local-attestation")?;
@@ -179,8 +179,33 @@ impl LocalPolicy {
         if result.status != ScopeStatus::Satisfied || run.result_digest != result.digest()? {
             return Err("local attestation does not match a satisfied native scope".into());
         }
-        Ok(signed.statement)
+        Ok((signed.statement, expected.requirements))
     }
+}
+
+/// Name the first native requirement or observation rule of `check` that the signed scope lacks.
+pub(super) fn uncovered(scope: &RequirementsV1, check: &Check) -> Option<String> {
+    let Source::Native(native) = &check.source else {
+        return Some("local check has no native requirements".into());
+    };
+    let declared = &native.requirements;
+    if let Some(requirement) = declared
+        .requirements
+        .as_slice()
+        .iter()
+        .find(|requirement| !scope.requirements.as_slice().contains(requirement))
+    {
+        return Some(format!(
+            "signed local scope does not cover requirement {}",
+            requirement.id()
+        ));
+    }
+    declared
+        .observations
+        .as_slice()
+        .iter()
+        .find(|rule| !scope.observations.as_slice().contains(rule))
+        .map(|rule| format!("signed local scope does not cover observation {}", rule.id))
 }
 
 fn read_document<T: DeserializeOwned>(directory: &Path, name: &str) -> Result<T> {

@@ -317,21 +317,43 @@ impl LocalFixture {
 
 #[test]
 fn accepted_hardware_signature_uses_base_signers_and_reports_local_evidence() {
-    for (policy, attestation) in [("policy", "attestation"), ("policy_v4", "attestation_v4")] {
-        let mut fixture = LocalFixture::new();
-        fixture.github.policy = Some(fixture.material[policy].clone());
-        fixture.write("gate-attestation.json", &fixture.material[attestation]);
-        let report = fixture.evaluate_at(&NOW);
-        assert_eq!(report.verdict, Verdict::Ready, "{report:?}");
-        assert!(report
-            .line(&report.reason)
-            .starts_with("ready: [local_runner_attested]"));
-        let json = serde_json::to_value(report).unwrap();
-        assert_eq!(json["evidence_classes"], json!(["local_runner_attested"]));
-        assert_eq!(json["checks"][0]["evidence_class"], "local_runner_attested");
-        assert_eq!(json["local_attestation"]["run"]["subject"]["head"], HEAD);
-        assert_eq!(fixture.github.run_reads.get(), 0);
-    }
+    let fixture = LocalFixture::new();
+    let report = fixture.evaluate_at(&NOW);
+    assert_eq!(report.verdict, Verdict::Ready, "{report:?}");
+    assert!(report
+        .line(&report.reason)
+        .starts_with("ready: [local_runner_attested]"));
+    let json = serde_json::to_value(report).unwrap();
+    assert_eq!(json["evidence_classes"], json!(["local_runner_attested"]));
+    assert_eq!(json["checks"][0]["evidence_class"], "local_runner_attested");
+    assert_eq!(json["local_attestation"]["run"]["subject"]["head"], HEAD);
+    assert_eq!(fixture.github.run_reads.get(), 0);
+}
+
+#[test]
+fn signed_run_leaves_a_required_local_check_it_did_not_cover_unknown() {
+    let mut fixture = LocalFixture::new();
+    fixture.github.files = json!([
+        {"filename":"src/lib.rs","status":"modified"},
+        {"filename":"tests/integration/suite.rs","status":"modified"}
+    ]);
+    fixture.github.pull["changed_files"] = json!(2);
+    let report = fixture.evaluate_at(&NOW);
+    assert_eq!(report.verdict, Verdict::Unknown, "{report:?}");
+    assert_eq!(
+        report.reason,
+        "integration: signed local scope does not cover requirement integration"
+    );
+    assert!(report.evidence_classes.is_empty());
+    let json = serde_json::to_value(&report).unwrap();
+    assert_eq!(json["required_checks"], json!(["integration", "verify"]));
+    assert_eq!(json["checks"][0]["check"], "integration");
+    assert_eq!(json["checks"][0]["verdict"], "unknown");
+    assert_eq!(json["checks"][0]["evidence_class"], Value::Null);
+    assert_eq!(json["checks"][1]["check"], "verify");
+    assert_eq!(json["checks"][1]["verdict"], "ready");
+    assert_eq!(json["checks"][1]["evidence_class"], "local_runner_attested");
+    assert_eq!(fixture.github.run_reads.get(), 0);
 }
 
 #[test]
@@ -411,7 +433,7 @@ fn missing_opt_in_and_policy_digest_changes_fail_closed() {
         .as_object_mut()
         .unwrap()
         .remove("local_runner_evidence");
-    absent.require_unknown("requires policy v4 or v5 opt-in");
+    absent.require_unknown("requires policy v5 local runner opt-in");
 
     let mut changed = LocalFixture::new();
     changed.github.policy.as_mut().unwrap()["policy"]["max_evidence_age_seconds"] = json!(1800);
@@ -476,23 +498,6 @@ fn base_policy_scopes_light_jobs_and_reviews_remain_advisory() {
     assert_eq!(value["checks"][0]["kind"], "light");
     assert!(value["checks"][0]["native"].is_null());
     assert_eq!(value["advisory_reviews"][0]["state"], "CHANGES_REQUESTED");
-}
-
-#[test]
-fn v4_gate_uses_the_required_checks_from_the_base_policy() {
-    let mut fixture = Fixture::new();
-    let snapshot = fixture.policy.as_mut().unwrap()["policy"]
-        .as_object_mut()
-        .unwrap();
-    snapshot.insert("schema_version".into(), json!(4));
-    snapshot.insert("required_sensor_ids".into(), json!(["verify"]));
-    snapshot.remove("scope_rules");
-    let report = fixture.evaluate();
-    assert_eq!(report.verdict, Verdict::Ready, "{report:?}");
-    assert_eq!(
-        serde_json::to_value(report).unwrap()["required_checks"],
-        json!(["verify"])
-    );
 }
 
 #[test]

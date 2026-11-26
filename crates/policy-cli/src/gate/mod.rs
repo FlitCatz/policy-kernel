@@ -312,7 +312,7 @@ impl Evidence<'_> {
         {
             return Err("gate check profile does not match policy's profile digest".into());
         }
-        self.required_checks = settings.required_checks(&profile, &paths, &labels)?;
+        self.required_checks = resolve_required_scope(&settings.policy, &profile, &paths, &labels)?;
         self.changed_paths = Some(paths);
         if self.required_checks.is_empty() {
             return Err("gate policy selected no required checks".into());
@@ -360,20 +360,27 @@ impl Evidence<'_> {
                 gate: self,
                 directory: local,
             };
-            let result = config.evaluate(api, &settings.policy, &request);
-            let (verdict, reason, class) = match result {
-                Ok(statement) => {
+            let scope = match config.evaluate(api, &settings.policy, &request) {
+                Ok((statement, scope)) => {
                     self.local_attestation = Some(statement);
-                    (
+                    Ok(scope)
+                }
+                Err(error) => Err(error.to_string()),
+            };
+            self.checks.extend(local_group.into_iter().map(|check| {
+                let failure = match &scope {
+                    Ok(scope) => local::uncovered(scope, check),
+                    Err(error) => Some(error.clone()),
+                };
+                let (verdict, reason, class) = match failure {
+                    None => (
                         Verdict::Ready,
                         "verified signed local scope satisfied".into(),
                         Some(TrustClass::LocalRunnerAttested),
-                    )
-                }
-                Err(error) => (Verdict::Unknown, error.to_string(), None),
-            };
-            self.checks
-                .extend(local_group.into_iter().map(|check| CheckEvidence {
+                    ),
+                    Some(reason) => (Verdict::Unknown, reason, None),
+                };
+                CheckEvidence {
                     check: check.id.clone(),
                     workflow: check.workflow.clone(),
                     job_name: check.job.clone(),
@@ -382,8 +389,9 @@ impl Evidence<'_> {
                     native: None,
                     evidence_class: class,
                     verdict,
-                    reason: reason.clone(),
-                }));
+                    reason,
+                }
+            }));
         }
         for group in groups {
             self.read_workflow(api, pull, group, settings.policy.max_evidence_age_seconds);
@@ -473,31 +481,6 @@ impl Evidence<'_> {
 }
 
 impl GatePolicy {
-    fn required_checks(
-        &self,
-        profile: &SensorProfile,
-        paths: &[String],
-        labels: &[String],
-    ) -> Result<Vec<SensorId>> {
-        if self.policy.schema_version == 4 {
-            self.policy.validate_version()?;
-            return Ok(self
-                .policy
-                .required_sensor_ids
-                .iter()
-                .cloned()
-                .collect::<BTreeSet<_>>()
-                .into_iter()
-                .collect());
-        }
-        Ok(resolve_required_scope(
-            &self.policy,
-            profile,
-            paths,
-            labels,
-        )?)
-    }
-
     fn validate(&self) -> Result<BTreeMap<&SensorId, &Check>> {
         if self.policy.max_evidence_age_seconds == 0 {
             return Err("gate policy maximum evidence age must be positive".into());

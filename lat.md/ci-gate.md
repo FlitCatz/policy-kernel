@@ -7,7 +7,6 @@ policy, upload contract, and exit codes.
 [[crates/policy-cli/src/gate/mod.rs#run]] runs the advisory command.
 [[crates/policy-core/src/scope.rs#resolve_required_scope]] applies the v5
 rules from [[kernel#Declarative PR scope rules]] to changed files and labels.
-Policy v4 uses the required IDs directly.
 
 ## GitHub observations
 
@@ -73,7 +72,10 @@ base and exact policy bytes. It checks the signed scope and run digests and
 re-evaluates scope at the attested clock, subject to freshness measured by the
 gate. [[crates/policy-core/src/scope.rs#requires_ci_for_local_evidence]] applies
 owner-defined CI conditions conservatively in the absence of trusted risk.
-CI-only labels, policy or registry edits force CI. The advisory verdict names
+CI-only labels, policy or registry edits force CI.
+[[crates/policy-cli/src/gate/local.rs#uncovered]] keeps a listed check unknown
+unless the signed expected scope contains its declared native requirements and
+observation rules. The advisory verdict names
 the classes used. The [gate guide](../docs/integrations/ci-gate.md#signed-local-runs)
 describes the handoff from [[native-contracts#Local attester]].
 
@@ -82,7 +84,10 @@ describes the handoff from [[native-contracts#Local attester]].
 Recorded signatures and GitHub responses exercise the same gate path as the CLI, including scope satisfaction, trust selection, revocation by registry removal and replay rejection.
 
 [[crates/policy-cli/src/gate/tests.rs#accepted_hardware_signature_uses_base_signers_and_reports_local_evidence]]
-asserts local readiness with both v4 and v5. Missing base keys, invalid signatures
+asserts local readiness.
+[[crates/policy-cli/src/gate/tests.rs#signed_run_leaves_a_required_local_check_it_did_not_cover_unknown]]
+keeps a second required local check unknown when the signed run omits its
+requirement. Missing base keys, invalid signatures
 and absent presence are covered by
 [[crates/policy-cli/src/gate/tests.rs#unavailable_or_unsigned_local_evidence_never_passes]].
 [[crates/policy-cli/src/gate/tests.rs#expired_or_obsolete_attestations_never_pass]]

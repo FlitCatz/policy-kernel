@@ -228,7 +228,7 @@ policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --ou
 ```
 
 자문 gate는 호출자가 인증한 `gh`를 사용합니다. PR의 대상 브랜치 최신 커밋에서 정책을 읽고,
-v5에서는 라벨과 변경 경로로, v4에서는 필수 검사 목록으로 검사 범위를 결정합니다.
+v5 정책의 라벨과 변경 경로 규칙으로 검사 범위를 결정합니다.
 CI 근거를 평가하고, 대상 브랜치 정책이 허용하면 `--local-attestation`으로 서명된
 로컬 실행도 검증합니다. `ready`(0), `not ready`(2), `unknown`(3) 판정에 사용한
 근거 등급을 표시하고 상세 JSON을 기록합니다. 리뷰는 참고 정보로 표시합니다.
