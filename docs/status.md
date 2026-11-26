@@ -57,9 +57,9 @@ explicitly claims coverage by executed tests without inferring it. One TRX maps
 to one observation and independently approved project suite, preserving all v1
 wire contracts. [Claim preparation](integrations/native-contracts-v1.md#claim-preparation-from-raw-reports)
 removes the need for consumer Rust or duplicated report parsers.
-The [version-tag workflow](../.github/workflows/release-binaries.yml) builds both
-commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
-`x86_64-unknown-linux-gnu`, packaging four executables, `SHA256SUMS` and
+The [version-tag workflow](../.github/workflows/release-binaries.yml) builds the
+native commands with Rust 1.95.0 and `--locked` for `aarch64-apple-darwin` and
+`x86_64-unknown-linux-gnu`, packaging per-target executables, `SHA256SUMS` and
 `SOURCE_COMMIT`. [Consumer instructions](integrations/native-contracts-v1.md#pinned-binary-releases)
 describe version and checksum pins. The
 [`v0.1.0` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/43784765825)
@@ -91,15 +91,15 @@ labels. Versions 1–4 retain their existing contract. Binary publication
 requires a version tag. This change supplies kernel evaluation and the existing
 advisory entry point.
 
-## Advisory GitHub Actions gate
+## Advisory pull request gate
 
 The v0.1.6 source adds [`policy-cli gate`](integrations/ci-gate.md). It reads
 the policy at the tip of a PR's base branch and applies v5 scope rules to
-the current file and label observations. The gate combines latest-attempt
-native evidence across jobs and workflows or evaluates explicitly configured
-light job results.
-It produces a local, advisory report with review information. Binary
-publication requires a version tag.
+the current file and label observations.
+The gate can evaluate latest-attempt native and light CI evidence, plus
+`local_runner_attested` for configured native checks when base policy opts in
+and the change is eligible. The one-line advisory verdict and evidence report
+identify the evidence classes. Binary publication requires a version tag.
 
 ## Policy v4 local-runner contract
 
@@ -179,6 +179,13 @@ satisfied scope prompts the owner with the result summary and the SHA-256 of the
 exact statement signing bytes. Only confirmation on the terminal invokes the
 external signer. The envelope and exact scope/observations from the import can
 then be submitted to the controller through the authenticated observer.
+
+The v0.1.6 release workflow also packages the attester. Its
+[gate mode](integrations/local-runner-signing.md) uses OpenSSH and checks the
+hardware handle's touch setting before signing. It binds the PR number and
+base policy file digest as well as the native run statement. The gate reads
+the key registry from the base commit and verifies signature, presence,
+freshness and scope before accepting the attestation.
 
 End-to-end fixtures use that adapter, the controller CLI and `policy-ci` with
 simulated GitHub. An ordinary change reaches `READY_TO_MERGE` with

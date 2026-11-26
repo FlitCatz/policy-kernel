@@ -1,4 +1,4 @@
-# Advisory GitHub Actions gate
+# Advisory pull request gate
 
 Run the distributed `policy-cli` on a machine with authenticated `gh`. Grant the
 caller read access to the repository's contents, pull requests, and Actions.
@@ -19,7 +19,7 @@ verdict. The gate publishes no check, status, or comment.
 
 | CLI line | Exit | Meaning |
 | --- | ---: | --- |
-| `ready: …` | 0 | Every required check has passing evidence. |
+| `ready: …` | 0 | Every required check has passing evidence. The line names the evidence classes used. |
 | `not ready: …` | 2 | The evidence is complete and a required check did not pass. |
 | `unknown: …` | 3 | The policy, scope, or evidence could not be established, or an observation became obsolete. |
 | CLI diagnostic | 64 | Invalid command arguments or failure to write the report. |
@@ -36,10 +36,10 @@ Use a JSON document with a `policy` object and a `checks` array. The
 [policy-kernel gate policy](../../.policy-kernel/gate.json), which this
 repository uses for its own pull requests, uses light evidence. The
 `policy` object follows the [policy v5 contract](policy-scope-v5.md). The gate
-uses `required_sensor_ids`, `scope_rules`, and `max_evidence_age_seconds`. It
-derives the v5 sensor profile from the check IDs. Omit the optional
-`sensor_profile_digest` in a standalone gate policy. The review and authorization
-fields of the v5 wire contract have no role in the advisory verdict.
+resolves its path and label scope rules and derives a sensor profile from the
+check IDs. Omit the optional `sensor_profile_digest`
+in a standalone gate policy. The gate uses `max_evidence_age_seconds` and
+reports review observations for reference.
 
 Each check has a unique `id`, an exact workflow file path under
 `.github/workflows/`, an exact `job` display name, and a `source`. IDs use ASCII
@@ -73,6 +73,53 @@ including a rename into or out of either directory. The base-branch policy
 controls which checks are required. The workflow-change rule withholds
 readiness when the PR edits any CI workflow or action, whether or not a
 required check uses it, because the evidence from that PR cannot be trusted.
+
+## Signed local runs
+
+To use a registered local runner, the base policy must opt in with
+`policy.local_runner_evidence` and the gate document must declare
+`local_attestation`. Name the required native checks that the approved combined
+local scope covers. Other required checks keep their CI source. A single
+signed run can cover all selected checks from that list. A listed check is
+ready only when the signed expected scope contains each of its declared native
+requirements and observation rules. A check that the run did not cover yields
+`unknown` and names the missing entry.
+
+```json
+{
+  "allowed_signers": ".policy-kernel/allowed_signers",
+  "checks": ["verify"],
+  "ci_required_labels": ["run-ci", "security", "dependency-update", "hosted-review"]
+}
+```
+
+Pass the attester's output directory to the gate.
+
+```console
+policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json \
+  --local-attestation /work/attested --output gate-42.json
+```
+
+The directory supplies `gate-attestation.json`, `expected.json`, and
+`observations.json`. The gate reads the public key registry at the same base
+branch tip as the policy. It checks the signature and user-presence flag,
+enforces the approved runner and template, compares the exact PR number, head,
+tree, base and policy-file hash, and recomputes the scope result. A missing,
+stale, unregistered, mismatched or unverifiable local run withholds readiness
+for checks routed to local evidence.
+
+The gate uses CI for every required check when a configured CI-only label or
+`ci_required_when` condition matches, or when the PR changes the gate policy or
+key registry itself. Labels match case-insensitively. Risk-specific conditions
+are retained when they could match because the gate has no independent risk
+observation. The workflow/action edit rule above still applies. Configure the
+repository's checking tools, runner and toolchain pins as CI-only paths, and
+route security and dependency updates, static-analysis policy transitions,
+hosted-review exceptions and scheduled main checks to hosted CI.
+
+The one-line verdict and the JSON report identify `local_runner_attested` and
+`ci_observed` when a verdict uses each class. The report includes the verified
+statement and the class for each check. See [key registration and signing](local-runner-signing.md).
 
 ## Native job artifacts
 
@@ -112,6 +159,6 @@ An observation named `unit` in two different jobs remains two observations.
 Duplicate job, artifact, or observation identities within their namespace
 withhold readiness.
 
-GitHub Actions provenance identifies an advisory CI observation. Reviewers and
-branch protection are outside the gate verdict. See the
+The gate produces an advisory verdict. Reviews and branch protection remain
+independent controls, and shipping requires CI-grade evidence. See the
 [trust model](../trust-model.md) for authoritative evidence and protection.

@@ -190,7 +190,10 @@ sign statements, or change review evaluation.
 
 ## Issuing a local attestation
 
-Build the owner-operated Unix adapter from an approved revision. Pass the clean
+Use the owner-operated Unix adapter from an approved revision. The
+[v0.1.6 release wiring and gate signing guide](../docs/integrations/local-runner-signing.md)
+describe the packaged adapter's gate mode. For controller-compatible evidence,
+use the explicit signer interface below. Pass the clean
 worktree root, the intended base ref, an independently prepared expected scope,
 and the expected run and scope IDs. The runner writes a fresh native manifest
 outside its raw-artifact directory. Keep runner and attester outputs outside the

@@ -32,7 +32,7 @@ const MANIFEST: &str = "run.json";
 #[serde(deny_unknown_fields)]
 pub(super) struct NativePolicy {
     artifact_key: Option<SensorId>,
-    requirements: RequirementsV1,
+    pub requirements: RequirementsV1,
     bindings: RequiredSet<ObservationBindingV1>,
     #[serde(default)]
     reports: Vec<ReportSelection>,

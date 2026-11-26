@@ -4,6 +4,7 @@ on:
     paths:
       - '.github/workflows/release-binaries.yml'
       - 'crates/policy-cli/**'
+      - 'crates/policy-local-attest/**'
       - 'crates/policy-native-importer/**'
       - 'xtask/**'
       - 'Cargo.toml'
@@ -42,17 +43,19 @@ jobs:
           echo "RUSTC=$(rustup which --toolchain 1.95.0 rustc)" >> "$GITHUB_ENV"
           echo "RUSTDOC=$(rustup which --toolchain 1.95.0 rustdoc)" >> "$GITHUB_ENV"
       - name: Build locked native commands
-        run: rustup run 1.95.0 cargo build --locked --release --target '${{ matrix.target }}' -p policy-cli -p policy-native-importer --bins
+        run: rustup run 1.95.0 cargo build --locked --release --target '${{ matrix.target }}' -p policy-cli -p policy-native-importer -p policy-local-attest --bins
       - name: Smoke test native commands
         run: |
           target/${{ matrix.target }}/release/policy-cli --version
           target/${{ matrix.target }}/release/policy-native-importer --help
+          target/${{ matrix.target }}/release/policy-local-attest --help
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.target }}
           path: |
             target/${{ matrix.target }}/release/policy-cli
             target/${{ matrix.target }}/release/policy-native-importer
+            target/${{ matrix.target }}/release/policy-local-attest
           if-no-files-found: error
           retention-days: 7
   publish:

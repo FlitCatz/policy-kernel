@@ -17,6 +17,7 @@ flate2.workspace = true
 github-adapter = { path = "../github-adapter" }
 policy-contracts = { path = "../policy-contracts" }
 policy-core = { path = "../policy-core" }
+policy-local-attest = { path = "../policy-local-attest" }
 policy-native-contracts = { path = "../policy-native-contracts" }
 policy-native-importer = { path = "../policy-native-importer" }
 policy-native-verifier = { path = "../policy-native-verifier" }

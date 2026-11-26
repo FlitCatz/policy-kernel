@@ -1,8 +1,11 @@
 use crate::sensors::{
-    evaluate_sensor_evidence_inner, normalize_path, path_glob, required_sensors, validate_profile,
+    condition_matches, evaluate_sensor_evidence_inner, normalize_path, path_glob, required_sensors,
+    validate_conditions, validate_profile,
 };
 use crate::{SensorEvaluation, SensorResolutionError};
-use policy_contracts::{PolicySnapshot, PreMergeContext, ScopeRule, SensorId, SensorProfile};
+use policy_contracts::{
+    LocalRunnerEvidencePolicy, PolicySnapshot, PreMergeContext, ScopeRule, SensorId, SensorProfile,
+};
 use std::collections::BTreeSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
@@ -31,6 +34,23 @@ pub fn resolve_required_scope(
 ) -> Result<Vec<SensorId>, ScopeResolutionError> {
     let paths = scope_paths(changed_paths)?;
     resolve_scope(policy, profile, &paths, labels)
+}
+
+/// Match the local-runner CI rules when no independently observed risk is available.
+/// A risk-specific condition may apply and is retained in that case.
+pub fn requires_ci_for_local_evidence(
+    policy: &LocalRunnerEvidencePolicy,
+    changed_paths: &[String],
+) -> Result<bool, ScopeResolutionError> {
+    policy
+        .validate()
+        .map_err(ScopeResolutionError::InvalidPolicy)?;
+    validate_conditions(policy.ci_required_when.iter())?;
+    let paths = scope_paths(changed_paths)?;
+    Ok(policy
+        .ci_required_when
+        .iter()
+        .any(|condition| condition_matches(condition, &paths, None)))
 }
 
 pub(crate) fn evaluate_scoped_sensors(

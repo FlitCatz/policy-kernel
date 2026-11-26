@@ -215,17 +215,19 @@ Missing files or invalid command arguments produce stderr diagnostics and no
 JSON result. Either input may use `-` for stdin, but both cannot use it together.
 See the [ratchet input and result contract](docs/integrations/debt-ratchet-v1.md#cli).
 
-### Evaluate GitHub Actions evidence
+### Evaluate pull request evidence
 
 ```console
 policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --output gate-42.json
 ```
 
 The advisory gate uses the caller's authenticated `gh`. It reads policy at the
-tip of the PR's base branch, resolves v5 scope from labels and changed paths,
-and evaluates native artifacts or named CI job results. It prints `ready` (0),
-`not ready` (2), or `unknown` (3) and writes a detailed JSON report. Reviews in
-the report are advisory. [Gate policy and artifact contract](docs/integrations/ci-gate.md)
+tip of the PR's base branch and uses v5 path and label rules to select checks.
+It evaluates CI evidence and, when the base policy opts in, can verify
+a signed local run using `--local-attestation`. It prints `ready` (0),
+`not ready` (2), or `unknown` (3) and writes a detailed JSON report. The verdict
+identifies evidence classes and the report records advisory reviews.
+[Gate policy and artifact contract](docs/integrations/ci-gate.md)
 
 ## Workspace map
 
@@ -235,7 +237,7 @@ the report are advisory. [Gate policy and artifact contract](docs/integrations/c
 | `policy-native-contracts` | Native and debt ratchet v1 wire types, structural validation, schemas and conformance corpus; no importer. |
 | `policy-native-verifier` | Typed local scope assembly, core evaluation and standalone debt ratchet; no adapter dependency or authorization. |
 | `policy-core` | Deterministic policy, provenance, review, sensor, and merge evaluation. |
-| `policy-cli` | Advisory GitHub Actions gate, local scope and pre-merge evaluation, debt ratchet comparison and typed-object inspection. |
+| `policy-cli` | Advisory pull request gate, local scope and pre-merge evaluation, debt ratchet comparison and typed-object inspection. |
 | `policy-ci` | Authoritative GitHub Actions evaluation and dedicated check publication. |
 | `evidence-collector` | Bounded explicit-argv execution with artifact digests. |
 | `github-adapter` | GitHub observation and process adapter used by the gate and CI integration. |
@@ -460,7 +462,8 @@ and signing bytes without local attestations are unchanged. The Unix
 [`policy-local-attest` adapter](action/controller.md#issuing-a-local-attestation)
 signs a satisfied result only after the owner confirms the summary and SHA-256
 of the statement signing bytes. End-to-end fixtures exercise the full reference
-path with simulated GitHub. Live consumer operation and promotion require
+path with simulated GitHub. See [key registration and gate signing](docs/integrations/local-runner-signing.md)
+for the release binary's OpenSSH mode. Live consumer operation and promotion require
 separate [deployment evidence](docs/promotion.md).
 
 Policy v4 also supports an independent optional
@@ -551,9 +554,10 @@ schemas remain unchanged.
 
 ### Install pinned native binaries
 
-The [release workflow](.github/workflows/release-binaries.yml) builds both commands
+The [release workflow](.github/workflows/release-binaries.yml) builds the commands
 with Rust 1.95.0 and `--locked` for macOS arm64 and Linux x64.
-Assets include both executables per target, `SHA256SUMS` and `SOURCE_COMMIT`.
+The v0.1.6 asset set includes `policy-local-attest` alongside `policy-cli` and
+`policy-native-importer` per target, with `SHA256SUMS` and `SOURCE_COMMIT`.
 Linux builds use Ubuntu 22.04/glibc 2.35; macOS builds use macOS 15.
 Windows x64 users can run the Linux x64 binaries under WSL2.
 

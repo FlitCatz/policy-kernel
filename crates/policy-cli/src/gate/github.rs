@@ -333,12 +333,15 @@ impl<'a> GitHub<'a> {
     }
 
     pub fn policy(&self, base_tip: &CommitSha, path: &str) -> Result<Vec<u8>> {
+        self.base_file(base_tip, path)
+            .map_err(|error| format!("policy unavailable at base tip {base_tip}: {error}").into())
+    }
+
+    pub fn base_file(&self, base_tip: &CommitSha, path: &str) -> Result<Vec<u8>> {
         let encoded = encode_path(path)?;
-        let content: Contents = self
-            .json(&format!("/contents/{encoded}?ref={base_tip}"))
-            .map_err(|error| format!("policy unavailable at base tip {base_tip}: {error}"))?;
+        let content: Contents = self.json(&format!("/contents/{encoded}?ref={base_tip}"))?;
         if content.kind != "file" || content.encoding != "base64" || content.path != path {
-            return Err("policy at base tip is not the requested readable file".into());
+            return Err("base commit does not contain the requested readable file".into());
         }
         let encoded: Vec<u8> = content
             .content
@@ -346,6 +349,14 @@ impl<'a> GitHub<'a> {
             .filter(|byte| !matches!(byte, b'\r' | b'\n'))
             .collect();
         Ok(STANDARD.decode(encoded)?)
+    }
+
+    pub fn head_tree(&self, head: &CommitSha) -> Result<CommitSha> {
+        let commit: GitCommit = self.json(&format!("/git/commits/{head}"))?;
+        if &commit.sha != head {
+            return Err("GitHub commit response does not match the PR head".into());
+        }
+        Ok(commit.tree.sha)
     }
 
     pub fn reviews(&self) -> Result<Vec<Review>> {

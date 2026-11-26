@@ -1,0 +1,648 @@
+{
+  "attestation": {
+    "signature": {
+      "format": "sshsig",
+      "runner_id": "runner-test",
+      "value": "-----BEGIN SSH SIGNATURE-----\nU1NIU0lHAAAAAQAAAFEAAAAac2stc3NoLWVkMjU1MTlAb3BlbnNzaC5jb20AAAAghV+Yin\nRRFSGM627MZLT56XDpH0hUDLKTWKmPiBw29WUAAAALc3NoOmZpeHR1cmUAAAAncG9saWN5\nLWtlcm5lbC9nYXRlLWxvY2FsLWF0dGVzdGF0aW9uL3YxAAAAAAAAAAZzaGE1MTIAAABnAA\nAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAQNaX7dYDrWUVUh8IvzbahTLpvGTu\nsKUMpxdVAZkZnBklurgintlY2Kp1F1Tp6AAcjOp0udR2kKRbwaOVam4DZwcBAAAAAQ==\n-----END SSH SIGNATURE-----\n"
+    },
+    "statement": {
+      "policy_sha256": "634efb9a3d79555f4436cd4c542c8c5bb70dcbb44009a05e9c8d10d98adf4776",
+      "pr": 42,
+      "run": {
+        "attested_at": "2026-11-26T00:08:05Z",
+        "base": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "completed_at": "2026-11-26T00:08:05Z",
+        "domain": "policy-kernel/local-runner-attestation/v1",
+        "expected_scope_digest": {
+          "kind": "canonical_sha256",
+          "role": "expected_scope",
+          "schema": "policy_native_v1",
+          "sha256": "34795bc805cc90ee2aad83e324e6caae67c95f6eb71ed61c629839016ac522f6"
+        },
+        "head_tree": "2222222222222222222222222222222222222222",
+        "native_run_digest": {
+          "kind": "canonical_sha256",
+          "role": "native_run",
+          "schema": "policy_native_v1",
+          "sha256": "52365dfd7f0c2ebcacfee56694794a69e9f2647974e1582cf4f5b59534ad4479"
+        },
+        "observations_digest": {
+          "kind": "canonical_sha256",
+          "role": "imported_observations",
+          "schema": "policy_native_v1",
+          "sha256": "48aa149132fda1c17824c31a4fb5a5158c4bddb404db7f3b6238bbe6da78e4b7"
+        },
+        "result_digest": {
+          "kind": "canonical_sha256",
+          "role": "local_scope_result",
+          "schema": "policy_native_v1",
+          "sha256": "db2dcdc9961e759d1b1edef0378b71f6c18b1df8e8495eec160db261b1987000"
+        },
+        "run_id": "run-1",
+        "runner": {
+          "arch": "test",
+          "attestor_version": "fixture/1",
+          "os": "fixture",
+          "runner_id": "runner-test"
+        },
+        "schema_version": 1,
+        "scope_id": "scope-1",
+        "scope_template_digest": {
+          "kind": "canonical_sha256",
+          "role": "scope_template",
+          "schema": "policy_native_v1",
+          "sha256": "f8bd69a3739635f736b5ae254a2c791ec3ad7c04a4e05f85a99332df6204dbf5"
+        },
+        "started_at": "2026-11-26T00:08:00Z",
+        "subject": {
+          "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "repository": "owner/repo",
+          "scope_definition_digest": {
+            "kind": "canonical_sha256",
+            "role": "scope_definition",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "source_inventory_digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "source_set_digest": {
+            "kind": "canonical_sha256",
+            "role": "source_set",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      }
+    }
+  },
+  "expected": {
+    "bindings": {
+      "evaluated_at": "2026-11-26T00:08:05Z",
+      "maximum_age_seconds": 3600,
+      "mode": "local_advisory",
+      "observations": [
+        {
+          "command_digest": {
+            "kind": "canonical_sha256",
+            "role": "command",
+            "schema": "policy_native_v1",
+            "sha256": "a78f2a2456759bd93d3d08835bf24199d8e47e7136a11b5af0f49e0784a47096"
+          },
+          "configuration_digest": {
+            "kind": "canonical_sha256",
+            "role": "configuration",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "id": "unit",
+          "parser": {
+            "id": "example-json",
+            "version": "1"
+          }
+        }
+      ]
+    },
+    "requirements": {
+      "approved_file_digest": {
+        "kind": "raw_byte_sha256",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "exemptions": [],
+      "observations": [
+        {
+          "accepted_exit_codes": [
+            0
+          ],
+          "id": "unit",
+          "tests": {
+            "maximum_failed": 0,
+            "maximum_retries": 0,
+            "maximum_skipped": 0,
+            "minimum_discovered": 1,
+            "minimum_executed": 1,
+            "minimum_passed": 1
+          }
+        }
+      ],
+      "requirements": [
+        {
+          "id": "AC-1",
+          "kind": "acceptance_criterion",
+          "minimum_executed_tests": 1,
+          "suites": [
+            "unit"
+          ]
+        },
+        {
+          "id": "B-1",
+          "kind": "changed_behavior",
+          "minimum_executed_tests": 1,
+          "suites": [
+            "unit"
+          ]
+        },
+        {
+          "id": "N-1",
+          "kind": "negative_case",
+          "minimum_executed_tests": 1,
+          "suites": [
+            "unit"
+          ]
+        }
+      ]
+    },
+    "schema_version": 1,
+    "subject": {
+      "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "repository": "owner/repo",
+      "scope_definition_digest": {
+        "kind": "canonical_sha256",
+        "role": "scope_definition",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      },
+      "source_inventory_digest": {
+        "kind": "raw_byte_sha256",
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "source_set_digest": {
+        "kind": "canonical_sha256",
+        "role": "source_set",
+        "schema": "policy_native_v1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+      }
+    }
+  },
+  "head_commit": {
+    "parents": [],
+    "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "tree": {
+      "sha": "2222222222222222222222222222222222222222"
+    }
+  },
+  "no_presence": {
+    "signature": {
+      "format": "sshsig",
+      "runner_id": "runner-test",
+      "value": "-----BEGIN SSH SIGNATURE-----\nU1NIU0lHAAAAAQAAAFEAAAAac2stc3NoLWVkMjU1MTlAb3BlbnNzaC5jb20AAAAghV+Yin\nRRFSGM627MZLT56XDpH0hUDLKTWKmPiBw29WUAAAALc3NoOmZpeHR1cmUAAAAncG9saWN5\nLWtlcm5lbC9nYXRlLWxvY2FsLWF0dGVzdGF0aW9uL3YxAAAAAAAAAAZzaGE1MTIAAABnAA\nAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAQKK9RHg/1tCLZqdW6Lo8j+4j3QBr\nDlZvi7VXbVvxpjse/M2fgPCjzCo/tEbBt8u1RCf0s8lLmi980PVJj8l2IA0AAAAAAQ==\n-----END SSH SIGNATURE-----\n"
+    },
+    "statement": {
+      "policy_sha256": "634efb9a3d79555f4436cd4c542c8c5bb70dcbb44009a05e9c8d10d98adf4776",
+      "pr": 42,
+      "run": {
+        "attested_at": "2026-11-26T00:08:05Z",
+        "base": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "completed_at": "2026-11-26T00:08:05Z",
+        "domain": "policy-kernel/local-runner-attestation/v1",
+        "expected_scope_digest": {
+          "kind": "canonical_sha256",
+          "role": "expected_scope",
+          "schema": "policy_native_v1",
+          "sha256": "34795bc805cc90ee2aad83e324e6caae67c95f6eb71ed61c629839016ac522f6"
+        },
+        "head_tree": "2222222222222222222222222222222222222222",
+        "native_run_digest": {
+          "kind": "canonical_sha256",
+          "role": "native_run",
+          "schema": "policy_native_v1",
+          "sha256": "52365dfd7f0c2ebcacfee56694794a69e9f2647974e1582cf4f5b59534ad4479"
+        },
+        "observations_digest": {
+          "kind": "canonical_sha256",
+          "role": "imported_observations",
+          "schema": "policy_native_v1",
+          "sha256": "48aa149132fda1c17824c31a4fb5a5158c4bddb404db7f3b6238bbe6da78e4b7"
+        },
+        "result_digest": {
+          "kind": "canonical_sha256",
+          "role": "local_scope_result",
+          "schema": "policy_native_v1",
+          "sha256": "db2dcdc9961e759d1b1edef0378b71f6c18b1df8e8495eec160db261b1987000"
+        },
+        "run_id": "run-1",
+        "runner": {
+          "arch": "test",
+          "attestor_version": "fixture/1",
+          "os": "fixture",
+          "runner_id": "runner-test"
+        },
+        "schema_version": 1,
+        "scope_id": "scope-1",
+        "scope_template_digest": {
+          "kind": "canonical_sha256",
+          "role": "scope_template",
+          "schema": "policy_native_v1",
+          "sha256": "f8bd69a3739635f736b5ae254a2c791ec3ad7c04a4e05f85a99332df6204dbf5"
+        },
+        "started_at": "2026-11-26T00:08:00Z",
+        "subject": {
+          "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "repository": "owner/repo",
+          "scope_definition_digest": {
+            "kind": "canonical_sha256",
+            "role": "scope_definition",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "source_inventory_digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "source_set_digest": {
+            "kind": "canonical_sha256",
+            "role": "source_set",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      }
+    }
+  },
+  "observations": {
+    "adapter_version": "fixture/1",
+    "expected_run_id": "run-1",
+    "expected_scope_digest": {
+      "kind": "canonical_sha256",
+      "role": "expected_scope",
+      "schema": "policy_native_v1",
+      "sha256": "34795bc805cc90ee2aad83e324e6caae67c95f6eb71ed61c629839016ac522f6"
+    },
+    "expected_scope_id": "scope-1",
+    "review": "unmet",
+    "run": {
+      "artifacts": [
+        {
+          "digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "id": "raw-1",
+          "path": "raw.json",
+          "role": "raw_report"
+        }
+      ],
+      "exclusions": [],
+      "mappings": [
+        {
+          "requirement_id": "AC-1",
+          "tests": [
+            {
+              "suite_id": "unit",
+              "test_id": "test-1"
+            }
+          ]
+        },
+        {
+          "requirement_id": "B-1",
+          "tests": [
+            {
+              "suite_id": "unit",
+              "test_id": "test-1"
+            }
+          ]
+        },
+        {
+          "requirement_id": "N-1",
+          "tests": [
+            {
+              "suite_id": "unit",
+              "test_id": "test-1"
+            }
+          ]
+        }
+      ],
+      "observations": [
+        {
+          "command": {
+            "argv": [
+              "native-test",
+              "--report",
+              "raw.json"
+            ],
+            "cwd": "."
+          },
+          "completed_at": "2026-11-26T00:08:05Z",
+          "completion": {
+            "code": 0,
+            "kind": "exited"
+          },
+          "configuration_digest": {
+            "kind": "canonical_sha256",
+            "role": "configuration",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "execution_id": "exec-1",
+          "id": "unit",
+          "observed_at": "2026-11-26T00:08:05Z",
+          "started_at": "2026-11-26T00:08:00Z",
+          "subject": {
+            "run_id": "run-1",
+            "scope_id": "scope-1",
+            "source": {
+              "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "repository": "owner/repo",
+              "scope_definition_digest": {
+                "kind": "canonical_sha256",
+                "role": "scope_definition",
+                "schema": "policy_native_v1",
+                "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              },
+              "source_inventory_digest": {
+                "kind": "raw_byte_sha256",
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              },
+              "source_set_digest": {
+                "kind": "canonical_sha256",
+                "role": "source_set",
+                "schema": "policy_native_v1",
+                "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+              }
+            }
+          }
+        }
+      ],
+      "schema_version": 1,
+      "subject": {
+        "run_id": "run-1",
+        "scope_id": "scope-1",
+        "source": {
+          "head": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "repository": "owner/repo",
+          "scope_definition_digest": {
+            "kind": "canonical_sha256",
+            "role": "scope_definition",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          },
+          "source_inventory_digest": {
+            "kind": "raw_byte_sha256",
+            "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          },
+          "source_set_digest": {
+            "kind": "canonical_sha256",
+            "role": "source_set",
+            "schema": "policy_native_v1",
+            "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        }
+      },
+      "test_observations": [
+        {
+          "counts": {
+            "discovered": 1,
+            "executed": 1,
+            "failed": 0,
+            "passed": 1,
+            "retries": 0,
+            "skipped": 0
+          },
+          "observation_id": "unit",
+          "parser": {
+            "id": "example-json",
+            "version": "1"
+          },
+          "raw_report": {
+            "digest": {
+              "kind": "raw_byte_sha256",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "id": "raw-1"
+          },
+          "tests": [
+            {
+              "attempts": 1,
+              "id": "test-1",
+              "outcome": "passed",
+              "raw_identity": "/original/checkout/tests/test-1"
+            }
+          ]
+        }
+      ]
+    },
+    "schema_version": 1,
+    "trust": "local_untrusted",
+    "unsuccessful_reports": []
+  },
+  "policy": {
+    "checks": [
+      {
+        "id": "verify",
+        "job": "verify",
+        "source": {
+          "bindings": [
+            {
+              "command_digest": {
+                "kind": "canonical_sha256",
+                "role": "command",
+                "schema": "policy_native_v1",
+                "sha256": "21cd4a88908f7277a3691c3e985e82f59ae1256ccc7bb3bf3c1b70886aa54914"
+              },
+              "configuration_digest": {
+                "kind": "canonical_sha256",
+                "role": "configuration",
+                "schema": "policy_native_v1",
+                "sha256": "386d4f971c7b333ce6717e4398a6e68f79bf82a97516ddc67e3a18eda375e8c2"
+              },
+              "id": "unit",
+              "parser": null
+            }
+          ],
+          "kind": "native",
+          "requirements": {
+            "approved_file_digest": {
+              "kind": "raw_byte_sha256",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "exemptions": [],
+            "observations": [
+              {
+                "accepted_exit_codes": [
+                  0
+                ],
+                "id": "unit",
+                "tests": {
+                  "maximum_failed": 0,
+                  "maximum_retries": 0,
+                  "maximum_skipped": 0,
+                  "minimum_discovered": 1,
+                  "minimum_executed": 1,
+                  "minimum_passed": 1
+                }
+              }
+            ],
+            "requirements": [
+              {
+                "id": "AC-1",
+                "kind": "acceptance_criterion",
+                "minimum_executed_tests": 1,
+                "suites": [
+                  "unit"
+                ]
+              },
+              {
+                "id": "B-1",
+                "kind": "changed_behavior",
+                "minimum_executed_tests": 1,
+                "suites": [
+                  "unit"
+                ]
+              },
+              {
+                "id": "N-1",
+                "kind": "negative_case",
+                "minimum_executed_tests": 1,
+                "suites": [
+                  "unit"
+                ]
+              }
+            ]
+          }
+        },
+        "workflow": ".github/workflows/ci.yml"
+      },
+      {
+        "id": "integration",
+        "job": "integration",
+        "source": {
+          "bindings": [
+            {
+              "command_digest": {
+                "kind": "canonical_sha256",
+                "role": "command",
+                "schema": "policy_native_v1",
+                "sha256": "21cd4a88908f7277a3691c3e985e82f59ae1256ccc7bb3bf3c1b70886aa54914"
+              },
+              "configuration_digest": {
+                "kind": "canonical_sha256",
+                "role": "configuration",
+                "schema": "policy_native_v1",
+                "sha256": "386d4f971c7b333ce6717e4398a6e68f79bf82a97516ddc67e3a18eda375e8c2"
+              },
+              "id": "integration",
+              "parser": null
+            }
+          ],
+          "kind": "native",
+          "requirements": {
+            "approved_file_digest": {
+              "kind": "raw_byte_sha256",
+              "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+            },
+            "exemptions": [],
+            "observations": [
+              {
+                "accepted_exit_codes": [
+                  0
+                ],
+                "id": "integration",
+                "tests": null
+              }
+            ],
+            "requirements": [
+              {
+                "id": "integration",
+                "process_checks": [
+                  "integration"
+                ]
+              }
+            ]
+          }
+        },
+        "workflow": ".github/workflows/ci.yml"
+      },
+      {
+        "id": "docs",
+        "job": "docs",
+        "source": {
+          "kind": "light"
+        },
+        "workflow": ".github/workflows/ci.yml"
+      },
+      {
+        "id": "extra",
+        "job": "extra",
+        "source": {
+          "kind": "light"
+        },
+        "workflow": ".github/workflows/ci.yml"
+      }
+    ],
+    "local_attestation": {
+      "allowed_signers": ".policy-kernel/allowed_signers",
+      "checks": [
+        "integration",
+        "verify"
+      ],
+      "ci_required_labels": [
+        "run-ci"
+      ]
+    },
+    "policy": {
+      "authorized_actors": [],
+      "local_runner_evidence": {
+        "allowed_runner_ids": [
+          "runner-test"
+        ],
+        "approved_scope_template_digests": [
+          "f8bd69a3739635f736b5ae254a2c791ec3ad7c04a4e05f85a99332df6204dbf5"
+        ],
+        "ci_required_when": [
+          {
+            "id": "check-system",
+            "path_globs": [
+              "tools/checks/**"
+            ],
+            "risks": []
+          }
+        ],
+        "maximum_age_seconds": 3600
+      },
+      "max_evidence_age_seconds": 3600,
+      "policy_digest": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "required_check_name": "advisory/ci",
+      "required_reviews": {
+        "allowed_providers": [],
+        "minimum_reviewers": 1,
+        "require_provider_independence": true
+      },
+      "required_sensor_ids": [],
+      "schema_version": 5,
+      "scope_rules": {
+        "default_required_sensor_ids": [
+          "verify"
+        ],
+        "rules": [
+          {
+            "path_globs": [
+              "docs/**"
+            ],
+            "required_sensor_ids": [
+              "docs"
+            ],
+            "when": "paths"
+          },
+          {
+            "path_globs": [
+              "tests/integration/**"
+            ],
+            "required_sensor_ids": [
+              "integration"
+            ],
+            "when": "paths"
+          },
+          {
+            "label": "run-ci",
+            "required_sensor_ids": [
+              "extra"
+            ],
+            "when": "label"
+          }
+        ]
+      }
+    }
+  },
+  "signers": "runner-test namespaces=\"policy-kernel/gate-local-attestation/v1\" sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAIIVfmIp0URUhjOtuzGS0+elw6R9IVAyyk1ipj4gcNvVlAAAAC3NzaDpmaXh0dXJl"
+}

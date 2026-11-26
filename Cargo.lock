@@ -879,6 +879,7 @@ dependencies = [
  "github-adapter",
  "policy-contracts",
  "policy-core",
+ "policy-local-attest",
  "policy-native-contracts",
  "policy-native-importer",
  "policy-native-verifier",
@@ -919,12 +920,14 @@ dependencies = [
 name = "policy-local-attest"
 version = "0.1.6"
 dependencies = [
+ "base64",
  "clap",
  "policy-contracts",
  "policy-core",
  "policy-native-importer",
  "policy-native-verifier",
  "rustix",
+ "serde",
  "serde_json",
  "tempfile",
 ]

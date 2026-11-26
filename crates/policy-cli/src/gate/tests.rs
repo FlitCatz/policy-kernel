@@ -1,12 +1,12 @@
 use super::{
-    evaluate, raw_digest, resolve_required_scope, scope_profile, Evidence, GatePolicy, Result,
-    Verdict,
+    evaluate, evaluate_with, raw_digest, resolve_required_scope, scope_profile, Evidence,
+    GatePolicy, Result, Verdict,
 };
 use base64::{engine::general_purpose::STANDARD, Engine};
 use policy_contracts::UtcTimestamp;
 use policy_native_contracts::{canonical_digest, DigestRole};
 use serde_json::{json, Value};
-use std::{cell::Cell, collections::BTreeMap, io::Write, path::Path};
+use std::{cell::Cell, collections::BTreeMap, fs, io::Write, path::Path};
 use yaml_rust2::{Yaml, YamlLoader};
 
 const BASE: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
@@ -14,6 +14,7 @@ const NEW_BASE: &str = "dddddddddddddddddddddddddddddddddddddddd";
 const HEAD: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const MERGE: &str = "cccccccccccccccccccccccccccccccccccccccc";
 const PATH: &str = ".policy-kernel/gate.json";
+const SIGNERS_PATH: &str = ".policy-kernel/allowed_signers";
 static NOW: std::sync::LazyLock<UtcTimestamp> =
     std::sync::LazyLock::new(|| UtcTimestamp::parse("2026-11-26T00:16:00Z").unwrap());
 const LIGHT: &str = "light";
@@ -54,6 +55,7 @@ struct Fixture {
     files: Value,
     reviews: Option<Value>,
     policy: Option<Value>,
+    signers: Option<String>,
     workflows: BTreeMap<String, Workflow>,
     archives: BTreeMap<u64, Vec<u8>>,
     commits: BTreeMap<String, Value>,
@@ -96,6 +98,7 @@ impl Fixture {
             files: data["files"].clone(),
             reviews: Some(data["reviews"].clone()),
             policy: Some(policy()),
+            signers: None,
             workflows: BTreeMap::from([(
                 "ci.yml".into(),
                 Workflow {
@@ -155,6 +158,16 @@ impl Fixture {
                 let policy = self.policy.as_ref().ok_or("not found")?;
                 json!({"type":"file","encoding":"base64","path":PATH,
                     "content":STANDARD.encode(serde_json::to_vec(policy).unwrap())})
+            }
+            path if path
+                == format!(
+                    "/contents/{SIGNERS_PATH}?ref={}",
+                    self.base_tip["object"]["sha"].as_str().unwrap()
+                ) =>
+            {
+                let signers = self.signers.as_ref().ok_or("no allowed signers at base")?;
+                json!({"type":"file","encoding":"base64","path":SIGNERS_PATH,
+                    "content":STANDARD.encode(signers.as_bytes())})
             }
             path if path.starts_with("/actions/workflows/") => {
                 let (file, query) = path
@@ -244,6 +257,221 @@ impl Fixture {
             .artifacts
             .push(artifact);
         self.archives.insert(job.artifact, bytes);
+    }
+}
+
+struct LocalFixture {
+    github: Fixture,
+    material: Value,
+    directory: tempfile::TempDir,
+}
+
+impl LocalFixture {
+    fn new() -> Self {
+        let material: Value =
+            serde_json::from_str(include_str!("../../tests/fixtures/gate-local-signed.json"))
+                .unwrap();
+        let mut github = Fixture::new();
+        github.policy = Some(material["policy"].clone());
+        github.signers = Some(material["signers"].as_str().unwrap().into());
+        github.pull["labels"] = json!([]);
+        github
+            .commits
+            .insert(HEAD.into(), material["head_commit"].clone());
+        let fixture = Self {
+            github,
+            material,
+            directory: tempfile::tempdir().unwrap(),
+        };
+        fixture.write("gate-attestation.json", &fixture.material["attestation"]);
+        fixture.write("expected.json", &fixture.material["expected"]);
+        fixture.write("observations.json", &fixture.material["observations"]);
+        fixture
+    }
+
+    fn write(&self, name: &str, document: &Value) {
+        fs::write(
+            self.directory.path().join(name),
+            serde_json::to_vec(document).unwrap(),
+        )
+        .unwrap();
+    }
+
+    fn evaluate_at<'a>(&self, now: &'a UtcTimestamp) -> Evidence<'a> {
+        evaluate_with(
+            &|route| self.github.response(route),
+            "owner/repo",
+            42,
+            PATH,
+            (now, Some(self.directory.path())),
+        )
+    }
+
+    fn require_unknown(&self, reason: &str) {
+        let report = self.evaluate_at(&NOW);
+        assert_eq!(report.verdict, Verdict::Unknown, "{report:?}");
+        assert!(report.reason.contains(reason), "{report:?}");
+        assert!(report.evidence_classes.is_empty());
+    }
+}
+
+#[test]
+fn accepted_hardware_signature_uses_base_signers_and_reports_local_evidence() {
+    let fixture = LocalFixture::new();
+    let report = fixture.evaluate_at(&NOW);
+    assert_eq!(report.verdict, Verdict::Ready, "{report:?}");
+    assert!(report
+        .line(&report.reason)
+        .starts_with("ready: [local_runner_attested]"));
+    let json = serde_json::to_value(report).unwrap();
+    assert_eq!(json["evidence_classes"], json!(["local_runner_attested"]));
+    assert_eq!(json["checks"][0]["evidence_class"], "local_runner_attested");
+    assert_eq!(json["local_attestation"]["run"]["subject"]["head"], HEAD);
+    assert_eq!(fixture.github.run_reads.get(), 0);
+}
+
+#[test]
+fn signed_run_leaves_a_required_local_check_it_did_not_cover_unknown() {
+    let mut fixture = LocalFixture::new();
+    fixture.github.files = json!([
+        {"filename":"src/lib.rs","status":"modified"},
+        {"filename":"tests/integration/suite.rs","status":"modified"}
+    ]);
+    fixture.github.pull["changed_files"] = json!(2);
+    let report = fixture.evaluate_at(&NOW);
+    assert_eq!(report.verdict, Verdict::Unknown, "{report:?}");
+    assert_eq!(
+        report.reason,
+        "integration: signed local scope does not cover requirement integration"
+    );
+    assert!(report.evidence_classes.is_empty());
+    let json = serde_json::to_value(&report).unwrap();
+    assert_eq!(json["required_checks"], json!(["integration", "verify"]));
+    assert_eq!(json["checks"][0]["check"], "integration");
+    assert_eq!(json["checks"][0]["verdict"], "unknown");
+    assert_eq!(json["checks"][0]["evidence_class"], Value::Null);
+    assert_eq!(json["checks"][1]["check"], "verify");
+    assert_eq!(json["checks"][1]["verdict"], "ready");
+    assert_eq!(json["checks"][1]["evidence_class"], "local_runner_attested");
+    assert_eq!(fixture.github.run_reads.get(), 0);
+}
+
+#[test]
+fn local_and_ci_evidence_are_reported_together() {
+    let mut fixture = LocalFixture::new();
+    fixture.github.files = json!([
+        {"filename":"src/lib.rs","status":"modified"},
+        {"filename":"docs/intro.md","status":"modified"}
+    ]);
+    fixture.github.pull["changed_files"] = json!(2);
+    let mut docs = fixture.github.ci().jobs[0].clone();
+    docs["id"] = json!(2003);
+    docs["name"] = json!("docs");
+    fixture.github.ci().jobs.push(docs);
+    let report = fixture.evaluate_at(&NOW);
+    assert_eq!(report.verdict, Verdict::Ready, "{report:?}");
+    assert!(report
+        .line(&report.reason)
+        .starts_with("ready: [ci_observed, local_runner_attested]"));
+}
+
+#[test]
+fn unavailable_or_unsigned_local_evidence_never_passes() {
+    let mut no_registry = LocalFixture::new();
+    no_registry.github.signers = None;
+    no_registry.require_unknown("could not read allowed signers at base");
+
+    let mut unregistered = LocalFixture::new();
+    unregistered.github.signers = Some(
+        unregistered.material["signers"]
+            .as_str()
+            .unwrap()
+            .replace("runner-test", "other-owner"),
+    );
+    unregistered.require_unknown("no allowed-signers entry at the base commit");
+
+    let missing = LocalFixture::new();
+    assert_eq!(missing.github.evaluate().verdict, Verdict::Unknown);
+
+    let unsigned = LocalFixture::new();
+    unsigned.write("gate-attestation.json", &unsigned.material["no_presence"]);
+    unsigned.require_unknown("requires user presence");
+
+    let tampered = LocalFixture::new();
+    let mut envelope = tampered.material["attestation"].clone();
+    envelope["statement"]["run"]["runner"]["os"] = json!("changed");
+    tampered.write("gate-attestation.json", &envelope);
+    tampered.require_unknown("signature could not be verified");
+}
+
+#[test]
+fn expired_or_obsolete_attestations_never_pass() {
+    let expired = LocalFixture::new();
+    let now = UtcTimestamp::parse("2026-11-26T02:00:00Z").unwrap();
+    let report = expired.evaluate_at(&now);
+    assert_eq!(report.verdict, Verdict::Unknown);
+    assert!(
+        report.reason.contains("stale or future dated"),
+        "{report:?}"
+    );
+
+    let mut moved = LocalFixture::new();
+    moved.github.pull["head"]["sha"] = json!(NEW_BASE);
+    moved.require_unknown("does not match the current repository, PR, head, tree, base or policy");
+
+    let mut moved_during_evaluation = LocalFixture::new();
+    let mut final_pull = moved_during_evaluation.github.pull.clone();
+    final_pull["head"]["sha"] = json!(NEW_BASE);
+    moved_during_evaluation.github.final_pull = Some(final_pull);
+    moved_during_evaluation.require_unknown("obsolete evidence");
+}
+
+#[test]
+fn missing_opt_in_and_policy_digest_changes_fail_closed() {
+    let mut absent = LocalFixture::new();
+    absent.github.policy.as_mut().unwrap()["policy"]
+        .as_object_mut()
+        .unwrap()
+        .remove("local_runner_evidence");
+    absent.require_unknown("requires policy v5 local runner opt-in");
+
+    let mut changed = LocalFixture::new();
+    changed.github.policy.as_mut().unwrap()["policy"]["max_evidence_age_seconds"] = json!(1800);
+    changed
+        .require_unknown("does not match the current repository, PR, head, tree, base or policy");
+}
+
+#[test]
+fn check_system_paths_and_ci_only_labels_use_ci_instead() {
+    for (file, labels) in [
+        ("tools/checks/runner.rs", json!([])),
+        (SIGNERS_PATH, json!([])),
+        (PATH, json!([])),
+        ("src/lib.rs", json!([{"name":"RUN-CI"}])),
+    ] {
+        let mut fixture = LocalFixture::new();
+        fixture.github.files = json!([{"filename":file,"status":"modified"}]);
+        fixture.github.pull["labels"] = labels.clone();
+        let report = fixture.evaluate_at(&NOW);
+        assert_eq!(report.verdict, Verdict::Unknown, "{report:?}");
+        assert!(report.reason.contains("missing artifact"), "{report:?}");
+        assert!(report.local_attestation.is_none());
+
+        let mut fixture = LocalFixture::new();
+        fixture.github.files = json!([{"filename":file,"status":"modified"}]);
+        fixture.github.pull["labels"] = labels;
+        fixture.github.native_job(
+            "verify",
+            native_zip("verify", VERIFY, b"ran verify", 0),
+            VERIFY,
+        );
+        let report = fixture.evaluate_at(&NOW);
+        assert_eq!(report.verdict, Verdict::Ready, "{report:?}");
+        assert_eq!(
+            report.evidence_classes,
+            vec![policy_contracts::TrustClass::CiObserved]
+        );
+        assert!(report.local_attestation.is_none());
     }
 }
 
