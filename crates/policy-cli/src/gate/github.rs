@@ -24,6 +24,8 @@ pub(super) struct GitHub<'a> {
 pub(super) struct Pull {
     pub id: u64,
     pub number: u64,
+    pub state: String,
+    pub merged: bool,
     pub base: Branch,
     pub head: Branch,
     pub labels: Vec<Label>,
@@ -162,6 +164,20 @@ struct GitObject {
     sha: CommitSha,
 }
 
+#[derive(Debug, Deserialize)]
+struct GitRef {
+    #[serde(rename = "ref")]
+    name: String,
+    object: GitRefObject,
+}
+
+#[derive(Debug, Deserialize)]
+struct GitRefObject {
+    #[serde(rename = "type")]
+    kind: String,
+    sha: CommitSha,
+}
+
 enum Page {
     Array(Option<usize>),
     Object(&'static str),
@@ -285,17 +301,44 @@ impl<'a> GitHub<'a> {
         Ok(paths.into_iter().collect())
     }
 
-    pub fn policy(&self, pull: &Pull, path: &str) -> Result<Vec<u8>> {
-        let encoded = path
-            .split('/')
-            .map(encode_route_segment)
-            .collect::<std::result::Result<Vec<_>, _>>()?
-            .join("/");
+    pub fn base_tip(&self, pull: &Pull) -> Result<CommitSha> {
+        let branch = encode_path(&pull.base.name)?;
+        let reference: GitRef = self.json(&format!("/git/ref/heads/{branch}"))?;
+        if reference.name != format!("refs/heads/{}", pull.base.name)
+            || reference.object.kind != "commit"
+        {
+            return Err("GitHub did not resolve the requested base branch to a commit".into());
+        }
+        Ok(reference.object.sha)
+    }
+
+    pub fn require_unique_head(&self, pull: &Pull) -> Result<()> {
+        let (owner, _) = pull
+            .head
+            .repo
+            .full_name
+            .as_str()
+            .split_once('/')
+            .ok_or("missing head repository owner")?;
+        let head = encode_route_segment(&format!("{owner}:{}", pull.head.name))?;
+        // A second open PR can be created after the workflow run. Observe the
+        // branch independently of the pull request links on that run.
+        let links: Vec<PullLink> =
+            self.json(&format!("/pulls?state=open&head={head}&per_page=2"))?;
+        match links.as_slice() {
+            [link] if link.matches(pull) => Ok(()),
+            [_, _, ..] => Err("head branch has multiple open pull requests".into()),
+            _ => Err("could not confirm a unique open pull request for the head branch".into()),
+        }
+    }
+
+    pub fn policy(&self, base_tip: &CommitSha, path: &str) -> Result<Vec<u8>> {
+        let encoded = encode_path(path)?;
         let content: Contents = self
-            .json(&format!("/contents/{encoded}?ref={}", pull.base.sha))
-            .map_err(|error| format!("policy unavailable at PR base {}: {error}", pull.base.sha))?;
+            .json(&format!("/contents/{encoded}?ref={base_tip}"))
+            .map_err(|error| format!("policy unavailable at base tip {base_tip}: {error}"))?;
         if content.kind != "file" || content.encoding != "base64" || content.path != path {
-            return Err("policy at PR base is not the requested readable file".into());
+            return Err("policy at base tip is not the requested readable file".into());
         }
         let encoded: Vec<u8> = content
             .content
@@ -344,6 +387,9 @@ impl<'a> GitHub<'a> {
                 || !numbers.insert(run.run_number)
             {
                 return Err("inconsistent or duplicate GitHub workflow run identity".into());
+            }
+            if run.pull_requests.len() > 1 {
+                return Err(format!("workflow run {} links multiple pull requests", run.id).into());
             }
             if (run.status == "completed" && run.conclusion.as_deref() == Some("skipped"))
                 || (!run.pull_requests.is_empty()
@@ -444,15 +490,7 @@ impl Run {
     fn links_pull(&self, pull: &Pull) -> bool {
         self.head_repository.id == pull.head.repo.id
             && self.head_branch == pull.head.name
-            && self.pull_requests.iter().any(|link| {
-                link.id == pull.id
-                    && link.number == pull.number
-                    && link.head.repo.id == pull.head.repo.id
-                    && link.head.name == pull.head.name
-                    && link.head.sha == pull.head.sha
-                    && link.base.repo.id == pull.base.repo.id
-                    && link.base.name == pull.base.name
-            })
+            && matches!(self.pull_requests.as_slice(), [link] if link.matches(pull))
     }
 
     fn same_attempt(&self, other: &Self) -> bool {
@@ -471,6 +509,26 @@ impl Run {
             && self.status == other.status
             && self.conclusion == other.conclusion
     }
+}
+
+impl PullLink {
+    fn matches(&self, pull: &Pull) -> bool {
+        self.id == pull.id
+            && self.number == pull.number
+            && self.head.repo.id == pull.head.repo.id
+            && self.head.name == pull.head.name
+            && self.head.sha == pull.head.sha
+            && self.base.repo.id == pull.base.repo.id
+            && self.base.name == pull.base.name
+    }
+}
+
+fn encode_path(path: &str) -> Result<String> {
+    let segments = path
+        .split('/')
+        .map(encode_route_segment)
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    Ok(segments.join("/"))
 }
 
 fn attempt_path(run: &Run) -> String {

@@ -63,7 +63,7 @@ entry point with the v5 input. It exits 0 for readiness, 2 for blocked, 3 for
 inconclusive and 64 for invalid input. Native `evaluate-scope` accepts an
 independently approved `ExpectedScopeV1`. The
 [advisory CI gate](ci-gate.md) resolves its required CI checks from the same v5
-rules using the PR's base policy, changed files and labels.
+rules using the policy at the tip of the PR's base branch, changed files and labels.
 
 Policies v1 through v4 retain their existing bytes, digests and verdicts.
 They reject `scope_rules` and continue to use the legacy risk input.

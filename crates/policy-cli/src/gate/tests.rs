@@ -10,6 +10,7 @@ use std::{cell::Cell, collections::BTreeMap, io::Write, path::Path};
 use yaml_rust2::{Yaml, YamlLoader};
 
 const BASE: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+const NEW_BASE: &str = "dddddddddddddddddddddddddddddddddddddddd";
 const HEAD: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const MERGE: &str = "cccccccccccccccccccccccccccccccccccccccc";
 const PATH: &str = ".policy-kernel/gate.json";
@@ -47,6 +48,9 @@ fn policy() -> Value {
 // reduced to the consumed fields with generic repository and test identities.
 struct Fixture {
     pull: Value,
+    base_tip: Value,
+    final_base_tip: Option<Value>,
+    base_reads: Cell<u32>,
     files: Value,
     reviews: Option<Value>,
     policy: Option<Value>,
@@ -86,6 +90,9 @@ impl Fixture {
         extra["name"] = json!("extra");
         Self {
             pull: data["pull"].clone(),
+            base_tip: data["base_tip"].clone(),
+            final_base_tip: None,
+            base_reads: Cell::new(0),
             files: data["files"].clone(),
             reviews: Some(data["reviews"].clone()),
             policy: Some(policy()),
@@ -126,10 +133,25 @@ impl Fixture {
                 .clone()
             }
             "/pulls/42/files?per_page=100&page=1" => self.files.clone(),
+            "/pulls?state=open&head=owner%3Afeature&per_page=2" => json!([self.pull]),
+            "/git/ref/heads/main" => {
+                let read = self.base_reads.replace(self.base_reads.get() + 1);
+                if read == 0 {
+                    &self.base_tip
+                } else {
+                    self.final_base_tip.as_ref().unwrap_or(&self.base_tip)
+                }
+                .clone()
+            }
             "/pulls/42/reviews?per_page=100&page=1" => {
                 self.reviews.clone().ok_or("reviews inaccessible")?
             }
-            path if path == format!("/contents/{PATH}?ref={BASE}") => {
+            path if path
+                == format!(
+                    "/contents/{PATH}?ref={}",
+                    self.base_tip["object"]["sha"].as_str().unwrap()
+                ) =>
+            {
                 let policy = self.policy.as_ref().ok_or("not found")?;
                 json!({"type":"file","encoding":"base64","path":PATH,
                     "content":STANDARD.encode(serde_json::to_vec(policy).unwrap())})
@@ -302,7 +324,7 @@ fn missing_policy_or_unreadable_scope_never_returns_ready() {
     assert!(fixture
         .evaluate()
         .reason
-        .contains("policy unavailable at PR base"));
+        .contains("policy unavailable at base tip"));
     let mut fixture = Fixture::new();
     fixture.pull["labels"] = Value::Null;
     assert_eq!(fixture.evaluate().verdict, Verdict::Unknown);
@@ -478,21 +500,202 @@ fn merge_preserves_same_named_sensors_across_jobs_and_runs() {
         native_zip("verify", VERIFY, b"ran verify", 0),
         VERIFY,
     );
-    fixture.native_job("extra", native_zip("extra", EXTRA, b"ran verify", 0), EXTRA);
+    fixture.native_job("extra", native_zip("extra", EXTRA, b"ran verify", 9), EXTRA);
     let report = fixture.evaluate();
-    assert_eq!(report.verdict, Verdict::Ready, "{report:?}");
+    assert_eq!(report.verdict, Verdict::NotReady, "{report:?}");
+    assert_eq!(report.reason, "extra: verified native scope did not pass");
     let value = serde_json::to_value(report).unwrap();
     assert_eq!(value["workflows"].as_object().unwrap().len(), 2);
     for check in value["checks"].as_array().unwrap() {
         assert_eq!(check["kind"], "native_run_v1");
         assert_eq!(check["native"]["observations"], json!(["unit"]));
-        assert_eq!(check["native"]["evaluation"]["status"], "satisfied");
+        match check["check"].as_str() {
+            Some("extra") => {
+                assert_eq!(check["native"]["evaluation"]["status"], "non_pass");
+                assert_eq!(
+                    check["native"]["evaluation"]["subject"]["run_id"],
+                    "2001-extra"
+                );
+            }
+            Some("verify") => {
+                assert_eq!(check["native"]["evaluation"]["status"], "satisfied");
+                assert_eq!(
+                    check["native"]["evaluation"]["subject"]["run_id"],
+                    "1001-verify"
+                );
+            }
+            other => panic!("unexpected check {other:?}"),
+        }
         assert_eq!(check["native"]["import"]["issues"], json!([]));
     }
     assert_ne!(
         value["checks"][0]["native"]["evaluation"]["subject"]["run_id"],
         value["checks"][1]["native"]["evaluation"]["subject"]["run_id"]
     );
+}
+
+#[test]
+fn rejects_multiple_pr_links_even_on_a_skipped_candidate() {
+    for skipped in [false, true] {
+        let mut fixture = Fixture::new();
+        let run = if skipped {
+            &mut fixture.ci().listing[0]
+        } else {
+            &mut fixture.ci().run
+        };
+        let mut sibling = run["pull_requests"][0].clone();
+        sibling["id"] = json!(56);
+        sibling["number"] = json!(43);
+        sibling["base"]["ref"] = json!("release");
+        run["pull_requests"].as_array_mut().unwrap().push(sibling);
+        let report = fixture.evaluate();
+        assert_eq!(report.verdict, Verdict::Unknown);
+        assert!(
+            report.reason.contains("multiple pull requests"),
+            "{}",
+            report.reason
+        );
+    }
+}
+
+#[test]
+fn rejects_an_open_sibling_even_when_the_run_has_one_link() {
+    let fixture = Fixture::new();
+    let get = |route: &str| {
+        if route.contains("/pulls?state=open") {
+            let mut sibling = fixture.pull.clone();
+            sibling["id"] = json!(56);
+            sibling["number"] = json!(43);
+            return Ok(serde_json::to_vec(&json!([fixture.pull, sibling]))?);
+        }
+        fixture.response(route)
+    };
+    let report = evaluate(&get, "owner/repo", 42, PATH, &NOW);
+    assert_eq!(report.verdict, Verdict::Unknown);
+    assert!(report.reason.contains("multiple open pull requests"));
+}
+
+#[test]
+fn policy_uses_the_base_branch_tip_even_when_pr_base_sha_is_stale() {
+    let mut fixture = Fixture::new();
+    fixture.base_tip["object"]["sha"] = json!(NEW_BASE);
+    let report = fixture.evaluate();
+    assert_eq!(report.verdict, Verdict::Ready, "{}", report.reason);
+    let value = serde_json::to_value(report).unwrap();
+    assert_eq!(value["pull"]["base"]["sha"], BASE);
+    assert_eq!(value["base_tip"], NEW_BASE);
+    assert_eq!(value["final_base_tip"], NEW_BASE);
+}
+
+#[test]
+fn a_base_tip_move_invalidates_an_unchanged_pr_snapshot() {
+    let mut fixture = Fixture::new();
+    let mut moved = fixture.base_tip.clone();
+    moved["object"]["sha"] = json!(NEW_BASE);
+    fixture.final_base_tip = Some(moved);
+    let report = fixture.evaluate();
+    assert_eq!(report.verdict, Verdict::Unknown);
+    assert!(report.reason.contains("base branch tip changed"));
+    let value = serde_json::to_value(report).unwrap();
+    assert_eq!(value["pull"], value["final_pull"]);
+    assert_eq!(value["base_tip"], BASE);
+    assert_eq!(value["final_base_tip"], NEW_BASE);
+}
+
+#[test]
+fn reads_the_second_page_of_pr_files_before_accepting_evidence() {
+    let mut fixture = Fixture::new();
+    fixture.pull["changed_files"] = json!(101);
+    fixture.files = json!((0..100)
+        .map(|id| json!({"filename":format!("src/file-{id}.rs"),"status":"modified"}))
+        .collect::<Vec<_>>());
+    let get = |route: &str| {
+        if route.ends_with("/pulls/42/files?per_page=100&page=2") {
+            return Ok(
+                br#"[{"filename":".github/actions/check/action.yml","status":"added"}]"#.to_vec(),
+            );
+        }
+        fixture.response(route)
+    };
+    let report = evaluate(&get, "owner/repo", 42, PATH, &NOW);
+    assert_eq!(report.verdict, Verdict::Unknown);
+    assert!(report.reason.contains(".github/actions/check/action.yml"));
+    assert_eq!(report.changed_paths.unwrap().len(), 101);
+}
+
+#[test]
+fn rejects_a_total_count_change_between_job_pages() {
+    let fixture = Fixture::new();
+    let get = |route: &str| {
+        if let Some(page) = route.split("/attempts/2/jobs?per_page=100&page=").nth(1) {
+            let jobs = if page == "1" {
+                (0..100)
+                    .map(|id| {
+                        let mut job = recorded()["job"].clone();
+                        job["id"] = json!(2001 + id);
+                        job
+                    })
+                    .collect::<Vec<_>>()
+            } else {
+                vec![]
+            };
+            let total = if page == "1" { 101 } else { 100 };
+            return Ok(serde_json::to_vec(
+                &json!({"total_count":total,"jobs":jobs}),
+            )?);
+        }
+        fixture.response(route)
+    };
+    let report = evaluate(&get, "owner/repo", 42, PATH, &NOW);
+    assert_eq!(report.verdict, Verdict::Unknown);
+    assert!(report
+        .reason
+        .contains("GitHub collection changed while reading"));
+}
+
+#[test]
+fn workflow_and_action_changes_cannot_supply_required_evidence() {
+    for path in [
+        ".github/workflows/ci.yml",
+        ".github/workflows/other.yaml",
+        ".github/actions/check/action.yml",
+    ] {
+        let mut fixture = Fixture::new();
+        fixture.files =
+            json!([{"filename":"src/lib.rs","status":"renamed","previous_filename":path}]);
+        let get = |route: &str| {
+            assert!(!route.contains("/actions/"), "unexpected read: {route}");
+            fixture.response(route)
+        };
+        let report = evaluate(&get, "owner/repo", 42, PATH, &NOW);
+        assert_eq!(report.verdict, Verdict::Unknown);
+        assert!(
+            report
+                .reason
+                .contains("workflow that produces required evidence"),
+            "{}",
+            report.reason
+        );
+    }
+}
+
+#[test]
+fn only_open_pull_requests_are_evaluated_and_closure_invalidates_evidence() {
+    for merged in [false, true] {
+        let mut fixture = Fixture::new();
+        fixture.pull["state"] = json!("closed");
+        fixture.pull["merged"] = json!(merged);
+        let report = fixture.evaluate();
+        assert_eq!(report.verdict, Verdict::Unknown);
+        assert!(report.reason.contains("not open"), "{}", report.reason);
+    }
+    let mut fixture = Fixture::new();
+    let mut closed = fixture.pull.clone();
+    closed["state"] = json!("closed");
+    fixture.final_pull = Some(closed);
+    let report = fixture.evaluate();
+    assert_eq!(report.verdict, Verdict::Unknown);
+    assert!(report.reason.contains("obsolete"), "{}", report.reason);
 }
 
 #[test]

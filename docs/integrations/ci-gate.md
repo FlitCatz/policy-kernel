@@ -8,10 +8,11 @@ The gate uses GitHub REST GET requests with those credentials.
 policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --output gate-42.json
 ```
 
-The policy path is repository-relative. The gate reads it at the PR's observed
-base SHA, including when the PR changes that file. The default output is
-`gate-evidence.json`. Choose a new path on each run. The report includes the
-policy bytes' SHA-256, initial and final PR observations, the resolved checks,
+The policy path is repository-relative. For an open PR, the gate resolves the
+current tip of its target branch and reads the policy at that commit. The default
+output is `gate-evidence.json`. Choose a new path on each run. The report includes
+the policy bytes' SHA-256, the PR's reported base SHA within each PR observation,
+the independently resolved initial and final base tips, the resolved checks,
 workflow and job identities, native import and scope diagnostics where applicable,
 and advisory review states. Review state and review read errors never affect the
 verdict. The gate publishes no check, status, or comment.
@@ -25,8 +26,9 @@ verdict. The gate publishes no check, status, or comment.
 
 When a required check's evidence is unknown, the report returns `unknown` and keeps
 any separately observed failures. It re-reads the selected workflows and the PR.
-Changes to the selected run or attempt, PR head or base, labels, or reported file
-count invalidate the evaluated evidence.
+Changes to the selected run or attempt, PR state, head or base, independently
+resolved base tip, labels, or reported file count invalidate the evidence.
+Closed and merged PRs yield `unknown`.
 
 ## Base policy and check sources
 
@@ -58,11 +60,18 @@ other unsuccessful job yields `unknown`.
 
 The gate selects the newest non-skipped `pull_request` run for each required
 workflow at the observed head. GitHub must link the run to this PR. GitHub does
-not link runs for a PR opened from a fork, so such a PR always yields `unknown`
-and the gate never reports it as ready. A queued or in-progress newer run
+not link runs for a PR opened from a fork, so such a PR yields `unknown`. A head
+branch with more than one open PR in the repository also yields `unknown`, as
+does a candidate run that links multiple PRs. A queued or in-progress newer run
 withholds readiness. GitHub may carry forward jobs on a partial rerun, so the
-gate checks that required jobs actually started during the latest attempt. Use a full rerun when evidence for carried-forward jobs is
-required. An unrelated job failure does not override the scoped checks.
+gate checks that required jobs actually started during the latest attempt. Use a
+full rerun when evidence for carried-forward jobs is required. An unrelated job
+failure does not override the scoped checks.
+
+Changes under `.github/workflows/` or `.github/actions/` yield `unknown`,
+including a rename into or out of either directory. The base-branch policy
+controls which checks are required. The workflow-change rule withholds
+readiness when the PR edits an Actions definition that could produce evidence.
 
 ## Native job artifacts
 
@@ -77,8 +86,9 @@ check requires its job's declared native scope.
   `NativeRunV1.artifacts[].path` is relative to `artifacts/`.
 - Use `<GITHUB_RUN_ID>-<key>` for `subject.run_id` and `<key>` for
   `subject.scope_id`. GitHub's run and artifact metadata must agree with the PR.
-  The gate checks the upload and observation times against the selected job.
-  Earlier attempts' artifacts are excluded using the attempt start time. An
+  The gate binds the artifact to the run attempt and the selected job's time
+  window. GitHub's artifact metadata has no uploader job identity. Earlier
+  attempts' artifacts are excluded using the attempt start time. An
   expired upload or multiple candidates for the same job withholds readiness.
 - Record the actual checkout SHA. The gate accepts the PR head SHA or a
   two-parent checkout with that head as the second parent and the same Git tree.

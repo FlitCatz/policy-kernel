@@ -132,9 +132,7 @@ impl NativePolicy {
                     && binding.head_sha == context.pull.head.sha
             })
         {
-            return Err(
-                "artifact is expired, oversized or unbound to the selected job attempt".into(),
-            );
+            return Err("artifact is expired, oversized, or outside the selected run attempt and job time window".into());
         }
         let archive = context.api.archive(artifact.id)?;
         let digest = format!("sha256:{}", raw_digest(&archive).sha256);
@@ -152,7 +150,9 @@ impl NativePolicy {
             observation.started_at.truncated_to_seconds() < context.job.started_at
                 || observation.observed_at.truncated_to_seconds() > *end
         }) {
-            return Err("native observations occurred outside the selected job attempt".into());
+            return Err(
+                "native observations occurred outside the selected job's time window".into(),
+            );
         }
         let subject = &run.subject.source;
         if !subject

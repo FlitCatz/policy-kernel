@@ -8,7 +8,7 @@ use github::{Get, GitHub, Job, Pull, Review, Run};
 use github_adapter::GhCliApi;
 use native::{JobContext, NativeEvidence, NativePolicy};
 use policy_contracts::{
-    PolicySnapshot, SensorDefinition, SensorId, SensorProfile, SensorResultRequirement,
+    CommitSha, PolicySnapshot, SensorDefinition, SensorId, SensorProfile, SensorResultRequirement,
     Sha256Digest, TestAdequacyPolicy, UtcTimestamp,
 };
 use policy_core::resolve_required_scope;
@@ -85,6 +85,8 @@ struct Evidence<'a> {
     reason: String,
     pull: Option<Pull>,
     final_pull: Option<Pull>,
+    base_tip: Option<CommitSha>,
+    final_base_tip: Option<CommitSha>,
     policy_sha256: Option<Sha256Digest>,
     changed_paths: Option<Vec<String>>,
     required_checks: Vec<SensorId>,
@@ -176,6 +178,8 @@ fn evaluate<'a>(
         reason: String::new(),
         pull: None,
         final_pull: None,
+        base_tip: None,
+        final_base_tip: None,
         policy_sha256: None,
         changed_paths: None,
         required_checks: vec![],
@@ -195,35 +199,61 @@ impl Evidence<'_> {
     fn collect(&mut self, api: &GitHub<'_>) -> Result<Verdict> {
         let pull = api.pull()?;
         self.pull = Some(pull.clone());
-        let result = self.read_checks(api, &pull);
+        if pull.state != "open" || pull.merged {
+            return Err("pull request is not open".into());
+        }
+        let base_tip = api.base_tip(&pull)?;
+        self.base_tip = Some(base_tip.clone());
+        let result = self.read_checks(api, &pull, &base_tip);
         match api.reviews() {
             Ok(observed) => self.advisory_reviews = Some(observed),
             Err(error) => self.advisory_review_error = Some(error.to_string()),
         }
+        let result = result.and_then(|verdict| {
+            if verdict != Verdict::Unknown {
+                api.require_unique_head(&pull)?;
+            }
+            Ok(verdict)
+        });
         let final_pull = api
             .pull()
             .map_err(|error| format!("could not confirm PR snapshot: {error}"))?;
-        let changed = final_pull != pull;
-        self.final_pull = Some(final_pull);
-        if changed {
+        self.final_pull = Some(final_pull.clone());
+        let final_base_tip = api
+            .base_tip(&final_pull)
+            .map_err(|error| format!("could not confirm base branch tip: {error}"))?;
+        self.final_base_tip = Some(final_base_tip.clone());
+        if final_pull != pull || final_base_tip != base_tip {
             return Err(
-                "obsolete evidence: PR head, base, labels or file count changed while reading"
+                "obsolete evidence: PR state, head, base, labels, file count or base branch tip changed while reading"
                     .into(),
             );
         }
         result
     }
 
-    fn read_checks(&mut self, api: &GitHub<'_>, pull: &Pull) -> Result<Verdict> {
+    fn read_checks(
+        &mut self,
+        api: &GitHub<'_>,
+        pull: &Pull,
+        base_tip: &CommitSha,
+    ) -> Result<Verdict> {
         if !native::safe_path(self.policy_path) {
             return Err("policy must be a portable repository-relative path".into());
         }
-        let policy_bytes = api.policy(pull, self.policy_path)?;
+        let policy_bytes = api.policy(base_tip, self.policy_path)?;
         self.policy_sha256 = Some(raw_digest(&policy_bytes).sha256);
         let settings: GatePolicy = serde_json::from_slice(&policy_bytes)
-            .map_err(|error| format!("invalid gate policy at PR base: {error}"))?;
+            .map_err(|error| format!("invalid gate policy at base tip: {error}"))?;
         let checks = settings.validate()?;
         let paths = api.files(pull)?;
+        if let Some(path) = paths.iter().find(|path| {
+            path.starts_with(".github/workflows/") || path.starts_with(".github/actions/")
+        }) {
+            let reason = format!("PR modifies a workflow that produces required evidence: {path}");
+            self.changed_paths = Some(paths);
+            return Err(reason.into());
+        }
         let labels: Vec<_> = pull.labels.iter().map(|label| label.name.clone()).collect();
         let profile = scope_profile(&settings.checks);
         if settings
@@ -244,9 +274,12 @@ impl Evidence<'_> {
 
         let mut groups = BTreeMap::<&str, Vec<&Check>>::new();
         for id in &self.required_checks {
-            let check = checks[id];
+            let check = checks
+                .get(id)
+                .ok_or_else(|| format!("scoped check {id} has no CI binding"))?;
             groups.entry(&check.workflow).or_default().push(check);
         }
+        api.require_unique_head(pull)?;
         for group in groups {
             self.read_workflow(api, pull, group, settings.policy.max_evidence_age_seconds);
         }

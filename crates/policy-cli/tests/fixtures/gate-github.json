@@ -2,10 +2,16 @@
   "pull": {
     "id": 55,
     "number": 42,
+    "state": "open",
+    "merged": false,
     "base": {"ref":"main","sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","repo":{"id":100,"full_name":"owner/repo"}},
     "head": {"ref":"feature","sha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","repo":{"id":100,"full_name":"owner/repo"}},
     "labels": [{"name":"run-ci"}],
     "changed_files": 1
+  },
+  "base_tip": {
+    "ref": "refs/heads/main",
+    "object": {"type":"commit","sha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
   },
   "files": [{"filename":"src/lib.rs","status":"modified"}],
   "reviews": [{"id": 10, "state": "CHANGES_REQUESTED", "user": {"login":"reviewer"}}],

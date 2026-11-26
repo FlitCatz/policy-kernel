@@ -40,7 +40,7 @@ enum Command {
         repo: String,
         #[arg(long)]
         pr: u64,
-        /// Repository-relative JSON policy path at the pull request's base SHA.
+        /// Repository-relative JSON policy path at the tip of the PR base branch.
         #[arg(long)]
         policy: String,
         /// Write the detailed JSON evidence to this new file.
