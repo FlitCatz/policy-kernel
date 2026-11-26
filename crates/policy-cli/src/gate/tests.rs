@@ -670,9 +670,9 @@ fn workflow_and_action_changes_cannot_supply_required_evidence() {
         let report = evaluate(&get, "owner/repo", 42, PATH, &NOW);
         assert_eq!(report.verdict, Verdict::Unknown);
         assert!(
-            report
-                .reason
-                .contains("workflow that produces required evidence"),
+            report.reason.contains(&format!(
+                "PR modifies a CI workflow or action, so its evidence cannot be trusted: {path}"
+            )),
             "{}",
             report.reason
         );

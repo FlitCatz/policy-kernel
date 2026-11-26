@@ -71,7 +71,8 @@ failure does not override the scoped checks.
 Changes under `.github/workflows/` or `.github/actions/` yield `unknown`,
 including a rename into or out of either directory. The base-branch policy
 controls which checks are required. The workflow-change rule withholds
-readiness when the PR edits an Actions definition that could produce evidence.
+readiness when the PR edits any CI workflow or action, whether or not a
+required check uses it, because the evidence from that PR cannot be trusted.
 
 ## Native job artifacts
 

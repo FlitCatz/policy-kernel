@@ -250,7 +250,9 @@ impl Evidence<'_> {
         if let Some(path) = paths.iter().find(|path| {
             path.starts_with(".github/workflows/") || path.starts_with(".github/actions/")
         }) {
-            let reason = format!("PR modifies a workflow that produces required evidence: {path}");
+            let reason = format!(
+                "PR modifies a CI workflow or action, so its evidence cannot be trusted: {path}"
+            );
             self.changed_paths = Some(paths);
             return Err(reason.into());
         }
