@@ -43,6 +43,7 @@ pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> Va
         );
         return result;
     };
+    let risk = context.risk.filter(|_| input.policy.schema_version < 5);
     for (index, requirement) in input.policy.required_knowledge.iter().enumerate() {
         let invalid = requirement.source.trim().is_empty()
             || requirement.source.contains('\0')
@@ -60,7 +61,8 @@ pub(crate) fn validate_required_knowledge(input: &PreMergeEvaluationInput) -> Va
         }
         let applies = requirement.required_when.is_empty()
             || requirement.required_when.iter().any(|condition| {
-                (condition.risks.is_empty() || condition.risks.contains(&context.risk))
+                (condition.risks.is_empty()
+                    || risk.is_none_or(|risk| condition.risks.contains(&risk)))
                     && (condition.path_globs.is_empty()
                         || condition.path_globs.iter().any(|pattern| {
                             let matcher =
@@ -322,7 +324,7 @@ fn validate_local_runner(input: &PreMergeEvaluationInput) -> ValidationResult {
         .policy
         .local_runner_evidence
         .as_ref()
-        .filter(|_| input.policy.schema_version == 4)
+        .filter(|_| input.policy.schema_version >= 4)
     else {
         result.insert(
             "PK-PROV-LOCAL-NOT-ACCEPTED",
@@ -346,7 +348,8 @@ fn validate_local_runner(input: &PreMergeEvaluationInput) -> ValidationResult {
             .zip(input.context.as_ref())
             .is_none_or(|(paths, context)| {
                 policy.ci_required_when.iter().any(|condition| {
-                    crate::sensors::condition_matches(condition, paths, context.risk)
+                    let risk = context.risk.filter(|_| input.policy.schema_version < 5);
+                    crate::sensors::condition_matches(condition, paths, risk)
                 })
             });
     if policy.validate().is_err() || ci_required {

@@ -181,9 +181,14 @@ pub struct PreMergeContext {
     pub sensor_profile: SensorProfile,
     /// Known changed paths; an empty list must not represent unknown impact.
     pub changed_paths: Vec<String>,
-    pub risk: Risk,
+    /// Legacy input for policy versions 1 through 4. V5 scope rules do not use risk.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub risk: Option<Risk>,
     pub workflow_run_id: WorkflowRunId,
     pub agent_ready: Option<AgentReadyObservation>,
+    /// The complete PR label list from the trusted change observation. Empty means no labels.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub labels: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

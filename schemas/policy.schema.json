@@ -176,6 +176,95 @@
       ],
       "type": "string"
     },
+    "ScopeRule": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "label": {
+              "not": {
+                "pattern": "\u0000"
+              },
+              "pattern": "[^\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]",
+              "type": "string"
+            },
+            "required_sensor_ids": {
+              "items": {
+                "$ref": "#/$defs/SensorId"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "when": {
+              "const": "label",
+              "type": "string"
+            }
+          },
+          "required": [
+            "when",
+            "label",
+            "required_sensor_ids"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "path_globs": {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "required_sensor_ids": {
+              "items": {
+                "$ref": "#/$defs/SensorId"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "when": {
+              "const": "paths",
+              "type": "string"
+            }
+          },
+          "required": [
+            "when",
+            "path_globs",
+            "required_sensor_ids"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ScopeRules": {
+      "additionalProperties": false,
+      "properties": {
+        "default_required_sensor_ids": {
+          "description": "Required when the change is empty or any changed path matches no path rule.\nLabels can still widen it.",
+          "items": {
+            "$ref": "#/$defs/SensorId"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/ScopeRule"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "default_required_sensor_ids",
+        "rules"
+      ],
+      "type": "object"
+    },
     "SensorCondition": {
       "additionalProperties": false,
       "properties": {
@@ -227,7 +316,8 @@
           "schema_version": {
             "enum": [
               3,
-              4
+              4,
+              5
             ]
           }
         }
@@ -276,6 +366,27 @@
             "owner_with_independent_agent_review"
           ]
         }
+      }
+    },
+    {
+      "else": {
+        "not": {
+          "required": [
+            "scope_rules"
+          ]
+        }
+      },
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": 5
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "scope_rules"
+        ]
       }
     }
   ],
@@ -356,9 +467,14 @@
         1,
         2,
         3,
-        4
+        4,
+        5
       ],
       "type": "integer"
+    },
+    "scope_rules": {
+      "$ref": "#/$defs/ScopeRules",
+      "default": null
     },
     "sensor_profile_digest": {
       "anyOf": [

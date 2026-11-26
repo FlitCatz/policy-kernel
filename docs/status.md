@@ -75,28 +75,38 @@ from `d9aa477e7563bba4ec787354a8a43ad779643f41`. The
 published the [binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.3)
 from `614a65c81dbb85c107b19b19c48fda93a85d4733`.
 
-The v0.1.4 workspace adds
+The [`v0.1.4` tag run](https://github.com/FlitCatz/policy-kernel/actions/runs/45607074153)
+published the [binary release](https://github.com/FlitCatz/policy-kernel/releases/tag/v0.1.4)
+from `246c92186c880c63f1b6bd3b030a02dd14205e88`. This release adds
 [process-check requirements](integrations/native-contracts-v1.md#process-check-requirements)
 for native local scopes. A scope can require only process checks or combine them
 with suite-backed requirements. Each required check needs a bound observation
-with an accepted exit code. Results stay local advisory. Publishing the v0.1.4
-binaries requires a version tag.
+with an accepted exit code. Results stay local advisory.
+
+## Policy v5 PR scope rules
+
+The v0.1.5 source supports [declarative PR scope rules](integrations/policy-scope-v5.md).
+Policy v5 selects sensors from changed paths, a fallback, and additive PR
+labels. Versions 1–4 retain their existing contract. Binary publication
+requires a version tag. This change supplies kernel evaluation and the existing
+advisory entry point.
 
 ## Policy v4 local-runner contract
 
-The [policy schema](../schemas/policy.schema.json) accepts versions 1–4. V4
+The [policy schema](../schemas/policy.schema.json) accepts versions 1–5. V4
 requires `required_reviews` as v3 does and optionally declares
-`local_runner_evidence`; absence keeps local-runner acceptance closed. V1–v3
-reject that field, including explicit `null`, and retain their serialization and
-digests. A present block requires nonempty, unique, nonblank `allowed_runner_ids`
-without NUL, nonempty `approved_scope_template_digests`, positive
-`maximum_age_seconds`, and `ci_required_when` (a list of sensor conditions, empty
-allowed). Explicit `null` is invalid in v4 too.
+`local_runner_evidence`; absence keeps local-runner acceptance closed. V5 accepts
+the same optional block. V1–v3 reject that field, including explicit `null`, and
+retain their serialization and digests. A present block requires nonempty, unique,
+nonblank `allowed_runner_ids` without NUL, nonempty
+`approved_scope_template_digests`, positive `maximum_age_seconds`, and
+`ci_required_when` (a list of sensor conditions, empty allowed). Explicit `null`
+is invalid in v4 and v5 too.
 
 The [evidence schema](../schemas/evidence-bundle.schema.json) adds
 `local_runner_attested` while retaining evidence schema version 1 and existing
 document digests. This class is explicitly not CI-grade. Core acceptance rules
-now allow it for sensors and executions only under a valid v4 opt-in block, a
+now allow it for sensors and executions only under a valid v4 or v5 opt-in block, a
 change exempt from CI, and the local freshness window. The evaluator clock measures
 age from execution start; local sensors also require fresh observations and
 command-bound execution starts. The local window can exceed the global window

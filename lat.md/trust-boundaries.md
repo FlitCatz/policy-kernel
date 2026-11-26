@@ -26,7 +26,7 @@ these observations. The reference controller's existing review floor is unchange
 
 ## Local-runner attestation
 
-Core accepts fresh local-runner sensors and executions under v4 opt-in when no CI requirement matches. The controller authenticates this class, and local-class readiness cannot ship.
+Core accepts fresh local-runner sensors and executions under v4 or v5 opt-in when no CI requirement matches. The controller authenticates this class, and local-class readiness cannot ship.
 
 The [decision record](../docs/decisions/2026-11-12-local-runner-attestation-adr.md)
 holds the threat model and the default-closed rules; the

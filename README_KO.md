@@ -385,7 +385,7 @@ receipt를 발행합니다. 로컬 암호 테스트가 실제 제공자 서비�
 정책 schema 2는 필수 knowledge를 명시할 수 있으며, 선언이 없는 정책은 계속 빈 knowledge를
 허용합니다.
 
-readiness에는 digest에 결합된 `required_reviews`를 갖춘 정책 schema 3 또는 4가 필요합니다:
+readiness에는 digest에 결합된 `required_reviews`를 갖춘 정책 schema 3–5가 필요합니다.
 양수인 `minimum_reviewers`, `require_provider_independence: true`,
 `allowed_providers`(빈 배열이면 모든 제공자 허용)를 명시합니다. Core는 서로 다른 승인
 리뷰 실행만 정족수로 계산하며 waiver는 승인으로 계산하지 않습니다. V1/v2 문서의 바이트와
@@ -395,11 +395,16 @@ digest는 유지되지만, 새 digest 및 결합된 증거를 갖춘 v3로 명�
 이는 소비 프로젝트 프로필의 자동 마이그레이션이나 운영 승인을 의미하지 않습니다.
 [리뷰 요구사항 및 마이그레이션](docs/trust-model.md)을 참고하세요.
 
+[정책 v5 범위 규칙](docs/integrations/policy-scope-v5.md)은 변경 경로와 일치하는 규칙과,
+어떤 경로 규칙과도 일치하지 않는 변경 경로가 있을 때 적용되는 기본값으로 필수 센서를
+선택합니다. `run-ci` 같은 PR 라벨은 요구사항을 추가할 수 있습니다. 커널은 호출자가
+계산한 위험도 없이 범위를 결정하며, 관찰값이 불완전하면 readiness를 거부합니다.
+
 추가된 [정책 v4 계약](docs/status.md#policy-v4-local-runner-contract)은 같은 리뷰 블록을
 필수로 유지하고 `local_runner_evidence`를 선택 필드로 선언합니다. V1–v3는 이 필드를
 거부하며 기존 바이트와 digest를 유지합니다. 증거 schema 1은 이제
 `local_runner_attested`를 표현하지만, 이 등급은 CI급 허용 목록에 포함되지 않습니다.
-Core는 v4가 명시적으로 허용하고 `ci_required_when`에 일치하지 않으며 로컬 유효 기간
+Core는 v4 또는 v5가 명시적으로 허용하고 `ci_required_when`에 일치하지 않으며 로컬 유효 기간
 안에 있는 센서·실행 증거에만 이 등급을 수용합니다. 실행 시작은 평가자 시계로 측정하며,
 센서 관찰과 명령 digest로 연결한 실행 시작도 유효 기간 안에 있어야 합니다.
 로컬 유효 기간을 늘려도 CI 증거의 전역 유효 기간은 늘어나지 않습니다.
@@ -510,12 +515,12 @@ scope 평가에서도 non-pass로 유지합니다.
 게시합니다. Linux 빌드는 Ubuntu 22.04/glibc 2.35, macOS 빌드는 macOS 15를
 사용합니다. Windows x64에서는 WSL2에서 Linux x64 바이너리를 실행할 수 있습니다.
 
-게시된 `v0.1.3`을 설치하려면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
-프로세스 검사 요구사항을 사용하려면 v0.1.4 게시 후 `tag=v0.1.4`로 설정합니다.
+프로세스 검사 요구사항을 지원하는 `v0.1.4`가 게시되었습니다.
+이 버전을 설치하려면 빈 다운로드 디렉터리에서 아래 예제를 실행합니다.
 
 ```sh
 set -eu
-tag=v0.1.3
+tag=v0.1.4
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do

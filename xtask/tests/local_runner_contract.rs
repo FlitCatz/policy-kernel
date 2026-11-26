@@ -9,6 +9,9 @@ fn policy(version: u32) -> Value {
     if version < 3 {
         policy.as_object_mut().unwrap().remove("required_reviews");
     }
+    if version == 5 {
+        policy["scope_rules"] = json!({"default_required_sensor_ids": ["compile"], "rules": []});
+    }
     policy
 }
 
@@ -38,8 +41,8 @@ fn check_policy(value: Value, expected: bool) {
 }
 
 #[test]
-fn v4_local_runner_block_is_optional_and_legacy_versions_reject_its_presence() {
-    for version in 1..=4 {
+fn local_runner_block_is_optional_from_v4_and_legacy_versions_reject_its_presence() {
+    for version in 1..=5 {
         let value = policy(version);
         check_policy(value.clone(), true);
         let parsed: PolicySnapshot = serde_json::from_value(value.clone()).unwrap();
@@ -47,7 +50,7 @@ fn v4_local_runner_block_is_optional_and_legacy_versions_reject_its_presence() {
         for block in [local_policy(), Value::Null] {
             let mut value = value.clone();
             value["local_runner_evidence"] = block.clone();
-            check_policy(value, version == 4 && !block.is_null());
+            check_policy(value, version >= 4 && !block.is_null());
         }
     }
     for reviews in [None, Some(Value::Null)] {

@@ -32,15 +32,97 @@ pub struct PolicySnapshot {
     /// Policy v2 obligations; absent from the serialized legacy v1 projection.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub required_knowledge: Vec<KnowledgeRequirement>,
-    /// Mandatory in v3/v4; omitted from legacy digest preimages.
+    /// Mandatory from v3; omitted from legacy digest preimages.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub required_reviews: Option<RequiredReviewPolicy>,
-    /// Optional in v4; absence keeps local-runner evidence disabled.
+    /// Optional from v4; absence keeps local-runner evidence disabled.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub local_runner_evidence: Option<LocalRunnerEvidencePolicy>,
-    /// V4 opt-in for an owner authorization plus an independent automated review.
+    /// Opt-in from v4 for an owner authorization plus an independent automated review.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub owner_with_independent_agent_review: Option<OwnerWithIndependentAgentReviewPolicy>,
+    /// V5 declarations for selecting additional required sensors from PR observations.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub scope_rules: Option<ScopeRules>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ScopeRules {
+    /// Required when the change is empty or any changed path matches no path rule.
+    /// Labels can still widen it.
+    #[schemars(schema_with = "scope_sensor_ids_schema")]
+    pub default_required_sensor_ids: Vec<SensorId>,
+    pub rules: Vec<ScopeRule>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(tag = "when", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ScopeRule {
+    Label {
+        #[schemars(schema_with = "binding_nonblank_string_schema")]
+        label: String,
+        #[schemars(schema_with = "scope_sensor_ids_schema")]
+        required_sensor_ids: Vec<SensorId>,
+    },
+    Paths {
+        #[schemars(length(min = 1))]
+        path_globs: Vec<String>,
+        #[schemars(schema_with = "scope_sensor_ids_schema")]
+        required_sensor_ids: Vec<SensorId>,
+    },
+}
+
+impl ScopeRule {
+    pub fn required_sensor_ids(&self) -> &[SensorId] {
+        match self {
+            Self::Label {
+                required_sensor_ids,
+                ..
+            }
+            | Self::Paths {
+                required_sensor_ids,
+                ..
+            } => required_sensor_ids,
+        }
+    }
+}
+
+impl ScopeRules {
+    fn validate(&self) -> Result<(), &'static str> {
+        for ids in std::iter::once(self.default_required_sensor_ids.as_slice())
+            .chain(self.rules.iter().map(ScopeRule::required_sensor_ids))
+        {
+            if ids.is_empty()
+                || ids.iter().collect::<std::collections::BTreeSet<_>>().len() != ids.len()
+            {
+                return Err("scope rules require nonempty lists of distinct sensor IDs");
+            }
+        }
+        for rule in &self.rules {
+            match rule {
+                ScopeRule::Label { label, .. }
+                    if label.trim().is_empty() || label.contains('\0') =>
+                {
+                    return Err("scope rule labels must be nonblank and contain no NUL");
+                }
+                ScopeRule::Paths { path_globs, .. } if path_globs.is_empty() => {
+                    return Err("scope path rules require at least one glob");
+                }
+                _ => {}
+            }
+        }
+        Ok(())
+    }
+}
+
+fn scope_sensor_ids_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+    schemars::json_schema!({
+        "type": "array",
+        "minItems": 1,
+        "uniqueItems": true,
+        "items": generator.subschema_for::<SensorId>()
+    })
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -105,6 +187,15 @@ struct PolicySnapshotWire {
     #[serde(default, deserialize_with = "deserialize_owner_review_policy")]
     #[schemars(with = "OwnerWithIndependentAgentReviewPolicy")]
     owner_with_independent_agent_review: Option<OwnerWithIndependentAgentReviewPolicy>,
+    #[serde(default, deserialize_with = "deserialize_scope_rules")]
+    #[schemars(with = "ScopeRules")]
+    scope_rules: Option<ScopeRules>,
+}
+
+fn deserialize_scope_rules<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<ScopeRules>, D::Error> {
+    ScopeRules::deserialize(deserializer).map(Some)
 }
 
 fn deserialize_owner_review_policy<'de, D: serde::Deserializer<'de>>(
@@ -126,7 +217,7 @@ fn deserialize_required_reviews<'de, D: serde::Deserializer<'de>>(
 }
 
 fn policy_schema_version_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
-    schemars::json_schema!({"type": "integer", "enum": [1, 2, 3, 4]})
+    schemars::json_schema!({"type": "integer", "enum": [1, 2, 3, 4, 5]})
 }
 
 fn deserialize_knowledge_requirements<'de, D: serde::Deserializer<'de>>(
@@ -139,8 +230,8 @@ impl PolicySnapshot {
     /// Direct Rust construction must obey the same version boundary as JSON.
     pub fn validate_version(&self) -> Result<(), &'static str> {
         if let Some(owner) = &self.owner_with_independent_agent_review {
-            if self.schema_version != 4 {
-                return Err("only policy v4 can declare owner_with_independent_agent_review");
+            if self.schema_version < 4 {
+                return Err("owner_with_independent_agent_review requires policy v4 or later");
             }
             if owner.owner_actor.trim().is_empty()
                 || owner.owner_actor.contains('\0')
@@ -159,18 +250,24 @@ impl PolicySnapshot {
         }
         match (self.schema_version, &self.required_reviews) {
             (1 | 2, Some(_)) => return Err("policy v1/v2 cannot declare required_reviews"),
-            (3 | 4, None) => return Err("policy v3/v4 requires required_reviews"),
-            (3 | 4, Some(rules)) if rules.minimum_reviewers == 0 => {
+            (3..=5, None) => return Err("policy v3/v4/v5 requires required_reviews"),
+            (3..=5, Some(rules)) if rules.minimum_reviewers == 0 => {
                 return Err("required_reviews minimum_reviewers must be positive");
             }
-            (3 | 4, Some(rules)) if !rules.require_provider_independence => {
-                return Err("policy v3/v4 requires provider independence");
+            (3..=5, Some(rules)) if !rules.require_provider_independence => {
+                return Err("policy v3/v4/v5 requires provider independence");
             }
+            _ => {}
+        }
+        match (self.schema_version, &self.scope_rules) {
+            (5, Some(scope)) => scope.validate()?,
+            (5, None) => return Err("policy v5 requires scope_rules"),
+            (_, Some(_)) => return Err("only policy v5 can declare scope_rules"),
             _ => {}
         }
         match self.schema_version {
             1 if self.required_knowledge.is_empty() => Ok(()),
-            2..=4 => Ok(()),
+            2..=5 => Ok(()),
             1 => Err("policy v1 cannot declare required_knowledge"),
             _ => Err("unsupported policy schema version"),
         }
@@ -200,6 +297,7 @@ impl<'de> Deserialize<'de> for PolicySnapshot {
             required_reviews: wire.required_reviews,
             local_runner_evidence: wire.local_runner_evidence,
             owner_with_independent_agent_review: wire.owner_with_independent_agent_review,
+            scope_rules: wire.scope_rules,
         };
         policy
             .validate_version()
@@ -218,7 +316,7 @@ impl JsonSchema for PolicySnapshot {
         schema.insert(
             "allOf".into(),
             schemars::json_schema!({"allOf": [{
-                "if": {"properties": {"schema_version": {"enum": [3, 4]}}},
+                "if": {"properties": {"schema_version": {"enum": [3, 4, 5]}}},
                 "then": {"required": ["required_reviews"]},
                 "else": {"not": {"required": ["required_reviews"]}}
             }, {
@@ -227,6 +325,10 @@ impl JsonSchema for PolicySnapshot {
             }, {
                 "if": {"properties": {"schema_version": {"enum": [1, 2, 3]}}},
                 "then": {"not": {"required": ["owner_with_independent_agent_review"]}}
+            }, {
+                "if": {"properties": {"schema_version": {"const": 5}}},
+                "then": {"required": ["scope_rules"]},
+                "else": {"not": {"required": ["scope_rules"]}}
             }]})
             .get("allOf")
             .unwrap()

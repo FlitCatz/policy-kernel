@@ -574,7 +574,7 @@ fn local_evidence(
             .policy
             .local_runner_evidence
             .as_ref()
-            .filter(|_| raw.policy.schema_version == 4)
+            .filter(|_| raw.policy.schema_version >= 4)
             .ok_or("local runner requires policy v4 opt-in")?;
         if !policy
             .allowed_runner_ids

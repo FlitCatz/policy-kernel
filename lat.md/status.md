@@ -33,9 +33,10 @@ both commands on macOS arm64 and Linux x64, with SHA-256 and source-commit asset
 Explicit report selections populate empty test claims with shared parsers before
 import; explicit suite mappings claim coverage. Each TRX has a separate observation
 and approved suite, with no v1 wire-contract change or consumer Rust requirement.
-Tags `v0.1.0` through `v0.1.3` published binary releases. The v0.1.4 source adds
+Tags `v0.1.0` through `v0.1.4` published binary releases. The v0.1.4 release adds
 [[native-contracts#Process-check requirements]] for process-only and mixed local
-scopes. Publishing v0.1.4 requires a version tag.
+scopes. The v0.1.5 source adds [[kernel#Declarative PR scope rules]].
+Publishing v0.1.5 requires a version tag.
 See [[native-contracts#Native command distribution]].
 
 `policy-cli evaluate-ratchet --rule FILE --observation FILE` exposes the existing
@@ -47,10 +48,10 @@ digests remain valid, but readiness and shipping require explicit v3 reapproval.
 Consumer profiles are unchanged; reapproval and promotion are not established.
 See [[kernel#Review consensus and waivers]].
 
-Policy v4 optionally declares local-runner evidence settings, with the v3 review
+Policy v4 and v5 optionally declare local-runner evidence settings, with the v3 review
 block still required. V1–v3 bytes and digests stay unchanged. Evidence v1 accepts
 the new wire value, which is not CI-grade. Core accepts it only for fresh sensors
-and executions under v4 opt-in with no matching CI condition; such readiness cannot ship.
+and executions under v4 or v5 opt-in with no matching CI condition; such readiness cannot ship.
 See [[kernel#Local-runner policy contract]].
 
 V4 also offers an independent optional owner review rule: fresh owner authorization

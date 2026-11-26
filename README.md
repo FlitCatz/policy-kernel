@@ -413,9 +413,9 @@ its local cryptographic tests do not establish deployed provider services.
 Policy schema 2 can require explicit knowledge evidence. Policies with no such
 requirement continue to allow an empty knowledge collection.
 
-Readiness requires policy schema 3 or 4 with digest-bound `required_reviews`:
-a positive `minimum_reviewers`, `require_provider_independence: true`, and
-`allowed_providers` (empty permits any provider). Core counts distinct approving
+Readiness requires policy schema 3 through 5 and a digest-bound `required_reviews`
+block. Set a positive `minimum_reviewers`, `require_provider_independence: true`,
+and `allowed_providers` (empty permits any provider). Core counts distinct approving
 review executions; waivers do not count as approvals. V1/v2 documents retain
 their bytes and digests but fail closed with `PK-POLICY-V3-MIGRATION-REQUIRED`
 until explicitly reapproved as v3 with a new digest and bound evidence. The
@@ -423,11 +423,16 @@ controller's `minimum_reviewers` must equal `max(2, policy minimum_reviewers)`.
 This does not migrate consumer project profiles or establish production approval.
 See the [review requirements and migration](docs/trust-model.md).
 
+[Policy v5 scope rules](docs/integrations/policy-scope-v5.md) select required
+sensors from the complete changed paths and a default for unmatched changes.
+PR labels such as `run-ci` can add requirements. The kernel computes this scope
+without caller-supplied risk, and incomplete observations prevent readiness.
+
 The additive [policy v4 contract](docs/status.md#policy-v4-local-runner-contract)
 requires the same review block and optionally declares `local_runner_evidence`.
 V1–v3 reject this field and preserve their bytes and digests. Evidence schema 1
 now represents `local_runner_attested`, explicitly outside the CI-grade allowlist.
-Core accepts this class only for sensor and execution evidence when v4 opts in,
+Core accepts this class only for sensor and execution evidence when v4 or v5 opts in,
 no `ci_required_when` condition matches, and the local freshness window holds.
 Execution start is measured against the evaluator clock; sensor observations and
 their command-bound execution starts must be fresh. A longer local window does
@@ -539,12 +544,12 @@ Assets include both executables per target, `SHA256SUMS` and `SOURCE_COMMIT`.
 Linux builds use Ubuntu 22.04/glibc 2.35; macOS builds use macOS 15.
 Windows x64 users can run the Linux x64 binaries under WSL2.
 
-Use the example below in a fresh directory to install the published `v0.1.3`
-release. For process-check requirements, use `tag=v0.1.4` after publication.
+Use the example below in a fresh directory to install the published `v0.1.4`
+release, which includes process-check requirements.
 
 ```sh
 set -eu
-tag=v0.1.3
+tag=v0.1.4
 target=aarch64-apple-darwin # Linux x64: x86_64-unknown-linux-gnu
 base="https://github.com/FlitCatz/policy-kernel/releases/download/$tag"
 for file in "policy-cli-$target" "policy-native-importer-$target" SOURCE_COMMIT SHA256SUMS; do
