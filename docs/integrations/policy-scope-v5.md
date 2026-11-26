@@ -32,8 +32,8 @@ and `README.md` requires both `tests` and `compile`.
 Each requirement list is nonempty with distinct sensor IDs. Every referenced
 sensor must exist in the bound profile, including references in inactive rules.
 Each path rule declares one or more supported globs. A rule label must be
-nonblank and contain no NUL. A policy that only uses the default can declare
-`"rules": []`.
+nonblank ASCII without NUL. The context can still carry unrelated non-ASCII PR
+labels. A policy that only uses the default can declare `"rules": []`.
 
 ## Observations and evaluation
 
@@ -77,4 +77,7 @@ They reject `scope_rules` and require a non-null `risk` in any supplied context.
 Labels do not affect their verdict, and the decision digest still binds the
 supplied context. `evaluate-pre` exits 64 when the legacy risk is missing or
 null. The generated schema for `PreMergeEvaluationInput` uses the policy version
-to enforce this requirement.
+to enforce this requirement. A standalone `PreMergeContext` schema allows
+optional risk because it has no policy version. The authoritative pre-merge
+and controller entry points validate the context against their policy before
+publishing a decision or issuing a receipt.

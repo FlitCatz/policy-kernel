@@ -49,6 +49,7 @@ fn local_invocation_cannot_claim_actions_identity() {
 #[cfg(unix)]
 mod integration {
     use super::*;
+    use policy_ci::controller::read_json;
     use policy_contracts::*;
     use serde_json::{json, Value};
     use std::{
@@ -394,6 +395,29 @@ mod integration {
                 .contains("check_run_id=6001"));
             assert!(fixture.artifacts.join("publication-receipt.json").is_file());
         }
+    }
+
+    #[test]
+    fn authoritative_pre_merge_rejects_a_v3_context_without_risk() {
+        let fixture = Fixture::new("ready");
+        let policy: PolicySnapshot = read_json(&fixture.root.join("policy.json")).unwrap();
+        assert_eq!(policy.schema_version, 3);
+
+        let context_path = fixture.trusted.join("context.json");
+        let mut context: Value = read_json(&context_path).unwrap();
+        assert!(context.as_object_mut().unwrap().remove("risk").is_some());
+        fs::write(context_path, serde_json::to_vec(&context).unwrap()).unwrap();
+        let receipt_path = fixture.trusted.join("identity.json");
+        let mut receipt: Value = read_json(&receipt_path).unwrap();
+        receipt["context_digest"] = json!(policy_core::canonical_sha256(&context).unwrap());
+        fs::write(receipt_path, serde_json::to_vec(&receipt).unwrap()).unwrap();
+
+        let output = fixture.command().output().unwrap();
+        assert_eq!(output.status.code(), Some(2), "{output:?}");
+        assert!(String::from_utf8_lossy(&output.stderr)
+            .contains("context.risk is required for policy v1 through v4"));
+        assert!(!fixture.root.join("published.json").exists());
+        assert!(!fixture.artifacts.join("decision.json").exists());
     }
 
     #[test]

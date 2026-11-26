@@ -64,6 +64,8 @@ fn policy_schema_and_decoder_gate_scope_rules_to_v5() {
         ),
         ("/scope_rules/rules/0/label", json!("  ")),
         ("/scope_rules/rules/0/label", json!("run-ci\0other")),
+        ("/scope_rules/rules/0/label", json!("prüfung")),
+        ("/scope_rules/rules/0/label", json!("run-ci\u{0080}")),
         ("/scope_rules/rules/0/required_sensor_ids", json!([])),
         ("/scope_rules/rules/1/when", json!("event")),
         ("/scope_rules/rules/1/path_globs", json!([])),

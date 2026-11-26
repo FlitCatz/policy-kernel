@@ -469,9 +469,12 @@ publisher. Binary distribution does not promote observations or grant readiness.
   labels and changed paths through the kernel and the advisory `evaluate-pre`
   command.
 - Rust API changes for struct literals. `PreMergeContext::risk` changes from
-  `Risk` to `Option<Risk>` and `PreMergeContext` adds `labels`. Use `Some(risk)`
-  for v1–v4 and supply `labels: Some(labels)` for v5. `PolicySnapshot` adds
-  `scope_rules`. Set it to `None` for v1–v4 and supply `Some(rules)` for v5.
+  `Risk` to `Option<Risk>`. Every `PreMergeContext` literal now needs a
+  `labels` field. Use `risk: Some(risk)` and `labels: None` for v1–v4, and
+  `labels: Some(labels)` for v5. `PolicySnapshot` adds `scope_rules`. Set it
+  to `None` for v1–v4 and supply `Some(rules)` for v5.
+- V1–v4 JSON contexts with `labels` now decode and keep the same verdict as
+  their unlabeled equivalents. The v0.1.4 decoder rejected the field as unknown.
 
 ### v0.1.4 release notes
 

@@ -1,6 +1,6 @@
 mod support;
 
-use policy_contracts::{PreMergeEvaluationInput, PreMergeStatus, SensorId};
+use policy_contracts::{PreMergeEvaluationInput, PreMergeStatus, Reason, SensorId};
 use policy_core::{
     canonical_sha256, evaluate_pre_merge, pre_merge_policy_digest, resolve_required_scope,
 };
@@ -85,7 +85,12 @@ fn label_widens_a_path_matched_pre_merge_scope_without_caller_risk() {
 
 #[test]
 fn mixed_case_label_requires_the_declared_checks() {
-    let mut input = scope_input(json!(["src/lib.rs"]), json!(["Run-CI"]));
+    let mut input = scope_input(json!(["src/lib.rs"]), json!([]));
+    let mut compile_only = input.clone();
+    retain_sensor(&mut compile_only, "compile");
+    assert_scope_input_ready(&compile_only);
+
+    input["context"]["labels"] = json!(["Run-CI"]);
     let parsed = pre_merge_input(input.clone());
     let complete = evaluate_pre_merge(&parsed);
     assert_eq!(complete.status, PreMergeStatus::ReadyToMerge);
@@ -96,13 +101,28 @@ fn mixed_case_label_requires_the_declared_checks() {
     );
     assert_eq!(serialized["context"]["labels"], json!(["Run-CI"]));
 
-    retain_sensor(&mut input, "compile");
-    let decision = evaluate_pre_merge(&pre_merge_input(input));
+    compile_only["context"]["labels"] = json!(["Run-CI"]);
+    let labeled = pre_merge_input(compile_only);
+    let decision = evaluate_pre_merge(&labeled);
     assert_eq!(decision.status, PreMergeStatus::Inconclusive);
     assert!(decision
         .reasons
         .iter()
         .any(|reason| reason.code == "PK-SENSOR-MISSING"));
+    let context = labeled.context.unwrap();
+    assert_eq!(
+        resolve_required_scope(
+            &labeled.policy,
+            &context.sensor_profile,
+            &context.changed_paths,
+            context.labels.as_deref().unwrap(),
+        )
+        .unwrap(),
+        [
+            SensorId::parse("compile").unwrap(),
+            SensorId::parse("tests").unwrap()
+        ]
+    );
 }
 
 #[test]
@@ -126,7 +146,7 @@ fn required_scope_unions_path_and_label_rules_without_losing_the_baseline() {
         (&["notes.md"][..], &[][..], &["baseline", "compile"][..]),
         (
             &["notes.md"][..],
-            &["unrelated"][..],
+            &["unrelated", "prüfung"][..],
             &["baseline", "compile"][..],
         ),
         (
@@ -231,6 +251,10 @@ fn assert_scope_input_rejected(input: Value) {
 #[test]
 fn caller_risk_cannot_narrow_inherited_requirements() {
     let mut input = scope_input(json!(["src/lib.rs"]), json!([]));
+    let mut compile_only = input.clone();
+    retain_sensor(&mut compile_only, "compile");
+    assert_scope_input_ready(&compile_only);
+
     input["context"]["sensor_profile"]["sensors"][1]["required_when"] = json!([
         {"id":"high", "risks":["high"], "path_globs":["src/**"]}
     ]);
@@ -243,10 +267,13 @@ fn caller_risk_cannot_narrow_inherited_requirements() {
     assert_eq!(without_risk.status, PreMergeStatus::Inconclusive);
     assert_eq!(with_risk.status, without_risk.status);
     assert_eq!(with_risk.reasons, without_risk.reasons);
-    assert!(with_risk
-        .reasons
-        .iter()
-        .any(|reason| reason.code == "PK-SENSOR-MISSING"));
+    assert_eq!(
+        with_risk.reasons,
+        [Reason {
+            code: "PK-SENSOR-MISSING".into(),
+            message: "required sensor evidence is missing".into(),
+        }]
+    );
     input["context"]["risk"] = json!("low");
     assert_scope_input_ready(&input);
 }

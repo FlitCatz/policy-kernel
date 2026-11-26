@@ -56,7 +56,8 @@ profile validation and the existing glob matcher. Legacy policies still use
 caller risk and retain their bytes and verdicts. Both paths and labels carry
 the caller's trust. The controller authenticates the submitted context, and
 the planned `gate` command will read both lists directly from GitHub. Label
-matching folds ASCII case while preserving the supplied and declared spelling.
+rules require nonblank ASCII names without NUL and match them case-insensitively
+while preserving the supplied and declared spelling.
 The [[crates/policy-contracts/src/decision.rs#PreMergeEvaluationInput]] decoder
 and schema require `risk` in a supplied v1–v4 context. See the
 [wire and evaluation contract](../docs/integrations/policy-scope-v5.md).
@@ -73,6 +74,9 @@ Conformance includes
 [[crates/policy-core/tests/scope_rules.rs#labels_leave_legacy_verdicts_unchanged]],
 [[crates/policy-core/tests/owner_reviews.rs#v5_pre_merge_applies_owner_and_independent_agent_review]]
 and [[crates/policy-core/tests/scope_rules.rs#legacy_scope_documents_and_decisions_keep_their_bytes]].
+The [pre-merge CLI suite](../crates/policy-ci/tests/ci.rs) and
+[controller suite](../crates/policy-ci/tests/support/controller.rs) check that
+authoritative v3 inputs without risk cannot publish a decision or issue a receipt.
 
 ## Test adequacy
 

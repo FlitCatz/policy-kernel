@@ -184,6 +184,16 @@ mod authenticated_controller {
     }
 
     #[test]
+    fn controller_rejects_a_signed_v3_context_without_risk() {
+        let mut fixture = SignedFixture::new();
+        assert_eq!(fixture.signed.observation.policy.schema_version, 3);
+        fixture.signed.observation.context.risk = None;
+        fixture.sign();
+        fixture.reject("context.risk is required for policy v1 through v4");
+        assert!(!fixture.ci.root.join("authenticated/context.json").exists());
+    }
+
+    #[test]
     fn forged_json_local_artifacts_and_producer_signature_tampering_are_rejected() {
         let mut fixture = SignedFixture::new();
         let original = fixture.signed.clone();
