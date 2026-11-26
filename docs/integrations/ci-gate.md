@@ -59,10 +59,9 @@ other unsuccessful job yields `unknown`.
 The gate selects the newest non-skipped `pull_request` run for each required
 workflow at the observed head. GitHub must link the run to this PR. GitHub does
 not link runs for a PR opened from a fork, so such a PR always yields `unknown`
-and the gate never reports it as ready. A queued or
-in-progress newer run withholds readiness. GitHub may carry forward jobs on a
-partial rerun, so the gate checks that required jobs actually started during the
-latest attempt. Use a full rerun when evidence for carried-forward jobs is
+and the gate never reports it as ready. A queued or in-progress newer run
+withholds readiness. GitHub may carry forward jobs on a partial rerun, so the
+gate checks that required jobs actually started during the latest attempt. Use a full rerun when evidence for carried-forward jobs is
 required. An unrelated job failure does not override the scoped checks.
 
 ## Native job artifacts

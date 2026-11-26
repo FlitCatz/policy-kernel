@@ -230,8 +230,7 @@ policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --ou
 자문 gate는 호출자가 인증한 `gh`를 사용합니다. PR의 base 커밋에서 정책을 읽고,
 라벨과 변경 경로로 v5 검사 범위를 결정한 뒤 native 아티팩트 또는 지정된 CI job의
 결과를 평가합니다. `ready`(0), `not ready`(2), `unknown`(3) 중 하나를 출력하고
-상세 JSON 근거를 기록합니다. 취소된 native job은 아티팩트를 올렸어도
-`unknown`으로 판정합니다. 리뷰는 근거에 자문 정보로만 표시됩니다.
+상세 JSON 근거를 기록합니다. 리뷰는 근거에 자문 정보로만 표시됩니다.
 [Gate 정책 및 아티팩트 계약](docs/integrations/ci-gate.md)
 
 ## 워크스페이스 구성
