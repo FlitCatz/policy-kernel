@@ -49,7 +49,9 @@ different checks. A rename contributes both paths.
   workflow attempt. The evidence record marks it as `light`.
 - `{"kind":"native", …}` requires the named job and verified NativeRunV1
   evidence. Use this for jobs that upload native artifacts. Evidence never
-  falls back to light mode when an artifact is missing or rejected.
+  falls back to light mode when an artifact is missing or rejected. A job that
+  concluded `failure` or `timed_out` is not ready without reading its artifact;
+  any other unsuccessful conclusion still needs the artifact.
 
 The gate selects the newest non-skipped `pull_request` run for each required
 workflow at the observed head. GitHub must link the run to this PR. A queued or

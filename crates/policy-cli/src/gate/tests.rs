@@ -536,6 +536,46 @@ fn missing_expired_and_conflicting_artifacts_fail_closed() {
 }
 
 #[test]
+fn failed_native_job_without_artifact_is_not_ready() {
+    for (conclusion, verdict, reason) in [
+        (
+            "failure",
+            Verdict::NotReady,
+            "required job concluded failure",
+        ),
+        (
+            "timed_out",
+            Verdict::NotReady,
+            "required job concluded timed_out",
+        ),
+        (
+            "cancelled",
+            Verdict::Unknown,
+            "missing artifact native-run-verify",
+        ),
+    ] {
+        let mut fixture = Fixture::new();
+        fixture.native_job(
+            "verify",
+            native_zip("verify", VERIFY, b"ran verify", 0),
+            VERIFY,
+        );
+        fixture.ci().artifacts.clear();
+        let job = fixture
+            .ci()
+            .jobs
+            .iter_mut()
+            .find(|job| job["name"] == "verify")
+            .unwrap();
+        job["conclusion"] = json!(conclusion);
+        fixture.ci().run["conclusion"] = json!("failure");
+        let report = fixture.evaluate();
+        assert_eq!(report.verdict, verdict, "{conclusion}: {report:?}");
+        assert!(report.reason.contains(reason), "{report:?}");
+    }
+}
+
+#[test]
 fn native_importer_rejects_inconsistent_raw_bytes_and_verifier_reports_nonpass() {
     let mut fixture = Fixture::new();
     fixture.native_job(
@@ -583,7 +623,11 @@ fn own_gate_policy_scopes_jobs_present_in_pull_request_workflows() {
         let on_pull_request = workflow["on"]
             .as_hash()
             .is_some_and(|events| events.contains_key(&Yaml::String("pull_request".into())));
-        assert!(on_pull_request, "{} lacks a pull_request trigger", check.workflow);
+        assert!(
+            on_pull_request,
+            "{} lacks a pull_request trigger",
+            check.workflow
+        );
         let jobs = workflow["jobs"].as_hash().unwrap();
         let names: Vec<_> = jobs
             .iter()

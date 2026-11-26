@@ -25,7 +25,8 @@ Light evidence records successful named jobs. Native checks additionally require
 the job attempt and reuses [[native-contracts#Adapter importer]] and
 [[native-contracts#Local scope verifier]]. The gate keeps each job's sensor
 identities under its distinct scoped check ID. A conflicting duplicate or
-missing artifact yields unknown.
+missing artifact yields unknown, except that a failed or timed-out job is not
+ready without its artifact.
 
 ## Fixture coverage
 
@@ -38,5 +39,7 @@ checks obsolescence.
 [[crates/policy-cli/src/gate/tests.rs#merge_preserves_same_named_sensors_across_jobs_and_runs]]
 and [[crates/policy-cli/src/gate/tests.rs#missing_expired_and_conflicting_artifacts_fail_closed]]
 check merged and unavailable native evidence.
+[[crates/policy-cli/src/gate/tests.rs#failed_native_job_without_artifact_is_not_ready]]
+separates failed jobs from cancelled ones without an artifact.
 [[crates/policy-cli/src/gate/tests.rs#own_gate_policy_scopes_jobs_present_in_pull_request_workflows]]
 keeps policy-kernel's own `.policy-kernel/gate.json` valid against its CI jobs.

@@ -450,6 +450,9 @@ fn evaluate_job(
             "named CI job succeeded (light evidence)".into(),
         )),
         Source::Light => Ok(job_failed()),
+        Source::Native(_) if matches!(conclusion, Some("failure" | "timed_out")) => {
+            Ok(job_failed())
+        }
         Source::Native(policy) => {
             let artifacts = artifacts
                 .ok_or("workflow artifacts were not read")?
