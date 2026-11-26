@@ -13,7 +13,8 @@ rules from [[kernel#Declarative PR scope rules]] to changed files and labels.
 The gate uses read-only GitHub REST requests. Its evidence binds a workflow path, PR head and run to the latest eligible attempt.
 
 Run selection [[crates/policy-cli/src/gate/github.rs#GitHub]]
-ignores skipped workflows and confirms PR association. The same observation
+ignores skipped workflows and confirms PR association. GitHub does not link
+runs to a PR opened from a fork, so such a PR is always unknown, never ready. The same observation
 is required after evaluation. A moved PR head, base, label set, or file count
 or an unreadable observation yields unknown. Review reads are advisory.
 
@@ -25,9 +26,9 @@ Light evidence records successful named jobs. Native checks additionally require
 the job attempt and reuses [[native-contracts#Adapter importer]] and
 [[native-contracts#Local scope verifier]]. The gate keeps each job's sensor
 identities under its distinct scoped check ID. A conflicting duplicate or
-missing artifact yields unknown. Failed or timed-out jobs yield not ready.
-Other unsuccessful conclusions yield unknown. Only successful jobs proceed
-to artifact intake.
+missing artifact yields unknown. Only successful jobs proceed to artifact
+intake. Light and native checks share one conclusion mapping: failed or
+timed-out jobs yield not ready, and other unsuccessful conclusions yield unknown.
 
 ## Fixture coverage
 
@@ -35,6 +36,8 @@ Recorded API response fixtures exercise the base policy read, latest attempt, he
 
 [[crates/policy-cli/src/gate/tests.rs#base_policy_scopes_light_jobs_and_reviews_remain_advisory]]
 checks additive label scope, a newer skipped run, and light evidence.
+[[crates/policy-cli/src/gate/tests.rs#unsuccessful_light_job_is_unknown_not_failed]]
+keeps cancelled, skipped, and neutral light jobs unknown.
 [[crates/policy-cli/src/gate/tests.rs#a_move_during_reading_overrides_an_otherwise_ready_verdict]]
 checks obsolescence.
 [[crates/policy-cli/src/gate/tests.rs#merge_preserves_same_named_sensors_across_jobs_and_runs]]

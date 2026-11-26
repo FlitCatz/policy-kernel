@@ -264,6 +264,24 @@ fn failed_light_job_returns_not_ready_even_if_reviews_are_unavailable() {
 }
 
 #[test]
+fn unsuccessful_light_job_is_unknown_not_failed() {
+    for conclusion in ["cancelled", "skipped", "neutral"] {
+        let mut fixture = Fixture::new();
+        fixture.ci().jobs[0]["conclusion"] = json!(conclusion);
+        fixture.ci().run["conclusion"] = json!("failure");
+        let report = fixture.evaluate();
+        assert_eq!(report.verdict, Verdict::Unknown, "{conclusion}: {report:?}");
+        assert_eq!(report.verdict.exit_code(), 3);
+        assert!(
+            report
+                .reason
+                .contains(&format!("required job concluded {conclusion}")),
+            "{report:?}"
+        );
+    }
+}
+
+#[test]
 fn a_move_during_reading_overrides_an_otherwise_ready_verdict() {
     for branch in ["head", "base"] {
         let mut fixture = Fixture::new();
@@ -551,7 +569,7 @@ fn failed_native_job_without_artifact_is_not_ready() {
         (
             "cancelled",
             Verdict::Unknown,
-            "required native job concluded cancelled",
+            "required job concluded cancelled",
         ),
     ] {
         let mut fixture = Fixture::new();

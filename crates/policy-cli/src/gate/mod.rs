@@ -431,26 +431,17 @@ fn evaluate_job(
     {
         return Err("required job has stale or invalid execution times".into());
     }
-    let job_failed = || {
-        (
-            Verdict::NotReady,
-            format!("required job concluded {}", conclusion.unwrap_or_default()),
-        )
-    };
+    let concluded = || format!("required job concluded {}", conclusion.unwrap_or_default());
+    match conclusion {
+        Some("success") => {}
+        Some("failure" | "timed_out") => return Ok((Verdict::NotReady, concluded())),
+        _ => return Err(concluded().into()),
+    }
     match &check.source {
-        Source::Light if conclusion == Some("success") => Ok((
+        Source::Light => Ok((
             Verdict::Ready,
             "named CI job succeeded (light evidence)".into(),
         )),
-        Source::Light => Ok(job_failed()),
-        Source::Native(_) if matches!(conclusion, Some("failure" | "timed_out")) => {
-            Ok(job_failed())
-        }
-        Source::Native(_) if conclusion != Some("success") => Err(format!(
-            "required native job concluded {}",
-            conclusion.unwrap_or_default()
-        )
-        .into()),
         Source::Native(policy) => {
             let artifacts = artifacts
                 .get_or_init(|| context.api.artifacts(context.run))

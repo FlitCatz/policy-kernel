@@ -49,13 +49,17 @@ different checks. A rename contributes both paths.
   workflow attempt. The evidence record marks it as `light`.
 - `{"kind":"native", …}` requires the named job and verified NativeRunV1
   evidence. Use this for jobs that upload native artifacts. Evidence never
-  falls back to light mode when an artifact is missing or rejected. A job that
-  concluded `failure` or `timed_out` yields `not ready`. A cancelled, skipped,
-  neutral, or other unsuccessful job yields `unknown`. Only a successful job
-  proceeds to artifact intake.
+  falls back to light mode when an artifact is missing or rejected. Only a
+  successful job proceeds to artifact intake.
+
+Both forms map a required job's conclusion the same way. A job that concluded
+`failure` or `timed_out` yields `not ready`. A cancelled, skipped, neutral, or
+other unsuccessful job yields `unknown`.
 
 The gate selects the newest non-skipped `pull_request` run for each required
-workflow at the observed head. GitHub must link the run to this PR. A queued or
+workflow at the observed head. GitHub must link the run to this PR. GitHub does
+not link runs for a PR opened from a fork, so such a PR always yields `unknown`
+and the gate never reports it as ready. A queued or
 in-progress newer run withholds readiness. GitHub may carry forward jobs on a
 partial rerun, so the gate checks that required jobs actually started during the
 latest attempt. Use a full rerun when evidence for carried-forward jobs is
