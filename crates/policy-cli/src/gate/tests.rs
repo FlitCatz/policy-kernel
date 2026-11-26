@@ -1,9 +1,13 @@
-use super::{evaluate, raw_digest, Evidence, Result, Verdict};
+use super::{
+    evaluate, raw_digest, resolve_required_scope, scope_profile, Evidence, GatePolicy, Result,
+    Verdict,
+};
 use base64::{engine::general_purpose::STANDARD, Engine};
 use policy_contracts::UtcTimestamp;
 use policy_native_contracts::{canonical_digest, DigestRole};
 use serde_json::{json, Value};
-use std::{cell::Cell, collections::BTreeMap, io::Write};
+use std::{cell::Cell, collections::BTreeMap, io::Write, path::Path};
+use yaml_rust2::{Yaml, YamlLoader};
 
 const BASE: &str = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 const HEAD: &str = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -551,4 +555,45 @@ fn native_importer_rejects_inconsistent_raw_bytes_and_verifier_reports_nonpass()
         VERIFY,
     );
     assert_eq!(fixture.evaluate().verdict, Verdict::NotReady);
+}
+
+// Policy-kernel's own gate policy must stay valid for the gate parser and the v5
+// scope resolver, and every job it names must exist in a PR-triggered workflow.
+#[test]
+fn own_gate_policy_scopes_jobs_present_in_pull_request_workflows() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let settings: GatePolicy =
+        serde_json::from_slice(&std::fs::read(root.join(PATH)).unwrap()).unwrap();
+    settings.validate().unwrap();
+    let profile = scope_profile(&settings.checks);
+    let scope = |labels: &[&str]| {
+        let labels: Vec<_> = labels.iter().map(ToString::to_string).collect();
+        resolve_required_scope(&settings.policy, &profile, &["README.md".into()], &labels)
+            .unwrap()
+            .iter()
+            .map(|id| id.as_str().to_owned())
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(scope(&[]), ["verify"]);
+    assert_eq!(scope(&["run-ci"]), ["knowledge-graph", "verify"]);
+
+    for check in &settings.checks {
+        let source = std::fs::read_to_string(root.join(&check.workflow)).unwrap();
+        let workflow = YamlLoader::load_from_str(&source).unwrap().remove(0);
+        let on_pull_request = workflow["on"]
+            .as_hash()
+            .is_some_and(|events| events.contains_key(&Yaml::String("pull_request".into())));
+        assert!(on_pull_request, "{} lacks a pull_request trigger", check.workflow);
+        let jobs = workflow["jobs"].as_hash().unwrap();
+        let names: Vec<_> = jobs
+            .iter()
+            .map(|(key, job)| job["name"].as_str().or(key.as_str()).unwrap())
+            .collect();
+        assert!(
+            names.contains(&check.job.as_str()),
+            "{} has no job named {:?}: {names:?}",
+            check.workflow,
+            check.job
+        );
+    }
 }

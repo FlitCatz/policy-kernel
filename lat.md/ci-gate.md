@@ -38,3 +38,5 @@ checks obsolescence.
 [[crates/policy-cli/src/gate/tests.rs#merge_preserves_same_named_sensors_across_jobs_and_runs]]
 and [[crates/policy-cli/src/gate/tests.rs#missing_expired_and_conflicting_artifacts_fail_closed]]
 check merged and unavailable native evidence.
+[[crates/policy-cli/src/gate/tests.rs#own_gate_policy_scopes_jobs_present_in_pull_request_workflows]]
+keeps policy-kernel's own `.policy-kernel/gate.json` valid against its CI jobs.

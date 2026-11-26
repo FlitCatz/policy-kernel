@@ -31,7 +31,8 @@ count invalidate the evaluated evidence.
 ## Base policy and check sources
 
 Use a JSON document with a `policy` object and a `checks` array. The
-[repository example](../../.policy-kernel/gate.json) uses light evidence. The
+[policy-kernel gate policy](../../.policy-kernel/gate.json), which this
+repository uses for its own pull requests, uses light evidence. The
 `policy` object follows the [policy v5 contract](policy-scope-v5.md). The gate
 uses `required_sensor_ids`, `scope_rules`, and `max_evidence_age_seconds`. It
 derives the v5 sensor profile from the check IDs. Omit the optional
