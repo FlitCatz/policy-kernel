@@ -1,6 +1,7 @@
-use clap::Parser;
+use clap::{ArgGroup, Parser};
 use policy_contracts::{CommitSha, ExecutionId, UtcTimestamp};
 use policy_core::canonical_json;
+use policy_local_attest::{GateAttestation, GateStatement, SigningKey, DEFAULT_SSH_KEYGEN};
 use policy_native_importer::{import_run, raw_digest, ExpectedIdentity};
 use policy_native_verifier::{contracts::*, evaluate_scope};
 use rustix::termios::{tcflush, QueueSelector};
@@ -19,7 +20,10 @@ const ENVELOPE: &str = "attestation.json";
 const MAX_SIGNATURE_BYTES: usize = 16 * 1024;
 
 #[derive(Parser)]
-#[command(about = "Run one local check command and ask the owner to sign its satisfied scope")]
+#[command(
+    about = "Run one local check command and ask the owner to sign its satisfied scope",
+    group(ArgGroup::new("signing_mode").required(true).args(["signer", "signing_key"]))
+)]
 struct Args {
     /// Git worktree root and runner working directory.
     #[arg(long)]
@@ -45,12 +49,24 @@ struct Args {
     scope_id: RecordId,
     #[arg(long, value_parser = |value: &str| RecordId::parse(value))]
     runner_id: RecordId,
-    /// Absolute path to an owner-selected SSHSIG signer (statement stdin, signature stdout).
+    /// Controller mode: absolute path to an owner-selected SSHSIG signer.
     #[arg(long)]
-    signer: PathBuf,
+    signer: Option<PathBuf>,
     /// An argument to the signer, in order. Use --signer-arg=VALUE for leading hyphens.
-    #[arg(long)]
+    #[arg(long, requires = "signer")]
     signer_arg: Vec<OsString>,
+    /// Gate mode: OpenSSH hardware key handle requiring a touch.
+    #[arg(long, requires_all = ["pr", "gate_policy"])]
+    signing_key: Option<PathBuf>,
+    /// Pull request number to bind into the gate signature.
+    #[arg(long, requires = "signing_key", value_parser = clap::value_parser!(u64).range(1..))]
+    pr: Option<u64>,
+    /// Repository-relative gate policy path. The attester reads it from --base.
+    #[arg(long, requires = "signing_key")]
+    gate_policy: Option<String>,
+    /// Absolute path to a trusted OpenSSH ssh-keygen with FIDO support.
+    #[arg(long, requires = "signing_key")]
+    ssh_keygen: Option<PathBuf>,
     /// One runner command and its arguments, following --.
     #[arg(last = true, required = true, num_args = 1..)]
     runner: Vec<OsString>,
@@ -79,7 +95,11 @@ pub(super) fn main() -> ExitCode {
 fn attest(args: Args, confirm: impl FnOnce(&str) -> bool) -> Result<Outcome> {
     require_absent(&args.output)?;
     require_absent(&args.run)?;
-    if !args.signer.is_absolute() {
+    if args
+        .signer
+        .as_ref()
+        .is_some_and(|signer| !signer.is_absolute())
+    {
         return Err("signer must be an absolute executable path".into());
     }
     let mut expected: ExpectedScopeV1 = serde_json::from_slice(&fs::read(&args.expected)?)?;
@@ -94,6 +114,31 @@ fn attest(args: Args, confirm: impl FnOnce(&str) -> bool) -> Result<Outcome> {
     }
     let before = GitSnapshot::read(&args.repo)?;
     let base = revision(&args.repo, &format!("{}^{{commit}}", args.base))?;
+    let gate = args
+        .signing_key
+        .as_ref()
+        .map(|path| {
+            let key = SigningKey::read(path)?;
+            let policy = args
+                .gate_policy
+                .as_deref()
+                .ok_or("gate mode requires a policy path")?;
+            if policy
+                .split('/')
+                .any(|part| matches!(part, "" | "." | ".."))
+                || policy.contains(['\\', ':'])
+                || policy.chars().any(char::is_control)
+            {
+                return Err("gate policy must be a portable repository-relative path".into());
+            }
+            let policy_bytes = git(
+                &args.repo,
+                &["cat-file", "blob", &format!("{base}:{policy}")],
+            )?;
+            let pr = args.pr.ok_or("gate mode requires the PR number")?;
+            Ok::<_, Box<dyn Error>>((key, pr, raw_digest(&policy_bytes).sha256))
+        })
+        .transpose()?;
     if before.head != expected.subject.head {
         return Err("expected scope head does not match the Git worktree".into());
     }
@@ -174,43 +219,85 @@ fn attest(args: Args, confirm: impl FnOnce(&str) -> bool) -> Result<Outcome> {
         attested_at: now(),
     };
     statement.validate()?;
-    sign_and_publish(
-        &args.output,
-        &args.signer,
-        &args.signer_arg,
-        statement,
-        confirm,
+    match gate {
+        Some((key, pr, policy_sha256)) => {
+            let statement = GateStatement {
+                pr,
+                policy_sha256,
+                run: statement,
+            };
+            let mut handle = tempfile::NamedTempFile::new()?;
+            let executable = args
+                .ssh_keygen
+                .as_deref()
+                .unwrap_or_else(|| Path::new(DEFAULT_SSH_KEYGEN));
+            let mut command = key.command(executable, &mut handle)?;
+            let payload = canonical_json(&statement)?;
+            let context = format!(
+                "PR {}, base policy SHA-256 {}\n",
+                statement.pr, statement.policy_sha256
+            );
+            let summary = signing_summary(&statement.run, &context, &payload);
+            let Some(signature) = sign(&statement.run, &mut command, &payload, &summary, confirm)?
+            else {
+                return Ok(Outcome::Unconfirmed);
+            };
+            key.check_signature(signature.value.as_str())?;
+            publish(
+                &args.output,
+                "gate-attestation.json",
+                &GateAttestation {
+                    statement,
+                    signature,
+                },
+            )
+        }
+        None => {
+            let mut command = Command::new(args.signer.ok_or("missing controller signer")?);
+            command.args(args.signer_arg);
+            let payload = canonical_json(&statement)?;
+            let summary = signing_summary(&statement, "", &payload);
+            let Some(signature) = sign(&statement, &mut command, &payload, &summary, confirm)?
+            else {
+                return Ok(Outcome::Unconfirmed);
+            };
+            let signed = SignedLocalAttestationV1 {
+                statement,
+                signature,
+            };
+            signed.validate()?;
+            publish(&args.output, ENVELOPE, &signed)
+        }
+    }
+}
+
+fn signing_summary(statement: &LocalAttestationV1, context: &str, payload: &[u8]) -> String {
+    format!(
+        "Local scope Satisfied for {:?}\n{context}Head {} (tree {}), base {}\nRunner {:?}, run {:?}, scope {:?}\nScope template SHA-256 {}\nStatement SHA-256 (signing bytes) {}",
+        statement.subject.repository.as_str(), statement.subject.head, statement.head_tree, statement.base,
+        statement.runner.runner_id.as_str(), statement.run_id.as_str(), statement.scope_id.as_str(),
+        statement.scope_template_digest.sha256,
+        raw_digest(payload).sha256,
     )
 }
 
-fn sign_and_publish(
-    output: &Path,
-    signer: &Path,
-    signer_args: &[OsString],
-    statement: LocalAttestationV1,
+fn sign(
+    statement: &LocalAttestationV1,
+    command: &mut Command,
+    payload: &[u8],
+    summary: &str,
     confirm: impl FnOnce(&str) -> bool,
-) -> Result<Outcome> {
-    let envelope = output.join(ENVELOPE);
-    require_absent(&envelope)?;
-    let payload = canonical_json(&statement)?;
-    let summary = format!(
-        "Local scope Satisfied for {:?}\nHead {} (tree {}), base {}\nRunner {:?}, run {:?}, scope {:?}\nStatement SHA-256 (signing bytes) {}",
-        statement.subject.repository.as_str(), statement.subject.head, statement.head_tree, statement.base,
-        statement.runner.runner_id.as_str(), statement.run_id.as_str(), statement.scope_id.as_str(),
-        raw_digest(&payload).sha256,
-    );
+) -> Result<Option<LocalSignatureV1>> {
     // A file-backed stdin cannot deadlock if the signer writes before reading.
     let mut input = tempfile::tempfile()?;
-    input.write_all(&payload)?;
+    input.write_all(payload)?;
     input.rewind()?;
-    let mut command = Command::new(signer);
     command
-        .args(signer_args)
         .stdin(input)
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit());
-    if !confirm(&summary) {
-        return Ok(Outcome::Unconfirmed);
+    if !confirm(summary) {
+        return Ok(None);
     }
     let mut child = command.spawn()?;
     let mut signature_bytes = Vec::new();
@@ -239,21 +326,19 @@ fn sign_and_publish(
     {
         return Err("signer did not return an armored SSHSIG".into());
     }
-    let signature = LocalSignatureV1 {
+    Ok(Some(LocalSignatureV1 {
         format: LocalSignatureFormat::Sshsig,
         runner_id: statement.runner.runner_id.clone(),
         value: RecordId::parse(value)?,
-    };
-    let signed = SignedLocalAttestationV1 {
-        statement,
-        signature,
-    };
-    signed.validate()?;
+    }))
+}
+
+fn publish(output: &Path, file: &str, signed: &impl serde::Serialize) -> Result<Outcome> {
     let mut temp = tempfile::NamedTempFile::new_in(output)?;
-    serde_json::to_writer_pretty(&mut temp, &signed)?;
+    serde_json::to_writer_pretty(&mut temp, signed)?;
     temp.write_all(b"\n")?;
     temp.as_file().sync_all()?;
-    temp.persist_noclobber(envelope)?;
+    temp.persist_noclobber(output.join(file))?;
     Ok(Outcome::Signed)
 }
 

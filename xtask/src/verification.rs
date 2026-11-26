@@ -393,6 +393,7 @@ const WORKSPACE_DEPENDENCIES: &[(&str, &[&str])] = &[
             "github-adapter",
             "policy-contracts",
             "policy-core",
+            "policy-local-attest",
             "policy-native-contracts",
             "policy-native-importer",
             "policy-native-verifier",

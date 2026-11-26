@@ -17,7 +17,7 @@ pub use provenance::{
     validate_bundle, validate_provenance, verifier_is_independent, ValidationResult,
 };
 pub use reviews::{evaluate_reviews, ReviewEvaluation, ReviewEvaluationInput};
-pub use scope::{resolve_required_scope, ScopeResolutionError};
+pub use scope::{requires_ci_for_local_evidence, resolve_required_scope, ScopeResolutionError};
 pub use sensors::{
     evaluate_sensor_evidence, evaluate_sensor_evidence_for_change, resolve_required_sensors,
     SensorEvaluation, SensorEvaluationStatus, SensorResolutionError,

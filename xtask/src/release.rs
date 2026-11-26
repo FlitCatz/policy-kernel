@@ -2,7 +2,11 @@ use sha2::{Digest, Sha256};
 use std::{fs, path::Path};
 
 const TARGETS: [&str; 2] = ["aarch64-apple-darwin", "x86_64-unknown-linux-gnu"];
-const BINARIES: [&str; 2] = ["policy-cli", "policy-native-importer"];
+const BINARIES: [&str; 3] = [
+    "policy-cli",
+    "policy-native-importer",
+    "policy-local-attest",
+];
 
 /// Package only the agreed native binaries; never checksum Cargo output indiscriminately.
 pub fn assets(input: &Path, output: &Path, commit: &str) -> Result<(), String> {
@@ -50,7 +54,7 @@ mod tests {
                 fs::write(input.join(target).join(binary), b"abc").unwrap();
             }
         }
-        let missing = input.join(TARGETS[1]).join(BINARIES[1]);
+        let missing = input.join(TARGETS[1]).join("policy-local-attest");
         fs::remove_file(&missing).unwrap();
         assert!(assets(&input, &output, &commit).is_err());
         assert!(!output.exists());
@@ -58,7 +62,7 @@ mod tests {
         assert!(assets(&input, &output, "bad").is_err());
         assets(&input, &output, &commit).unwrap();
         let sums = fs::read_to_string(output.join("SHA256SUMS")).unwrap();
-        assert_eq!(sums.lines().count(), 5);
+        assert_eq!(sums.lines().count(), 7);
         for target in TARGETS {
             for binary in BINARIES {
                 let name = format!("{binary}-{target}");

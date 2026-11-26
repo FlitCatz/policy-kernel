@@ -221,16 +221,17 @@ cargo run --locked -p policy-cli -- evaluate-ratchet --rule rule.json --observat
 한 입력에는 표준 입력(`-`)을 사용할 수 있지만 두 입력에 동시에 사용할 수는 없습니다.
 자세한 내용은 [ratchet 입력·결과 계약](docs/integrations/debt-ratchet-v1.md#cli)을 참고하세요.
 
-### GitHub Actions 증거 평가
+### PR 증거 평가
 
 ```console
 policy-cli gate --repo owner/repo --pr 42 --policy .policy-kernel/gate.json --output gate-42.json
 ```
 
 자문 gate는 호출자가 인증한 `gh`를 사용합니다. PR의 대상 브랜치 최신 커밋에서 정책을 읽고,
-라벨과 변경 경로로 v5 검사 범위를 결정한 뒤 native 아티팩트 또는 지정된 CI job의
-결과를 평가합니다. `ready`(0), `not ready`(2), `unknown`(3) 중 하나를 출력하고
-상세 JSON 근거를 기록합니다. 리뷰는 근거에 자문 정보로만 표시됩니다.
+v5에서는 라벨과 변경 경로로, v4에서는 필수 검사 목록으로 검사 범위를 결정합니다.
+CI 근거를 평가하고, 대상 브랜치 정책이 허용하면 `--local-attestation`으로 서명된
+로컬 실행도 검증합니다. `ready`(0), `not ready`(2), `unknown`(3) 판정에 사용한
+근거 등급을 표시하고 상세 JSON을 기록합니다. 리뷰는 참고 정보로 표시합니다.
 [Gate 정책 및 아티팩트 계약](docs/integrations/ci-gate.md)
 
 ## 워크스페이스 구성
@@ -430,6 +431,8 @@ Core는 v4 또는 v5가 명시적으로 허용하고 `ci_required_when`에 일�
 Unix [`policy-local-attest` 어댑터](action/controller.md#issuing-a-local-attestation)는
 충족된 결과의 요약과 진술 서명 바이트의 SHA-256을 보여 주고 소유자가 확인한 뒤에만
 서명합니다. 종단 간 고정물 시험은 모의 GitHub로 참조 경로 전체를 검증합니다.
+릴리스 바이너리의 OpenSSH 모드는 [키 등록과 gate 서명](docs/integrations/local-runner-signing.md)을
+참고하세요.
 실제 소비 프로젝트 운영과 승격에는 별도의 [배포 증거](docs/promotion.md)가 필요합니다.
 
 정책 v4는 단일 소유자 저장소를 위한 독립 선택 규칙
@@ -523,9 +526,10 @@ scope 평가에서도 non-pass로 유지합니다.
 ### 고정된 native 바이너리 설치
 
 [Release workflow](.github/workflows/release-binaries.yml)는 Rust 1.95.0과
-`--locked`로 macOS arm64와 Linux x64용 두 명령을 빌드합니다.
-각 target의 실행 파일 두 개와 `SHA256SUMS`, `SOURCE_COMMIT`를
-게시합니다. Linux 빌드는 Ubuntu 22.04/glibc 2.35, macOS 빌드는 macOS 15를
+`--locked`로 macOS arm64와 Linux x64용 명령을 빌드합니다.
+v0.1.6 배포에는 대상별 `policy-cli`, `policy-native-importer`,
+`policy-local-attest`와 `SHA256SUMS`, `SOURCE_COMMIT`가 포함됩니다.
+Linux 빌드는 Ubuntu 22.04/glibc 2.35, macOS 빌드는 macOS 15를
 사용합니다. Windows x64에서는 WSL2에서 Linux x64 바이너리를 실행할 수 있습니다.
 
 프로세스 검사 요구사항을 지원하는 `v0.1.4`가 게시되었습니다.

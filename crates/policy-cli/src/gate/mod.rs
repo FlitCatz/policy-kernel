@@ -1,17 +1,20 @@
 //! Advisory gate for GitHub Actions evidence associated with a pull request.
 mod github;
+mod local;
 mod native;
 #[cfg(test)]
 mod tests;
 
 use github::{Get, GitHub, Job, Pull, Review, Run};
 use github_adapter::GhCliApi;
+use local::{LocalPolicy, LocalRequest};
 use native::{JobContext, NativeEvidence, NativePolicy};
 use policy_contracts::{
     CommitSha, PolicySnapshot, SensorDefinition, SensorId, SensorProfile, SensorResultRequirement,
-    Sha256Digest, TestAdequacyPolicy, UtcTimestamp,
+    Sha256Digest, TestAdequacyPolicy, TrustClass, UtcTimestamp,
 };
 use policy_core::resolve_required_scope;
+use policy_local_attest::GateStatement;
 use policy_native_importer::raw_digest;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -29,6 +32,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 struct GatePolicy {
     policy: PolicySnapshot,
     checks: Vec<Check>,
+    local_attestation: Option<LocalPolicy>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -92,6 +96,8 @@ struct Evidence<'a> {
     required_checks: Vec<SensorId>,
     workflows: BTreeMap<String, Run>,
     checks: Vec<CheckEvidence>,
+    evidence_classes: Vec<TrustClass>,
+    local_attestation: Option<GateStatement>,
     advisory_reviews: Option<Vec<Review>>,
     advisory_review_error: Option<String>,
 }
@@ -104,6 +110,7 @@ struct CheckEvidence {
     kind: &'static str,
     job: Option<Job>,
     native: Option<NativeEvidence>,
+    evidence_class: Option<TrustClass>,
     verdict: Verdict,
     reason: String,
 }
@@ -112,6 +119,7 @@ pub(super) fn run(
     repo: &str,
     pr: u64,
     policy: &str,
+    local_attestation: Option<&Path>,
     output: &Path,
 ) -> std::result::Result<u8, String> {
     let now = UtcTimestamp::try_from(SystemTime::now()).map_err(|error| error.to_string())?;
@@ -125,7 +133,7 @@ pub(super) fn run(
         };
         Ok(api.get(route)?)
     };
-    let evidence = evaluate(&get, repo, pr, policy, &now);
+    let evidence = evaluate_with(&get, repo, pr, policy, (&now, local_attestation));
     write_evidence(output, &evidence)
         .map_err(|error| format!("could not write {}: {error}", output.display()))?;
     let reason: String = evidence
@@ -140,12 +148,8 @@ pub(super) fn run(
         })
         .take(360)
         .collect();
-    writeln!(
-        io::stdout().lock(),
-        "{}: {reason}",
-        evidence.verdict.label()
-    )
-    .map_err(|error| error.to_string())?;
+    writeln!(io::stdout().lock(), "{}", evidence.line(&reason))
+        .map_err(|error| error.to_string())?;
     Ok(evidence.verdict.exit_code())
 }
 
@@ -160,12 +164,23 @@ fn write_evidence(path: &Path, evidence: &Evidence<'_>) -> Result<()> {
     Ok(())
 }
 
+#[cfg(test)]
 fn evaluate<'a>(
     get: &Get<'_>,
     repo: &'a str,
     pr: u64,
     path: &'a str,
     now: &'a UtcTimestamp,
+) -> Evidence<'a> {
+    evaluate_with(get, repo, pr, path, (now, None))
+}
+
+fn evaluate_with<'a>(
+    get: &Get<'_>,
+    repo: &'a str,
+    pr: u64,
+    path: &'a str,
+    (now, local_attestation): (&'a UtcTimestamp, Option<&Path>),
 ) -> Evidence<'a> {
     let mut evidence = Evidence {
         schema_version: 1,
@@ -185,18 +200,46 @@ fn evaluate<'a>(
         required_checks: vec![],
         workflows: BTreeMap::new(),
         checks: vec![],
+        evidence_classes: vec![],
+        local_attestation: None,
         advisory_reviews: None,
         advisory_review_error: None,
     };
-    match GitHub::new(get, repo, pr).and_then(|api| evidence.collect(&api)) {
-        Ok(verdict) => evidence.verdict = verdict,
+    match GitHub::new(get, repo, pr).and_then(|api| evidence.collect(&api, local_attestation)) {
+        Ok(verdict) => {
+            evidence.verdict = verdict;
+            if verdict != Verdict::Unknown {
+                evidence.evidence_classes =
+                    [TrustClass::CiObserved, TrustClass::LocalRunnerAttested]
+                        .into_iter()
+                        .filter(|class| {
+                            evidence
+                                .checks
+                                .iter()
+                                .any(|check| check.evidence_class == Some(*class))
+                        })
+                        .collect();
+            }
+        }
         Err(error) => evidence.reason = error.to_string(),
     }
     evidence
 }
 
 impl Evidence<'_> {
-    fn collect(&mut self, api: &GitHub<'_>) -> Result<Verdict> {
+    fn line(&self, reason: &str) -> String {
+        let classes = match self.evidence_classes.as_slice() {
+            [TrustClass::CiObserved] => "[ci_observed] ",
+            [TrustClass::LocalRunnerAttested] => "[local_runner_attested] ",
+            [TrustClass::CiObserved, TrustClass::LocalRunnerAttested] => {
+                "[ci_observed, local_runner_attested] "
+            }
+            _ => "",
+        };
+        format!("{}: {classes}{reason}", self.verdict.label())
+    }
+
+    fn collect(&mut self, api: &GitHub<'_>, local: Option<&Path>) -> Result<Verdict> {
         let pull = api.pull()?;
         self.pull = Some(pull.clone());
         if pull.state != "open" || pull.merged {
@@ -204,7 +247,7 @@ impl Evidence<'_> {
         }
         let base_tip = api.base_tip(&pull)?;
         self.base_tip = Some(base_tip.clone());
-        let result = self.read_checks(api, &pull, &base_tip);
+        let result = self.read_checks(api, &pull, &base_tip, local);
         match api.reviews() {
             Ok(observed) => self.advisory_reviews = Some(observed),
             Err(error) => self.advisory_review_error = Some(error.to_string()),
@@ -237,6 +280,7 @@ impl Evidence<'_> {
         api: &GitHub<'_>,
         pull: &Pull,
         base_tip: &CommitSha,
+        local: Option<&Path>,
     ) -> Result<Verdict> {
         if !native::safe_path(self.policy_path) {
             return Err("policy must be a portable repository-relative path".into());
@@ -268,20 +312,79 @@ impl Evidence<'_> {
         {
             return Err("gate check profile does not match policy's profile digest".into());
         }
-        self.required_checks = resolve_required_scope(&settings.policy, &profile, &paths, &labels)?;
+        self.required_checks = settings.required_checks(&profile, &paths, &labels)?;
         self.changed_paths = Some(paths);
         if self.required_checks.is_empty() {
             return Err("gate policy selected no required checks".into());
         }
-
+        let local_checks = match settings.local_attestation.as_ref() {
+            Some(config) => {
+                let paths = self
+                    .changed_paths
+                    .as_deref()
+                    .expect("observed changed paths");
+                let request = LocalRequest {
+                    pull,
+                    base_tip,
+                    gate: self,
+                    directory: local,
+                };
+                if config.needs_ci(&settings.policy, paths, &request, &labels)? {
+                    None
+                } else {
+                    Some(config)
+                }
+            }
+            None if local.is_some() => {
+                return Err("local attestation requires opt-in in the base gate policy".into())
+            }
+            None => None,
+        };
         let mut groups = BTreeMap::<&str, Vec<&Check>>::new();
+        let mut local_group = Vec::new();
         for id in &self.required_checks {
             let check = checks
                 .get(id)
                 .ok_or_else(|| format!("scoped check {id} has no CI binding"))?;
-            groups.entry(&check.workflow).or_default().push(check);
+            if local_checks.is_some_and(|config| config.checks.contains(id)) {
+                local_group.push(*check);
+            } else {
+                groups.entry(&check.workflow).or_default().push(check);
+            }
         }
         api.require_unique_head(pull)?;
+        if let (Some(config), false) = (local_checks, local_group.is_empty()) {
+            let request = LocalRequest {
+                pull,
+                base_tip,
+                gate: self,
+                directory: local,
+            };
+            let result = config.evaluate(api, &settings.policy, &request);
+            let (verdict, reason, class) = match result {
+                Ok(statement) => {
+                    self.local_attestation = Some(statement);
+                    (
+                        Verdict::Ready,
+                        "verified signed local scope satisfied".into(),
+                        Some(TrustClass::LocalRunnerAttested),
+                    )
+                }
+                Err(error) => (Verdict::Unknown, error.to_string(), None),
+            };
+            self.checks
+                .extend(local_group.into_iter().map(|check| CheckEvidence {
+                    check: check.id.clone(),
+                    workflow: check.workflow.clone(),
+                    job_name: check.job.clone(),
+                    kind: "local_runner_attested",
+                    job: None,
+                    native: None,
+                    evidence_class: class,
+                    verdict,
+                    reason: reason.clone(),
+                }));
+        }
         for group in groups {
             self.read_workflow(api, pull, group, settings.policy.max_evidence_age_seconds);
         }
@@ -302,10 +405,7 @@ impl Evidence<'_> {
                 return Ok(verdict);
             }
         }
-        self.reason = format!(
-            "all {} required CI checks passed",
-            self.required_checks.len()
-        );
+        self.reason = format!("all {} required checks passed", self.required_checks.len());
         Ok(Verdict::Ready)
     }
 
@@ -335,6 +435,7 @@ impl Evidence<'_> {
                 },
                 job: None,
                 native: None,
+                evidence_class: None,
                 verdict: Verdict::Unknown,
                 reason: String::new(),
             };
@@ -362,6 +463,7 @@ impl Evidence<'_> {
                 Ok((verdict, reason)) => {
                     result.verdict = verdict;
                     result.reason = reason;
+                    result.evidence_class = Some(TrustClass::CiObserved);
                 }
                 Err(error) => result.reason = error.to_string(),
             }
@@ -371,6 +473,31 @@ impl Evidence<'_> {
 }
 
 impl GatePolicy {
+    fn required_checks(
+        &self,
+        profile: &SensorProfile,
+        paths: &[String],
+        labels: &[String],
+    ) -> Result<Vec<SensorId>> {
+        if self.policy.schema_version == 4 {
+            self.policy.validate_version()?;
+            return Ok(self
+                .policy
+                .required_sensor_ids
+                .iter()
+                .cloned()
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect());
+        }
+        Ok(resolve_required_scope(
+            &self.policy,
+            profile,
+            paths,
+            labels,
+        )?)
+    }
+
     fn validate(&self) -> Result<BTreeMap<&SensorId, &Check>> {
         if self.policy.max_evidence_age_seconds == 0 {
             return Err("gate policy maximum evidence age must be positive".into());
@@ -405,6 +532,9 @@ impl GatePolicy {
                     );
                 }
             }
+        }
+        if let Some(local) = &self.local_attestation {
+            local.validate(&checks)?;
         }
         Ok(checks)
     }

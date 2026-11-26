@@ -59,8 +59,12 @@ impl Fixture {
             run_id: ExecutionId::parse("run-1").unwrap(),
             scope_id: RecordId::parse("scope-1").unwrap(),
             runner_id: RecordId::parse("fixture").unwrap(),
-            signer: PathBuf::from("/usr/bin/touch"),
+            signer: Some(PathBuf::from("/usr/bin/touch")),
             signer_arg: vec![self.root.join("signer-invoked").into_os_string()],
+            signing_key: None,
+            gate_policy: None,
+            pr: None,
+            ssh_keygen: None,
             runner: vec![
                 std::env::current_exe().unwrap().into_os_string(),
                 "--exact".into(),
@@ -139,6 +143,78 @@ fn dirty_tree_rejected_before_runner() {
     assert!(!fixture.root.join("ran-once").exists());
 }
 
+fn gate_args(fixture: &Fixture, recorded_key: &str) -> Args {
+    let keys: Value =
+        serde_json::from_str(include_str!("../tests/fixtures/openssh-handles.json")).unwrap();
+    let handle = fixture.root.join("signing-handle");
+    fs::write(
+        &handle,
+        format!(
+            "-----BEGIN OPENSSH PRIVATE KEY-----\n{}\n-----END OPENSSH PRIVATE KEY-----\n",
+            keys[recorded_key].as_str().unwrap()
+        ),
+    )
+    .unwrap();
+    let mut args = fixture.args();
+    args.signer = None;
+    args.signer_arg.clear();
+    args.signing_key = Some(handle);
+    args.pr = Some(42);
+    args.gate_policy = Some("gate.json".into());
+    args.ssh_keygen = Some("/usr/bin/false".into());
+    args
+}
+
+#[test]
+fn gate_rejects_software_and_no_touch_handles_before_runner_or_confirmation() {
+    for (key, reason) in [
+        ("software", "OpenSSH hardware security key"),
+        ("no_touch", "no-touch-required keys are refused"),
+    ] {
+        let fixture = Fixture::new("pass");
+        let error =
+            attest(gate_args(&fixture, key), |_| panic!("invalid key prompted")).unwrap_err();
+        assert!(error.to_string().contains(reason), "{error}");
+        assert!(!fixture.root.join("ran-once").exists());
+        assert!(!fixture.args().output.exists());
+    }
+}
+
+#[test]
+fn gate_confirms_the_pr_and_base_policy_once_before_invoking_the_signer() {
+    let fixture = Fixture::new("pass");
+    let mut args = gate_args(&fixture, "touch");
+    let base_policy = b"{\"policy\":\"base\"}\n";
+    fs::write(args.repo.join("gate.json"), base_policy).unwrap();
+    git(&args.repo, &["add", "gate.json"]).unwrap();
+    commit(&args.repo);
+    args.base = revision(&args.repo, "HEAD").unwrap().to_string();
+    fs::write(args.repo.join("gate.json"), b"{\"policy\":\"head\"}\n").unwrap();
+    git(&args.repo, &["add", "gate.json"]).unwrap();
+    commit(&args.repo);
+    let head = revision(&args.repo, "HEAD").unwrap();
+    let mut expected: Value = serde_json::from_slice(&fs::read(&args.expected).unwrap()).unwrap();
+    let run_template = fixture.root.join("run-template.json");
+    let mut run: Value = serde_json::from_slice(&fs::read(&run_template).unwrap()).unwrap();
+    expected["subject"]["head"] = json!(head);
+    run["subject"]["source"] = expected["subject"].clone();
+    run["observations"][0]["subject"] = run["subject"].clone();
+    fs::write(&args.expected, serde_json::to_vec(&expected).unwrap()).unwrap();
+    fs::write(run_template, serde_json::to_vec(&run).unwrap()).unwrap();
+    let outcome = attest(args, |preview| {
+        assert!(preview.contains(&format!(
+            "PR 42, base policy SHA-256 {}",
+            raw_digest(base_policy).sha256
+        )));
+        assert!(preview.contains(head.as_str()));
+        assert!(preview.contains("Statement SHA-256"));
+        false
+    })
+    .unwrap();
+    assert_eq!(outcome, Outcome::Unconfirmed);
+    assert!(!fixture.root.join("out/gate-attestation.json").exists());
+}
+
 #[test]
 fn edits_hidden_by_index_flags_are_rejected_before_runner() {
     for flag in ["--assume-unchanged", "--skip-worktree"] {
@@ -180,7 +256,7 @@ fn failed_runner_and_nonpass_scope_are_unsigned() {
 fn signer_failure_preserves_import_without_an_envelope() {
     let fixture = Fixture::new("pass");
     let mut args = fixture.args();
-    args.signer = "/usr/bin/false".into();
+    args.signer = Some("/usr/bin/false".into());
     args.signer_arg.clear();
     let error = attest(args, |_| true).unwrap_err().to_string();
     assert!(

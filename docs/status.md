@@ -91,15 +91,15 @@ labels. Versions 1–4 retain their existing contract. Binary publication
 requires a version tag. This change supplies kernel evaluation and the existing
 advisory entry point.
 
-## Advisory GitHub Actions gate
+## Advisory pull request gate
 
 The v0.1.6 source adds [`policy-cli gate`](integrations/ci-gate.md). It reads
 the policy at the tip of a PR's base branch and applies v5 scope rules to
-the current file and label observations. The gate combines latest-attempt
-native evidence across jobs and workflows or evaluates explicitly configured
-light job results.
-It produces a local, advisory report with review information. Binary
-publication requires a version tag.
+the current file and label observations or uses the v4 required check list.
+The gate can evaluate latest-attempt native and light CI evidence, plus
+`local_runner_attested` for configured native checks when base policy opts in
+and the change is eligible. The one-line advisory verdict and evidence report
+identify the evidence classes. Binary publication requires a version tag.
 
 ## Policy v4 local-runner contract
 
@@ -179,6 +179,13 @@ satisfied scope prompts the owner with the result summary and the SHA-256 of the
 exact statement signing bytes. Only confirmation on the terminal invokes the
 external signer. The envelope and exact scope/observations from the import can
 then be submitted to the controller through the authenticated observer.
+
+The v0.1.6 release workflow also packages the attester. Its
+[gate mode](integrations/local-runner-signing.md) uses OpenSSH and checks the
+hardware handle's touch setting before signing. It binds the PR number and
+base policy file digest as well as the native run statement. The gate reads
+the key registry from the base commit and verifies signature, presence,
+freshness and scope before accepting the attestation.
 
 End-to-end fixtures use that adapter, the controller CLI and `policy-ci` with
 simulated GitHub. An ordinary change reaches `READY_TO_MERGE` with

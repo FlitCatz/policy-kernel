@@ -419,17 +419,18 @@ v1 wire contracts and their existing canonical vectors/schemas are unchanged.
 
 ## Pinned binary releases
 
-The [release workflow](../../.github/workflows/release-binaries.yml) builds both
+The [release workflow](../../.github/workflows/release-binaries.yml) builds three
 commands with Rust **1.95.0**, `--locked` and `--release` on native macOS arm64 and
 Linux x64 runners. An owner-created `v[0-9]*` tag triggers publication. Linux binaries are built
 on Ubuntu 22.04 (glibc 2.35); they are GNU/glibc binaries, not musl binaries.
 macOS binaries are built on macOS 15 arm64. CI smoke tests each native command.
 Windows x64 users can run the Linux x64 binaries under WSL2.
 
-Each version has four raw executable assets:
-`policy-cli-<target>` and `policy-native-importer-<target>`, for targets
+Starting with v0.1.6, each release packages three executables per target:
+`policy-cli-<target>`, `policy-native-importer-<target>` and
+`policy-local-attest-<target>`, for targets
 `aarch64-apple-darwin` and `x86_64-unknown-linux-gnu`. `SOURCE_COMMIT` records the
-full source commit; `SHA256SUMS` covers all four executables and that record.
+full source commit. `SHA256SUMS` covers all executables and that record.
 The Rust packager `xtask release-assets INPUT OUTPUT COMMIT` requires both targets,
 copies exact bytes into a fresh output directory, and hashes those bytes. Its
 input layout is `INPUT/<target>/<command>`. The workflow creates a draft only
@@ -457,12 +458,23 @@ install -m 755 "policy-cli-$target" "$install_dir/policy-cli"
 install -m 755 "policy-native-importer-$target" "$install_dir/policy-native-importer"
 ```
 
+For v0.1.6 and later, add `policy-local-attest-$target` to the download list
+and install it as `policy-local-attest`.
 Check `SOURCE_COMMIT` against the reviewed tag's commit. Pin the exact tag and,
-for each target used, the SHA-256 values of both executables from the reviewed
+for each target used, the SHA-256 values of the executables from the reviewed
 manifest in consumer configuration. For recurring CI installs, verify against those committed checksum
 entries; do not use `latest` or build from source on every run. Downloaded
 checksums detect byte corruption but do not independently authenticate the release
 publisher. Binary distribution does not promote observations or grant readiness.
+
+### v0.1.6 release notes
+
+- Add [`policy-cli gate`](ci-gate.md) for scoped PR evidence with the base
+  policy and GitHub observations. The advisory verdict identifies CI and
+  signed local-runner evidence.
+- Package the [`policy-local-attest` command](local-runner-signing.md) for
+  macOS arm64 and Linux x64. Gate mode signs an approved native run together
+  with its PR number and base policy digest after the owner confirms.
 
 ### v0.1.5 release notes
 
@@ -506,8 +518,9 @@ publisher. Binary distribution does not promote observations or grant readiness.
 `policy-native-verifier::evaluate_scope(expected, imported)` accepts an independent
 `ExpectedScopeV1` and `ImportedObservationsV1`. The latter is a strict version-1
 kernel-owned transfer record, exported by the adapter; it is not an attestation.
-The dependency direction is importer → verifier → native contracts/core. Neither
-`policy-cli` nor the verifier depends on the importer or report adapters.
+The dependency direction is importer → verifier → native contracts/core. The
+gate uses the importer for CI artifacts, while the verifier evaluates typed
+input without the importer or report adapters.
 
 The verifier checks the expected digest, complete subject/run/scope identity,
 exact required observation set, freshness, command digest (argv and relative cwd),

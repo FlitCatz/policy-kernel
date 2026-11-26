@@ -119,7 +119,7 @@ Command conformance
 and [[crates/policy-native-importer/tests/import.rs#native_import_command_requires_independent_identity_and_valid_documents]]
 check export, evaluation, rejection, immutable output and independent expectations.
 
-Packaging [[xtask/src/release.rs#assets]] requires both commands for macOS arm64
+Packaging [[xtask/src/release.rs#assets]] requires all three commands for macOS arm64
 and Linux x64, hashes exact bytes and records the source commit. Its
 [conformance test](../xtask/src/release.rs) rejects missing targets and existing
 output and pins a known SHA-256 vector.
@@ -269,10 +269,14 @@ treats assume-unchanged and skip-worktree index entries as dirty because Git
 status hides edits to them. Git runs without the owner's environment, so global
 config and excludes cannot weaken the clean-tree check. It binds
 the scope to the actual head and preserves the scope with the completion clock.
-[[crates/policy-local-attest/src/attest.rs#sign_and_publish]] presents the hash of
-the canonical statement bytes and publishes the envelope atomically after the
-external signer succeeds. The [CLI reference](../action/controller.md#issuing-a-local-attestation)
-documents arguments, outputs and exit codes.
+[[crates/policy-local-attest/src/attest.rs#sign]] presents the hash of the
+canonical signing bytes and calls the signer only after explicit confirmation.
+Gate mode binds the PR number and base policy hash with
+[[crates/policy-local-attest/src/gate.rs#GateStatement]]. It checks the handle's
+touch flag before execution and issues an SSHSIG in the gate namespace.
+[[crates/policy-local-attest/src/attest.rs#publish]] writes either envelope
+atomically. See the [controller CLI reference](../action/controller.md#issuing-a-local-attestation)
+and the [gate signing guide](../docs/integrations/local-runner-signing.md).
 
 ### Attester rejection tests
 
@@ -282,6 +286,9 @@ See the [attester tests](../crates/policy-local-attest/src/tests.rs) and
 [[kernel#Controller authentication#Local-runner controller tests]].
 [[crates/policy-local-attest/src/tests.rs#process_only_scope_is_refused_before_the_runner]]
 checks that a valid process-only scope is refused before the runner starts.
+[[crates/policy-local-attest/src/tests.rs#gate_rejects_software_and_no_touch_handles_before_runner_or_confirmation]]
+covers gate-mode key refusal. The gate verifies recorded signatures in
+[[ci-gate#Signed local evidence#Local gate fixtures]].
 
 ## Debt ratchet conformance
 

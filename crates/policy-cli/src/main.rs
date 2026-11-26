@@ -34,7 +34,7 @@ struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    /// Evaluate a pull request's GitHub Actions evidence in advisory mode.
+    /// Evaluate a pull request's CI or signed local evidence in advisory mode.
     Gate {
         #[arg(long)]
         repo: String,
@@ -43,6 +43,9 @@ enum Command {
         /// Repository-relative JSON policy path at the tip of the PR base branch.
         #[arg(long)]
         policy: String,
+        /// Directory containing the signed gate attestation and its native evidence.
+        #[arg(long)]
+        local_attestation: Option<PathBuf>,
         /// Write the detailed JSON evidence to this new file.
         #[arg(long, default_value = "gate-evidence.json")]
         output: PathBuf,
@@ -99,8 +102,9 @@ fn run(cli: Cli) -> Result<u8, String> {
             repo,
             pr,
             policy,
+            local_attestation,
             output,
-        } => gate::run(&repo, pr, &policy, &output),
+        } => gate::run(&repo, pr, &policy, local_attestation.as_deref(), &output),
         Command::EvaluateScope {
             expected,
             observations,
