@@ -127,9 +127,11 @@ For **pre-merge**, also provide:
 
 - `context.json`: `PreMergeContext`, including the policy-bound sensor profile,
   complete changed paths, current run, and an exact-head `agent_ready`
-  observation (or null when absent). Policies v1 through v4 use `risk`.
-  [Policy v5](../docs/integrations/policy-scope-v5.md) uses the complete `labels`
-  list for the same PR and derives the required sensor scope in the kernel.
+  observation (or null when absent). Policies v1 through v4 require a non-null
+  `risk`. [Policy v5](../docs/integrations/policy-scope-v5.md) uses the complete
+  `labels` list for the same PR and derives the required sensor scope in the
+  kernel. The caller supplies both lists and is responsible for their accuracy
+  and completeness.
 - `work-item.json`: `WorkItemObservation`, including separately verified work
   authorization. Work item IDs and PR numbers are distinct.
 - The `policy-path` points to a `PolicySnapshot` whose required check is

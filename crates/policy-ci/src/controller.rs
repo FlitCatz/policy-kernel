@@ -813,6 +813,7 @@ pub fn produce(config: &ControllerConfig, signed: &SignedObservation, output: &P
         &signed.observer_signature,
         &canonical(raw)?,
     )?;
+    raw.context.validate_for_policy(&raw.policy)?;
     let manifest = &raw.evidence.manifest;
     if policy_core::pre_merge_policy_digest(&raw.policy)? != binding.policy_digest
         || raw.policy.policy_digest != binding.policy_digest

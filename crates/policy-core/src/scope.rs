@@ -108,7 +108,9 @@ fn resolve_scope(
     let mut path_matched = vec![false; paths.len()];
     for rule in &scope.rules {
         let matches = match rule {
-            ScopeRule::Label { label, .. } => labels.contains(label),
+            ScopeRule::Label { label, .. } => labels
+                .iter()
+                .any(|observed| observed.eq_ignore_ascii_case(label)),
             ScopeRule::Paths { path_globs, .. } => {
                 let matchers = path_globs
                     .iter()

@@ -113,6 +113,60 @@ fn invalid_input_uses_data_error_exit_and_stderr_only() {
 }
 
 #[test]
+fn evaluate_pre_rejects_missing_or_null_risk_for_legacy_contexts() {
+    let ready: Value =
+        serde_json::from_str(include_str!("../../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    for version in 1..=4 {
+        let mut input = ready.clone();
+        let policy = input["policy"].as_object_mut().unwrap();
+        policy.insert("schema_version".into(), json!(version));
+        if version < 3 {
+            policy.remove("required_reviews");
+        }
+        let baseline = run(&["evaluate-pre", "-"], Some(&input.to_string()));
+        assert!(
+            !baseline.stdout.is_empty(),
+            "policy v{version}: {baseline:?}"
+        );
+
+        input["context"]["risk"] = Value::Null;
+        for null_risk in [true, false] {
+            if !null_risk {
+                input["context"].as_object_mut().unwrap().remove("risk");
+            }
+            let output = run(&["evaluate-pre", "-"], Some(&input.to_string()));
+            assert_eq!(
+                output.status.code(),
+                Some(64),
+                "policy v{version}, null risk {null_risk}: {output:?}"
+            );
+            assert!(output.stdout.is_empty());
+        }
+    }
+}
+
+#[test]
+fn evaluate_pre_accepts_v5_scope_without_risk() {
+    let mut input: Value =
+        serde_json::from_str(include_str!("../../../tests/fixtures/pre-merge/ready.json")).unwrap();
+    input["policy"]["schema_version"] = json!(5);
+    input["policy"]["scope_rules"] = json!({
+        "default_required_sensor_ids": ["compile"], "rules": []
+    });
+    let policy = serde_json::from_value(input["policy"].clone()).unwrap();
+    let digest = json!(policy_core::pre_merge_policy_digest(&policy).unwrap());
+    input["policy"]["policy_digest"] = digest.clone();
+    input["evidence"]["manifest"]["policy_digest"] = digest;
+    input["context"].as_object_mut().unwrap().remove("risk");
+    input["context"]["labels"] = json!([]);
+
+    let output = run(&["evaluate-pre", "-"], Some(&input.to_string()));
+    assert_eq!(output.status.code(), Some(0), "{output:?}");
+    let decision: Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(decision["status"], "ready_to_merge");
+}
+
+#[test]
 fn inspect_preserves_pre_merge_decision_json_value() {
     let input = fs::read_to_string(workspace_path(
         "tests/fixtures/contracts/advisory-decision.json",

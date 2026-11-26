@@ -465,8 +465,13 @@ publisher. Binary distribution does not promote observations or grant readiness.
 
 ### v0.1.5 release notes
 
-- Evaluate [policy v5 scope rules](policy-scope-v5.md) from complete PR labels
-  and changed paths through the kernel and the advisory `evaluate-pre` command.
+- Evaluate [policy v5 scope rules](policy-scope-v5.md) from caller-supplied PR
+  labels and changed paths through the kernel and the advisory `evaluate-pre`
+  command.
+- Rust API changes for struct literals. `PreMergeContext::risk` changes from
+  `Risk` to `Option<Risk>` and `PreMergeContext` adds `labels`. Use `Some(risk)`
+  for v1–v4 and supply `labels: Some(labels)` for v5. `PolicySnapshot` adds
+  `scope_rules`. Set it to `None` for v1–v4 and supply `Some(rules)` for v5.
 
 ### v0.1.4 release notes
 

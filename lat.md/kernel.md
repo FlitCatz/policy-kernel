@@ -53,13 +53,25 @@ Policy v5 computes required sensor IDs from changed paths, a fallback for any pa
 [[crates/policy-core/src/scope.rs#resolve_required_scope]] and
 [[crates/policy-core/src/scope.rs#evaluate_scoped_sensors]] share selection,
 profile validation and the existing glob matcher. Legacy policies still use
-caller risk and retain their bytes and verdicts. See the
+caller risk and retain their bytes and verdicts. Both paths and labels carry
+the caller's trust. The controller authenticates the submitted context, and
+the planned `gate` command will read both lists directly from GitHub. Label
+matching folds ASCII case while preserving the supplied and declared spelling.
+The [[crates/policy-contracts/src/decision.rs#PreMergeEvaluationInput]] decoder
+and schema require `risk` in a supplied v1–v4 context. See the
 [wire and evaluation contract](../docs/integrations/policy-scope-v5.md).
 
 Conformance includes
 [[xtask/tests/scope_schema.rs#policy_schema_and_decoder_gate_scope_rules_to_v5]],
+[[xtask/tests/scope_schema.rs#pre_merge_input_schema_and_decoder_agree_on_versioned_risk]],
+[[crates/policy-cli/tests/cli_regressions.rs#evaluate_pre_rejects_missing_or_null_risk_for_legacy_contexts]],
+[[crates/policy-cli/tests/cli_regressions.rs#evaluate_pre_accepts_v5_scope_without_risk]],
+[[crates/policy-core/tests/scope_rules.rs#mixed_case_label_requires_the_declared_checks]],
 [[crates/policy-core/tests/scope_rules.rs#required_scope_unions_path_and_label_rules_without_losing_the_baseline]],
-[[crates/policy-core/tests/scope_rules.rs#missing_or_unreadable_scope_observations_withhold_readiness]]
+[[crates/policy-core/tests/scope_rules.rs#missing_or_unreadable_scope_observations_withhold_readiness]],
+[[crates/policy-core/tests/scope_rules.rs#caller_risk_cannot_narrow_inherited_requirements]],
+[[crates/policy-core/tests/scope_rules.rs#labels_leave_legacy_verdicts_unchanged]],
+[[crates/policy-core/tests/owner_reviews.rs#v5_pre_merge_applies_owner_and_independent_agent_review]]
 and [[crates/policy-core/tests/scope_rules.rs#legacy_scope_documents_and_decisions_keep_their_bytes]].
 
 ## Test adequacy

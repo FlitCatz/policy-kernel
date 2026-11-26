@@ -1,4 +1,4 @@
-use policy_contracts::PolicySnapshot;
+use policy_contracts::{PolicySnapshot, PreMergeEvaluationInput};
 use serde_json::{json, Value};
 
 fn legacy_policy(version: u32) -> Value {
@@ -81,5 +81,50 @@ fn policy_schema_and_decoder_gate_scope_rules_to_v5() {
         let mut policy = v5.clone();
         *policy.pointer_mut(pointer).unwrap() = invalid;
         assert_contract(&policy, false);
+    }
+}
+
+#[test]
+fn pre_merge_input_schema_and_decoder_agree_on_versioned_risk() {
+    let schema = serde_json::to_value(schemars::schema_for!(PreMergeEvaluationInput)).unwrap();
+    let validator = jsonschema::validator_for(&schema).unwrap();
+    let ready: Value =
+        serde_json::from_str(include_str!("../../tests/fixtures/pre-merge/ready.json")).unwrap();
+
+    let assert_contract = |input: &Value, accepted| {
+        let version = &input["policy"]["schema_version"];
+        let context = input.get("context");
+        assert_eq!(
+            validator.is_valid(input),
+            accepted,
+            "schema v{version}: {context:?}"
+        );
+        assert_eq!(
+            serde_json::from_value::<PreMergeEvaluationInput>(input.clone()).is_ok(),
+            accepted,
+            "decoder v{version}: {context:?}"
+        );
+    };
+
+    for version in 1..=5 {
+        let mut input = ready.clone();
+        input["policy"] = legacy_policy(version);
+        if version == 5 {
+            input["policy"]["scope_rules"] = json!({
+                "default_required_sensor_ids": ["compile"], "rules": []
+            });
+            input["context"]["labels"] = json!([]);
+        }
+        assert_contract(&input, true);
+        input["context"]["risk"] = json!("unknown");
+        assert_contract(&input, false);
+        input["context"]["risk"] = Value::Null;
+        assert_contract(&input, version == 5);
+        input["context"].as_object_mut().unwrap().remove("risk");
+        assert_contract(&input, version == 5);
+        input["context"] = Value::Null;
+        assert_contract(&input, true);
+        input.as_object_mut().unwrap().remove("context");
+        assert_contract(&input, true);
     }
 }

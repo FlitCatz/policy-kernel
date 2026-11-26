@@ -403,6 +403,39 @@ fn full_pre_merge_uses_the_owner_rule_and_binds_all_new_evidence() {
 }
 
 #[test]
+fn v5_pre_merge_applies_owner_and_independent_agent_review() {
+    use policy_contracts::PreMergeStatus;
+    use policy_core::evaluate_pre_merge;
+
+    let mut value = ready_owner_value();
+    value["policy"]["schema_version"] = json!(5);
+    value["policy"]["scope_rules"] = json!({
+        "default_required_sensor_ids": ["compile"], "rules": []
+    });
+    value["context"].as_object_mut().unwrap().remove("risk");
+    value["context"]["labels"] = json!([]);
+    seal_owner_value(&mut value);
+    let decision = evaluate_pre_merge(&support::pre_merge_input(value.clone()));
+    assert_eq!(
+        decision.status,
+        PreMergeStatus::ReadyToMerge,
+        "{decision:?}"
+    );
+
+    value["evidence"]["reviews"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("owner_approval");
+    seal_owner_value(&mut value);
+    let decision = evaluate_pre_merge(&support::pre_merge_input(value));
+    assert_eq!(decision.status, PreMergeStatus::Inconclusive);
+    assert!(decision
+        .reasons
+        .iter()
+        .any(|reason| reason.code == "PK-REVIEW-OWNER-MISSING"));
+}
+
+#[test]
 fn local_evidence_opt_in_cannot_upgrade_reviews_or_owner_authorization() {
     for pointer in [
         "/evidence/reviews/0/trust",

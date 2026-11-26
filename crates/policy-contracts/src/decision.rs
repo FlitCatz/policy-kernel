@@ -155,10 +155,10 @@ pub struct PostMergeDecision {
     pub decision_digest: Sha256Digest,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
+#[schemars(transform = require_legacy_risk)]
 pub struct PreMergeEvaluationInput {
-    #[serde(deserialize_with = "deserialize_schema_version")]
     #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub mode: EvaluationMode,
@@ -167,8 +167,51 @@ pub struct PreMergeEvaluationInput {
     pub work_item: WorkItemObservation,
     pub pull_request: GitHubPullRequestObservation,
     pub evidence: EvidenceBundle,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub context: Option<PreMergeContext>,
+}
+
+impl<'de> Deserialize<'de> for PreMergeEvaluationInput {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        #[serde(remote = "PreMergeEvaluationInput", deny_unknown_fields)]
+        struct Wire {
+            #[serde(deserialize_with = "deserialize_schema_version")]
+            schema_version: u32,
+            mode: EvaluationMode,
+            evaluation_time: UtcTimestamp,
+            policy: PolicySnapshot,
+            work_item: WorkItemObservation,
+            pull_request: GitHubPullRequestObservation,
+            evidence: EvidenceBundle,
+            context: Option<PreMergeContext>,
+        }
+
+        let input = Wire::deserialize(deserializer)?;
+        if let Some(context) = &input.context {
+            context
+                .validate_for_policy(&input.policy)
+                .map_err(serde::de::Error::custom)?;
+        }
+        Ok(input)
+    }
+}
+
+fn require_legacy_risk(schema: &mut schemars::Schema) {
+    schema.insert(
+        "if".into(),
+        schemars::json_schema!({"properties": {"policy": {"properties": {
+            "schema_version": {"enum": [1, 2, 3, 4]}
+        }}}})
+        .into(),
+    );
+    schema.insert(
+        "then".into(),
+        schemars::json_schema!({"properties": {"context": {
+            "required": ["risk"], "properties": {"risk": {"type": "string"}}
+        }}})
+        .into(),
+    );
 }
 
 /// Explicit current-run inputs. Absent legacy context cannot establish readiness.
@@ -179,16 +222,29 @@ pub struct PreMergeContext {
     #[schemars(schema_with = "crate::schema_version_schema")]
     pub schema_version: u32,
     pub sensor_profile: SensorProfile,
-    /// Known changed paths; an empty list must not represent unknown impact.
+    /// Caller-supplied changed paths. An empty list means a known empty change.
     pub changed_paths: Vec<String>,
-    /// Legacy input for policy versions 1 through 4. V5 scope rules do not use risk.
+    /// Required for policy v1 through v4. V5 scope rules ignore it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub risk: Option<Risk>,
     pub workflow_run_id: WorkflowRunId,
     pub agent_ready: Option<AgentReadyObservation>,
-    /// The complete PR label list from the trusted change observation. Empty means no labels.
+    /// Caller-supplied complete PR label list. Empty means a known absence of labels.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub labels: Option<Vec<String>>,
+}
+
+impl PreMergeContext {
+    /// Check the version-dependent context contract after pairing it with a policy.
+    ///
+    /// # Errors
+    /// Returns an error when a policy version from 1 through 4 has no observed risk.
+    pub fn validate_for_policy(&self, policy: &PolicySnapshot) -> Result<(), &'static str> {
+        if (1..=4).contains(&policy.schema_version) && self.risk.is_none() {
+            return Err("context.risk is required for policy v1 through v4");
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]

@@ -121,7 +121,9 @@ them retain exactly the same signing bytes and producer payloads.
 Inventory entries must match evidence exactly, with no duplicates. An empty
 contributor ledger or missing required reviews/sensors is rejected. Context and
 work item are signed together with evidence, and the sensor profile digest must
-match the adopted policy. Execution and test adequacy records must carry the
+match the adopted policy. For policy v5, the caller supplies `changed_paths`
+and `labels`. The signature binds the supplied lists, whose accuracy and
+completeness depend on that caller. Execution and test adequacy records must carry the
 evaluated `head_sha`; the collector fills it, and authoritative evaluation
 rejects records without it. The policy's required-knowledge declarations remain
 bound to its versioned digest and are checked by the evaluation core.

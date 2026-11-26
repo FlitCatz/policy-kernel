@@ -84,6 +84,28 @@ fn label_widens_a_path_matched_pre_merge_scope_without_caller_risk() {
 }
 
 #[test]
+fn mixed_case_label_requires_the_declared_checks() {
+    let mut input = scope_input(json!(["src/lib.rs"]), json!(["Run-CI"]));
+    let parsed = pre_merge_input(input.clone());
+    let complete = evaluate_pre_merge(&parsed);
+    assert_eq!(complete.status, PreMergeStatus::ReadyToMerge);
+    let serialized = serde_json::to_value(parsed).unwrap();
+    assert_eq!(
+        serialized["policy"]["scope_rules"]["rules"][1]["label"],
+        "run-ci"
+    );
+    assert_eq!(serialized["context"]["labels"], json!(["Run-CI"]));
+
+    retain_sensor(&mut input, "compile");
+    let decision = evaluate_pre_merge(&pre_merge_input(input));
+    assert_eq!(decision.status, PreMergeStatus::Inconclusive);
+    assert!(decision
+        .reasons
+        .iter()
+        .any(|reason| reason.code == "PK-SENSOR-MISSING"));
+}
+
+#[test]
 fn required_scope_unions_path_and_label_rules_without_losing_the_baseline() {
     let mut value = scope_input(json!([]), json!([]));
     value["policy"]["required_sensor_ids"] = json!(["baseline"]);
@@ -148,6 +170,7 @@ fn required_scope_unions_path_and_label_rules_without_losing_the_baseline() {
 #[test]
 fn missing_or_unreadable_scope_observations_withhold_readiness() {
     let valid = scope_input(json!(["src/lib.rs"]), json!([]));
+    assert_scope_input_ready(&valid);
     for (field, unreadable) in [
         ("labels", json!("run-ci")),
         ("labels", json!([null])),
@@ -173,6 +196,7 @@ fn missing_or_unreadable_scope_observations_withhold_readiness() {
 #[test]
 fn invalid_inactive_rules_cannot_silently_shrink_the_scope() {
     let valid = scope_input(json!(["docs/readme.md"]), json!([]));
+    assert_scope_input_ready(&valid);
     for broken_rule in [
         json!({"when":"paths","path_globs":["src/**","src/[a-z].rs"],"required_sensor_ids":["tests"]}),
         json!({"when":"label","label":"run-ci","required_sensor_ids":["undefined-check"]}),
@@ -182,6 +206,15 @@ fn invalid_inactive_rules_cannot_silently_shrink_the_scope() {
         seal_policy(&mut input);
         assert_scope_input_rejected(input);
     }
+}
+
+fn assert_scope_input_ready(input: &Value) {
+    let decision = evaluate_pre_merge(&pre_merge_input(input.clone()));
+    assert_eq!(
+        decision.status,
+        PreMergeStatus::ReadyToMerge,
+        "{decision:?}"
+    );
 }
 
 fn assert_scope_input_rejected(input: Value) {
@@ -201,11 +234,12 @@ fn caller_risk_cannot_narrow_inherited_requirements() {
     input["context"]["sensor_profile"]["sensors"][1]["required_when"] = json!([
         {"id":"high", "risks":["high"], "path_globs":["src/**"]}
     ]);
-    retain_sensor(&mut input, "compile");
     seal_policy(&mut input);
-    let without_risk = evaluate_pre_merge(&pre_merge_input(input.clone()));
-    input["context"]["risk"] = json!("low");
-    let with_risk = evaluate_pre_merge(&pre_merge_input(input));
+    let mut missing_tests = input.clone();
+    retain_sensor(&mut missing_tests, "compile");
+    let without_risk = evaluate_pre_merge(&pre_merge_input(missing_tests.clone()));
+    missing_tests["context"]["risk"] = json!("low");
+    let with_risk = evaluate_pre_merge(&pre_merge_input(missing_tests));
     assert_eq!(without_risk.status, PreMergeStatus::Inconclusive);
     assert_eq!(with_risk.status, without_risk.status);
     assert_eq!(with_risk.reasons, without_risk.reasons);
@@ -213,6 +247,44 @@ fn caller_risk_cannot_narrow_inherited_requirements() {
         .reasons
         .iter()
         .any(|reason| reason.code == "PK-SENSOR-MISSING"));
+    input["context"]["risk"] = json!("low");
+    assert_scope_input_ready(&input);
+}
+
+#[test]
+fn labels_leave_legacy_verdicts_unchanged() {
+    for version in 1..=4 {
+        let mut input = ready_value();
+        input["policy"]["schema_version"] = json!(version);
+        if version < 3 {
+            input["policy"]
+                .as_object_mut()
+                .unwrap()
+                .remove("required_reviews");
+        }
+        seal_policy(&mut input);
+        let baseline = evaluate_pre_merge(&pre_merge_input(input.clone()));
+        if version < 3 {
+            assert!(baseline
+                .reasons
+                .iter()
+                .any(|reason| reason.code == "PK-POLICY-V3-MIGRATION-REQUIRED"));
+        } else {
+            assert_eq!(
+                baseline.status,
+                PreMergeStatus::ReadyToMerge,
+                "{baseline:?}"
+            );
+        }
+
+        input["context"]["labels"] = json!(["Run-CI"]);
+        let labeled = evaluate_pre_merge(&pre_merge_input(input));
+        assert_eq!(labeled.status, baseline.status, "policy v{version}");
+        assert_eq!(labeled.reasons, baseline.reasons, "policy v{version}");
+        assert_eq!(labeled.binding, baseline.binding, "policy v{version}");
+        // The decision digest still binds the exact supplied context.
+        assert_ne!(labeled.decision_digest, baseline.decision_digest);
+    }
 }
 
 #[test]
